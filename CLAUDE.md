@@ -12,6 +12,8 @@ pnpm test                   # vitest, headless (no browser)
 pnpm content:validate       # schema + cross-reference check of /content
 pnpm content:format         # canonical JSON layout (what the in-game editor writes)
 pnpm assets:placeholders    # (re)generate missing placeholder sprite sheets; --force overwrites
+pnpm art:setup              # once: Python venv for the art generators in tools/art
+pnpm art <tool>             # regenerate a character sheet from source, e.g. pnpm art ashen_one
 ```
 
 ## Layers and the rules that keep them honest
@@ -37,7 +39,8 @@ ESLint enforces the "never" column for the pure layers. Do not disable those rul
   a system. Cross-file references are checked in `src/content/content.ts`.
 - **An enemy** → `content/enemies.json` (reuse a brain) or a new brain in `src/sim/modules/brains.ts`
   plus its schema variant.
-- **Art** → `assets/sprites/<name>.png` + `<name>.json` (format: `src/content/sprite-sheet.ts`).
+- **Art** → `assets/sprites/<name>.png` + `<name>.json` (format: `src/content/sprite-sheet.ts`). Sheets made by a
+  generator in `tools/art/` (currently `player`) are never hand-edited: change the script and regenerate.
 - **A dev command** → the owning module's `commands` (sim-level) or `src/dev/dev-tools.ts` (client-level).
 
 ## Conventions

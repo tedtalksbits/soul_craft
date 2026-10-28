@@ -21,7 +21,9 @@
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
     "assets:placeholders": "tsx scripts/placeholders/generate.ts",
     "content:validate": "tsx scripts/validate-content.ts",
-    "content:format": "tsx scripts/format-content.ts"
+    "content:format": "tsx scripts/format-content.ts",
+    "art:setup": "tsx scripts/art.ts setup",
+    "art": "tsx scripts/art.ts run"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm exec lint-staged && pnpm typecheck"

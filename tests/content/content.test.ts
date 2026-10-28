@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { PNG } from 'pngjs';
 import { describe, expect, it } from 'vitest';
 import { buildContent, ContentError } from '../../src/content/content';
 import { SpriteSheetSchema } from '../../src/content/sprite-sheet';
@@ -37,6 +38,21 @@ describe('sprite sheets', () => {
   it.each(sheets)('%s is valid and has its image', (file) => {
     const def = SpriteSheetSchema.parse(JSON.parse(readFileSync(join(SPRITES, file), 'utf8')));
     expect(existsSync(join(SPRITES, def.image))).toBe(true);
+  });
+
+  it.each(sheets)('%s only references frames that exist in its image', (file) => {
+    const def = SpriteSheetSchema.parse(JSON.parse(readFileSync(join(SPRITES, file), 'utf8')));
+    const { width, height } = PNG.sync.read(readFileSync(join(SPRITES, def.image)));
+    expect(width % def.frameWidth, 'image width is a whole number of frames').toBe(0);
+    expect(height % def.frameHeight, 'image height is a whole number of frames').toBe(0);
+    const count = (width / def.frameWidth) * (height / def.frameHeight);
+    const refs = [
+      ...Object.values(def.frames),
+      ...Object.values(def.animations).flatMap((a) => a.frames.filter((f) => typeof f === 'number')),
+    ];
+    expect(refs.filter((i) => i >= count)).toEqual([]);
+    const named = Object.values(def.animations).flatMap((a) => a.frames.filter((f) => typeof f === 'string'));
+    expect(named.filter((n) => !(n in def.frames))).toEqual([]);
   });
 
   it('every tile frame exists in the tiles sheet', () => {

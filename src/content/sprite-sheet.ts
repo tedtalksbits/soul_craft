@@ -13,6 +13,11 @@ export const SpriteSheetSchema = z.object({
   frameHeight: z.number().int().positive(),
   /** Normalised pivot within a frame. `[0.5, 1]` puts it at the feet. */
   anchor: z.tuple([z.number(), z.number()]).default([0.5, 1]),
+  /**
+   * Named attachment points in pixels relative to the anchor (x right, y down), e.g. `swing`:
+   * where the player's sword arc is centred. Lets art of any size line up with effects.
+   */
+  pivots: z.record(z.string(), z.tuple([z.number(), z.number()])).default({}),
   /** Named single frames, e.g. tile variants. */
   frames: z.record(z.string(), z.number().int().nonnegative()).default({}),
   animations: z
@@ -26,4 +31,7 @@ export const SpriteSheetSchema = z.object({
     )
     .default({}),
 });
+/** A parsed sheet, defaults applied. */
 export type SpriteSheetDef = z.infer<typeof SpriteSheetSchema>;
+/** What a sheet file may contain (defaulted fields optional). Use when writing sheets. */
+export type SpriteSheetFile = z.input<typeof SpriteSheetSchema>;

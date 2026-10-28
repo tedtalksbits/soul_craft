@@ -6,3 +6,7 @@ coverage
 .vite
 # local snapshots exported from the dev console
 snapshots/
+
+# local Python env for tools/art
+tools/art/.venv/
+__pycache__/

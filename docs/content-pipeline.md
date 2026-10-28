@@ -68,14 +68,25 @@ Each sheet is a PNG on a fixed grid plus a JSON sidecar (`src/content/sprite-she
 Frames are numbered left to right, top to bottom. Edit PNGs in any pixel editor (Aseprite, Piskel,
 LibreSprite…). Saving hot-reloads the sheet.
 
-**Animation names the renderer looks for**, most specific first: `<pose>_<dir>`, `<pose>`, then
-`walk_<dir>`, `idle_<dir>`, `idle`. Directions are `down`, `up`, `left`, `right`.
+**Animation names the renderer looks for**, most specific first: `<pose>_<dir8>`, `<pose>_<dir>`,
+`<pose>`, then the same for `walk` and `idle`. `<dir>` is `down`, `up`, `left` or `right`; `<dir8>` adds
+`down_right`, `up_right`, `up_left` and `down_left`. Diagonals are optional and are chosen from the direction
+of travel, held while standing still. A missing pose falls back to walk/idle frames rather than failing.
+
+**Pivots** (optional) name points relative to the anchor, in pixels, that effects attach to.
+`swing` places the player's sword arc; without one it sits 9 px above the feet.
 
 - Player poses: `idle`, `walk`, `attack`, `roll`, `hurt`, `drink`, `sit`, `dead`
 - Enemy poses: `idle`, `walk`, `windup` (telegraph), `attack`, `hurt`, `stunned`, `hop`
 - Props: `bonfire_lit`, `bonfire_unlit`, `torch`, `sign`, `souls`, `ember`
 - Tiles: named frames referenced from `tiles.json`. `overlay: true` tiles are transparent and drawn over the
   local biome's ground.
+
+### Generated character art
+
+Characters with real art are generated from Python source in `tools/art/` (see its README):
+`pnpm art:setup` once, then e.g. `pnpm art ashen_one` to rebuild `player.png` + `player.json`. Edit the
+script, not the PNG.
 
 ### Placeholders
 

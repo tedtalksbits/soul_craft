@@ -1,0 +1,3 @@
+# Art tool dependencies. Install with: pnpm art:setup
+numpy==2.5.4
+pillow==13.0.0

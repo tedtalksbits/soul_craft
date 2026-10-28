@@ -9,7 +9,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { format, resolveConfig } from 'prettier';
-import type { SpriteSheetDef } from '../../src/content/sprite-sheet';
+import type { SpriteSheetFile } from '../../src/content/sprite-sheet';
 import { ROOT } from '../lib/load-content';
 import { buildCharacter } from './characters';
 import { buildFont, buildProps, buildSlime } from './misc';
@@ -17,9 +17,9 @@ import { buildTiles } from './tiles';
 
 const OUT = join(ROOT, 'assets', 'sprites');
 
-const SHEETS: Record<string, () => { png: Buffer; json: SpriteSheetDef }> = {
+/** Sheets that still use placeholder art. Real art moves out of here (the player: `pnpm art ashen_one`). */
+const SHEETS: Record<string, () => { png: Buffer; json: SpriteSheetFile }> = {
   tiles: buildTiles,
-  player: () => buildCharacter('player'),
   hollow: () => buildCharacter('hollow'),
   archer: () => buildCharacter('archer'),
   knight: () => buildCharacter('knight'),

@@ -5,7 +5,7 @@
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import type { BiomeDef } from '../../content/schemas';
-import { Body, Player, Projectile } from '../../sim/components';
+import { Body, Player, Projectile, Sprite as SpriteDef } from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
@@ -14,6 +14,8 @@ import { PixelText } from './pixel-text';
 const MAX_PARTICLES = 700;
 const FRAME_MS = 1000 / 60;
 const SLASH_MS = 170;
+/** Arc centre above the feet when a sheet has no `swing` pivot (sized for 24px-tall sprites). */
+const DEFAULT_SWING_PIVOT: readonly [number, number] = [0, -9];
 
 interface Particle {
   sprite: Sprite;
@@ -276,8 +278,10 @@ export class Effects {
     const f = Math.min(1, this.slash.ageMs / (SLASH_MS * 0.6));
     const base = Math.atan2(this.slash.dirY, this.slash.dirX);
     const a = base - 1.3 + f * 2.6;
-    const cx = Math.round(b.x);
-    const cy = Math.round(b.y + b.h / 2 - 9);
+    const sheet = this.assets.sheet(sim.ecs.get(sim.player, SpriteDef)?.sheet ?? '');
+    const [px, py] = sheet?.def.pivots['swing'] ?? DEFAULT_SWING_PIVOT;
+    const cx = Math.round(b.x + px);
+    const cy = Math.round(b.y + b.h / 2 + py);
     g.moveTo(cx, cy)
       .lineTo(cx + Math.cos(a) * 15, cy + Math.sin(a) * 15)
       .stroke({ width: 2, color: 0xe4e8ea });

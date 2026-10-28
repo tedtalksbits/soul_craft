@@ -1,5 +1,5 @@
 /** Placeholder slime, props (bonfire, torch, sign, pickups) and the bitmap digit font. */
-import type { SpriteSheetDef } from '../../src/content/sprite-sheet';
+import type { SpriteSheetFile } from '../../src/content/sprite-sheet';
 import { hex, Sheet, type Surface } from './pixel-canvas';
 
 const SHADOW = hex('#000000', 90);
@@ -17,7 +17,7 @@ function drawSlime(s: Surface, squish: number, hop: number, flash: boolean): voi
   s.rect(10, y - 1, 1, 1, hex('#102018'));
 }
 
-export function buildSlime(): { png: Buffer; json: SpriteSheetDef } {
+export function buildSlime(): { png: Buffer; json: SpriteSheetFile } {
   const sheet = new Sheet(64, 48);
   const squish = [1, 1.08, 1, 0.92];
   squish.forEach((k, i) => drawSlime(sheet.frame(i, 16, 16), k, 0, false));
@@ -57,7 +57,7 @@ function bonfireBase(s: Surface): void {
   s.rect(6, 7, 5, 1, hex('#8a7a6a'));
 }
 
-export function buildProps(): { png: Buffer; json: SpriteSheetDef } {
+export function buildProps(): { png: Buffer; json: SpriteSheetFile } {
   const sheet = new Sheet(64, 96);
   const f = (i: number) => sheet.frame(i, 16, 24);
   // row 0: unlit bonfire, sign
@@ -127,7 +127,7 @@ const GLYPHS: Record<string, string> = {
   x: '000101010101000',
 };
 
-export function buildFont(): { png: Buffer; json: SpriteSheetDef } {
+export function buildFont(): { png: Buffer; json: SpriteSheetFile } {
   const chars = Object.keys(GLYPHS);
   const sheet = new Sheet(chars.length * 4, 6);
   const frames: Record<string, number> = {};

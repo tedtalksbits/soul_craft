@@ -1,7 +1,7 @@
 /** Placeholder terrain tiles, in the style of the original prototype. 16x16, eight per row. */
 import { hashString } from '../../src/core/hash';
 import { Rng } from '../../src/core/rng';
-import type { SpriteSheetDef } from '../../src/content/sprite-sheet';
+import type { SpriteSheetFile } from '../../src/content/sprite-sheet';
 import { hex, shade, Sheet, type RGBA, type Surface } from './pixel-canvas';
 
 type Draw = (s: Surface, r: () => number) => void;
@@ -222,7 +222,7 @@ function houseWall(): Draw {
   };
 }
 
-export function buildTiles(): { png: Buffer; json: SpriteSheetDef } {
+export function buildTiles(): { png: Buffer; json: SpriteSheetFile } {
   const cols = 8;
   const sheet = new Sheet(cols * 16, Math.ceil(FRAMES.length / cols) * 16);
   const frames: Record<string, number> = {};

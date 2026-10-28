@@ -26,6 +26,7 @@ import { TELEGRAPH_STATES } from '../../sim/modules/brains';
 import { DEATH_TICKS } from '../../sim/modules/combat';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
+import { resolveDir8, type Dir8 } from './facing';
 import { PixelText } from './pixel-text';
 
 const HIT_FLASH_MS = 110;
@@ -40,6 +41,8 @@ interface EntityView {
   glow: PixiSprite;
   anim: string;
   animMs: number;
+  /** Last drawn facing, so diagonals persist when the entity stops. */
+  dir8: Dir8 | undefined;
   flashMs: number;
   bar: HealthBar | null;
 }
@@ -67,7 +70,8 @@ export class EntityLayer {
       seen.add(e);
       const view = this.views.get(e) ?? this.create(e);
       const sheet = this.assets.sheet(spriteDef.sheet);
-      const key = resolveAnim(sim, e, (k) => sheet?.anim(k) !== undefined);
+      const { key, dir8 } = resolveAnim(sim, e, view.dir8, (k) => sheet?.anim(k) !== undefined);
+      view.dir8 = dir8;
       if (key !== view.anim) {
         view.anim = key;
         view.animMs = 0;
@@ -136,7 +140,16 @@ export class EntityLayer {
     glow.alpha = 0;
     root.addChild(sprite, glow);
     this.root.addChild(root);
-    const view: EntityView = { root, sprite, glow, anim: '', animMs: 0, flashMs: 0, bar: null };
+    const view: EntityView = {
+      root,
+      sprite,
+      glow,
+      anim: '',
+      animMs: 0,
+      dir8: undefined,
+      flashMs: 0,
+      bar: null,
+    };
     this.views.set(e, view);
     return view;
   }
@@ -204,12 +217,21 @@ class HealthBar {
   }
 }
 
-/** Picks the animation key for an entity, trying the most specific name first. */
-function resolveAnim(sim: Simulation, e: Entity, exists: (key: string) => boolean): string {
+/**
+ * Picks the animation key for an entity, trying the most specific name first:
+ * eight-way, then four-way, then undirected, then walk/idle fallbacks.
+ */
+function resolveAnim(
+  sim: Simulation,
+  e: Entity,
+  previous: Dir8 | undefined,
+  exists: (key: string) => boolean,
+): { key: string; dir8: Dir8 } {
   const { ecs } = sim;
   const dir = ecs.get(e, Facing)?.dir ?? 'down';
   const motion = ecs.get(e, Motion);
   const moving = motion !== undefined && Math.abs(motion.vx) + Math.abs(motion.vy) > 0.05;
+  const dir8 = resolveDir8(previous, dir, motion?.vx ?? 0, motion?.vy ?? 0);
   let pose: string;
 
   const player = ecs.get(e, Player);
@@ -242,7 +264,15 @@ function resolveAnim(sim: Simulation, e: Entity, exists: (key: string) => boolea
   else if (pickup) pose = pickup.kind;
   else pose = 'idle';
 
-  for (const key of [`${pose}_${dir}`, pose, `walk_${dir}`, `idle_${dir}`, 'idle'])
-    if (exists(key)) return key;
-  return pose;
+  const candidates = [
+    `${pose}_${dir8}`,
+    `${pose}_${dir}`,
+    pose,
+    `walk_${dir8}`,
+    `walk_${dir}`,
+    `idle_${dir8}`,
+    `idle_${dir}`,
+    'idle',
+  ];
+  return { key: candidates.find(exists) ?? pose, dir8 };
 }

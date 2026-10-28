@@ -1,6 +1,6 @@
 {
   "sprite": "player",
-  "body": { "w": 10, "h": 10 },
+  "body": { "w": 12, "h": 10 },
   "maxHp": 100,
   "maxStamina": 100,
   "staminaRegen": 1.1,

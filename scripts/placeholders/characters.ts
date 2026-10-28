@@ -1,14 +1,14 @@
 /**
- * Placeholder humanoid sheets (player, hollow, archer, knight). 16x24 frames,
+ * Placeholder humanoid sheets (hollow, archer, knight). 16x24 frames,
  * anchored at the feet. One row per animation; directional animations get a
  * row per facing. The renderer resolves `<pose>_<dir>`, then `<pose>`.
  */
-import type { SpriteSheetDef } from '../../src/content/sprite-sheet';
+import type { SpriteSheetFile } from '../../src/content/sprite-sheet';
 import { hex, Sheet, type RGBA, type Surface } from './pixel-canvas';
 
 type Dir = 'down' | 'up' | 'left' | 'right';
 const DIRS: Dir[] = ['down', 'up', 'left', 'right'];
-export type Kind = 'player' | 'hollow' | 'archer' | 'knight';
+export type Kind = 'hollow' | 'archer' | 'knight';
 
 interface Palette {
   body: RGBA;
@@ -20,14 +20,6 @@ interface Palette {
 }
 
 const PALETTES: Record<Kind, Palette> = {
-  player: {
-    body: hex('#9da2a8'),
-    dark: hex('#5f646b'),
-    cape: hex('#8a2219'),
-    trim: hex('#d0a85c'),
-    face: hex('#111111'),
-    head: hex('#9da2a8'),
-  },
   hollow: {
     body: hex('#7a6a58'),
     dark: hex('#4a4036'),
@@ -55,8 +47,6 @@ const PALETTES: Record<Kind, Palette> = {
 };
 
 const SHADOW = hex('#000000', 90);
-const SHIELD = hex('#5a412b');
-const BLADE = hex('#d8dcde');
 
 type Pose = 'idle' | 'walk' | 'attack' | 'windup' | 'hurt';
 const DIRECTIONAL: { pose: Pose; frames: number; fps: number; loop: boolean }[] = [
@@ -110,7 +100,6 @@ function drawFigure(s: Surface, kind: Kind, dir: Dir, pose: Pose, frame: number)
     B(1, -15, 2, 1, pal.face);
   } else if (dir === 'left') B(-4, -15, 3, 1, pal.face);
   else if (dir === 'right') B(1, -15, 3, 1, pal.face);
-  if (kind === 'player') B(-1, -21, 2, 3, hex('#a3261c'));
 
   drawGear(B, kind, dir, pose, frame, pal);
 }
@@ -126,24 +115,6 @@ function drawGear(
   const attacking = pose === 'attack';
   const raised = pose === 'windup';
   switch (kind) {
-    case 'player': {
-      if (!attacking && dir !== 'up') {
-        const sh = { down: [-6, -11], left: [-7, -12], right: [3, -12] }[dir];
-        B(sh[0]!, sh[1]!, 4, 7, SHIELD);
-        B(sh[0]! + 1, sh[1]! + 2, 2, 2, pal.trim);
-      }
-      if (!attacking && dir !== 'up') {
-        const sx = dir === 'left' ? -6 : 5;
-        B(sx, -12, 1, 9, BLADE);
-        B(sx - 1, -5, 3, 1, pal.trim);
-      }
-      if (attacking) {
-        // Arms thrust toward the swing; the blade itself is drawn as an effect.
-        const [hx, hy] = { down: [0, -4], up: [0, -16], left: [-7, -10], right: [6, -10] }[dir];
-        B(hx!, hy!, 2, 2, pal.body);
-      }
-      return;
-    }
     case 'hollow': {
       const y = raised ? -22 - frame : attacking ? -10 : -12;
       B(5, y, 1, 8, hex('#8a7a68'));
@@ -207,11 +178,11 @@ function drawSingle(s: Surface, kind: Kind, pose: (typeof SINGLE)[number]['pose'
   }
 }
 
-export function buildCharacter(kind: Kind): { png: Buffer; json: SpriteSheetDef } {
+export function buildCharacter(kind: Kind): { png: Buffer; json: SpriteSheetFile } {
   const cols = 4;
   const rows = DIRECTIONAL.length * DIRS.length + SINGLE.length;
   const sheet = new Sheet(cols * 16, rows * 24);
-  const animations: SpriteSheetDef['animations'] = {};
+  const animations: SpriteSheetFile['animations'] = {};
   let row = 0;
   for (const a of DIRECTIONAL) {
     for (const dir of DIRS) {
