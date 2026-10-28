@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "soul-craft",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev", "--strictPort"],
+      "port": 5173
+    }
+  ]
+}

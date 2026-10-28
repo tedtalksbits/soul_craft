@@ -1,0 +1,19 @@
+{
+  "legend": {
+    "#": { "tile": "wall" },
+    ".": { "tile": "flagstone" },
+    "T": { "tile": "flagstone", "entity": { "kind": "torch" } },
+    "B": { "tile": "flagstone", "entity": { "kind": "bonfire", "name": "Wayshrine" } }
+  },
+  "rows": [
+    "  #...#  ",
+    " ##...## ",
+    "#.T...T.#",
+    ".........",
+    "....B....",
+    ".........",
+    "#.......#",
+    " ##...## ",
+    "  #...#  "
+  ]
+}

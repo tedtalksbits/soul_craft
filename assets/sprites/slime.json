@@ -1,0 +1,12 @@
+{
+  "image": "slime.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "anchor": [0.5, 1],
+  "frames": {},
+  "animations": {
+    "idle": { "frames": [0, 1, 2, 3], "fps": 4, "loop": true },
+    "hop": { "frames": [4, 5, 6, 7], "fps": 8, "loop": false },
+    "hurt": { "frames": [8], "fps": 1, "loop": false }
+  }
+}

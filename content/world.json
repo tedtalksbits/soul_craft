@@ -1,0 +1,31 @@
+{
+  "terrain": {
+    "climateScale": 0.01,
+    "elevationScale": 0.02,
+    "lakeLevel": 0.3,
+    "shoreWidth": 0.03,
+    "riverScale": 0.006,
+    "riverWidth": 0.018,
+    "fordScale": 0.08,
+    "fordThreshold": 0.6,
+    "waterTile": "water",
+    "shallowTile": "shallows"
+  },
+  "biomeRules": [
+    { "biome": "fungal_wilds", "moisture": [0.58, 1] },
+    { "biome": "ashen_hills", "moisture": [0, 0.4] },
+    { "biome": "pale_graveyard", "temperature": [0, 0.4] },
+    { "biome": "sunken_ruins", "temperature": [0.6, 1] },
+    { "biome": "meadow" }
+  ],
+  "origin": { "prefab": "ashen_village", "safeRadius": 28, "biome": "meadow" },
+  "regions": {
+    "sizeChunks": 3,
+    "prefabs": [
+      ["wayshrine", 3],
+      ["knight_shrine", 1],
+      ["hollow_camp", 2],
+      [null, 2]
+    ]
+  }
+}

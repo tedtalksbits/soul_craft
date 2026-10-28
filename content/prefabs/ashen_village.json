@@ -1,0 +1,63 @@
+{
+  "name": "Ashen Village",
+  "darkness": 0.06,
+  "legend": {
+    "2": {
+      "tile": "grass",
+      "entity": {
+        "kind": "sign",
+        "lines": [
+          "The roads lead out into lands that change with every waking flame.",
+          "Hollows wander the meadows. Archers keep the hills. Beware the knights who guard the old shrines."
+        ]
+      }
+    },
+    ",": { "tile": "grass" },
+    "t": { "tile": "tree" },
+    "=": { "tile": "path" },
+    ".": { "tile": "flagstone" },
+    "R": { "tile": "roof" },
+    "H": { "tile": "house_wall" },
+    "W": { "tile": "house_window" },
+    "D": { "tile": "house_door" },
+    "T": { "tile": "flagstone", "entity": { "kind": "torch" } },
+    "B": { "tile": "flagstone", "entity": { "kind": "bonfire", "name": "Ashen Village" } },
+    "@": { "tile": "path", "entity": { "kind": "playerSpawn" } },
+    "S": {
+      "tile": "flagstone",
+      "entity": {
+        "kind": "sign",
+        "lines": [
+          "ASHEN VILLAGE. The bonfire here was kindled for you.",
+          "Rest to mend your wounds. The Hollow rise again whenever you do."
+        ]
+      }
+    }
+  },
+  "rows": [
+    "tt,,,,,,,,,,,,====,,,,,,,,,,,,tt",
+    ",,,,,,,,,,,,,,====,,,,,,,,,,,,,,",
+    ",,RRRRRR,,,,,,====,,,,,,RRRRRR,,",
+    ",,RRRRRR,,,,,,====,,,,,,RRRRRR,,",
+    ",,HWHDWH,,,,,,====,,,,,,HWDHWH,,",
+    ",,,,,=,,,,,,,,====,,,,,,,,=,,,,,",
+    ",,,,,======================,,,,,",
+    ",,,,,,,,,,,,,,====,,,,,,,,,,,,,,",
+    ",,,,,,,,T..............T,,,,,,,,",
+    ",,,,,,,,................,,,,,,,,",
+    ",,,,,,,,....S...........,,,,,,,,",
+    "========.......B........========",
+    "========................========",
+    ",,,,,,,,................,,,,,,,,",
+    ",,,,,,,,................,,,,,,,,",
+    ",,,,,,,,T..............T,,,,,,,,",
+    ",,,,,,,,,,,,,,====,,,,,,,,,,,,,,",
+    ",,RRRRRR,,,,,,====,,,,,,RRRRRR,,",
+    ",,RRRRRR,,,,,,====,,,,,,RRRRRR,,",
+    ",,HWHDWH,,,,,,====,,,,,,HWDHWH,,",
+    ",,,,,,,,,,,,,2====,,,,,,,,,,,,,,",
+    ",,,,,,,,,,,,,,=@==,,,,,,,,,,,,,,",
+    ",,,,,,,,,,,,,,====,,,,,,,,,,,,,,",
+    "tt,,,,,,,,,,,,====,,,,,,,,,,,,tt"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "description": "Die immediately with souls in hand, to test the death and respawn flow.",
+  "seed": 1,
+  "commands": ["give souls 200", "kill"]
+}

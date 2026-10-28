@@ -1,0 +1,4 @@
+{
+  "description": "Village start with god mode and a pile of souls.",
+  "commands": ["god on", "give souls 500"]
+}

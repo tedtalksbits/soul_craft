@@ -1,0 +1,85 @@
+{
+  "slime": {
+    "name": "Fungal Slime",
+    "sprite": "slime",
+    "body": { "w": 10, "h": 8 },
+    "hp": 22,
+    "speed": 0.6,
+    "aggroRange": 90,
+    "contactDamage": 8,
+    "souls": 6,
+    "drops": [{ "kind": "ember", "chance": 0.15, "amount": [12, 12] }],
+    "recoilTicks": 14,
+    "knockbackTaken": 1,
+    "brain": { "type": "hopper", "hopSpeed": 2.2, "hopTicks": 18, "hopCooldown": [50, 80] }
+  },
+  "hollow": {
+    "name": "Hollow",
+    "sprite": "hollow",
+    "body": { "w": 10, "h": 10 },
+    "hp": 36,
+    "speed": 0.6,
+    "aggroRange": 110,
+    "contactDamage": 6,
+    "souls": 12,
+    "drops": [{ "kind": "ember", "chance": 0.2, "amount": [15, 15] }],
+    "recoilTicks": 16,
+    "knockbackTaken": 1,
+    "brain": {
+      "type": "lunger",
+      "range": 26,
+      "windupTicks": 26,
+      "lungeSpeed": 2.6,
+      "lungeTicks": 10,
+      "lungeDamage": 16,
+      "cooldown": 50
+    }
+  },
+  "archer": {
+    "name": "Hollow Archer",
+    "sprite": "archer",
+    "body": { "w": 10, "h": 10 },
+    "hp": 24,
+    "speed": 0.55,
+    "aggroRange": 140,
+    "contactDamage": 5,
+    "souls": 18,
+    "drops": [{ "kind": "ember", "chance": 0.2, "amount": [15, 15] }],
+    "recoilTicks": 14,
+    "knockbackTaken": 1,
+    "brain": {
+      "type": "archer",
+      "preferredRange": [60, 110],
+      "drawTicks": 30,
+      "cooldown": [100, 140],
+      "arrowSpeed": 2.3,
+      "arrowDamage": 10
+    }
+  },
+  "knight": {
+    "name": "Oathbound Knight",
+    "sprite": "knight",
+    "body": { "w": 14, "h": 14 },
+    "hp": 140,
+    "speed": 0.7,
+    "aggroRange": 150,
+    "contactDamage": 10,
+    "souls": 120,
+    "drops": [
+      { "kind": "ember", "chance": 1, "amount": [30, 40] },
+      { "kind": "souls", "chance": 0.5, "amount": [20, 40] }
+    ],
+    "recoilTicks": 0,
+    "knockbackTaken": 0.4,
+    "brain": {
+      "type": "shieldKnight",
+      "chargeRange": 120,
+      "windupTicks": 34,
+      "chargeSpeed": 3.4,
+      "chargeTicks": 50,
+      "chargeDamage": 24,
+      "stunTicks": 70,
+      "cooldown": 40
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "Forsaken Shrine",
+  "darkness": 0.7,
+  "biomes": ["pale_graveyard", "sunken_ruins", "ashen_hills"],
+  "legend": {
+    "#": { "tile": "wall" },
+    ".": { "tile": "stone_floor" },
+    "T": { "tile": "stone_floor", "entity": { "kind": "torch" } },
+    "K": { "tile": "stone_floor", "entity": { "kind": "enemy", "archetype": "knight" } }
+  },
+  "rows": [
+    "###############",
+    "#.............#",
+    "#.T.........T.#",
+    "#.............#",
+    "#......K......#",
+    "#.............#",
+    "#..#.......#..#",
+    "#.............#",
+    "#.T.........T.#",
+    "#.............#",
+    "######...######"
+  ]
+}

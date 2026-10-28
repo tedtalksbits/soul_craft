@@ -1,0 +1,25 @@
+{
+  "name": "Hollow Camp",
+  "biomes": ["meadow", "ashen_hills", "sunken_ruins"],
+  "legend": {
+    "#": { "tile": "wall" },
+    ",": { "tile": "path" },
+    "h": { "tile": "path", "entity": { "kind": "enemy", "archetype": "hollow" } },
+    "a": { "tile": "path", "entity": { "kind": "enemy", "archetype": "archer" } },
+    "S": {
+      "tile": "path",
+      "entity": { "kind": "sign", "lines": ["Scratched into the post: THE FLAME REMEMBERS WHAT WE FORGET."] }
+    }
+  },
+  "rows": [
+    "  #  #  #  ",
+    " ,,,,,,,,, ",
+    "#,,,,,,,,,#",
+    ",,,h,,,h,,,",
+    ",,,,,S,,,,,",
+    ",,,h,,,a,,,",
+    "#,,,,,,,,,#",
+    " ,,,,,,,,, ",
+    "  #  #  #  "
+  ]
+}

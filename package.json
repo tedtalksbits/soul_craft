@@ -1,0 +1,56 @@
+{
+  "name": "soul-craft",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Soul Craft: a top-down Souls-like action RPG with crafting, built on TypeScript and PixiJS.",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
+    "assets:placeholders": "tsx scripts/placeholders/generate.ts",
+    "content:validate": "tsx scripts/validate-content.ts",
+    "content:format": "tsx scripts/format-content.ts"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged && pnpm typecheck"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --max-warnings=0",
+      "prettier --check"
+    ],
+    "*.{json,md,css,html,yaml}": "prettier --check"
+  },
+  "dependencies": {
+    "pixi.js": "^8.22.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "@types/pngjs": "^6.0.5",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
+    "lint-staged": "^17.6.0",
+    "pngjs": "^7.0.0",
+    "prettier": "^3.9.10",
+    "simple-git-hooks": "^2.14.0",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

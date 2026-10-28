@@ -1,0 +1,5 @@
+{
+  "description": "A ring of slimes closing in. Tests crowd hits, hitstop and damage numbers.",
+  "seed": 1,
+  "commands": ["clear", "spawn slime 12 72"]
+}

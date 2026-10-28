@@ -1,0 +1,5 @@
+{
+  "description": "Three archers at range. Face the arrows while standing still to block them.",
+  "seed": 1,
+  "commands": ["clear", "spawn archer 3 96"]
+}

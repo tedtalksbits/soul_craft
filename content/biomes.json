@@ -1,0 +1,98 @@
+{
+  "meadow": {
+    "name": "Ashen Meadows",
+    "ground": [
+      ["grass", 92],
+      ["flowers", 4]
+    ],
+    "scatter": [
+      { "tile": "tree", "scale": 0.08, "threshold": 0.64, "chance": 0.55 },
+      { "tile": "rock", "scale": 0.5, "threshold": 0.72, "chance": 0.25 },
+      { "tile": "tall_grass", "scale": 0.3, "threshold": 0.58, "chance": 0.7 }
+    ],
+    "darkness": 0.1,
+    "ambient": "ash",
+    "spawns": {
+      "perChunk": 2.2,
+      "table": [
+        ["hollow", 3],
+        ["slime", 1]
+      ]
+    }
+  },
+  "fungal_wilds": {
+    "name": "The Fungal Wilds",
+    "ground": [["moss", 1]],
+    "scatter": [
+      { "tile": "fungal_tree", "scale": 0.15, "threshold": 0.55, "chance": 0.75 },
+      { "tile": "giant_shroom", "scale": 0.2, "threshold": 0.62, "chance": 0.22 },
+      { "tile": "tall_moss", "scale": 0.3, "threshold": 0.52, "chance": 0.6 }
+    ],
+    "darkness": 0.42,
+    "ambient": "spores",
+    "spawns": {
+      "perChunk": 3,
+      "table": [
+        ["slime", 5],
+        ["hollow", 1]
+      ]
+    }
+  },
+  "ashen_hills": {
+    "name": "Ashen Hills",
+    "ground": [["ash", 1]],
+    "scatter": [
+      { "tile": "rock", "scale": 0.25, "threshold": 0.6, "chance": 0.7 },
+      { "tile": "dead_tree", "scale": 0.1, "threshold": 0.6, "chance": 0.3 }
+    ],
+    "darkness": 0.15,
+    "ambient": "ash",
+    "spawns": {
+      "perChunk": 2,
+      "table": [
+        ["hollow", 2],
+        ["archer", 1]
+      ]
+    }
+  },
+  "pale_graveyard": {
+    "name": "Pale Graveyard",
+    "ground": [["pale", 1]],
+    "scatter": [
+      { "tile": "grave", "scale": 0.4, "threshold": 0.55, "chance": 0.5 },
+      { "tile": "dead_tree", "scale": 0.1, "threshold": 0.6, "chance": 0.3 }
+    ],
+    "darkness": 0.5,
+    "ambient": "mist",
+    "spawns": {
+      "perChunk": 2.5,
+      "table": [
+        ["archer", 2],
+        ["hollow", 2],
+        ["knight", 0.4]
+      ]
+    }
+  },
+  "sunken_ruins": {
+    "name": "Sunken Ruins",
+    "ground": [
+      ["grass", 60],
+      ["flagstone", 30]
+    ],
+    "scatter": [
+      { "tile": "wall", "scale": 0.25, "threshold": 0.68, "chance": 0.5 },
+      { "tile": "rock", "scale": 0.5, "threshold": 0.7, "chance": 0.3 },
+      { "tile": "tall_grass", "scale": 0.3, "threshold": 0.6, "chance": 0.5 }
+    ],
+    "darkness": 0.22,
+    "ambient": "mist",
+    "spawns": {
+      "perChunk": 2.5,
+      "table": [
+        ["hollow", 3],
+        ["archer", 1],
+        ["knight", 0.5]
+      ]
+    }
+  }
+}

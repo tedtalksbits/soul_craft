@@ -1,0 +1,35 @@
+{
+  "sprite": "player",
+  "body": { "w": 10, "h": 10 },
+  "maxHp": 100,
+  "maxStamina": 100,
+  "staminaRegen": 1.1,
+  "staminaRegenDelay": 30,
+  "moveSpeed": 1.35,
+  "interactRange": 18,
+  "attack": {
+    "damage": 12,
+    "variance": 0.1,
+    "critChance": 0.1,
+    "critMultiplier": 1.5,
+    "staminaCost": 14,
+    "duration": 16,
+    "activeFrom": 3,
+    "activeTo": 9,
+    "reach": 16,
+    "width": 18,
+    "knockback": 3,
+    "hitstop": 3
+  },
+  "roll": {
+    "staminaCost": 26,
+    "minStamina": 20,
+    "duration": 18,
+    "iframesFrom": 2,
+    "iframesTo": 12,
+    "speed": 2.8
+  },
+  "flask": { "charges": 3, "heal": 45, "duration": 40, "healAt": 24 },
+  "hurt": { "iframes": 50, "stun": 14, "knockback": 2.6 },
+  "death": { "soulPenalty": 0.5, "respawnDelay": 210 }
+}

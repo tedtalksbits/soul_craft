@@ -1,0 +1,5 @@
+{
+  "description": "God mode and 100 hollows, for profiling AI, physics and rendering.",
+  "seed": 1,
+  "commands": ["god on", "spawn hollow 100 140"]
+}

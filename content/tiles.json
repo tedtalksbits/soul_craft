@@ -1,0 +1,54 @@
+[
+  { "id": "grass", "frames": ["grass_0", "grass_1", "grass_2"], "map": "#545e3e" },
+  { "id": "flowers", "frames": ["flowers"], "map": "#5e6644" },
+  { "id": "moss", "frames": ["moss_0", "moss_1", "moss_2"], "map": "#2a4236" },
+  { "id": "ash", "frames": ["ash_0", "ash_1", "ash_2"], "map": "#605e50" },
+  { "id": "pale", "frames": ["pale_0", "pale_1", "pale_2"], "map": "#424842" },
+  {
+    "id": "tall_grass",
+    "frames": ["tall_grass"],
+    "cut": {
+      "into": "grass",
+      "drops": [
+        { "kind": "souls", "chance": 0.18, "amount": [2, 4] },
+        { "kind": "ember", "chance": 0.06, "amount": [10, 10] }
+      ]
+    },
+    "map": "#6a7a48"
+  },
+  {
+    "id": "tall_moss",
+    "frames": ["tall_moss"],
+    "cut": {
+      "into": "moss",
+      "drops": [
+        { "kind": "souls", "chance": 0.2, "amount": [2, 5] },
+        { "kind": "ember", "chance": 0.06, "amount": [10, 10] }
+      ]
+    },
+    "map": "#36584a"
+  },
+  { "id": "path", "frames": ["path_0", "path_1"], "map": "#7a6a52" },
+  { "id": "flagstone", "frames": ["flagstone_0", "flagstone_1"], "map": "#6e6c62" },
+  { "id": "stone_floor", "frames": ["stone_floor_0", "stone_floor_1"], "map": "#4a4648" },
+  { "id": "wall", "frames": ["wall"], "solid": true, "map": "#3a3638" },
+  { "id": "water", "frames": ["water"], "solid": true, "blocksProjectiles": false, "map": "#2b4a58" },
+  { "id": "shallows", "frames": ["shallows"], "map": "#3e6470" },
+  { "id": "tree", "frames": ["tree"], "solid": true, "overlay": true, "map": "#2e4024" },
+  { "id": "fungal_tree", "frames": ["fungal_tree"], "solid": true, "overlay": true, "map": "#1e3a34" },
+  { "id": "dead_tree", "frames": ["dead_tree"], "solid": true, "overlay": true, "map": "#3a302a" },
+  {
+    "id": "giant_shroom",
+    "frames": ["giant_shroom_0", "giant_shroom_1"],
+    "solid": true,
+    "overlay": true,
+    "light": { "radius": 34, "intensity": 0.7 },
+    "map": "#7a3f8a"
+  },
+  { "id": "rock", "frames": ["rock"], "solid": true, "overlay": true, "map": "#6a6660" },
+  { "id": "grave", "frames": ["grave"], "solid": true, "overlay": true, "map": "#8a8884" },
+  { "id": "roof", "frames": ["roof"], "solid": true, "map": "#5a4440" },
+  { "id": "house_wall", "frames": ["house_wall"], "solid": true, "map": "#8a8070" },
+  { "id": "house_window", "frames": ["house_window"], "solid": true, "map": "#8a8070" },
+  { "id": "house_door", "frames": ["house_door"], "solid": true, "map": "#3a2618" }
+]

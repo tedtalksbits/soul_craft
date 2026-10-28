@@ -1,0 +1,5 @@
+{
+  "description": "A shield knight in the village square. Bait the charge into a wall, then punish.",
+  "seed": 1,
+  "commands": ["clear", "spawn knight 1 72"]
+}
