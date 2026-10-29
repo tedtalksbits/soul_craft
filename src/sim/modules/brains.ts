@@ -61,6 +61,16 @@ function moveToward(c: BrainContext, speed: number): void {
   c.motion.vy = (c.dy / c.dist) * speed;
 }
 
+/**
+ * Chase the player but stop once touching them. Walking on towards their exact
+ * position overshoots every tick and flips the enemy left-right in place.
+ */
+function closeIn(c: BrainContext): void {
+  const touching = (c.body.w + c.sim.content.player.body.w) / 2;
+  if (c.dist > touching) moveToward(c, c.def.speed);
+  else facePlayer(c);
+}
+
 function facePlayer(c: BrainContext): void {
   c.facing.dir = dirFromVec(c.dx, c.dy, c.facing.dir);
 }
@@ -143,7 +153,7 @@ const lunger: Brain<'lunger'> = (c, b) => {
       } else if (c.dist < b.range && ai.cooldown <= 0) setAi(ai, 'windup');
       else {
         ai.state = 'chase';
-        moveToward(c, c.def.speed);
+        closeIn(c);
       }
   }
 };
@@ -227,7 +237,7 @@ const shieldKnight: Brain<'shieldKnight'> = (c, b) => {
       } else if (ai.cooldown <= 0 && c.dist < b.chargeRange) setAi(ai, 'windup');
       else {
         ai.state = 'chase';
-        moveToward(c, c.def.speed);
+        closeIn(c);
       }
   }
 };

@@ -563,8 +563,9 @@ ANIMATIONS = [
     ], round(1000 / 233, 2), False),
 ]
 
-# animations whose silhouette leaves the standing footprint are kept inside the frame
-FIT = {'roll', 'dead', 'sit'}
+# Every animation is fitted: the sword tip and trailing foot reach below the ground line
+# in some directions (idle and walk included). The shift is (0, 0) wherever nothing clips.
+FIT = {name for name, *_ in ANIMATIONS}
 
 # pivots in pixels relative to the anchor (x right, y down)
 PIVOTS = {'swing': [0, -13]}   # body centre: where the game draws the sword arc

@@ -1,5 +1,5 @@
 /**
- * Placeholder humanoid sheets (hollow, archer, knight). 16x24 frames,
+ * Placeholder humanoid sheets (archer, knight). 16x24 frames,
  * anchored at the feet. One row per animation; directional animations get a
  * row per facing. The renderer resolves `<pose>_<dir>`, then `<pose>`.
  */
@@ -8,7 +8,7 @@ import { hex, Sheet, type RGBA, type Surface } from './pixel-canvas';
 
 type Dir = 'down' | 'up' | 'left' | 'right';
 const DIRS: Dir[] = ['down', 'up', 'left', 'right'];
-export type Kind = 'hollow' | 'archer' | 'knight';
+export type Kind = 'archer' | 'knight';
 
 interface Palette {
   body: RGBA;
@@ -20,14 +20,6 @@ interface Palette {
 }
 
 const PALETTES: Record<Kind, Palette> = {
-  hollow: {
-    body: hex('#7a6a58'),
-    dark: hex('#4a4036'),
-    cape: hex('#3a322c'),
-    trim: hex('#6a5a48'),
-    face: hex('#0b0a0a'),
-    head: hex('#7a6a58'),
-  },
   archer: {
     body: hex('#b0aa98'),
     dark: hex('#6a665a'),
@@ -86,7 +78,6 @@ function drawFigure(s: Surface, kind: Kind, dir: Dir, pose: Pose, frame: number)
     B(3 + bulk, -12, 2, 6, pal.cape);
   }
   B(-4 - bulk, -18 - bulk, 8 + bulk * 2, 7 + bulk, pal.head);
-  if (kind === 'hollow') B(-4, -19, 8, 3, pal.cape);
   if (kind === 'knight') B(-4, -15, 8, 1, hex('#1a1a1e'));
   if (pose === 'hurt') {
     if (dir === 'down') {
@@ -101,7 +92,7 @@ function drawFigure(s: Surface, kind: Kind, dir: Dir, pose: Pose, frame: number)
   } else if (dir === 'left') B(-4, -15, 3, 1, pal.face);
   else if (dir === 'right') B(1, -15, 3, 1, pal.face);
 
-  drawGear(B, kind, dir, pose, frame, pal);
+  drawGear(B, kind, dir, pose, pal);
 }
 
 function drawGear(
@@ -109,17 +100,10 @@ function drawGear(
   kind: Kind,
   dir: Dir,
   pose: Pose,
-  frame: number,
   pal: Palette,
 ): void {
-  const attacking = pose === 'attack';
   const raised = pose === 'windup';
   switch (kind) {
-    case 'hollow': {
-      const y = raised ? -22 - frame : attacking ? -10 : -12;
-      B(5, y, 1, 8, hex('#8a7a68'));
-      return;
-    }
     case 'archer': {
       const drawn = raised;
       const bx = dir === 'left' ? -7 : 4;

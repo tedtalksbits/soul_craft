@@ -19,6 +19,8 @@ const HIT_FLASH_MS = 110;
 const BAR_VISIBLE_MS = 4000;
 const CHIP_HOLD_MS = 450;
 const COMBO_WINDOW_MS = 1500;
+/** Pixels between the top of an enemy's head and its health bar. */
+const BAR_GAP = 4;
 
 interface EntityView {
   root: Container;
@@ -31,6 +33,8 @@ interface EntityView {
   dir8: Dir8 | undefined;
   flashMs: number;
   bar: HealthBar | null;
+  /** Health bar width: sized to the body, not the (mostly empty) sprite frame. */
+  barWidth: number;
 }
 
 export class EntityLayer {
@@ -75,6 +79,7 @@ export class EntityLayer {
         view.glow.position.set(...anim.offset);
       }
 
+      view.barWidth = Math.max(16, body.w + 8);
       const z = ecs.get(e, Pickup)?.z ?? 0;
       const feetY = Math.round(body.y + body.h / 2);
       view.root.position.set(Math.round(body.x), feetY - Math.round(z));
@@ -104,7 +109,9 @@ export class EntityLayer {
 
       if (view.bar) {
         const health = ecs.get(e, Health);
-        view.bar.root.y = -(view.sprite.height + 4);
+        // Above the head pivot when the art provides one; the frame top is a poor guess for big frames.
+        const head = sheet?.def.pivots['head'];
+        view.bar.root.y = (head ? head[1] : -view.sprite.height) - BAR_GAP;
         view.bar.update(dtMs, health?.hp ?? 0, health?.max ?? 1, !!dying);
       }
     }
@@ -137,13 +144,14 @@ export class EntityLayer {
       dir8: undefined,
       flashMs: 0,
       bar: null,
+      barWidth: 16,
     };
     this.views.set(e, view);
     return view;
   }
 
   private makeBar(view: EntityView): HealthBar {
-    const bar = new HealthBar(this.assets, Math.max(16, Math.round(view.sprite.width) + 4));
+    const bar = new HealthBar(this.assets, view.barWidth);
     view.root.addChild(bar.root);
     return bar;
   }

@@ -3,7 +3,19 @@
  * Kept free of Pixi so it can be tested against a headless Simulation.
  */
 import type { Entity } from '../../core/ecs';
-import { Ai, Bonfire, Dying, Enemy, Facing, Motion, Pickup, Player, Sign, Torch } from '../../sim/components';
+import {
+  Ai,
+  Body,
+  Bonfire,
+  Dying,
+  Enemy,
+  Facing,
+  Motion,
+  Pickup,
+  Player,
+  Sign,
+  Torch,
+} from '../../sim/components';
 import { TICK_RATE } from '../../sim/constants';
 import type { Simulation } from '../../sim/simulation';
 import { dir8FromVec, resolveDir8, type Dir8 } from './facing';
@@ -56,17 +68,20 @@ export function selectAnim(
     if (player.state === 'attack' || player.state === 'roll') dir8 = dir8FromVec(player.dirX, player.dirY);
   } else if (ai && ecs.has(e, Enemy)) {
     if (dying) {
-      pose = 'hurt';
+      pose = 'dead';
       elapsedMs = dying.t * TICK_MS;
     } else {
       switch (ai.state) {
         case 'windup':
         case 'draw':
           pose = 'windup';
+          // Telegraphs track the player in all 8 directions, so the attack that follows lines up.
+          dir8 = towardPlayer(sim, e) ?? dir8;
           break;
         case 'lunge':
         case 'charge':
           pose = 'attack';
+          dir8 = dir8FromVec(ai.dirX, ai.dirY);
           break;
         case 'recoil':
           pose = 'hurt';
@@ -83,15 +98,23 @@ export function selectAnim(
   else if (pickup) pose = pickup.kind;
   else pose = 'idle';
 
+  const directed = (p: string) => [`${p}_${dir8}`, `${p}_${dir}`, p];
+  const fallback = FALLBACK[pose];
   const candidates = [
-    `${pose}_${dir8}`,
-    `${pose}_${dir}`,
-    pose,
-    `walk_${dir8}`,
-    `walk_${dir}`,
-    `idle_${dir8}`,
-    `idle_${dir}`,
-    'idle',
+    ...directed(pose),
+    ...(fallback ? directed(fallback) : []),
+    ...directed('walk'),
+    ...directed('idle'),
   ];
   return { key: candidates.find(exists) ?? pose, dir8, elapsedMs };
+}
+
+/** Closest stand-in when a sheet lacks a pose (placeholder sheets have `hurt` but no `dead`). */
+const FALLBACK: Readonly<Record<string, string>> = { dead: 'hurt' };
+
+function towardPlayer(sim: Simulation, e: Entity): Dir8 | undefined {
+  const from = sim.ecs.get(e, Body);
+  const to = sim.ecs.get(sim.player, Body);
+  if (!from || !to || (from.x === to.x && from.y === to.y)) return undefined;
+  return dir8FromVec(to.x - from.x, to.y - from.y);
 }

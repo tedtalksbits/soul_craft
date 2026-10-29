@@ -8,6 +8,7 @@ PNG and JSON along with the script change.
 ```bash
 pnpm art:setup          # once: creates tools/art/.venv and installs requirements.txt (needs Python 3.10+)
 pnpm art ashen_one      # regenerate assets/sprites/player.png + player.json (about 80 s)
+pnpm art hollow         # regenerate assets/sprites/hollow.png + hollow.json (about 80 s)
 ```
 
 Output is deterministic, so running a tool without changing it produces no diff. `pnpm dev`
@@ -16,9 +17,10 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 
 ## Tools
 
-| Tool           | Writes     | Contents                                                                                             |
-| -------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
-| `ashen_one.py` | `player.*` | The Ashen One: idle, walk, attack, roll, drink, sit, dead, hurt; 8 directions, 48×48 (sheet 384×864) |
+| Tool           | Writes     | Contents                                                                                              |
+| -------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
+| `ashen_one.py` | `player.*` | The Ashen One: idle, walk, attack, roll, drink, sit, dead, hurt; 8 directions, 48×48 (sheet 384×864)  |
+| `hollow.py`    | `hollow.*` | The Hollow: idle, walk, windup, attack, hurt, dead; 8 directions, 48×48 (sheet 384×624); `head` pivot |
 
 ## How the Ashen One generator works
 
@@ -34,9 +36,12 @@ lit from the upper left, quantised to 4-step material ramps (`RAMPS`), then give
 - **Timing:** `fps` must fit the gameplay duration in `content/player.json`. In game, one-shot actions
   (attack, roll, hurt, drink, sit, dead) are clocked from the sim state's tick counter, so frames stay in
   step with hit windows.
-- **Fitting into the frame:** animations in `FIT` (roll, sit, dead) reach towards the camera and would clip
-  at the bottom of the frame, so each direction is shifted by whole pixels. The shift is written as the
-  animation's `offset` in the JSON and undone by the renderer, so the body stays where it lies.
+- **Fitting into the frame:** the ground line leaves only 2–3 px below the feet, and blade tips, trailing feet
+  and lying bodies reach past it in some directions. Every animation (`FIT`) is therefore shifted per direction
+  by whole pixels so nothing clips. The JSON `offset` is the correction the game adds to the sprite position (the
+  opposite of the shift), so the character still stands exactly on its anchor.
+- **Determinism:** pattern noise uses integer hashing. Avoid `sin()`-based hashes: they amplify last-bit
+  differences between CPUs and numpy builds.
 - **Directions:** columns follow `DIRECTIONS` (down, down_right, right, up_right, up, up_left, left,
   down_left). The renderer prefers 8-way keys and falls back to 4-way ones.
 - **Pivots:** points the engine attaches effects to, in pixels from the feet anchor (`PIVOTS`). `swing` is

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { selectAnim } from '../../src/client/render/anim-select';
-import { Body, Dying, Player } from '../../src/sim/components';
+import { Ai, Body, Dying, Player } from '../../src/sim/components';
 import { inputFrame } from '../../src/sim/input';
 import { face, newSim, press, run, spawnNear } from '../helpers';
 
@@ -45,12 +45,28 @@ describe('selectAnim', () => {
     expect(selectAnim(sim, sim.player, undefined, fourWay).key).toBe('walk_right');
   });
 
-  it('times a dying enemy from its death timer', () => {
+  it('shows a dying enemy as dead, timed from its death timer', () => {
     const sim = newSim();
     const e = spawnNear(sim, 'hollow', 60, 0);
     sim.ecs.add(e, Dying, { t: 12 });
     const choice = selectAnim(sim, e, undefined, all);
-    expect(choice.key).toBe('hurt_down');
+    expect(choice.key).toBe('dead_down');
     expect(choice.elapsedMs).toBeCloseTo(200);
+    // Sheets without a dead pose (placeholders) fall back to hurt.
+    expect(selectAnim(sim, e, undefined, (k) => !k.startsWith('dead')).key).toBe('hurt_down');
+  });
+
+  it('faces an enemy winding up towards the player in 8 directions', () => {
+    const sim = newSim();
+    const e = spawnNear(sim, 'hollow', -20, -20);
+    Object.assign(sim.ecs.need(e, Ai), { state: 'windup', t: 5 });
+    expect(selectAnim(sim, e, 'left', all).key).toBe('windup_down_right');
+  });
+
+  it('faces a lunging enemy along its committed direction', () => {
+    const sim = newSim();
+    const e = spawnNear(sim, 'hollow', 30, 0);
+    Object.assign(sim.ecs.need(e, Ai), { state: 'lunge', t: 2, dirX: -0.7, dirY: 0.7 });
+    expect(selectAnim(sim, e, 'up', all).key).toBe('attack_down_left');
   });
 });

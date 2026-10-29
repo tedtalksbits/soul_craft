@@ -1,6 +1,6 @@
 | Done || Done || Done || Done || Done || Done |# Character Art Design Doc
 
-Last updated: 2026-10-29 (player complete: all eight animations ported; see "Port report: full player")
+Last updated: 2026-10-29 (hollow ported and player crop fixed; see "Port report: hollow")
 
 ## Purpose
 
@@ -103,8 +103,14 @@ model so they follow proportion changes.
 (no SciPy), deterministic (seeded randomness), keeping the shared camera, light, ramp shading and outline code
 unchanged (`W = H = 48`, `PHI = 32°`, `FOOT_ROW = 45`, `LV`, `render`, `compose`). Animations are declared as
 `(name, poses, fps, loop)` entries in `ANIMATIONS`, and poses are dicts passed to `build(pose)`. The art agent
-delivers the script; the implementation agent runs it with `pnpm art <tool>`. Once a second character lands,
-the implementation agent will move the shared renderer into `tools/art/voxel.py`.
+delivers the script; the implementation agent runs it with `pnpm art <tool>`. Every animation is fitted into the
+frame (`FIT` = all of them), and the JSON `offset` is the **correction the game adds** to the sprite position:
+the opposite of how far the drawing was moved inside the frame. Pattern noise must use integer hashing, not
+`sin()`, so output is identical on every machine.
+
+The shared renderer stays copied in each script for now (decided 2026-10-29, superseding the earlier plan to
+extract `tools/art/voxel.py` at the second character): the art agent works on standalone scripts, and a shared
+module it cannot see would turn every delivery into a re-merge. Revisit once the four characters are in.
 
 ## Animations
 
@@ -241,16 +247,46 @@ Written by the implementation agent, 2026-10-29, for the delivery `player.py` (a
 - **For enemy deliveries:** the same conventions apply (`ANIMATIONS`, `DIRECTIONS`, `FIT` with whole-pixel
   shifts, `PIVOTS` including `head`, plus `release` for the archer). Write the JSON in the engine format directly.
 
+## Port report: hollow
+
+Written by the implementation agent, 2026-10-29, for the delivery `hollow.py`.
+
+- **Accepted:** 384×624 sheet (idle 0–1, walk 2–5, windup 6–7, attack 8–10, hurt 11, dead 12), hard alpha,
+  timings as specced. Walk stride 12.1 px at 6 fps = 36.3 px/s against a 36 px/s chase, so its speed is unchanged.
+  The script lives at `tools/art/hollow.py` (`pnpm art hollow`).
+- **Fixed in the script:**
+  - **JSON:** `image` added. The engine format requires it, and the sheet would not have loaded without it.
+  - **Offset sign:** flipped to the engine convention, as the delivery note anticipated.
+  - **`head` pivot:** measured with each direction's fit offset undone. As delivered, it was taken from frames
+    shifted up by as much as 7 px, so health bars would have floated above the head.
+  - **Pattern hash:** the rust and crack noise used a `sin()` hash. It is replaced with an integer hash, because
+    `sin()` amplifies last-bit differences between CPUs and numpy builds, so the same script could draw different
+    pixels on different machines. The rust blotches land in slightly different places as a result.
+  - **Cleanup:** removed a duplicate `coords()` definition.
+- **"The attack looked weird":** the attack is shifted up to 12 px inside its frames to fit the blade dipping
+  ahead, against 1–3 px for the windup, so a preview that ignores offsets shows the hollow jumping as it lunges.
+  In game the offsets are undone. The thrust towards the camera (`attack_down`) is heavily foreshortened and
+  hard to read; judge it in game.
+- **Player crop fixed:** confirmed. The committed player's sword tip and trailing foot were cut off by up to 3.7 px
+  (idle) and 4.3 px (walk) in the down and right-facing views. Every player animation is now fitted and the sheet
+  regenerated.
+- **Game changes made for this art:**
+  - Dying enemies show `dead`, falling back to `hurt` for sheets without it.
+  - Health bars sit 4 px above the `head` pivot and are sized to the body (20 px for the hollow) instead of the
+    48 px frame.
+  - Windups face the player in 8 directions; lunges and charges face their committed direction.
+  - The hollow's hitbox is now 12×10.
+
 ### Changes the implementation agent will make (not art work)
 
 So the art below is actually shown, the game gets these changes as each character is ported:
 
-- **Enemy death:** dying enemies show `dead` during their 667 ms fade (today they show `hurt`).
+- **Enemy death:** dying enemies show `dead` during their 667 ms fade (today they show `hurt`). _Done 2026-10-29._
 - **Archer:** add a 12-tick (200 ms) `loose` state after each shot, shown with `attack`; today it goes straight
   back to moving. It keeps facing the player while it sees them, and plays `walk` in reverse when backing off.
 - **Knight:** its `attack` (the charge) loops.
 - **Attack poses:** they follow the aim direction rather than the movement direction. _Done 2026-10-29._
-- **Pivots:** health bars use `head`; arrows use `release`.
+- **Pivots:** health bars use `head` (_done 2026-10-29_); arrows use `release`.
 - **Retuning:** hitboxes as proposed per enemy below, and player move speed matched to the final walk stride
   (_done 2026-10-29: 1.075 px/tick = 64.5 px/s_).
 

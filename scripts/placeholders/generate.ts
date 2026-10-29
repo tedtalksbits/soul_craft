@@ -17,10 +17,9 @@ import { buildTiles } from './tiles';
 
 const OUT = join(ROOT, 'assets', 'sprites');
 
-/** Sheets that still use placeholder art. Real art moves out of here (the player: `pnpm art ashen_one`). */
+/** Sheets that still use placeholder art. Real art moves out of here (`pnpm art ashen_one`, `pnpm art hollow`). */
 const SHEETS: Record<string, () => { png: Buffer; json: SpriteSheetFile }> = {
   tiles: buildTiles,
-  hollow: () => buildCharacter('hollow'),
   archer: () => buildCharacter('archer'),
   knight: () => buildCharacter('knight'),
   slime: buildSlime,
