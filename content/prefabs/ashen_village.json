@@ -29,7 +29,9 @@
         "kind": "sign",
         "lines": [
           "ASHEN VILLAGE. The bonfire here was kindled for you.",
-          "Rest to mend your wounds. The Hollow rise again whenever you do."
+          "Rest to mend your wounds. The Hollow rise again whenever you do.",
+          "Your class gives you three powers: a blast, a class art, and a super that charges as you fight. Open your pack and read Abilities to learn them.",
+          "At the bonfire you may take up another class. Pause the game to see every control, or to change them in Settings."
         ]
       }
     },

@@ -16,6 +16,7 @@ import { FULL_ENERGY } from '../../sim/modules/energy';
 import { countItem } from '../../sim/modules/items';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
+import { DEFAULT_BINDINGS, hudKeyLabel, type Binding, type Bindings } from '../keybinds';
 import { classPalette } from './class-palette';
 import { PixelText } from './pixel-text';
 
@@ -41,16 +42,41 @@ export class Hud {
   private shownSouls = -1;
   /** Drives the full-super glow. */
   private clockMs = 0;
+  /** The player's key bindings, for the key labels on the slots. */
+  bindings: Bindings = DEFAULT_BINDINGS;
+  /** Key labels: the three ability slots, then the quick item. */
+  private readonly keyLabels: PixelText[];
 
   constructor(
     private readonly assets: Assets,
-    private readonly viewW: number,
-    private readonly viewH: number,
+    private viewW: number,
+    private viewH: number,
   ) {
     this.flasks = new PixelText(assets);
     this.souls = new PixelText(assets);
     this.quickCount = new PixelText(assets);
-    this.root.addChild(this.g, this.flasks, this.souls, this.quickIcon, this.quickCount);
+    this.keyLabels = [0, 1, 2, 3].map(() => new PixelText(assets));
+    this.root.addChild(this.g, this.flasks, this.souls, this.quickIcon, this.quickCount, ...this.keyLabels);
+  }
+
+  /** The view changed size (window resize, fill mode): the bottom and right edges move. */
+  resize(w: number, h: number): void {
+    this.viewW = w;
+    this.viewH = h;
+  }
+
+  /** Each slot's key in its top-left corner, so the HUD itself says what to press. */
+  private labelKeys(quickShown: boolean): void {
+    const y = this.viewH - 6 - SLOT;
+    LABELED.forEach((binding, i) => {
+      const t = this.keyLabels[i];
+      if (!t) return;
+      const code = this.bindings[binding][0];
+      t.visible = code !== undefined && (binding !== 'item' || quickShown);
+      t.set(code ? hudKeyLabel(code) : '', 0xffffff);
+      if (binding === 'item') t.position.set(27, 17);
+      else t.position.set(6 + i * (SLOT + SLOT_GAP) + 1, y + 1);
+    });
   }
 
   reset(): void {
@@ -116,6 +142,7 @@ export class Hud {
 
     this.clockMs += dtMs;
     abilitySlots(sim, g, this.viewH, this.clockMs);
+    this.labelKeys(tex !== undefined);
 
     // Souls count up toward the true value.
     if (this.shownSouls < 0) this.shownSouls = player.souls;
@@ -141,6 +168,8 @@ const SLOT_GAP = 3;
  * the bottom as they cool down; the super fills with energy, glows when full, and shows
  * the time left while it runs.
  */
+const LABELED: readonly Binding[] = ['aoe', 'classAbility', 'super', 'item'];
+
 function abilitySlots(sim: Simulation, g: Graphics, viewH: number, clockMs: number): void {
   const a = sim.ecs.get(sim.player, Abilities);
   if (!a) return;

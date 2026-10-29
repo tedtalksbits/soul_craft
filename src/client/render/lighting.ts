@@ -39,7 +39,8 @@ function radialTexture(stops: [number, string][]): Texture {
 export class Lighting {
   /** Drawn over the world in screen space. */
   readonly root = new Container();
-  private readonly target: RenderTexture;
+  private target: RenderTexture;
+  private readonly targetSprite: Sprite;
   private readonly scene = new Container();
   private readonly dark = new Graphics();
   private readonly erasers = new Container();
@@ -52,20 +53,33 @@ export class Lighting {
   private darkness = -1;
 
   constructor(
-    private readonly width: number,
-    private readonly height: number,
+    private width: number,
+    private height: number,
   ) {
     this.target = RenderTexture.create({ width, height });
+    this.targetSprite = new Sprite(this.target);
     this.scene.addChild(this.dark, this.erasers);
     const vignetteTex = radialTexture([
       [0.55, 'rgba(0,0,0,0)'],
       [1, 'rgba(0,0,0,0.75)'],
     ]);
     this.vignette = new Sprite(vignetteTex);
-    this.vignette.setSize(width * 1.25, height * 1.6);
     this.vignette.anchor.set(0.5);
+    this.root.addChild(this.targetSprite, this.glows, this.vignette);
+    this.resize(width, height);
+  }
+
+  /** The view changed size: a new darkness texture to match, and the vignette re-centered. */
+  resize(width: number, height: number): void {
+    if (width !== this.width || height !== this.height) {
+      this.target.destroy(true);
+      this.target = RenderTexture.create({ width, height });
+      this.targetSprite.texture = this.target;
+      this.width = width;
+      this.height = height;
+    }
+    this.vignette.setSize(width * 1.25, height * 1.6);
     this.vignette.position.set(width / 2, height / 2);
-    this.root.addChild(new Sprite(this.target), this.glows, this.vignette);
   }
 
   update(

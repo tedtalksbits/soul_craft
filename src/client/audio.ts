@@ -6,13 +6,23 @@ import type { SimEvent } from '../sim/events';
 
 type FilterType = BiquadFilterType;
 
+/** Output gain at full volume: the mix was tuned at this level. */
+const MASTER = 0.45;
+
 export class Audio {
   private ctx: AudioContext | null = null;
   private out: GainNode | null = null;
   private noise: AudioBuffer | null = null;
   muted = false;
+  /** Master volume 0-1, from settings. */
+  private volume = 1;
   /** Pickups in quick succession chime a step higher each, like coins in a run. */
   private chain = { count: 0, at: 0 };
+
+  setVolume(volume: number): void {
+    this.volume = volume;
+    if (this.out) this.out.gain.value = MASTER * volume;
+  }
 
   /** Call from a user gesture. Safe to call repeatedly. */
   unlock(): void {
@@ -23,7 +33,7 @@ export class Audio {
     const c = new AudioContext();
     this.ctx = c;
     this.out = c.createGain();
-    this.out.gain.value = 0.45;
+    this.out.gain.value = MASTER * this.volume;
     this.out.connect(c.destination);
     this.noise = c.createBuffer(1, c.sampleRate, c.sampleRate);
     const d = this.noise.getChannelData(0);

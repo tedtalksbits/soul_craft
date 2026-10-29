@@ -8,7 +8,6 @@ import { h } from '../client/ui/dom';
 import { Ai, Body, Enemy, Health, Pickup, Player, Projectile } from '../sim/components';
 import { CHUNK, TILE } from '../sim/constants';
 import { attackBox } from '../sim/modules/player';
-import { VIEW_H, VIEW_W } from '../client/render/renderer';
 
 export const OVERLAYS = ['hitboxes', 'ai', 'chunks', 'solids', 'stats'] as const;
 export type OverlayName = (typeof OVERLAYS)[number];
@@ -69,8 +68,8 @@ export class Overlays {
       const cam = this.app.renderer.camera;
       const tx0 = Math.floor(cam.x / TILE) - 1;
       const ty0 = Math.floor(cam.y / TILE) - 1;
-      const tw = Math.ceil(VIEW_W / TILE) + 2;
-      const th = Math.ceil(VIEW_H / TILE) + 2;
+      const tw = Math.ceil(this.app.renderer.view.w / TILE) + 2;
+      const th = Math.ceil(this.app.renderer.view.h / TILE) + 2;
 
       if (this.enabled.solids) {
         for (let ty = ty0; ty < ty0 + th; ty++)

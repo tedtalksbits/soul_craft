@@ -17,6 +17,9 @@ import { Simulation } from '../sim/simulation';
 import type { Assets } from './assets';
 import { Audio } from './audio';
 import { InputCapture, isTyping } from './input';
+import { primaryKey } from './keybinds';
+import { SettingsStore } from './settings';
+import { Tutorial } from './tutorial';
 import { FixedLoop } from './loop';
 import type { GameRenderer } from './render/renderer';
 import { iconElement } from './ui/icons';
@@ -41,6 +44,9 @@ export class App {
   readonly ui: Ui;
   readonly inventory: InventoryScreen;
   readonly audio = new Audio();
+  /** Per-device settings: controls, display, audio, tutorial hints. */
+  readonly settings = new SettingsStore();
+  private readonly tutorial: Tutorial;
   /** Extra reasons to hold input, e.g. the dev console having focus. */
   readonly inputHolds = new Set<string>();
   private readonly simListeners = new Set<SimListener>();
@@ -64,6 +70,7 @@ export class App {
       sim: () => this.sim,
       icon: (item) => this.itemIcon(item),
       act: (action) => this.input.queueAction(action),
+      bindings: () => this.input.bindings,
     });
     this.loop = new FixedLoop(
       () => this.tick(),
@@ -74,16 +81,13 @@ export class App {
       'keydown',
       (e) => {
         if (e.repeat || isTyping(e)) return;
-        if (this.inventory.isOpen && ['Escape', 'Tab', 'KeyI'].includes(e.code)) {
+        const pack = this.input.bindings.inventory.includes(e.code);
+        if (this.inventory.isOpen && (e.code === 'Escape' || pack)) {
           e.preventDefault();
           this.inventory.close();
-        } else if (
-          (e.code === 'Tab' || e.code === 'KeyI') &&
-          this.sim &&
-          !this.ui.blocking &&
-          this.inputHolds.size === 0
-        ) {
+        } else if (pack && this.sim && !this.ui.blocking && this.inputHolds.size === 0) {
           e.preventDefault();
+          this.ui.clearHint();
           this.inventory.open('items');
         }
       },
@@ -92,6 +96,16 @@ export class App {
     addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && !e.defaultPrevented) this.togglePause();
     });
+    this.tutorial = new Tutorial(this.settings, this.ui);
+    this.settings.watch((s) => {
+      this.input.bindings = s.bindings;
+      this.ui.bindings = s.bindings;
+      this.renderer.hud.bindings = s.bindings;
+      this.audio.setVolume(s.volume);
+      this.audio.muted = s.muted;
+      this.renderer.setFill(s.fill);
+    });
+    document.addEventListener('fullscreenchange', () => this.ui.refreshSettings());
     addEventListener('pointerdown', () => this.audio.unlock());
     addEventListener('keydown', () => this.audio.unlock());
     document.addEventListener('visibilitychange', () => {
@@ -142,6 +156,7 @@ export class App {
         newGame: (slot) => this.chooseClassFor(slot),
         continueGame: (slot) => void this.continueSlot(slot),
         deleteSlot: (slot) => void this.saves.delete(slot).then(() => this.showTitle()),
+        settings: () => this.openSettings(() => void this.showTitle()),
         classLabel: (id) => this.classLabel(id),
       },
       this.titleFooter,
@@ -167,6 +182,7 @@ export class App {
       content: this.content,
       current: null,
       mode: 'newGame',
+      bindings: this.input.bindings,
       pick: (cls) => void this.newGame(slot, randomSeed(), cls).then(() => this.save()),
       cancel: () => void this.showTitle(),
     });
@@ -180,6 +196,7 @@ export class App {
       content: this.content,
       current: sim.ecs.get(sim.player, Abilities)?.class ?? null,
       mode: 'bonfire',
+      bindings: this.input.bindings,
       pick: (cls) => {
         this.input.queueAction({ type: 'setClass', class: cls });
         this.ui.hideScreen();
@@ -253,13 +270,36 @@ export class App {
       return;
     }
     this.ui.closeDialog();
+    this.showPauseMenu();
+  }
+
+  private showPauseMenu(): void {
     this.ui.showPause(
       {
         resume: () => this.ui.hideScreen(),
+        settings: () => this.openSettings(() => this.showPauseMenu()),
         saveAndQuit: () => void this.quitToTitle(),
       },
       this.currentClassLabel(),
     );
+  }
+
+  /** The settings screen; `back` reopens whatever it was opened from. */
+  private openSettings(back: () => void): void {
+    this.ui.showSettings({
+      settings: () => this.settings.current,
+      change: (update) => this.settings.update(update),
+      isFullscreen: () => document.fullscreenElement !== null,
+      toggleFullscreen: () => {
+        const done = document.fullscreenElement
+          ? document.exitFullscreen()
+          : document.documentElement.requestFullscreen();
+        void done
+          .catch(() => this.ui.toast('Full screen is not available here.'))
+          .finally(() => this.ui.refreshSettings());
+      },
+      back,
+    });
   }
 
   // ------------------------------------------------------------------ per tick / frame
@@ -283,6 +323,8 @@ export class App {
       for (const fn of this.eventListeners) fn(events);
     }
     this.inventory.refresh();
+    // Hints wait while the pack is open; they would cover it.
+    if (!this.inventory.isOpen) this.tutorial.update(sim);
     if (this.slot && sim.tick - this.lastSaveTick >= AUTOSAVE_INTERVAL_TICKS) void this.save();
   }
 
@@ -348,7 +390,7 @@ export class App {
     const free = sim !== null && !this.ui.blocking && !this.inventory.isOpen;
     if (sim && free) {
       const target = findInteraction(sim);
-      this.ui.prompt(target ? target.label : null, 'E');
+      this.ui.prompt(target ? target.label : null, primaryKey(this.input.bindings, 'use'));
     } else this.ui.prompt(null);
     const resting = free && sim.ecs.get(sim.player, Player)?.state === 'sit';
     this.ui.restMenu(resting ? this.currentClassLabel() : null, () => this.changeClass());

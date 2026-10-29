@@ -5,6 +5,8 @@
 import type { SaveSlot, SlotInfo } from '../../save/save-manager';
 import { TICK_RATE } from '../../sim/constants';
 import { classScreen, type ClassScreenOptions } from './classes';
+import { SettingsScreen, type SettingsScreenOptions } from './settings';
+import { BINDING_GROUPS, DEFAULT_BINDINGS, keyLabel, primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
 
 /** A class as menus show it: its name, its element's name, and the element's color (CSS). */
@@ -27,14 +29,16 @@ export interface TitleHandlers {
   newGame(slot: SaveSlot): void;
   continueGame(slot: SaveSlot): void;
   deleteSlot(slot: SaveSlot): void;
+  settings(): void;
 }
 
 export interface PauseHandlers {
   resume(): void;
+  settings(): void;
   saveAndQuit(): void;
 }
 
-type ScreenKind = 'title' | 'pause' | 'classes';
+type ScreenKind = 'title' | 'pause' | 'classes' | 'settings';
 
 export class Ui {
   private readonly promptEl = h('div', { class: 'prompt hidden' });
@@ -49,12 +53,17 @@ export class Ui {
   /** What Escape does on the open screen, if anything. */
   private screenCancel: (() => void) | null = null;
   private restEl: HTMLElement | null = null;
+  private settingsScreen: SettingsScreen | null = null;
+  private hintEl: HTMLElement | null = null;
+  private hintTimer = 0;
+  /** The player's key bindings, for key hints and for advancing dialog. */
+  bindings: Bindings = DEFAULT_BINDINGS;
 
   constructor(private readonly root: HTMLElement) {
     root.append(this.promptEl, this.toastEl, this.fadeEl);
     addEventListener('keydown', (e) => {
       if (!this.dialogState || e.repeat) return;
-      if (['KeyE', 'Enter', 'Space', 'KeyJ'].includes(e.code)) {
+      if (this.bindings.use.includes(e.code) || this.bindings.attack.includes(e.code)) {
         e.preventDefault();
         this.advanceDialog();
       }
@@ -75,6 +84,18 @@ export class Ui {
     if (!this.screenCancel) return false;
     this.screenCancel();
     return true;
+  }
+
+  showSettings(o: SettingsScreenOptions): void {
+    const screen = new SettingsScreen(o);
+    this.setScreen('settings', screen.el);
+    this.settingsScreen = screen;
+    this.screenCancel = () => o.back();
+  }
+
+  /** Redraws the settings screen if it is open (e.g. after leaving full screen with F11). */
+  refreshSettings(): void {
+    this.settingsScreen?.render();
   }
 
   showClasses(o: ClassScreenOptions): void {
@@ -125,6 +146,32 @@ export class Ui {
     this.toastTimer = window.setTimeout(() => this.toastEl.classList.add('hidden'), ms);
   }
 
+  /** A tutorial card above the prompt: a key, what it does, and where to read more. */
+  hint(o: { key: string; title: string; text: string; footer: string; color: string }): void {
+    this.hintEl?.remove();
+    const title = h('div', { class: 'title' }, o.title);
+    title.style.color = o.color;
+    this.hintEl = h(
+      'div',
+      { class: 'hint-card' },
+      h('kbd', {}, o.key),
+      h('div', {}, title, h('div', { class: 'text' }, o.text), h('div', { class: 'footer' }, o.footer)),
+    );
+    this.root.append(this.hintEl);
+    clearTimeout(this.hintTimer);
+    this.hintTimer = window.setTimeout(() => {
+      this.hintEl?.remove();
+      this.hintEl = null;
+    }, 9000);
+  }
+
+  /** Closes the tutorial card, e.g. when a menu opens over it. */
+  clearHint(): void {
+    clearTimeout(this.hintTimer);
+    this.hintEl?.remove();
+    this.hintEl = null;
+  }
+
   area(name: string): void {
     this.areaEl?.remove();
     this.areaEl = h('div', { class: 'area' }, name);
@@ -153,7 +200,7 @@ export class Ui {
       'div',
       { class: 'dialog', onclick: () => this.advanceDialog() },
       h('div', { class: 'text' }),
-      h('div', { class: 'more' }, h('kbd', {}, 'E'), ' ▸'),
+      h('div', { class: 'more' }, h('kbd', {}, primaryKey(this.bindings, 'use')), ' ▸'),
     );
     this.root.append(el);
     this.dialogState = { el, lines, index: 0 };
@@ -227,11 +274,8 @@ export class Ui {
         h('h1', {}, 'SOUL CRAFT'),
         h('div', { class: 'sub' }, 'kindle the flame, and walk the waking lands'),
         h('div', { class: 'slots' }, ...rows),
-        h(
-          'div',
-          { class: 'hint' },
-          'WASD move · J / click attack · Shift roll · F / C / V abilities · R flask · Q quick item · E use · Tab pack · Esc pause',
-        ),
+        h('button', { class: 'quiet', onclick: () => handlers.settings() }, 'Settings'),
+        h('div', { class: 'hint' }, controlsLine(this.bindings)),
         footer ? h('div', { class: 'hint' }, footer) : null,
       ),
     );
@@ -249,13 +293,17 @@ export class Ui {
           'div',
           { class: 'menu' },
           h('button', { onclick: () => handlers.resume() }, 'Resume'),
+          h('button', { onclick: () => handlers.settings() }, 'Settings'),
           h('button', { onclick: () => handlers.saveAndQuit() }, 'Save & quit to title'),
         ),
+        controlsPanel(this.bindings),
       ),
     );
   }
 
   hideScreen(): void {
+    this.settingsScreen?.dispose();
+    this.settingsScreen = null;
     this.screenEl?.remove();
     this.screenEl = null;
     this.screenKind = null;
@@ -270,15 +318,60 @@ export class Ui {
     this.areaEl?.remove();
     this.bannerEl?.remove();
     this.restMenu(null, () => undefined);
+    this.clearHint();
   }
 
   private setScreen(kind: ScreenKind, el: HTMLElement): void {
     this.hideScreen();
+    this.clearHint();
     this.screenEl = el;
     this.screenKind = kind;
     this.root.append(el);
     el.querySelector('button')?.focus();
   }
+}
+
+/** Every control and its key, for the pause screen. */
+function controlsPanel(b: Bindings): HTMLElement {
+  return h(
+    'div',
+    { class: 'controls-panel' },
+    ...BINDING_GROUPS.map((g) =>
+      h(
+        'div',
+        { class: 'bind-group' },
+        h('h3', {}, g.title),
+        ...g.rows.map((r) =>
+          h(
+            'div',
+            { class: 'row' },
+            h('span', { class: 'what' }, r.label),
+            ...(b[r.binding].length > 0
+              ? b[r.binding].map((k) => h('kbd', {}, keyLabel(k)))
+              : [h('span', {}, '—')]),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/** The title screen's one-line key reminder, from the current bindings. */
+function controlsLine(b: Bindings): string {
+  const k = (binding: Parameters<typeof primaryKey>[1]) => primaryKey(b, binding);
+  const move = [k('up'), k('left'), k('down'), k('right')].join('');
+  const abilities = [k('aoe'), k('classAbility'), k('super')].join(' / ');
+  return [
+    `${move} move`,
+    `${k('attack')} / click attack`,
+    `${k('roll')} roll`,
+    `${abilities} abilities`,
+    `${k('heal')} flask`,
+    `${k('item')} quick item`,
+    `${k('use')} use`,
+    `${k('inventory')} pack`,
+    'Esc pause and settings',
+  ].join(' · ');
 }
 
 export function formatTicks(ticks: number): string {

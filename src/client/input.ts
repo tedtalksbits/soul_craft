@@ -4,24 +4,7 @@
  * render frames.
  */
 import { Action, type ActionName, type InputFrame, type PlayerAction } from '../sim/input';
-
-type Binding = ActionName | 'up' | 'down' | 'left' | 'right';
-
-/** Default key bindings (KeyboardEvent.code). Left-click attacks toward the cursor. */
-export const BINDINGS: Readonly<Record<Binding, readonly string[]>> = {
-  up: ['KeyW', 'ArrowUp'],
-  down: ['KeyS', 'ArrowDown'],
-  left: ['KeyA', 'ArrowLeft'],
-  right: ['KeyD', 'ArrowRight'],
-  attack: ['KeyJ', 'Space'],
-  roll: ['ShiftLeft', 'ShiftRight', 'KeyK'],
-  heal: ['KeyR', 'KeyH'],
-  use: ['KeyE', 'Enter'],
-  item: ['KeyQ'],
-  aoe: ['KeyF'],
-  classAbility: ['KeyC'],
-  super: ['KeyV'],
-};
+import { DEFAULT_BINDINGS, type Binding, type Bindings } from './keybinds';
 
 /** Ability keys aim at the mouse cursor, like a click does. */
 const AIMED = Action.aoe | Action.classAbility | Action.super;
@@ -32,6 +15,8 @@ const ACTIONS = Object.keys(Action) as ActionName[];
 export class InputCapture {
   /** When false, game input is ignored (a menu or the console has focus). */
   enabled = true;
+  /** The player's key bindings (from settings). */
+  bindings: Bindings = DEFAULT_BINDINGS;
   private readonly held = new Set<string>();
   private pressed = 0;
   private aim: { x: number; y: number } | null = null;
@@ -49,7 +34,7 @@ export class InputCapture {
       if (e.repeat) return;
       this.held.add(e.code);
       for (const a of ACTIONS) {
-        if (!BINDINGS[a].includes(e.code)) continue;
+        if (!this.bindings[a].includes(e.code)) continue;
         this.pressed |= Action[a];
         if (Action[a] & AIMED && this.pointer) this.aim = this.toWorld(this.pointer.x, this.pointer.y);
       }
@@ -76,7 +61,7 @@ export class InputCapture {
 
   /** The frame for the next tick. Clears accumulated presses. */
   consume(): InputFrame {
-    const on = (b: Binding) => this.enabled && BINDINGS[b].some((k) => this.held.has(k));
+    const on = (b: Binding) => this.enabled && this.bindings[b].some((k) => this.held.has(k));
     let held = 0;
     for (const a of ACTIONS) if (on(a)) held |= Action[a];
     const frame: InputFrame = {

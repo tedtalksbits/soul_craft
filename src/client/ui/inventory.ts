@@ -4,13 +4,23 @@
  * screen redraws when the state it shows changes. The game keeps running
  * underneath (no pause, as in the Souls games); only movement input is held.
  */
-import { STATIONS, type ItemDef, type StationId } from '../../content/schemas';
-import { Buffs, Equipment, Inventory, Player, type EquipSlot, type ItemStack } from '../../sim/components';
+import { ABILITY_SLOTS, STATIONS, type ItemDef, type StationId } from '../../content/schemas';
+import {
+  Abilities,
+  Buffs,
+  Equipment,
+  Inventory,
+  Player,
+  type EquipSlot,
+  type ItemStack,
+} from '../../sim/components';
+import { FULL_ENERGY } from '../../sim/modules/energy';
 import type { PlayerAction } from '../../sim/input';
 import { canCraft, canUpgrade, nextUpgrade, stationNearby } from '../../sim/modules/crafting';
 import { countItem, EQUIP_SLOTS, playerStats } from '../../sim/modules/items';
 import type { Simulation } from '../../sim/simulation';
 import { TICK_RATE } from '../../sim/constants';
+import { primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
 
 export interface InventoryHost {
@@ -18,9 +28,14 @@ export interface InventoryHost {
   /** An element showing the item's icon. */
   icon(item: string): HTMLElement;
   act(action: PlayerAction): void;
+  /** The player's key bindings, for key hints. */
+  bindings(): Bindings;
 }
 
-type Tab = 'items' | 'craft';
+type Tab = 'items' | 'craft' | 'abilities';
+
+const SLOT_BINDING = { aoe: 'aoe', class: 'classAbility', super: 'super' } as const;
+const SLOT_NAMES = { aoe: 'AoE ability', class: 'Class ability', super: 'Super' } as const;
 
 const SLOT_LABELS: Readonly<Record<EquipSlot, string>> = {
   weapon: 'Weapon',
@@ -79,9 +94,15 @@ export class InventoryScreen {
     if (!force && key === this.shown) return;
     this.shown = key;
     const scroll = this.el.querySelector('.body')?.scrollTop ?? 0;
-    this.el.replaceChildren(this.header(sim), this.tab === 'items' ? this.itemsTab(sim) : this.craftTab(sim));
-    const body = this.el.querySelector('.body');
-    if (body) body.scrollTop = scroll;
+    const body =
+      this.tab === 'items'
+        ? this.itemsTab(sim)
+        : this.tab === 'craft'
+          ? this.craftTab(sim)
+          : this.abilitiesTab(sim);
+    this.el.replaceChildren(this.header(sim), body);
+    const shown = this.el.querySelector('.body');
+    if (shown) shown.scrollTop = scroll;
   }
 
   private signature(sim: Simulation): string {
@@ -96,6 +117,8 @@ export class InventoryScreen {
       sim.ecs.get(e, Buffs)?.active.map((b) => b.stat),
       stationNearby(sim, 'forge'),
       stationNearby(sim, 'alchemy'),
+      this.tab === 'abilities' ? abilityStatus(sim) : null,
+      this.host.bindings(),
     ]);
   }
 
@@ -118,8 +141,13 @@ export class InventoryScreen {
       { class: 'head' },
       tab('items', 'Inventory'),
       tab('craft', this.station ? STATIONS[this.station] : 'Crafting'),
+      tab('abilities', 'Abilities'),
       h('div', { class: 'souls' }, `${souls} souls`),
-      h('button', { class: 'quiet', onclick: () => this.close() }, 'Close (Tab)'),
+      h(
+        'button',
+        { class: 'quiet', onclick: () => this.close() },
+        `Close (${primaryKey(this.host.bindings(), 'inventory')})`,
+      ),
     );
   }
 
@@ -248,6 +276,57 @@ export class InventoryScreen {
   }
 
   // ------------------------------------------------------------------ crafting tab
+
+  // ------------------------------------------------------------------ abilities tab
+
+  /** The class's three abilities: their keys, what they do, and whether they are ready. */
+  private abilitiesTab(sim: Simulation): HTMLElement {
+    const a = sim.ecs.get(sim.player, Abilities);
+    const cls = a ? sim.content.classes[a.class] : undefined;
+    if (!a || !cls) return h('div', { class: 'body abilities' }, h('p', { class: 'hint' }, 'No class.'));
+    const status = abilityStatus(sim);
+    const rows = ABILITY_SLOTS.map((slot) => {
+      const def = sim.content.ability(cls.abilities[slot]);
+      const rule =
+        slot === 'super'
+          ? 'Needs a full energy bar. Hits and kills fill it; so does time.'
+          : `${def.cooldown} s cooldown.`;
+      return h(
+        'div',
+        { class: 'ability-row' },
+        h('kbd', {}, primaryKey(this.host.bindings(), SLOT_BINDING[slot])),
+        h(
+          'div',
+          { class: 'what' },
+          h('div', { class: 'kind' }, SLOT_NAMES[slot]),
+          h('div', { class: 'name' }, def.name),
+          h('div', { class: 'desc' }, def.description),
+          h('div', { class: 'rule' }, rule),
+        ),
+        h('div', { class: status[slot] === 'Ready' ? 'status ready' : 'status' }, status[slot]),
+      );
+    });
+    const body = h(
+      'div',
+      { class: 'body abilities' },
+      h(
+        'div',
+        { class: 'class-head' },
+        h('h2', {}, cls.name),
+        h('span', { class: 'element' }, cls.element.name),
+      ),
+      h('p', { class: 'about' }, cls.description),
+      ...rows,
+      h(
+        'p',
+        { class: 'hint' },
+        'Abilities aim at the mouse cursor. Change class while resting at a bonfire.',
+      ),
+    );
+    body.style.setProperty('--class-color', cls.element.base);
+    body.style.setProperty('--class-light', cls.element.light);
+    return body;
+  }
 
   private craftTab(sim: Simulation): HTMLElement {
     const inv = sim.ecs.need(sim.player, Inventory);
@@ -379,4 +458,16 @@ function statLine(stat: keyof typeof STAT_LABELS, amount: number): string {
   return stat === 'maxHp'
     ? `+${amount} ${STAT_LABELS[stat]}`
     : `+${Math.round(amount * 100)}% ${STAT_LABELS[stat]}`;
+}
+
+/** "Ready", "Ready in 7 s" or "Energy 43%" per slot. Whole seconds, so the screen redraws once a second. */
+function abilityStatus(sim: Simulation): Record<'aoe' | 'class' | 'super', string> {
+  const a = sim.ecs.get(sim.player, Abilities);
+  if (!a) return { aoe: '', class: '', super: '' };
+  const cd = (ticks: number) => (ticks <= 0 ? 'Ready' : `Ready in ${Math.ceil(ticks / TICK_RATE)} s`);
+  return {
+    aoe: cd(a.cooldowns.aoe),
+    class: cd(a.cooldowns.class),
+    super: a.energy >= FULL_ENERGY ? 'Ready' : `Energy ${Math.floor(a.energy)}%`,
+  };
 }

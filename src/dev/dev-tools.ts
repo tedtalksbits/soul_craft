@@ -354,8 +354,8 @@ const devCommands: DevCommand[] = [
     name: 'mute',
     description: 'Toggle sound.',
     run: ({ app }) => {
-      app.audio.muted = !app.audio.muted;
-      return app.audio.muted ? 'muted' : 'unmuted';
+      app.settings.update({ muted: !app.settings.current.muted });
+      return app.settings.current.muted ? 'muted' : 'unmuted';
     },
   },
 ];

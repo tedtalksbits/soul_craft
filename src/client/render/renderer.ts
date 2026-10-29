@@ -19,10 +19,10 @@ import { Effects } from './effects';
 import { EntityLayer } from './entity-layer';
 import { AbilityFx } from './ability-fx';
 import { Hud } from './hud';
+import { VIEW_H, VIEW_W, viewFor } from './view-size';
 import { Lighting } from './lighting';
 
-export const VIEW_W = 384;
-export const VIEW_H = 216;
+export { VIEW_H, VIEW_W } from './view-size';
 /** Camera follow factor per 60Hz frame. */
 const CAMERA_LERP = 0.12;
 
@@ -33,6 +33,9 @@ export class GameRenderer {
   /** Screen-space container for debug overlays. */
   readonly debugScreen = new Container();
   readonly camera = { x: 0, y: 0 };
+  /** The view in world pixels (game pixels) right now. Fill mode changes it with the window. */
+  readonly view = { w: VIEW_W, h: VIEW_H };
+  private fill = false;
   readonly chunks: ChunkLayer;
   readonly entities: EntityLayer;
   readonly effects: Effects;
@@ -117,8 +120,8 @@ export class GameRenderer {
       const pb = sim.ecs.get(sim.player, Body);
       if (pb) {
         const k = 1 - Math.pow(1 - CAMERA_LERP, dtMs / (1000 / 60));
-        this.camera.x += (pb.x - VIEW_W / 2 - this.camera.x) * k;
-        this.camera.y += (pb.y - VIEW_H / 2 - this.camera.y) * k;
+        this.camera.x += (pb.x - this.view.w / 2 - this.camera.x) * k;
+        this.camera.y += (pb.y - this.view.h / 2 - this.camera.y) * k;
       }
       const shake = this.effects.shake;
       const cam = {
@@ -132,7 +135,7 @@ export class GameRenderer {
       const biome = pb
         ? sim.content.biomes[sim.world.gen.biomeAt(Math.floor(pb.x / TILE), Math.floor(pb.y / TILE))]
         : undefined;
-      this.effects.update(sim, dtMs, { ...cam, w: VIEW_W, h: VIEW_H }, biome);
+      this.effects.update(sim, dtMs, { ...cam, w: this.view.w, h: this.view.h }, biome);
       this.abilityFx.update(sim, dtMs);
       const area = pb ? sim.world.areaAt(pb.x, pb.y) : undefined;
       this.lighting.update(
@@ -152,25 +155,44 @@ export class GameRenderer {
   toWorld(clientX: number, clientY: number): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect();
     return {
-      x: ((clientX - rect.left) / rect.width) * VIEW_W + this.camera.x,
-      y: ((clientY - rect.top) / rect.height) * VIEW_H + this.camera.y,
+      x: ((clientX - rect.left) / rect.width) * this.view.w + this.camera.x,
+      y: ((clientY - rect.top) / rect.height) * this.view.h + this.camera.y,
     };
   }
 
   private snapCamera(sim: Simulation): void {
     const pb = sim.ecs.get(sim.player, Body);
     if (!pb) return;
-    this.camera.x = pb.x - VIEW_W / 2;
-    this.camera.y = pb.y - VIEW_H / 2;
+    this.camera.x = pb.x - this.view.w / 2;
+    this.camera.y = pb.y - this.view.h / 2;
   }
 
+  /** Fill the window (a slightly bigger view, same pixel scale) or keep the base view with borders. */
+  setFill(fill: boolean): void {
+    this.fill = fill;
+    this.resize();
+  }
+
+  /**
+   * Scales the game by a whole number so every pixel is the same size (no shimmer). In fill mode
+   * the view then grows to the window's shape, up to the cap, so there are no black borders;
+   * otherwise it stays at the base view and the rest is border.
+   */
   private resize(): void {
-    const fit = Math.min(innerWidth / VIEW_W, innerHeight / VIEW_H);
-    const scale = fit >= 2 ? Math.floor(fit) : fit;
-    const w = Math.floor(VIEW_W * scale);
-    const h = Math.floor(VIEW_H * scale);
+    const size = viewFor(innerWidth, innerHeight, this.fill);
+    if (!size) return; // No window size yet (hidden tab, pane opening): keep the current view.
+    const { w: vw, h: vh, scale } = size;
+    if (vw !== this.view.w || vh !== this.view.h) {
+      this.view.w = vw;
+      this.view.h = vh;
+      this.app.renderer.resize(vw, vh);
+      this.lighting.resize(vw, vh);
+      this.hud.resize(vw, vh);
+    }
+    const w = Math.floor(vw * scale);
+    const h = Math.floor(vh * scale);
     this.wrap.style.width = `${w}px`;
     this.wrap.style.height = `${h}px`;
-    this.wrap.style.fontSize = `${Math.max(11, h / 34)}px`;
+    this.wrap.style.fontSize = `${Math.max(11, (VIEW_H * scale) / 34)}px`;
   }
 }

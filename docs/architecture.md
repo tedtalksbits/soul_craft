@@ -70,6 +70,18 @@ chunk textures, y-sorted entity sprites (animation chosen from sim state), effec
 numbers, sword arc, arrows), a lighting pass (darkness render texture with erased light sprites), then the
 HUD. Everything visual derives from sim state or events; nothing feeds back.
 
+### Settings, controls and screen size
+
+Per-device settings (`src/client/settings.ts`) live in the browser's local storage, separate from save slots:
+key bindings, fill mode, volume and which tutorial hints were seen. Storage may be missing, so every read and
+write is guarded and the game runs on defaults without it. Key bindings (`src/client/keybinds.ts`) are
+KeyboardEvent.code values; every on-screen key name (prompts, HUD labels, class cards, the pause controls panel)
+is read from them, so rebinding changes all of it. Escape, the dev console key and function keys are reserved.
+
+The game always scales by a whole number, so every pixel is the same size. In fill mode (the default) the
+view grows from 384×216 to the window's shape, up to 512×288, instead of leaving black borders. The cap keeps
+the unloaded world out of sight. Anything sized to the view reads `GameRenderer.view`, never the base constants.
+
 ## Dev tools
 
 `src/dev` loads lazily in dev builds or with `?dev`: the command console (which shares the

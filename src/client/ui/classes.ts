@@ -4,6 +4,7 @@
  */
 import type { Content } from '../../content/content';
 import { ABILITY_SLOTS, type AbilitySlot } from '../../content/schemas';
+import { primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
 
 export interface ClassScreenOptions {
@@ -11,11 +12,15 @@ export interface ClassScreenOptions {
   /** The player's class now, marked on its card; null before a new game. */
   current: string | null;
   mode: 'newGame' | 'bonfire';
+  bindings: Bindings;
   pick(id: string): void;
   cancel(): void;
 }
 
-const SLOT_KEYS: Readonly<Record<AbilitySlot, string>> = { aoe: 'F', class: 'C', super: 'V' };
+const SLOT_BINDING = { aoe: 'aoe', class: 'classAbility', super: 'super' } as const satisfies Record<
+  AbilitySlot,
+  string
+>;
 
 export function classScreen(o: ClassScreenOptions): HTMLElement {
   const cards = Object.entries(o.content.classes).map(([id, cls]) => {
@@ -25,7 +30,7 @@ export function classScreen(o: ClassScreenOptions): HTMLElement {
       return h(
         'li',
         {},
-        h('kbd', {}, SLOT_KEYS[slot]),
+        h('kbd', {}, primaryKey(o.bindings, SLOT_BINDING[slot])),
         h('div', {}, h('div', { class: 'ability' }, def.name), h('div', { class: 'what' }, def.description)),
       );
     });
