@@ -11,6 +11,8 @@ export interface SimState {
   checkpoint: { id: string; x: number; y: number } | null;
   /** chunk key -> tile index within chunk -> tile id. Player changes to the generated world. */
   tileOverrides: Record<string, Record<string, string>>;
+  /** "tx,ty" -> swings taken by a cuttable tile that has not broken yet. */
+  tileDamage: Record<string, number>;
   /** Named areas and biomes the player has entered. */
   discovered: Record<string, true>;
   currentArea: string | null;
@@ -24,6 +26,7 @@ export function initialState(seed: number): SimState {
     litBonfires: {},
     checkpoint: null,
     tileOverrides: {},
+    tileDamage: {},
     discovered: {},
     currentArea: null,
     cheats: { god: false, noclip: false },

@@ -4,6 +4,7 @@
  * simulation state.
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
+import type { Content } from '../../content/content';
 import type { BiomeDef } from '../../content/schemas';
 import { Body, Player, Projectile, Sprite as SpriteDef } from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
@@ -14,6 +15,8 @@ import { PixelText } from './pixel-text';
 const MAX_PARTICLES = 700;
 const FRAME_MS = 1000 / 60;
 const SLASH_MS = 170;
+/** Chip colour for anything woody that a sword bites into. */
+const WOOD = 0x6e5236;
 /** Arc centre above the feet when a sheet has no `swing` pivot (sized for 24px-tall sprites). */
 const DEFAULT_SWING_PIVOT: readonly [number, number] = [0, -9];
 
@@ -74,7 +77,7 @@ export class Effects {
     this.root.addChild(this.projectileG, this.particleLayer, this.slashG, this.numberLayer);
   }
 
-  handle(e: SimEvent): void {
+  handle(e: SimEvent, content?: Content): void {
     switch (e.type) {
       case 'damaged':
         this.burst(e.x, e.y, {
@@ -110,8 +113,39 @@ export class Effects {
         this.burst(e.x, e.y, { count: 24, color: 0xd0e0ff, speed: 0.8, life: 60, add: true, z: 8, vz: 0.6 });
         if (e.souls > 0) this.number(e.x, e.y - 30, `+${e.souls}`, 0xb8ccff, 1);
         return;
+      case 'tileHit': {
+        const color = tileColor(content, e.tile);
+        this.burst(e.x, e.y - 4, { count: 5, color: WOOD, speed: 1.4, life: 20, z: 6, vz: 1, grav: 0.12 });
+        this.burst(e.x, e.y - 4, { count: 4, color, speed: 1, life: 24, z: 8, vz: 0.6, grav: 0.08 });
+        this.shake = Math.min(4, this.shake + 1);
+        return;
+      }
       case 'tileCut':
-        this.burst(e.x, e.y, { count: 8, color: 0x7a9a50, speed: 1, life: 30, z: 4, vz: 1, grav: 0.06 });
+        if (e.hits <= 1) {
+          this.burst(e.x, e.y, { count: 8, color: 0x7a9a50, speed: 1, life: 30, z: 4, vz: 1, grav: 0.06 });
+          return;
+        }
+        this.burst(e.x, e.y - 4, {
+          count: 14,
+          color: WOOD,
+          speed: 1.8,
+          size: 2,
+          life: 30,
+          z: 6,
+          vz: 1.4,
+          grav: 0.12,
+        });
+        this.burst(e.x, e.y - 6, {
+          count: 18,
+          color: tileColor(content, e.tile),
+          speed: 1.4,
+          size: 2,
+          life: 40,
+          z: 10,
+          vz: 0.8,
+          grav: 0.08,
+        });
+        this.shake = Math.min(6, this.shake + 2.5);
         return;
       case 'wallSlam':
         this.burst(e.x, e.y, { count: 24, color: 0x8a8278, speed: 1.4, size: 3, life: 45, z: 4, vz: 0.4 });
@@ -317,4 +351,10 @@ export class Effects {
     this.particleLayer.removeChild(s);
     this.pool.push(s);
   }
+}
+
+/** A tile's map colour (its dominant colour), used to tint debris; leaf green if unknown. */
+function tileColor(content: Content | undefined, id: string): number {
+  const hex = content?.tiles.find((t) => t.id === id)?.map;
+  return hex === undefined ? 0x7a9a50 : parseInt(hex.slice(1), 16);
 }

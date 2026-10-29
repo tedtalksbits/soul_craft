@@ -69,8 +69,13 @@ export class Audio {
         );
       case 'roll':
         return this.burst(0.2, 450, 0.22, 'lowpass');
+      case 'tileHit':
+        this.burst(0.09, 420, 0.4, 'lowpass');
+        return this.tone([[140, 1]], 0.08, 0.06, 'square');
       case 'tileCut':
-        return this.burst(0.08, 2400, 0.12, 'highpass');
+        if (e.hits <= 1) return this.burst(0.08, 2400, 0.12, 'highpass');
+        this.burst(0.35, 300, 0.55, 'lowpass');
+        return this.burst(0.15, 1500, 0.2, 'bandpass', [1800, 600]);
       case 'pickedUp':
         return e.kind === 'souls'
           ? this.tone(

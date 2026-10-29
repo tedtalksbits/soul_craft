@@ -156,7 +156,7 @@ function checkReferences(
     if (!(id in c.enemies)) problems.push(`${where}: unknown enemy "${id}"`);
   };
 
-  for (const t of c.tiles) if (t.cut) tile(`tiles.json: ${t.id}.cut.into`, t.cut.into);
+  for (const t of c.tiles) if (t.cut?.into !== undefined) tile(`tiles.json: ${t.id}.cut.into`, t.cut.into);
 
   for (const [id, b] of Object.entries(c.biomes)) {
     for (const [g] of b.ground) tile(`biomes.json: ${id}.ground`, g);

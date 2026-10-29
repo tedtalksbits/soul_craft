@@ -34,14 +34,36 @@
   { "id": "wall", "frames": ["wall"], "solid": true, "map": "#3a3638" },
   { "id": "water", "frames": ["water"], "solid": true, "blocksProjectiles": false, "map": "#2b4a58" },
   { "id": "shallows", "frames": ["shallows"], "map": "#3e6470" },
-  { "id": "tree", "frames": ["tree"], "solid": true, "overlay": true, "map": "#2e4024" },
-  { "id": "fungal_tree", "frames": ["fungal_tree"], "solid": true, "overlay": true, "map": "#1e3a34" },
-  { "id": "dead_tree", "frames": ["dead_tree"], "solid": true, "overlay": true, "map": "#3a302a" },
+  {
+    "id": "tree",
+    "frames": ["tree"],
+    "solid": true,
+    "overlay": true,
+    "cut": { "hits": 3 },
+    "map": "#2e4024"
+  },
+  {
+    "id": "fungal_tree",
+    "frames": ["fungal_tree"],
+    "solid": true,
+    "overlay": true,
+    "cut": { "hits": 3 },
+    "map": "#1e3a34"
+  },
+  {
+    "id": "dead_tree",
+    "frames": ["dead_tree"],
+    "solid": true,
+    "overlay": true,
+    "cut": { "hits": 2 },
+    "map": "#3a302a"
+  },
   {
     "id": "giant_shroom",
     "frames": ["giant_shroom_0", "giant_shroom_1"],
     "solid": true,
     "overlay": true,
+    "cut": { "hits": 2 },
     "light": { "radius": 34, "intensity": 0.7 },
     "map": "#7a3f8a"
   },

@@ -32,6 +32,19 @@ with new values. World and tile edits regenerate the loaded chunks immediately.
 Files are kept in the canonical layout that the editor writes (`pnpm content:format`), so editor saves only
 diff what changed. Note that JSON objects list numeric-looking keys first (e.g. prefab legend `"2"`).
 
+### Cuttable tiles
+
+A tile with `cut` can be broken by the player's sword: `{ "hits": 3 }` takes three swings (one hit per swing,
+however many tiles the swing covers), `into` is what it becomes (default: the local biome's first ground
+tile, so a dead tree leaves ash in the hills and pale earth in the graveyard), and `drops` lists pickups.
+Partial damage is remembered per tile and saved. Currently: tall grass and tall moss (1 hit, small drops),
+trees and fungal trees (3), dead trees and giant mushrooms (2, no drops). Rocks, walls, graves and water are
+not cuttable.
+
+Movement assistance for the player lives in `player.json`: `cornerSlide` is how many pixels the player is
+nudged around a corner it clips while walking straight (0 turns it off). Enemies get none, so a knight's
+charge still slams into corners.
+
 ### Prefabs
 
 ```json

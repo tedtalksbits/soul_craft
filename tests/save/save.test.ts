@@ -72,3 +72,17 @@ describe('SaveManager', () => {
     expect(store.data.size).toBe(0);
   });
 });
+
+describe('shipped migrations', () => {
+  it('v1 -> v2 adds empty tile damage and the save loads', () => {
+    const current = createSave(newSim(4), '1');
+    const v1State = Object.fromEntries(
+      Object.entries(current.snapshot.state).filter(([k]) => k !== 'tileDamage'),
+    );
+    const v1 = { ...current, version: 1, snapshot: { ...current.snapshot, state: v1State } };
+    const migrated = parseSave(JSON.parse(JSON.stringify(v1)));
+    expect(migrated.version).toBe(SAVE_VERSION);
+    expect(migrated.snapshot.state.tileDamage).toEqual({});
+    expect(() => Simulation.restore(migrated.snapshot, content)).not.toThrow();
+  });
+});

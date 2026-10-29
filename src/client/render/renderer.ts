@@ -90,7 +90,7 @@ export class GameRenderer {
   handle(events: readonly SimEvent[]): void {
     for (const e of events) {
       this.entities.handle(e);
-      this.effects.handle(e);
+      this.effects.handle(e, this.sim?.content);
       if (this.sim && (e.type === 'healed' || e.type === 'rested'))
         this.effects.aroundPlayer(this.sim, e.type === 'healed' ? 'heal' : 'rest');
     }

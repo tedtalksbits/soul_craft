@@ -25,9 +25,10 @@ import { Action } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
-import { applyDamage, rollDamage, rollDrops } from './combat';
+import { applyDamage, rollDamage } from './combat';
 import { interact } from './interaction';
 import { resetEnemies } from './streaming';
+import { strikeTiles } from './terrain';
 
 /** How long an early attack/roll press is remembered. */
 const BUFFER_TICKS = 12;
@@ -242,16 +243,9 @@ function strike(sim: Simulation, e: Entity, p: Player): void {
     }
   }
 
-  for (let ty = Math.floor(box.y / TILE); ty <= Math.floor((box.y + box.h) / TILE); ty++) {
-    for (let tx = Math.floor(box.x / TILE); tx <= Math.floor((box.x + box.w) / TILE); tx++) {
-      const cut = sim.world.tileAt(tx, ty)?.cut;
-      if (!cut) continue;
-      sim.world.setTile(tx, ty, cut.into);
-      const x = tx * TILE + TILE / 2;
-      const y = ty * TILE + TILE / 2;
-      rollDrops(sim, cut.drops, x, y);
-      sim.events.emit({ type: 'tileCut', x, y });
-    }
+  // Terrain takes one hit per swing, on the first active tick.
+  if (p.t === def.attack.activeFrom && strikeTiles(sim, box)) {
+    sim.hitstop = Math.max(sim.hitstop, def.attack.hitstop);
   }
 }
 

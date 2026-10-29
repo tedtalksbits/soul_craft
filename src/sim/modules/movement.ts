@@ -17,7 +17,9 @@ function integrate(sim: Simulation): void {
       body.y += dy;
       motion.hitWall = false;
     } else {
-      motion.hitWall = moveBody(sim.world, body, dx, dy);
+      // Only the player gets corner assistance; enemies (the knight's charge) should still slam into walls.
+      const slide = ecs.has(e, Player) ? sim.content.player.cornerSlide : 0;
+      motion.hitWall = moveBody(sim.world, body, dx, dy, slide);
     }
     motion.kx *= KNOCKBACK_DRAG;
     motion.ky *= KNOCKBACK_DRAG;

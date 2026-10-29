@@ -24,7 +24,10 @@ export type SimEvent =
   | { type: 'roll' }
   | { type: 'healed'; amount: number }
   | { type: 'flaskEmpty' }
-  | { type: 'tileCut'; x: number; y: number }
+  /** A cuttable tile took a swing but still stands. */
+  | { type: 'tileHit'; x: number; y: number; tile: string; hitsLeft: number }
+  /** A cuttable tile broke; `hits` is how many swings it needed (1 for grass). */
+  | { type: 'tileCut'; x: number; y: number; tile: string; hits: number }
   | { type: 'pickedUp'; kind: PickupKind; amount: number }
   | { type: 'enemyAttack'; entity: Entity; kind: 'lunge' | 'charge' | 'shoot' }
   | { type: 'wallSlam'; x: number; y: number }

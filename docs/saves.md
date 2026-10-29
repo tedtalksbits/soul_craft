@@ -38,6 +38,12 @@ change:
    never edited once shipped, and run in sequence.
 3. Add a test that migrates a fixture of the old version (`tests/save/save.test.ts` shows the pattern).
 
+Migrations so far:
+
+| From | To  | Change                                                      |
+| ---- | --- | ----------------------------------------------------------- |
+| 1    | 2   | `SimState.tileDamage` added (multi-hit trees and mushrooms) |
+
 Adding a new optional component needs no migration: old saves simply don't have it. Content changes need
 none either: restore drops entities whose archetype no longer exists, and tile overrides referring to
 removed tiles fall back to generated terrain.

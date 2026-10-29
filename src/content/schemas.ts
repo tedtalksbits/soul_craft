@@ -26,6 +26,8 @@ export const PlayerSchema = z.object({
   staminaRegenDelay: ticks,
   moveSpeed: pos,
   interactRange: pos,
+  /** How far (px) the player is nudged around a corner it clips while walking straight. 0 disables. */
+  cornerSlide: nonneg,
   attack: z.object({
     damage: pos,
     variance: fraction,
@@ -130,8 +132,18 @@ export const TileSchema = z.object({
   overlay: z.boolean().default(false),
   /** Defaults to `solid`. Water is solid to walkers but arrows fly over it. */
   blocksProjectiles: z.boolean().optional(),
-  /** Tiles a sword can cut (tall grass). */
-  cut: z.object({ into: z.string(), drops: z.array(DropSchema).default([]) }).optional(),
+  /**
+   * Tiles a sword can cut down: tall grass, trees, mushrooms. It breaks after `hits` swings and
+   * becomes `into`, or the local biome's ground when omitted (so a tree leaves the right floor in
+   * any biome). Partial damage is remembered per tile.
+   */
+  cut: z
+    .object({
+      hits: z.number().int().min(1).default(1),
+      into: z.string().optional(),
+      drops: z.array(DropSchema).default([]),
+    })
+    .optional(),
   light: z.object({ radius: pos, intensity: fraction }).optional(),
   /** Colour on the world map and minimap. */
   map: color,

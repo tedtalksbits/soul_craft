@@ -11,7 +11,7 @@ import { Player } from '../sim/components';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -61,7 +61,19 @@ export type Migration = (save: Record<string, unknown>) => Record<string, unknow
  * `MIGRATIONS[n]` upgrades a version-n file to n+1. Never edit a shipped
  * migration; add a new one.
  */
-export const MIGRATIONS: Readonly<Record<number, Migration>> = {};
+export const MIGRATIONS: Readonly<Record<number, Migration>> = {
+  /** v1 -> v2: trees and mushrooms became multi-hit; SimState gained `tileDamage`. */
+  1: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const state = asRecord(snapshot['state']);
+    return { ...save, snapshot: { ...snapshot, state: { tileDamage: {}, ...state } } };
+  },
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null) throw new SaveError('save is missing its snapshot state');
+  return value as Record<string, unknown>;
+}
 
 export function createSave(sim: Simulation, slot: string, now: Date = new Date()): SaveFile {
   const player = sim.ecs.need(sim.player, Player);
