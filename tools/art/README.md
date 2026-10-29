@@ -28,7 +28,7 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 | `archer.py`    | `archer.*`   | The Archer: the same six animations; `head` plus per-direction `release` on `attack_<dir>`            |
 | `knight.py`    | `knight.*`   | The Oathbound Knight: idle, walk, windup, attack (looping charge), stunned, dead; `head` pivot        |
 | `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels)  |
-| `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 16×24 `frames`, voxel-rendered like the characters        |
+| `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 32×48 `frames`, voxel-rendered like the characters        |
 
 ## How the Ashen One generator works
 

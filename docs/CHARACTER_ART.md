@@ -322,8 +322,9 @@ Written by the implementation agent, 2026-10-29, for `archer.py` and the revised
   - `props.py` is installed as `stations.py` and writes `stations.png`/`stations.json`. The `props` sheet already
     holds the bonfire, sign, torch, souls and ember, and writing `props.*` would have erased them. Each tool owns
     its own sheet and never overwrites another tool's.
-- **Scale:** at 16×24 the stations read as too small next to the knight, so they are re-requested at 32×48, about
-  the knight's width. Until then the station hitboxes stay at 14 × 8.
+- **Scale:** at 16×24 the stations read as too small next to the knight, so they were re-requested at 32×48.
+- **32×48 stations accepted as delivered** (2026-10-29): forge 27 × 42 px, alchemy table 24 × 23 px, stills in
+  `frames`, writing only `stations.*`. Station hitboxes widened to match: forge 24 × 10, alchemy table 22 × 8.
 
 ### Port report: knight
 

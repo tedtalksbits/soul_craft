@@ -1,8 +1,9 @@
 {
   "image": "stations.png",
-  "frameWidth": 16,
-  "frameHeight": 24,
+  "frameWidth": 32,
+  "frameHeight": 48,
   "anchor": [0.5, 1],
+  "pivots": {},
   "frames": {
     "forge": 0,
     "alchemy": 1

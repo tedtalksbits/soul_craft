@@ -3,6 +3,7 @@
  * entities (enemies, bonfires, signs, torches) on load and removes them on
  * unload. Also tracks which named area the player is in.
  */
+import type { StationId } from '../../content/schemas';
 import { Body, Bonfire, Enemy, Sign, Spawned, Sprite, Station, Torch } from '../components';
 import { CHUNK, LOAD_RADIUS, TILE, UNLOAD_RADIUS } from '../constants';
 import type { SimCommand, SimModule } from '../module';
@@ -13,6 +14,11 @@ import { spawnEnemy } from './enemies';
 
 const PROPS_SHEET = 'props';
 const STATIONS_SHEET = 'stations';
+/** Station footprints, matched to their art (forge 27 px wide, alchemy table 24 px). */
+const STATION_BODY: Readonly<Record<StationId, { w: number; h: number }>> = {
+  forge: { w: 24, h: 10 },
+  alchemy: { w: 22, h: 8 },
+};
 
 export function updateStreaming(sim: Simulation): void {
   const { ecs, world } = sim;
@@ -86,7 +92,7 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
     }
     case 'station': {
       const e = ecs.create();
-      ecs.add(e, Body, { x: sp.x, y: sp.y, w: 14, h: 8 });
+      ecs.add(e, Body, { x: sp.x, y: sp.y, ...STATION_BODY[ent.station] });
       ecs.add(e, Station, { station: ent.station });
       ecs.add(e, Spawned, spawned);
       ecs.add(e, Sprite, { sheet: STATIONS_SHEET });

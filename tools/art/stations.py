@@ -1,13 +1,14 @@
-"""Crafting station sprite generator.
+"""Stations sprite generator.
 
 Writes stations.png and stations.json to <repo>/assets/sprites (or the directory given).
 
 Usage: pnpm art stations
 
-Crafting stations, 16 wide by 24 tall, one named frame each (forge, alchemy), anchor [0.5, 1]
-on the ground under the prop's centre. Rendered with the characters' own voxel renderer, camera,
-light, ramps and outline at the same 1 unit = 1 px scale, so they sit in the world beside the
-sprites. numpy + Pillow only, integer hashing only, no randomness.
+Crafting stations, 32 wide by 48 tall, stored as named stills in `frames` (forge, alchemy) with
+`animations` empty; anchor [0.5, 1] on the ground under the station's centre, ground plane 3 rows
+above the frame bottom as for the characters. Rendered with the characters' own voxel renderer,
+camera, light, ramps and outline at the same 1 unit = 1 px scale. numpy + Pillow only, integer
+hashing only, no randomness. Writes only stations.*: never another tool's sheet.
 """
 import json
 import os
@@ -27,24 +28,30 @@ RAMPS = {
     1:  ('#8f897c', '#6c675d', '#4a463f', '#2c2a26'),  # stone
     3:  ('#5a554c', '#46423b', '#34312c', '#211f1c'),  # mortar and shadowed stone
     4:  ('#fff0b0', '#ffb347', '#e0701e', '#8a3010'),  # embers: bright at every level, they give light
-    5:  ('#4a4440', '#2e2a28', '#1e1b1a', '#111111'),  # coal
+    5:  ('#4a4440', '#2e2a28', '#1e1b1a', '#111111'),  # coal and soot
     6:  ('#767b83', '#5f646b', '#41454b', '#2c2f35'),  # iron (the knight's rim iron)
     7:  ('#7a5e44', '#5e4632', '#402f22', '#271c14'),  # table wood
-    8:  ('#5e4632', '#4a3726', '#33261a', '#1e160f'),  # darker wood: seams, apron, stretcher
-    9:  ('#eef4f4', '#a9b8bc', '#6e7c82', '#3e474c'),  # glass
-    10: ('#fff8d0', '#ffe080', '#ffb040', '#a85a10'),  # candle flame
-    11: ('#d0f6ff', '#6ec8e8', '#3a8aae', '#1d4c62'),  # blue brew (the breath potion's colour)
-    12: ('#d4ff9a', '#8fd65a', '#5a9e3e', '#2f5c26'),  # green brew (the glowspore's colour)
-    13: ('#a0805c', '#7e6244', '#56422e', '#33271b'),  # cork and pestle wood
-    14: ('#f0e8d0', '#d6cba8', '#a89c7c', '#6e654e'),  # candle wax
+    8:  ('#6e5442', '#4f3c30', '#33271f', '#1c1511'),  # leather (the items' leather)
+    9:  ('#4f3c30', '#3a2c23', '#271e18', '#140f0c'),  # dark leather: bellows pleats, book cover
+    10: ('#a0805c', '#7e6244', '#56422e', '#33271b'),  # light wood: handles, corks, pestle, boards
+    11: ('#5e4632', '#4a3726', '#33261a', '#1e160f'),  # dark wood: seams, apron, stretcher
+    12: ('#ecd096', '#d0a85c', '#9a7536', '#5c4220'),  # brass (the player's gold)
+    13: ('#eef4f4', '#a9b8bc', '#6e7c82', '#3e474c'),  # glass
+    14: ('#fff8d0', '#ffe080', '#ffb040', '#a85a10'),  # flame
+    15: ('#d4ff9a', '#8fd65a', '#5a9e3e', '#2f5c26'),  # green brew (the glowspore's colour)
+    16: ('#ffd27a', '#ff9a30', '#c4691c', '#7a3e10'),  # potion_ember
+    17: ('#cfc6b4', '#948a78', '#655d50', '#3a352d'),  # potion_stone
+    18: ('#d0f6ff', '#6ec8e8', '#3a8aae', '#1d4c62'),  # potion_breath
+    19: ('#f2ead2', '#d8ccaa', '#a89c7c', '#6e654e'),  # parchment
+    20: ('#f0e8d0', '#d6cba8', '#a89c7c', '#6e654e'),  # candle wax
 }
 RAMPS = {k: [hx(c) for c in v] for k, v in RAMPS.items()}
 
 # ---------------------------------------------------------------- voxel grid
 RES = 0.5
-xs = np.arange(-10, 10, RES) + RES / 2
-ys = np.arange(-10, 10, RES) + RES / 2
-zs = np.arange(-2, 26, RES) + RES / 2
+xs = np.arange(-18, 18, RES) + RES / 2
+ys = np.arange(-10, 16, RES) + RES / 2
+zs = np.arange(-2, 48, RES) + RES / 2
 X, Y, Z = np.meshgrid(xs, ys, zs, indexing='ij')
 M = np.zeros(X.shape, np.uint8)
 N = np.zeros(X.shape + (3,))
@@ -173,115 +180,188 @@ def box(C, x0, x1, y0, y1, z0, z1):
     x, y, z = C
     return (x >= x0) & (x < x1) & (y >= y0) & (y < y1) & (z >= z0) & (z < z1)
 
+def courses(C, mask, h=2.6, w=4.2, mortar=0.5):
+    """Mortar lines of a running-bond stone wall, on any face of mask."""
+    x, y, z = C
+    row = np.floor(z / h)
+    off = (row % 2) * (w / 2)
+    bed = (z - row * h) < mortar
+    head = ((x + off) - np.floor((x + off) / w) * w) < mortar
+    head2 = ((y + off) - np.floor((y + off) / w) * w) < mortar
+    return mask & (bed | head | head2)
+
 def build_forge():
-    """A stone forge: block hearth, glowing coal bed, iron hood and a chimney at the back."""
-    global M, N
+    """A stone forge about as wide as the knight: chest-high hearth with a glowing fire mouth
+    and coal bed, an iron hood and chimney, bellows on the left, hammer and tongs on the right."""
+    global M
     M = np.zeros(X.shape, np.uint8)
     def put(mask, mat):
         M[mask] = mat
     C = coords(IDENT)
     x, y, z = C
-    # hearth: dressed stone blocks with darker mortar courses
-    hearth = box(C, -6.4, 6.4, -2.4, 4.2, 0.0, 9.0)
+    TOP = 18.0
+    # hearth: running-bond stone, slightly battered (wider at the foot)
+    batter = (TOP - np.clip(z, 0, TOP)) * 0.05
+    hearth = (np.abs(x) < 9.8 + batter) & (y >= -2.6 - batter * 0.4) & (y < 8.0) & (z >= 0) & (z < TOP)
     put(hearth, 1)
-    course = hearth & ((np.floor(z / 2.4) != np.floor((z + 0.5) / 2.4)) |
-                       (np.floor((x + 1.2 * (np.floor(z / 2.4) % 2)) / 3.2) !=
-                        np.floor((x + 0.5 + 1.2 * (np.floor(z / 2.4) % 2)) / 3.2)))
-    put(course & (y < -1.9), 3)
-    put(hearth & (ihash3(x, y, z, 0.8) > 0.8) & (y < -1.9), 3)            # chipped, uneven stones
-    # the coal bed, sunk into the top
-    put(box(C, -4.6, 4.6, -1.4, 3.0, 8.0, 9.0), 0)
-    bed = box(C, -4.6, 4.6, -1.4, 3.0, 8.0, 8.6)
+    put(courses(C, hearth), 3)
+    put(hearth & (ihash3(x, y, z, 0.45) > 0.86), 3)                           # weathered stones
+    # cap stones round the top edge
+    cap = (np.abs(x) < 10.4) & (y >= -3.0) & (y < 8.4) & (z >= TOP - 1.2) & (z < TOP)
+    put(cap, 1)
+    put(cap & (((x + 30) % 3.4) < 0.45), 3)
+    # the fire mouth: an arched opening in the front, glowing from inside
+    mouth = (np.abs(x) < 3.6) & (y < 0.2) & (z >= 3.0) & ((z < 7.4) | (x ** 2 + (z - 7.4) ** 2 < 3.6 ** 2))
+    put(mouth & hearth, 0)
+    put((np.abs(x) < 3.6) & (y >= 0.2) & (y < 1.0) & (z >= 3.0) & (z < 11.0) & ((z < 7.4) | (x ** 2 + (z - 7.4) ** 2 < 3.6 ** 2)), 4)
+    put((np.abs(x) < 3.0) & (y >= -0.2) & (y < 0.6) & (z >= 3.0) & (z < 4.4), 5)       # coals in the mouth
+    put((np.abs(x) < 3.0) & (y >= -0.2) & (y < 0.6) & (z >= 3.0) & (z < 4.4) & (ihash3(x, y, z, 1.2) > 0.5), 4)
+    arch = (np.abs(x) < 4.6) & (y >= -2.8) & (y < -1.8) & (z >= 3.0) & ((z < 7.4) | (x ** 2 + (z - 7.4) ** 2 < 4.6 ** 2))
+    put(arch & ~((np.abs(x) < 3.6) & ((z < 7.4) | (x ** 2 + (z - 7.4) ** 2 < 3.6 ** 2))), 3)   # voussoirs
+    # coal bed sunk into the top
+    put(box(C, -6.6, 6.6, -1.0, 5.6, TOP - 1.2, TOP + 0.2), 0)
+    bed = box(C, -6.6, 6.6, -1.0, 5.6, TOP - 1.2, TOP - 0.4)
     put(bed, 4)
-    put(bed & (ihash3(x, y, z, 1.1) > 0.62), 5)                           # dark coals among the embers
-    put(box(C, -4.9, 4.9, -1.7, 3.3, 8.6, 9.2) & ~box(C, -4.4, 4.4, -1.2, 2.8, 7.6, 9.6), 6)   # iron lip
-    # chimney at the back, iron hood sloping out over the coals
-    put(box(C, -2.8, 2.8, 2.6, 5.0, 9.0, 19.8), 1)
-    put(box(C, -2.8, 2.8, 2.6, 5.0, 9.0, 19.8) & (np.floor(z / 2.2) != np.floor((z + 0.5) / 2.2)), 3)
-    hood = (np.abs(x) < 3.2 + (16.8 - z) * 0.45) & (z >= 13.2) & (z < 16.8)
-    hood &= (y > 2.6 - (16.8 - z) * 0.9) & (y < 2.6 - (16.8 - z) * 0.9 + 0.9)
+    put(bed & (ihash3(x, y, z, 0.9) > 0.6), 5)
+    lip = box(C, -7.0, 7.0, -1.4, 6.0, TOP - 0.4, TOP + 0.3) & ~box(C, -6.4, 6.4, -0.8, 5.4, TOP - 2, TOP + 1)
+    put(lip, 6)
+    # iron hood flaring down over the bed, chimney rising behind it
+    HOOD0, HOOD1 = TOP + 5.0, TOP + 11.0
+    k = np.clip((HOOD1 - z) / (HOOD1 - HOOD0), 0, 1)
+    hood = (z >= HOOD0) & (z < HOOD1) & (np.abs(x) < 3.4 + 4.6 * k) & (y > 6.2 - 7.0 * k) & (y < 7.8)
+    hood &= ~((np.abs(x) < 2.6 + 4.6 * k) & (y > 6.9 - 7.0 * k) & (y < 7.2) & (z < HOOD1 - 0.8))
     put(hood, 6)
-    put(box(C, -3.4, 3.4, 2.2, 3.2, 16.4, 17.4), 6)                       # hood collar
-    # a pair of tongs leaning on the hearth
-    put(capsule(C, (5.6, -2.8, 0.4), (5.2, -2.6, 11.0), 0.35), 6)
-    put(capsule(C, (6.2, -2.7, 0.4), (5.4, -2.6, 11.0), 0.35), 6)
+    put(hood & (np.abs(z - (HOOD0 + 0.5)) < 0.5), 7)                           # riveted iron band
+    chimney = box(C, -3.4, 3.4, 4.0, 8.0, HOOD1, TOP + 24.0)
+    put(chimney, 1)
+    put(courses(C, chimney, h=2.4, w=3.4), 3)
+    put(box(C, -3.9, 3.9, 3.5, 8.5, TOP + 22.8, TOP + 24.0), 1)                 # chimney cap
+    put(box(C, -2.4, 2.4, 5.0, 7.0, TOP + 23.4, TOP + 24.2), 5)                 # soot at the flue
+    for sx in (-1, 1):                                                         # hood supports
+        put(capsule(C, (sx * 6.4, 6.2, TOP + 0.2), (sx * 3.4, 6.6, HOOD1 - 0.2), 0.4), 6)
+    # bellows on the left: two boards and a leather body, nozzle into the hearth side
+    bc = np.array([-11.6, 3.0, 9.0])
+    put(capsule(C, bc + [0, -3.2, 0], bc + [0, 3.2, 0], 1.7, 1.0), 8)          # leather pleats
+    put(capsule(C, bc + [0, -3.2, 0], bc + [0, 3.2, 0], 1.75, 1.05) & (((y - bc[1]) % 1.4) < 0.35), 9)
+    put(box(C, bc[0] - 2.0, bc[0] + 2.0, bc[1] - 3.6, bc[1] + 3.6, bc[2] + 1.5, bc[2] + 2.1), 10)   # top board
+    put(box(C, bc[0] - 2.0, bc[0] + 2.0, bc[1] - 3.6, bc[1] + 3.6, bc[2] - 2.1, bc[2] - 1.5), 10)   # bottom board
+    put(capsule(C, bc + [0, 3.6, 1.8], bc + [0, 6.4, 3.6], 0.45), 10)          # handle
+    put(capsule(C, bc + [1.2, -3.0, 0], (-9.6, -1.0, 9.0), 0.55), 6)           # nozzle
+    put(capsule(C, (-11.6, 1.0, 0.0), (-11.6, 1.0, 7.0), 0.5), 10)             # stand
+    put(capsule(C, (-11.6, 5.0, 0.0), (-11.6, 5.0, 7.0), 0.5), 10)
+    # hammer and tongs leaning against the right side
+    put(capsule(C, (11.2, -1.2, 0.3), (10.7, -0.8, 10.2), 0.45), 10)          # hammer haft
+    put(capsule(C, (9.9, -0.9, 10.2), (11.7, -0.7, 10.4), 0.85), 6)            # hammer head
+    put(capsule(C, (11.6, 1.6, 0.3), (10.6, 1.8, 12.6), 0.38), 6)              # tongs
+    put(capsule(C, (12.4, 1.8, 0.3), (10.9, 1.9, 12.6), 0.38), 6)
 
 def build_alchemy():
-    """An alchemy table: plank top on four legs, a bubbling flask, a tall vial, a mortar and a candle."""
-    global M, N
+    """An alchemy table at hip height: a green brew bubbling over a burner, a rack of the three
+    potions, a tall blue vial, a mortar and pestle, an open book and a lit candle."""
+    global M
     M = np.zeros(X.shape, np.uint8)
     def put(mask, mat):
         M[mask] = mat
     C = coords(IDENT)
     x, y, z = C
-    top = box(C, -6.6, 6.6, -2.4, 3.6, 10.0, 11.0)
+    TOP = 12.0
+    top = box(C, -11.4, 11.4, -2.6, 6.4, TOP - 1.2, TOP)
     put(top, 7)
-    put(top & (np.abs(np.floor(y / 2.0) - y / 2.0) < 0.12), 8)             # plank seams
-    for lx in (-5.8, 5.8):
-        for ly in (-1.6, 2.8):
-            put(box(C, lx - 0.6, lx + 0.6, ly - 0.6, ly + 0.6, 0.0, 10.0), 7)
-    put(box(C, -6.0, 6.0, -2.0, -1.2, 8.6, 10.0), 8)                        # front apron
-    put(box(C, -5.4, 5.4, 2.4, 3.2, 2.4, 3.0), 8)                          # stretcher
-    # round flask of green brew, glass above the liquid
-    fc = np.array([-3.4, 0.4, 13.2])
-    put(ball(C, fc, 2.3), 12)
-    put(ball(C, fc, 2.3) & (z > 14.7), 9)                                 # glass above the brew line
-    put(capsule(C, fc + [0, 0, 1.8], fc + [0, 0, 4.4], 0.75), 9)
-    put(ball(C, fc + [0.6, -0.9, 1.6], 0.5), 12)                           # a bubble breaking the surface
-    # tall vial of blue
-    vc = np.array([3.6, 0.0, 11.0])
-    put(capsule(C, vc + [0, 0, 0.6], vc + [0, 0, 6.2], 1.1), 11)
-    put(capsule(C, vc + [0, 0, 3.4], vc + [0, 0, 6.2], 1.1), 9)
-    put(capsule(C, vc + [0, 0, 6.2], vc + [0, 0, 7.4], 0.8), 13)          # cork
-    # stone mortar with a pestle, front centre
-    mc = np.array([0.6, -1.0, 11.0])
-    put(capsule(C, mc + [0, 0, 0.3], mc + [0, 0, 1.6], 1.3, 1.6), 1)
-    put(capsule(C, mc + [0.3, 0.2, 1.4], mc + [1.6, 0.8, 3.6], 0.45), 13)
-    # a stub of candle at the back right, flame burning
-    cc = np.array([5.4, 2.6, 11.0])
-    put(capsule(C, cc, cc + [0, 0, 2.2], 0.6), 14)
-    put(capsule(C, cc + [0, 0, 2.8], cc + [0, 0, 3.8], 0.45, 0.2), 10)
+    put(top & ((((y + 30) % 2.3) < 0.35) | (np.abs(np.abs(x) - 11.0) < 0.4)), 11)   # plank seams, end grain
+    for lx in (-10.2, 10.2):                                                   # turned legs
+        for ly in (-1.4, 5.2):
+            put(box(C, lx - 0.75, lx + 0.75, ly - 0.75, ly + 0.75, 0.0, TOP - 1.2), 7)
+            put(box(C, lx - 0.95, lx + 0.95, ly - 0.95, ly + 0.95, 0.0, 0.8), 11)
+    put(box(C, -10.0, 10.0, -2.2, -1.4, TOP - 3.4, TOP - 1.2), 11)             # front apron
+    put(box(C, -2.6, 2.6, -2.5, -2.1, TOP - 2.8, TOP - 1.6), 7)                # drawer front
+    put(ball(C, (0, -2.6, TOP - 2.2), 0.45), 12)                               # brass pull
+    put(box(C, -9.6, 9.6, 4.6, 5.6, 2.2, 3.0), 11)                             # stretcher
+    put(box(C, -9.6, 9.6, -2.0, 6.0, 3.0, 3.6) & ((((x + 30) % 2.8) < 2.2)), 7)  # low shelf
+    put(capsule(C, (-7.0, 1.0, 3.6), (-7.0, 1.0, 5.4), 1.3, 1.1), 13)          # a stoppered jar on the shelf
+    put(capsule(C, (-7.0, 1.0, 5.4), (-7.0, 1.0, 6.2), 0.6), 10)
+    # round flask of green brew over a little burner (left)
+    fc = np.array([-6.4, 1.8, TOP + 5.0])
+    put(capsule(C, (fc[0], fc[1], TOP), (fc[0], fc[1], TOP + 1.6), 1.3), 6)    # burner
+    put(capsule(C, (fc[0], fc[1], TOP + 1.6), (fc[0], fc[1], TOP + 2.6), 0.6, 0.2), 14)
+    for a in (0, 2.09, 4.19):                                                  # tripod
+        put(capsule(C, (fc[0] + 2.4 * np.cos(a), fc[1] + 2.4 * np.sin(a), TOP), (fc[0], fc[1], TOP + 2.8), 0.3), 6)
+    put(ball(C, fc, 2.9), 15)
+    put(ball(C, fc, 2.9) & (z > fc[2] + 1.2), 13)
+    put(capsule(C, fc + [0, 0, 2.4], fc + [0, 0, 5.4], 0.85), 13)              # neck
+    put(capsule(C, fc + [0, 0, 5.2], fc + [3.6, 0.6, 6.4], 0.4), 12)           # brass condenser tube
+    put(ball(C, fc + [0.8, -1.5, 1.6], 0.55), 15)                              # bubbles breaking the surface
+    put(ball(C, fc + [-1.0, -1.2, 1.9], 0.45), 15)
+    # rack of the three potions (ember, stone, breath), centre back
+    put(box(C, -2.6, 3.8, 3.4, 5.2, TOP, TOP + 0.6), 7)
+    put(box(C, -2.6, 3.8, 3.4, 5.2, TOP + 3.0, TOP + 3.5) & ~(((x + 30) % 2.1) < 1.2), 7)
+    for i, (px, mat) in enumerate(((-1.5, 16), (0.6, 17), (2.7, 18))):
+        put(capsule(C, (px, 4.3, TOP + 0.6), (px, 4.3, TOP + 3.2), 0.75), mat)
+        put(capsule(C, (px, 4.3, TOP + 3.2), (px, 4.3, TOP + 4.6), 0.4), 13)
+        put(ball(C, (px, 4.3, TOP + 4.8), 0.45), 10)                           # corks
+    # tall blue vial and a mortar with its pestle (front right)
+    vc = np.array([7.0, 2.6, TOP])
+    put(capsule(C, vc + [0, 0, 0.5], vc + [0, 0, 7.5], 1.2), 18)
+    put(capsule(C, vc + [0, 0, 4.6], vc + [0, 0, 7.5], 1.2), 13)
+    put(capsule(C, vc + [0, 0, 7.5], vc + [0, 0, 8.6], 0.8), 10)
+    mc = np.array([3.6, -0.8, TOP])
+    put(capsule(C, mc + [0, 0, 0.3], mc + [0, 0, 1.9], 1.5, 1.9), 1)
+    put(capsule(C, mc + [0, 0, 1.6], mc + [0, 0, 2.2], 1.2), 3)
+    put(capsule(C, mc + [0.2, 0.3, 1.8], mc + [1.8, 1.0, 4.4], 0.5), 10)
+    # an open book, front left, and a stub of candle at the back right
+    bk = (np.abs(x + 2.2) < 2.6) & (y > -2.2) & (y < 1.4) & (z >= TOP) & (z < TOP + 0.6 + 0.25 * np.abs(x + 2.2))
+    put(bk, 19)
+    put(bk & (np.abs(x + 2.2) < 0.3), 9)                                       # spine
+    put(bk & (z < TOP + 0.4), 9)                                               # cover
+    cc = np.array([9.4, 5.0, TOP])
+    put(capsule(C, cc, cc + [0, 0, 3.4], 0.75), 20)
+    put(capsule(C, cc + [0.4, 0, 0], cc + [0.6, -0.1, 1.6], 0.35), 20)         # a wax drip
+    put(capsule(C, cc + [0, 0, 4.0], cc + [0, 0, 5.4], 0.55, 0.2), 14)
 
-PROPS = [('forge', build_forge), ('alchemy', build_alchemy)]
+STATIONS = [('forge', build_forge), ('alchemy', build_alchemy)]
 
 def finish():
     global N
-    occ = gauss3d((M > 0).astype(float), 1.2)
+    occ = gauss3d((M > 0).astype(float), 1.6)
     gx, gy, gz = np.gradient(occ)
     N = -np.stack([gx, gy, gz], -1)
     N /= (np.linalg.norm(N, axis=-1, keepdims=True) + 1e-9)
 
-def check_fits(name):
-    """Props stand on their anchor: they are never shifted, so they must already fit the frame."""
+def measure():
     occ = np.argwhere(M > 0)
     p = np.stack([xs[occ[:, 0]], ys[occ[:, 1]], zs[occ[:, 2]]], -1)
-    sx = p[:, 0]
-    sy = p[:, 1] * np.sin(PHI) + p[:, 2] * np.cos(PHI)
+    return p[:, 0], p[:, 1] * np.sin(PHI) + p[:, 2] * np.cos(PHI)
+
+def check_fits(name):
+    """Stations stand on their anchor and are never shifted, so they must already fit the frame."""
+    sx, sy = measure()
     lim_x, lo_y, hi_y = W / 2 - 1.25, -1.5, FOOT_ROW - 1.5      # content in columns and rows 1..edge-2
     if sx.min() < -lim_x or sx.max() > lim_x or sy.min() < lo_y or sy.max() > hi_y:
         raise ValueError(f'{name} does not fit the {W}x{H} frame: '
                          f'x {sx.min():.1f}..{sx.max():.1f}, y {sy.min():.1f}..{sy.max():.1f}')
 
 def generate(out_dir=None, name='stations'):
+    """Write <name>.png and <name>.json. Stills go in `frames` (name -> index); `animations` stays empty."""
     out_dir = out_dir or DEFAULT_OUT
-    sheet = Image.new('RGBA', (W * len(PROPS), H), (0, 0, 0, 0))
-    frames = {}
-    for i, (key, fn) in enumerate(PROPS):
+    sheet = Image.new('RGBA', (W * len(STATIONS), H), (0, 0, 0, 0))
+    frames, report = {}, {}
+    for i, (key, fn) in enumerate(STATIONS):
         fn()
         finish()
         check_fits(key)
+        sx, sy = measure()
+        report[key] = {'width_px': round(float(sx.max() - sx.min()) + 1), 'height_px': round(float(sy.max() - sy.min()) + 1)}
         sheet.paste(Image.fromarray(compose(*render(0)), 'RGBA'), (i * W, 0))
         frames[key] = i
     os.makedirs(out_dir, exist_ok=True)
     sheet.save(os.path.join(out_dir, f'{name}.png'))
     meta = {'image': f'{name}.png', 'frameWidth': W, 'frameHeight': H, 'anchor': [0.5, 1],
-            'frames': frames, 'animations': {}}
+            'pivots': {}, 'frames': frames, 'animations': {}}
     with open(os.path.join(out_dir, f'{name}.json'), 'w', encoding='utf-8', newline='\n') as f:
         f.write(json.dumps(meta, indent=2) + '\n')
-    return sheet, meta
+    return sheet, meta, report
 
 # ---------------------------------------------------------------- renderer
-W, H = 16, 24                                 # props: 16 wide, 24 tall
+W, H = 32, 48                                 # stations: 32 wide, 48 tall
 PHI = np.radians(32)                          # camera pitch: 3/4 overhead
 F = np.array([0, np.cos(PHI), -np.sin(PHI)])  # into the screen
 U = np.array([0, np.sin(PHI), np.cos(PHI)])   # screen up
@@ -289,7 +369,7 @@ R = np.array([1.0, 0, 0])                     # screen right
 LV = np.array([-0.6, 0.45, 0.85])            # light: upper-left, from the viewer side
 LV /= np.linalg.norm(LV)
 L_WORLD = LV[0] * R + LV[1] * U - LV[2] * F
-FOOT_ROW = 21.0                               # ground 3 rows above the bottom, as for characters
+FOOT_ROW = 45.0
 
 def rot(v, ang):
     c, s = np.cos(ang), np.sin(ang)
@@ -366,5 +446,5 @@ def compose(out_mat, out_lvl, depth):
 
 
 if __name__ == '__main__':
-    sheet, meta = generate(sys.argv[1] if len(sys.argv) > 1 else None)
-    print('sheet', sheet.size, list(meta['frames']))
+    sheet, meta, report = generate(sys.argv[1] if len(sys.argv) > 1 else None)
+    print('sheet', sheet.size, meta['frames'], report)
