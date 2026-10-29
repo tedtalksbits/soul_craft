@@ -1,6 +1,6 @@
 | Done || Done || Done || Done || Done || Done |# Character Art Design Doc
 
-Last updated: 2026-10-29 (slime look and timing decided; see "Slime". Next: the slime delivery)
+Last updated: 2026-10-29 (slime ported; see "Port report: slime". Every enemy now has real art)
 
 ## Purpose
 
@@ -311,6 +311,15 @@ Written by the implementation agent, 2026-10-29, for `archer.py` and the revised
     travel. A retreating archer keeps its eyes on you, and the renderer plays its walk in reverse.
   - Arrows are drawn from the release height.
   - The archer is removed from placeholder generation; the knight is the last placeholder.
+
+### Port report: slime
+
+- **Installed as delivered** (`tools/art/slime.py`, `pnpm art slime`). It runs clean with warnings as errors, and
+  `pnpm art slime` reproduces the delivered PNG byte for byte. Undirected `idle`, `hop`, `hurt`, `dead` with
+  per-animation offsets. The hop rises 4 and 8 px over a ground shadow that stays put.
+- **Shadow:** the engine draws no shadows of its own, so the baked one is the only one. Its colour stays as delivered.
+- **Gel icon:** `slime_gel` in `items.py` now uses the slime's violet ramp, so the drop matches the creature.
+- **Placeholders:** the slime is removed from placeholder generation. What's left is tiles, props and the font.
 
 ### Port report: items and stations
 

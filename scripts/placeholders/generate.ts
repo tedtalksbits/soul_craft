@@ -11,15 +11,14 @@ import { join } from 'node:path';
 import { format, resolveConfig } from 'prettier';
 import type { SpriteSheetFile } from '../../src/content/sprite-sheet';
 import { ROOT } from '../lib/load-content';
-import { buildFont, buildProps, buildSlime } from './misc';
+import { buildFont, buildProps } from './misc';
 import { buildTiles } from './tiles';
 
 const OUT = join(ROOT, 'assets', 'sprites');
 
-/** Sheets that still use placeholder art. Real art moves out of here (`pnpm art ashen_one`, `hollow`, `archer`, `knight`, `items`, `stations`). */
+/** Sheets that still use placeholder art. Real art moves out of here (`pnpm art ashen_one`, `hollow`, `archer`, `knight`, `slime`, `items`, `stations`). */
 const SHEETS: Record<string, () => { png: Buffer; json: SpriteSheetFile }> = {
   tiles: buildTiles,
-  slime: buildSlime,
   props: buildProps,
   font: buildFont,
 };

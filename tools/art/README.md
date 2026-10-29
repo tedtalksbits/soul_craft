@@ -11,6 +11,7 @@ pnpm art ashen_one      # regenerate assets/sprites/player.png + player.json (ab
 pnpm art hollow         # regenerate assets/sprites/hollow.png + hollow.json (about 80 s)
 pnpm art archer         # regenerate assets/sprites/archer.png + archer.json (about 80 s)
 pnpm art knight         # regenerate assets/sprites/knight.png + knight.json
+pnpm art slime          # regenerate assets/sprites/slime.png + slime.json
 pnpm art items          # regenerate assets/sprites/items.png + items.json (seconds)
 pnpm art stations       # regenerate assets/sprites/stations.png + stations.json (seconds)
 ```
@@ -27,6 +28,7 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 | `hollow.py`    | `hollow.*`   | The Hollow: idle, walk, windup, attack, hurt, dead; 8 directions, 48×48 (sheet 384×624); `head` pivot |
 | `archer.py`    | `archer.*`   | The Archer: the same six animations; `head` plus per-direction `release` on `attack_<dir>`            |
 | `knight.py`    | `knight.*`   | The Oathbound Knight: idle, walk, windup, attack (looping charge), stunned, dead; `head` pivot        |
+| `slime.py`     | `slime.*`    | The Fungal Slime: undirected idle, hop (lift drawn in, ground shadow), hurt, dead; `head` pivot       |
 | `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels)  |
 | `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 32×48 `frames`, voxel-rendered like the characters        |
 

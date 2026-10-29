@@ -1,46 +1,6 @@
-/** Placeholder slime, props (bonfire, torch, sign, pickups) and the bitmap digit font. */
+/** Placeholder props (bonfire, torch, sign, pickups) and the bitmap digit font. */
 import type { SpriteSheetFile } from '../../src/content/sprite-sheet';
 import { hex, Sheet, type Surface } from './pixel-canvas';
-
-const SHADOW = hex('#000000', 90);
-
-// ------------------------------------------------------------------ slime (16x16)
-
-function drawSlime(s: Surface, squish: number, hop: number, flash: boolean): void {
-  s.ellipse(8, 14.5, 6, 2, SHADOW);
-  const y = 11 - hop;
-  s.ellipse(8, y, 6 * squish, 5 / squish, flash ? hex('#e8fff0') : hex('#4a8a6a'));
-  s.rect(5, y - 3, 2, 1, hex('#8ad8a8'));
-  s.rect(9, y - 5, 2, 2, hex('#c49aff'));
-  s.rect(6, y - 6, 1, 2, hex('#c49aff'));
-  s.rect(6, y - 1, 1, 1, hex('#102018'));
-  s.rect(10, y - 1, 1, 1, hex('#102018'));
-}
-
-export function buildSlime(): { png: Buffer; json: SpriteSheetFile } {
-  const sheet = new Sheet(64, 48);
-  const squish = [1, 1.08, 1, 0.92];
-  squish.forEach((k, i) => drawSlime(sheet.frame(i, 16, 16), k, 0, false));
-  [0.85, 1, 1.05, 1.1].forEach((k, i) =>
-    drawSlime(sheet.frame(4 + i, 16, 16), k, [2, 5, 5, 2][i] ?? 0, false),
-  );
-  drawSlime(sheet.frame(8, 16, 16), 1.15, 0, true);
-  return {
-    png: sheet.toPNG(),
-    json: {
-      image: 'slime.png',
-      frameWidth: 16,
-      frameHeight: 16,
-      anchor: [0.5, 1],
-      frames: {},
-      animations: {
-        idle: { frames: [0, 1, 2, 3], fps: 4, loop: true },
-        hop: { frames: [4, 5, 6, 7], fps: 8, loop: false },
-        hurt: { frames: [8], fps: 1, loop: false },
-      },
-    },
-  };
-}
 
 // ------------------------------------------------------------------ props (16x24)
 

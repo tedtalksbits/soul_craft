@@ -34,7 +34,7 @@ MATERIALS = {
     'iron':    ('iI6', ('#c9ced3', '#9da2a8', '#5f646b', '#34373c')),   # the player's steel
     'rust':    ('rR7', ('#bd703a', '#9a5a2e', '#6b3c1e', '#4a2713')),   # the hollow's rust
     'bone':    ('bB8', ('#e7dec4', '#c8c0a8', '#8a8470', '#5f5a49')),   # the archer's bone
-    'gel':     ('sS9', ('#c4f0a0', '#7cc25a', '#4f8a3e', '#2c5428')),
+    'gel':     ('sS9', ('#b08ac0', '#7d5a92', '#55396a', '#33213f')),   # the slime's violet gel
     'leather': ('lL0', ('#6e5442', '#4f3c30', '#33271f', '#1c1511')),
     'brass':   ('yY!', ('#ecd096', '#d0a85c', '#9a7536', '#5c4220')),   # the player's gold
     'jacket':  ('pP@', ('#857a64', '#665c4c', '#453e33', '#2a251f')),

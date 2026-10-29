@@ -1,12 +1,35 @@
 {
   "image": "slime.png",
-  "frameWidth": 16,
-  "frameHeight": 16,
+  "frameWidth": 48,
+  "frameHeight": 48,
   "anchor": [0.5, 1],
-  "frames": {},
+  "pivots": {
+    "head": [0, -16]
+  },
   "animations": {
-    "idle": { "frames": [0, 1, 2, 3], "fps": 4, "loop": true },
-    "hop": { "frames": [4, 5, 6, 7], "fps": 8, "loop": false },
-    "hurt": { "frames": [8], "fps": 1, "loop": false }
+    "idle": {
+      "frames": [0, 1],
+      "fps": 2,
+      "loop": true,
+      "offset": [0, 3]
+    },
+    "hop": {
+      "frames": [2, 3, 4, 5],
+      "fps": 10,
+      "loop": false,
+      "offset": [0, 4]
+    },
+    "hurt": {
+      "frames": [6],
+      "fps": 4.29,
+      "loop": false,
+      "offset": [0, 3]
+    },
+    "dead": {
+      "frames": [7],
+      "fps": 1.5,
+      "loop": false,
+      "offset": [0, 4]
+    }
   }
 }

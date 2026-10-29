@@ -136,6 +136,6 @@ script, not the PNG.
 
 `pnpm assets:placeholders` draws programmatic placeholder sheets (`scripts/placeholders/`). It **never
 overwrites existing files** unless you pass `--force` (optionally limited to names:
-`pnpm assets:placeholders --force props`). What is still placeholder: tiles, the slime, props (bonfire, sign,
+`pnpm assets:placeholders --force props`). What is still placeholder: tiles, props (bonfire, sign,
 torch, souls, ember) and the font. Replace any PNG with real art whenever you like, keeping the
 grid and JSON in step.
