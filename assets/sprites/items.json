@@ -1,0 +1,26 @@
+{
+  "image": "items.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "anchor": [0.5, 1],
+  "frames": {
+    "ashwood": 0,
+    "fungal_cap": 1,
+    "glowspore": 2,
+    "iron_scrap": 3,
+    "bone_shard": 4,
+    "slime_gel": 5,
+    "chipped_sword": 6,
+    "iron_sword": 7,
+    "bone_cleaver": 8,
+    "padded_jacket": 9,
+    "iron_mail": 10,
+    "ring_vigor": 11,
+    "ring_breath": 12,
+    "bandage": 13,
+    "potion_ember": 14,
+    "potion_stone": 15,
+    "potion_breath": 16
+  },
+  "animations": {}
+}

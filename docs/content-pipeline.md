@@ -4,15 +4,17 @@ Everything a designer tunes lives in data, validated on load and hot-reloaded wh
 
 ## Content (`/content`)
 
-| File                  | What it defines                                                      |
-| --------------------- | -------------------------------------------------------------------- |
-| `player.json`         | Player stats: health, stamina, attack, roll, flask, death            |
-| `enemies.json`        | Enemy archetypes: stats, drops and a `brain` with its own parameters |
-| `tiles.json`          | Tile types: sprite frames, solidity, cutting, light, map colour      |
-| `biomes.json`         | Ground, scatter rules, darkness, ambient particles, spawn tables     |
-| `world.json`          | Terrain noise, biome rules, origin and region prefab placement       |
-| `prefabs/<id>.json`   | Handmade set pieces as ASCII rows plus a legend                      |
-| `scenarios/<id>.json` | Dev boot presets: a seed and console commands                        |
+| File                  | What it defines                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| `player.json`         | Player stats: health, stamina, attack timing, roll, flask, pack size, starting kit |
+| `items.json`          | Items: materials, weapons, armour, rings, consumables                              |
+| `recipes.json`        | Crafting recipes: output, inputs, soul cost, station                               |
+| `enemies.json`        | Enemy archetypes: stats, drops and a `brain` with its own parameters               |
+| `tiles.json`          | Tile types: sprite frames, solidity, cutting, light, map colour                    |
+| `biomes.json`         | Ground, scatter rules, darkness, ambient particles, spawn tables                   |
+| `world.json`          | Terrain noise, biome rules, origin and region prefab placement                     |
+| `prefabs/<id>.json`   | Handmade set pieces as ASCII rows plus a legend                                    |
+| `scenarios/<id>.json` | Dev boot presets: a seed and console commands                                      |
 
 Schemas: `src/content/schemas.ts`. Cross-references (biome → tile, prefab → enemy and so on) are checked in
 `src/content/content.ts`. One bad file reports every problem with its path, and the running game keeps its
@@ -38,12 +40,32 @@ A tile with `cut` can be broken by the player's sword: `{ "hits": 3 }` takes thr
 however many tiles the swing covers), `into` is what it becomes (default: the local biome's first ground
 tile, so a dead tree leaves ash in the hills and pale earth in the graveyard), and `drops` lists pickups.
 Partial damage is remembered per tile and saved. Currently: tall grass and tall moss (1 hit, small drops),
-trees and fungal trees (3), dead trees and giant mushrooms (2, no drops). Rocks, walls, graves and water are
-not cuttable.
+trees and fungal trees (3), dead trees and giant mushrooms (2). Trees and mushrooms drop crafting materials
+(ashwood, fungal caps, glowspores), never souls. Rocks, walls, graves and water are not cuttable.
 
 Movement assistance for the player lives in `player.json`: `cornerSlide` is how many pixels the player is
 nudged around a corner it clips while walking straight (0 turns it off). Enemies get none, so a knight's
 charge still slams into corners.
+
+### Items and recipes
+
+Every item has `kind`, `name`, `description`, `icon` (a frame name in `assets/sprites/items.json`) and
+`stack` (equipment must be 1). By kind:
+
+- `material`: nothing else; used by recipes and upgrades.
+- `weapon`: `weapon { damage, staminaCost, reach, width, knockback }` and `upgrades`, the forge steps in order,
+  each `{ damage, souls, items }`. The player's swing uses the equipped weapon; unarmed is weak on purpose.
+- `armor`: `armor { defense }`, the fraction of incoming damage absorbed (capped at 0.9 with buffs).
+- `ring`: `ring { stat, amount }`. Two ring slots.
+- `consumable`: `effect` is `{ type: "heal", amount }` or `{ type: "buff", stat, amount, seconds }`.
+  Drinking one takes the flask's drink time. A second buff on the same stat refreshes the first.
+
+Stats are `damage`, `defense`, `staminaRegen` (fractions: 0.2 = +20%) and `maxHp` (points).
+
+A recipe is `{ output { item, count }, inputs [{ item, count }], souls, station }`, where `station` is
+`"forge"`, `"alchemy"` or `null` (craftable anywhere). Stations are prefab entities; the player must stand
+within twice the interact range. Enemy and tile `drops` can be `{ "kind": "item", "item": "iron_scrap", ... }`.
+Every item id named anywhere is cross-checked on load.
 
 ### Prefabs
 
@@ -60,8 +82,8 @@ charge still slams into corners.
 }
 ```
 
-A space keeps the generated terrain. Entity kinds: `bonfire`, `sign`, `enemy`, `torch`, `playerSpawn`
-(origin prefab only). To add a prefab to the world, add it to `world.json → regions.prefabs` with a weight.
+A space keeps the generated terrain. Entity kinds: `bonfire`, `sign`, `enemy`, `torch`, `station`
+(`{ "kind": "station", "station": "forge" }`), `playerSpawn` (origin prefab only). To add a prefab to the world, add it to `world.json → regions.prefabs` with a weight.
 
 ## Sprites (`/assets/sprites`)
 

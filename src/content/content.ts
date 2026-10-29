@@ -10,15 +10,22 @@ import type { z } from 'zod';
 import {
   BiomesSchema,
   EnemiesSchema,
+  ItemsSchema,
   PlayerSchema,
   PrefabSchema,
+  RecipesSchema,
   ScenarioSchema,
   TilesSchema,
   WorldSchema,
   type BiomeDef,
+  type DropDef,
   type EnemyDef,
+  type ItemCount,
+  type ItemDef,
+  type ItemKind,
   type PlayerDef,
   type PrefabDef,
+  type RecipeDef,
   type ScenarioDef,
   type TileDef,
   type WorldDef,
@@ -39,6 +46,8 @@ const SINGLE_FILES = {
   'tiles.json': TilesSchema,
   'biomes.json': BiomesSchema,
   'world.json': WorldSchema,
+  'items.json': ItemsSchema,
+  'recipes.json': RecipesSchema,
 } as const;
 
 const DIRECTORIES = {
@@ -58,6 +67,8 @@ export class Content {
     readonly world: WorldDef,
     readonly prefabs: Readonly<Record<string, PrefabDef>>,
     readonly scenarios: Readonly<Record<string, ScenarioDef>>,
+    readonly items: Readonly<Record<string, ItemDef>>,
+    readonly recipes: Readonly<Record<string, RecipeDef>>,
   ) {
     this.tileIndex = new Map(tiles.map((t, i) => [t.id, i]));
   }
@@ -78,6 +89,12 @@ export class Content {
   enemy(archetype: string): EnemyDef {
     const def = this.enemies[archetype];
     if (!def) throw new Error(`Unknown enemy archetype "${archetype}"`);
+    return def;
+  }
+
+  item(id: string): ItemDef {
+    const def = this.items[id];
+    if (!def) throw new Error(`Unknown item "${id}"`);
     return def;
   }
 }
@@ -123,15 +140,19 @@ export function buildContent(files: ContentFiles): Content {
   const tiles = parse('tiles.json', SINGLE_FILES['tiles.json']);
   const biomes = parse('biomes.json', SINGLE_FILES['biomes.json']);
   const world = parse('world.json', SINGLE_FILES['world.json']);
+  const items = parse('items.json', SINGLE_FILES['items.json']);
+  const recipes = parse('recipes.json', SINGLE_FILES['recipes.json']);
   const prefabs = parseDir('prefabs', DIRECTORIES.prefabs);
   const scenarios = parseDir('scenarios', DIRECTORIES.scenarios);
 
-  if (!player || !enemies || !tiles || !biomes || !world) throw new ContentError(problems);
+  if (!player || !enemies || !tiles || !biomes || !world || !items || !recipes)
+    throw new ContentError(problems);
 
   checkReferences({ enemies, tiles, biomes, world, prefabs }, problems);
+  checkItems({ player, enemies, tiles, items, recipes }, problems);
   if (problems.length > 0) throw new ContentError(problems);
 
-  return new Content(files, player, enemies, tiles, biomes, world, prefabs, scenarios);
+  return new Content(files, player, enemies, tiles, biomes, world, prefabs, scenarios, items, recipes);
 }
 
 function checkReferences(
@@ -193,4 +214,42 @@ function checkReferences(
   const origin = c.prefabs[w.origin.prefab];
   if (origin && !Object.values(origin.legend).some((e) => e.entity?.kind === 'playerSpawn'))
     problems.push(`prefabs/${w.origin.prefab}.json: the origin prefab needs a playerSpawn marker`);
+}
+
+function checkItems(
+  c: {
+    player: PlayerDef;
+    enemies: Record<string, EnemyDef>;
+    tiles: TileDef[];
+    items: Record<string, ItemDef>;
+    recipes: Record<string, RecipeDef>;
+  },
+  problems: string[],
+): void {
+  const item = (where: string, id: string, kind?: ItemKind) => {
+    const def = c.items[id];
+    if (!def) problems.push(`${where}: unknown item "${id}"`);
+    else if (kind && def.kind !== kind)
+      problems.push(`${where}: "${id}" is a ${def.kind}, expected a ${kind}`);
+  };
+  const counts = (where: string, list: readonly ItemCount[]) => {
+    for (const ic of list) item(where, ic.item);
+  };
+  const drops = (where: string, list: readonly DropDef[]) => {
+    for (const d of list) if (d.item !== undefined) item(where, d.item);
+  };
+
+  item('player.json: start.weapon', c.player.start.weapon, 'weapon');
+  counts('player.json: start.items', c.player.start.items);
+  for (const [id, e] of Object.entries(c.enemies)) drops(`enemies.json: ${id}.drops`, e.drops);
+  for (const t of c.tiles) if (t.cut) drops(`tiles.json: ${t.id}.cut.drops`, t.cut.drops);
+  for (const [id, def] of Object.entries(c.items)) {
+    if (def.kind === 'weapon') for (const u of def.upgrades) counts(`items.json: ${id}.upgrades`, u.items);
+    if (def.kind !== 'material' && def.kind !== 'consumable' && def.stack !== 1)
+      problems.push(`items.json: ${id}: equipment must have stack 1`);
+  }
+  for (const [id, r] of Object.entries(c.recipes)) {
+    item(`recipes.json: ${id}.output`, r.output.item);
+    counts(`recipes.json: ${id}.inputs`, r.inputs);
+  }
 }

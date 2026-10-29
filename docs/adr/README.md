@@ -13,3 +13,4 @@ it with a new one and link both ways. Template: copy `0000-template.md`.
 | [0006](0006-full-snapshot-saves.md)               | Saves are versioned full snapshots with migrations and a backup   |
 | [0007](0007-command-registry-dev-tools.md)        | One command registry for console, scenarios and tests             |
 | [0008](0008-character-art-from-source.md)         | Character art is generated from source scripts in tools/art       |
+| [0009](0009-player-actions-through-input.md)      | Menu actions (equip, craft...) travel through the InputFrame      |

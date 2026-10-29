@@ -14,6 +14,7 @@ import {
   Pickup,
   Player,
   Sign,
+  Station,
   Torch,
 } from '../../sim/components';
 import { TICK_RATE } from '../../sim/constants';
@@ -115,7 +116,10 @@ export function selectAnim(
     pose = sim.state.litBonfires[ecs.need(e, Bonfire).id] ? 'bonfire_lit' : 'bonfire_unlit';
   } else if (ecs.has(e, Torch)) pose = 'torch';
   else if (ecs.has(e, Sign)) pose = 'sign';
-  else if (pickup) pose = pickup.kind;
+  else if (ecs.has(e, Station)) pose = ecs.need(e, Station).station;
+  // Item pickups draw their item's icon from the items sheet.
+  else if (pickup)
+    pose = pickup.item !== null ? (sim.content.items[pickup.item]?.icon ?? 'idle') : pickup.kind;
   else pose = 'idle';
 
   const directed = (p: string) => [`${p}_${dir8}`, `${p}_${dir}`, p];

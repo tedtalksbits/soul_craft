@@ -22,6 +22,17 @@ export interface Anim {
   pivots: Readonly<Record<string, readonly [number, number]>>;
 }
 
+/** Where a named frame sits in its sheet's PNG, for drawing it outside Pixi (DOM icons). */
+export interface FrameRect {
+  url: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  sheetW: number;
+  sheetH: number;
+}
+
 export class SpriteSheet {
   readonly frames: Texture[] = [];
   readonly named = new Map<string, Texture>();
@@ -30,7 +41,8 @@ export class SpriteSheet {
   constructor(
     readonly name: string,
     readonly def: SpriteSheetDef,
-    source: ImageSource,
+    private readonly source: ImageSource,
+    readonly url: string,
   ) {
     const cols = Math.floor(source.width / def.frameWidth);
     const rows = Math.floor(source.height / def.frameHeight);
@@ -54,6 +66,14 @@ export class SpriteSheet {
       if (textures.length > 0)
         this.anims.set(key, { textures, fps: a.fps, loop: a.loop, offset: a.offset, pivots: a.pivots });
     }
+  }
+
+  frameRect(key: string): FrameRect | undefined {
+    const index = this.def.frames[key];
+    const tex = index === undefined ? undefined : this.frames[index];
+    if (!tex) return undefined;
+    const { x, y, width: w, height: h } = tex.frame;
+    return { url: this.url, x, y, w, h, sheetW: this.source.width, sheetH: this.source.height };
   }
 
   /** An animation, or a named still frame wrapped as a one-frame animation. */
@@ -88,7 +108,10 @@ export class Assets {
         const name = nameOf(path);
         const pngUrl = SHEET_PNG[path.replace(/\.json$/, '.png')];
         if (!pngUrl) throw new Error(`Sprite sheet ${path} has no matching PNG`);
-        assets.sheets.set(name, new SpriteSheet(name, SpriteSheetSchema.parse(raw), await loadImage(pngUrl)));
+        assets.sheets.set(
+          name,
+          new SpriteSheet(name, SpriteSheetSchema.parse(raw), await loadImage(pngUrl), pngUrl),
+        );
       }),
     );
     return assets;
@@ -110,8 +133,8 @@ export class Assets {
       await fetch(`/assets/sprites/${name}.json${bust}`, { cache: 'no-store' })
     ).json();
     const def = SpriteSheetSchema.parse(raw);
-    const source = await loadImage(`/assets/sprites/${def.image}${bust}`);
-    this.sheets.set(name, new SpriteSheet(name, def, source));
+    const url = `/assets/sprites/${def.image}${bust}`;
+    this.sheets.set(name, new SpriteSheet(name, def, await loadImage(url), url));
     this.version++;
   }
 

@@ -23,7 +23,8 @@
       "into": "moss",
       "drops": [
         { "kind": "souls", "chance": 0.2, "amount": [2, 5] },
-        { "kind": "ember", "chance": 0.06, "amount": [10, 10] }
+        { "kind": "ember", "chance": 0.06, "amount": [10, 10] },
+        { "kind": "item", "item": "glowspore", "chance": 0.04, "amount": [1, 1] }
       ]
     },
     "map": "#36584a"
@@ -39,7 +40,7 @@
     "frames": ["tree"],
     "solid": true,
     "overlay": true,
-    "cut": { "hits": 3 },
+    "cut": { "hits": 3, "drops": [{ "kind": "item", "item": "ashwood", "chance": 1, "amount": [1, 2] }] },
     "map": "#2e4024"
   },
   {
@@ -47,7 +48,7 @@
     "frames": ["fungal_tree"],
     "solid": true,
     "overlay": true,
-    "cut": { "hits": 3 },
+    "cut": { "hits": 3, "drops": [{ "kind": "item", "item": "fungal_cap", "chance": 1, "amount": [1, 2] }] },
     "map": "#1e3a34"
   },
   {
@@ -55,7 +56,7 @@
     "frames": ["dead_tree"],
     "solid": true,
     "overlay": true,
-    "cut": { "hits": 2 },
+    "cut": { "hits": 2, "drops": [{ "kind": "item", "item": "ashwood", "chance": 1, "amount": [1, 1] }] },
     "map": "#3a302a"
   },
   {
@@ -63,7 +64,13 @@
     "frames": ["giant_shroom_0", "giant_shroom_1"],
     "solid": true,
     "overlay": true,
-    "cut": { "hits": 2 },
+    "cut": {
+      "hits": 2,
+      "drops": [
+        { "kind": "item", "item": "fungal_cap", "chance": 1, "amount": [1, 1] },
+        { "kind": "item", "item": "glowspore", "chance": 0.6, "amount": [1, 2] }
+      ]
+    },
     "light": { "radius": 34, "intensity": 0.7 },
     "map": "#7a3f8a"
   },

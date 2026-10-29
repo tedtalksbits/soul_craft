@@ -5,6 +5,7 @@
  */
 import { defineComponent, type Entity } from '../core/ecs';
 import type { Dir } from '../core/math';
+import type { StatId, StationId } from '../content/schemas';
 
 /** Collision box, centred on (x, y), in world pixels. */
 export interface Body {
@@ -71,8 +72,52 @@ export interface Player {
   souls: number;
   flasks: number;
   maxFlasks: number;
+  /** The consumable being drunk in the `drink` state; null means the flask. */
+  using: string | null;
 }
 export const Player = defineComponent<Player>('player');
+
+/** One inventory slot: an item, how many, and (for weapons) its forge upgrade level. */
+export interface ItemStack {
+  item: string;
+  count: number;
+  level: number;
+}
+
+/** What the player carries. Order is the display order; capacity is `player.inventorySlots`. */
+export interface Inventory {
+  stacks: ItemStack[];
+}
+export const Inventory = defineComponent<Inventory>('inventory');
+
+export type EquipSlot = 'weapon' | 'armor' | 'ring0' | 'ring1';
+export interface Equipment {
+  weapon: ItemStack | null;
+  armor: ItemStack | null;
+  ring0: ItemStack | null;
+  ring1: ItemStack | null;
+  /** Consumable used with the quick-use key; it stays in the inventory. */
+  quick: string | null;
+}
+export const Equipment = defineComponent<Equipment>('equipment');
+
+export interface Buff {
+  stat: StatId;
+  amount: number;
+  ticks: number;
+  /** The item that granted it. */
+  source: string;
+}
+export interface Buffs {
+  active: Buff[];
+}
+export const Buffs = defineComponent<Buffs>('buffs');
+
+/** A crafting station in the world. */
+export interface Station {
+  station: StationId;
+}
+export const Station = defineComponent<Station>('station');
 
 export interface Enemy {
   archetype: string;
@@ -120,10 +165,12 @@ export interface Projectile {
 }
 export const Projectile = defineComponent<Projectile>('projectile');
 
-export type PickupKind = 'souls' | 'ember';
+export type PickupKind = 'souls' | 'ember' | 'item';
 export interface Pickup {
   kind: PickupKind;
   amount: number;
+  /** For `item` pickups: which item. */
+  item: string | null;
   age: number;
   /** Visual hop height; the sim tracks it so pickups land deterministically. */
   z: number;

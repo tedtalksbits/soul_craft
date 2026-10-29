@@ -1,3 +1,5 @@
+import type { EquipSlot } from './components';
+
 /**
  * The only way input reaches the simulation: one plain frame per tick.
  * Keeping it device-agnostic and serializable is what makes replays,
@@ -9,8 +11,22 @@ export const Action = {
   roll: 1 << 1,
   heal: 1 << 2,
   use: 1 << 3,
+  /** Use the quick-slot consumable. */
+  item: 1 << 4,
 } as const;
 export type ActionName = keyof typeof Action;
+
+/**
+ * Menu actions (inventory, crafting). They travel inside the InputFrame like
+ * button presses, so they are just as deterministic and replayable.
+ */
+export type PlayerAction =
+  | { type: 'equip'; index: number }
+  | { type: 'unequip'; slot: EquipSlot }
+  | { type: 'use'; item: string }
+  | { type: 'setQuick'; item: string | null }
+  | { type: 'craft'; recipe: string }
+  | { type: 'upgrade' };
 
 export interface InputFrame {
   /** Movement intent, each axis in [-1, 1]. */
@@ -22,6 +38,8 @@ export interface InputFrame {
   pressed: number;
   /** Bitmask of {@link Action}s currently held. */
   held: number;
+  /** Menu actions issued this tick, applied in order. */
+  actions?: readonly PlayerAction[];
 }
 
 export const NO_INPUT: InputFrame = Object.freeze({ moveX: 0, moveY: 0, aim: null, pressed: 0, held: 0 });
@@ -34,6 +52,7 @@ export function inputFrame(opts: {
   move?: readonly [number, number];
   press?: readonly ActionName[];
   aim?: { x: number; y: number };
+  actions?: readonly PlayerAction[];
 }): InputFrame {
   const mask = (opts.press ?? []).reduce((m, a) => m | Action[a], 0);
   return {
@@ -42,5 +61,6 @@ export function inputFrame(opts: {
     aim: opts.aim ?? null,
     pressed: mask,
     held: mask,
+    ...(opts.actions ? { actions: opts.actions } : {}),
   };
 }

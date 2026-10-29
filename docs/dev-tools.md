@@ -29,6 +29,8 @@ Run `help` for the live list or `help <command>` for usage. Highlights:
 | ------------------------------------------------------------------------ | --------------------------------------------------- |
 | `god [on/off]`, `noclip`                                                 | Invulnerability, walk through walls                 |
 | `heal`, `give souls 500`, `give flasks 2`, `give maxhp 300`              | Player resources                                    |
+| `item <id> [count]`, `inv`, `equip <id>`                                 | Give items, list the pack, equip from it            |
+| `craft <recipe>`, `upgrade`                                              | Craft or upgrade the weapon, ignoring station range |
 | `kill`                                                                   | Die (tests death and respawn)                       |
 | `tp <x> <y>`, `home`, `where`                                            | Teleport by tile, return to bonfire, print location |
 | `spawn <enemy> [count] [dist]`                                           | Spawn a ring of enemies                             |

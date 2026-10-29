@@ -61,14 +61,15 @@ describe('enemy defences', () => {
   it('a shield knight blocks unless stunned', () => {
     const sim = newSim();
     face(sim, 'right');
-    const knight = spawnNear(sim, 'knight', 16, 0);
+    // Just outside the knight's 18 px wide body, so contact damage does not cancel the swing.
+    const knight = spawnNear(sim, 'knight', 18, 0);
     const hp = sim.ecs.need(knight, Health).hp;
     const blocked = press(sim, ['attack'], 20);
     expect(ofType(blocked, 'blocked')).toHaveLength(1);
     expect(sim.ecs.need(knight, Health).hp).toBe(hp);
 
     const kb = sim.ecs.need(knight, Body);
-    Object.assign(sim.ecs.need(sim.player, Body), { x: kb.x - 16, y: kb.y });
+    Object.assign(sim.ecs.need(sim.player, Body), { x: kb.x - 18, y: kb.y });
     sim.ecs.need(knight, Ai).state = 'stunned';
     sim.ecs.need(knight, Ai).t = 0;
     const hit = press(sim, ['attack'], 12);

@@ -1,28 +1,42 @@
-import { Container, Graphics } from 'pixi.js';
-import { Health, Player, Stamina } from '../../sim/components';
+import { Container, Graphics, Sprite } from 'pixi.js';
+import type { StatId } from '../../content/schemas';
+import { TICK_RATE } from '../../sim/constants';
+import { Buffs, Equipment, Health, Inventory, Player, Stamina } from '../../sim/components';
+import { countItem } from '../../sim/modules/items';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
 import { PixelText } from './pixel-text';
 
-/** Screen-space HUD: health (with chip), stamina, flasks and souls. */
+/** Buff pip colours, matching the potions that grant them. */
+const BUFF_COLORS: Readonly<Record<StatId, number>> = {
+  damage: 0xff7a30,
+  defense: 0x8a8778,
+  staminaRegen: 0x7ad8d0,
+  maxHp: 0xc43a2a,
+};
+
+/** Screen-space HUD: health (with chip), stamina, flasks, quick item, buffs and souls. */
 export class Hud {
   readonly root = new Container();
   private readonly g = new Graphics();
   private readonly flasks: PixelText;
   private readonly souls: PixelText;
+  private readonly quickIcon = new Sprite();
+  private readonly quickCount: PixelText;
   private chip = 1;
   private chipHoldMs = 0;
   private lastHp = -1;
   private shownSouls = -1;
 
   constructor(
-    assets: Assets,
+    private readonly assets: Assets,
     private readonly viewW: number,
     private readonly viewH: number,
   ) {
     this.flasks = new PixelText(assets);
     this.souls = new PixelText(assets);
-    this.root.addChild(this.g, this.flasks, this.souls);
+    this.quickCount = new PixelText(assets);
+    this.root.addChild(this.g, this.flasks, this.souls, this.quickIcon, this.quickCount);
   }
 
   reset(): void {
@@ -57,6 +71,34 @@ export class Hud {
     g.rect(7, 20, 5, 6).fill(full ? 0xff9a30 : 0x555555);
     this.flasks.set(String(player.flasks), full ? 0xe8e0cc : 0x888888);
     this.flasks.position.set(15, 20);
+
+    // Quick item (Q): its icon and how many are left, greyed out at zero.
+    const quick = sim.ecs.get(e, Equipment)?.quick ?? null;
+    const quickDef = quick ? sim.content.items[quick] : undefined;
+    const tex = quickDef ? this.assets.sheet('items')?.named.get(quickDef.icon) : undefined;
+    this.quickIcon.visible = tex !== undefined;
+    this.quickCount.visible = tex !== undefined;
+    if (tex && quick) {
+      const left = countItem(sim.ecs.need(e, Inventory), quick);
+      g.rect(26, 16, 16, 16).fill({ color: 0x000000, alpha: 0.5 });
+      this.quickIcon.texture = tex;
+      this.quickIcon.position.set(26, 16);
+      this.quickIcon.alpha = left > 0 ? 1 : 0.35;
+      this.quickCount.set(String(left), left > 0 ? 0xe8e0cc : 0x888888);
+      this.quickCount.position.set(44, 20);
+    }
+
+    // Buffs: a pip per active buff, its bar running down with the time left.
+    let bx = 6;
+    for (const b of sim.ecs.get(e, Buffs)?.active ?? []) {
+      const def = sim.content.items[b.source];
+      const total =
+        def?.kind === 'consumable' && def.effect.type === 'buff' ? def.effect.seconds * TICK_RATE : b.ticks;
+      g.rect(bx, 34, 5, 5).fill(BUFF_COLORS[b.stat]);
+      g.rect(bx, 40, 5, 1).fill({ color: 0x000000, alpha: 0.6 });
+      g.rect(bx, 40, Math.max(1, Math.round((5 * b.ticks) / total)), 1).fill(0xe8e0cc);
+      bx += 8;
+    }
 
     // Souls count up toward the true value.
     if (this.shownSouls < 0) this.shownSouls = player.souls;

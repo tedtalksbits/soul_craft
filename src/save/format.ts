@@ -11,7 +11,7 @@ import { Player } from '../sim/components';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -67,6 +67,46 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     const snapshot = asRecord(save['snapshot']);
     const state = asRecord(snapshot['state']);
     return { ...save, snapshot: { ...snapshot, state: { tileDamage: {}, ...state } } };
+  },
+  /**
+   * v2 -> v3: items and crafting. The player gains an inventory (empty), equipment (the
+   * starting Chipped Sword), buffs and `using`; pickups gain `item`.
+   */
+  2: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const ecs = asRecord(snapshot['ecs']);
+    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
+    const playerRow = components['player']?.[0];
+    if (!playerRow) throw new SaveError('save has no player');
+    const [player, value] = playerRow;
+    return {
+      ...save,
+      snapshot: {
+        ...snapshot,
+        ecs: {
+          ...ecs,
+          components: {
+            ...components,
+            player: [[player, { ...asRecord(value), using: null }]],
+            inventory: [[player, { stacks: [] }]],
+            equipment: [
+              [
+                player,
+                {
+                  weapon: { item: 'chipped_sword', count: 1, level: 0 },
+                  armor: null,
+                  ring0: null,
+                  ring1: null,
+                  quick: null,
+                },
+              ],
+            ],
+            buffs: [[player, { active: [] }]],
+            pickup: (components['pickup'] ?? []).map(([e, p]) => [e, { ...asRecord(p), item: null }]),
+          },
+        },
+      },
+    };
   },
 };
 

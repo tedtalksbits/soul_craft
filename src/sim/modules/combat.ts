@@ -22,6 +22,7 @@ import {
 import type { SimModule } from '../module';
 import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
+import { playerStats } from './items';
 import { dropPickup } from './pickups';
 
 export interface Hit {
@@ -72,14 +73,16 @@ function damagePlayer(
   if (player.state === 'dead' || sim.state.cheats.god || (ecs.get(e, Invulnerable)?.ticks ?? 0) > 0)
     return 'ignored';
 
-  health.hp = Math.max(0, health.hp - hit.amount);
+  // Armour and buffs absorb a fraction of every blow; something always gets through.
+  const amount = Math.max(1, Math.round(hit.amount * (1 - playerStats(sim, e).defense)));
+  health.hp = Math.max(0, health.hp - amount);
   ecs.add(e, Invulnerable, { ticks: def.hurt.iframes });
   push(sim, e, body, hit, 1);
   sim.events.emit({
     type: 'damaged',
     target: e,
     isPlayer: true,
-    amount: hit.amount,
+    amount,
     crit: hit.crit,
     x: body.x,
     y: body.y,
@@ -170,7 +173,7 @@ export function killEnemy(sim: Simulation, e: Entity): void {
 export function rollDrops(sim: Simulation, drops: readonly DropDef[], x: number, y: number): void {
   for (const drop of drops) {
     if (sim.rng.chance(drop.chance))
-      dropPickup(sim, drop.kind, sim.rng.int(drop.amount[0], drop.amount[1]), x, y);
+      dropPickup(sim, drop.kind, sim.rng.int(drop.amount[0], drop.amount[1]), x, y, drop.item ?? null);
   }
 }
 

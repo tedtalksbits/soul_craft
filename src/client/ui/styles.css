@@ -289,3 +289,209 @@ button.quiet {
     animation-duration: 0.01s;
   }
 }
+
+/* ------------------------------------------------------------------ inventory and crafting */
+
+.inventory {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(56em, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  box-shadow: 0 0 40px #000;
+}
+.inventory .head {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.5em 0.7em;
+  border-bottom: 1px solid var(--edge);
+}
+.inventory .tab {
+  font-family: var(--display);
+  letter-spacing: 0.08em;
+  background: transparent;
+}
+.inventory .tab.on {
+  border-color: var(--ember);
+  color: var(--ember);
+}
+.inventory .souls {
+  margin-left: auto;
+  color: #d8e4ff;
+  font-variant-numeric: tabular-nums;
+}
+.inventory .body {
+  overflow-y: auto;
+  padding: 0.8em;
+}
+.inventory h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 0.95em;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  margin: 0 0 0.4em;
+}
+.inventory .hint {
+  color: var(--dim);
+  font-size: 0.85em;
+}
+.inventory .items {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 1.2em;
+}
+.inventory .equip,
+.inventory .grid {
+  display: grid;
+  gap: 4px;
+}
+.inventory .equip {
+  grid-template-columns: repeat(5, 44px);
+}
+.inventory .grid {
+  grid-template-columns: repeat(6, 44px);
+}
+.inventory .cell {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+.inventory .cell.empty {
+  opacity: 0.45;
+}
+.inventory .cell:disabled {
+  cursor: default;
+}
+.inventory .cell.selected {
+  border-color: var(--ember);
+  box-shadow: inset 0 0 8px rgba(240, 184, 102, 0.4);
+}
+.inventory .cell .count,
+.inventory .cell .level {
+  position: absolute;
+  font-size: 0.75em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 3px #000;
+}
+.inventory .cell .count {
+  right: 3px;
+  bottom: 1px;
+}
+.inventory .cell .level {
+  left: 3px;
+  top: 1px;
+  color: var(--ember);
+}
+.inventory .cell .label {
+  position: absolute;
+  top: 100%;
+  font-size: 0.65em;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.inventory .gear .equip {
+  margin-bottom: 2em;
+}
+.inventory dl {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.1em 1em;
+  margin: 0;
+}
+.inventory dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.inventory .detail .title {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.inventory .detail .title h2 {
+  margin: 0;
+  color: var(--ink);
+}
+.inventory .facts {
+  padding-left: 1.1em;
+  color: var(--dim);
+}
+.inventory .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+}
+.inventory .recipe {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  padding: 0.45em 0.6em;
+  border-bottom: 1px solid rgba(214, 190, 140, 0.15);
+}
+.inventory .recipe.unavailable > .icon,
+.inventory .recipe.unavailable .name {
+  opacity: 0.55;
+}
+.inventory .recipe.upgrade {
+  border: 1px solid var(--ember);
+  margin-bottom: 0.6em;
+}
+.inventory .recipe .what {
+  flex: 1;
+}
+.inventory .recipe .where {
+  color: var(--dim);
+  font-size: 0.8em;
+}
+.inventory .costs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2em 0.9em;
+  font-size: 0.85em;
+}
+.inventory .cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+}
+.inventory .cost.short {
+  color: #e07060;
+}
+.inventory .costs .icon {
+  zoom: 0.5;
+}
+.inventory .recipe button {
+  min-width: 7em;
+}
+.inventory button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.inventory button:disabled:hover {
+  border-color: var(--edge);
+  color: var(--ink);
+}
+.icon {
+  display: inline-block;
+  flex: none;
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 720px) {
+  .inventory .items {
+    grid-template-columns: 1fr;
+  }
+}

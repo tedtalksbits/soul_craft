@@ -15,6 +15,75 @@ const size = z.object({ w: pos, h: pos });
 const weighted = <T extends z.ZodType>(item: T) => z.array(z.tuple([item, pos])).min(1);
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'expected a #rrggbb colour');
 
+// ------------------------------------------------------------------ items & crafting
+
+/** Crafting stations placed in the world. Recipes with `station: null` can be crafted anywhere. */
+export const STATIONS = { forge: 'Forge', alchemy: 'Alchemy table' } as const;
+export const StationSchema = z.enum(['forge', 'alchemy']);
+export type StationId = z.infer<typeof StationSchema>;
+
+export const ItemCountSchema = z.object({ item: z.string(), count: z.number().int().min(1) });
+export type ItemCount = z.infer<typeof ItemCountSchema>;
+
+const itemBase = {
+  name: z.string(),
+  description: z.string(),
+  /** Frame name in the `items` sprite sheet. */
+  icon: z.string(),
+  /** Most of this item one inventory slot holds. */
+  stack: z.number().int().min(1),
+};
+
+/** Stats a buff or ring can change. Values are additive fractions (0.2 = +20%) except maxHp (points). */
+export const StatSchema = z.enum(['damage', 'defense', 'staminaRegen', 'maxHp']);
+export type StatId = z.infer<typeof StatSchema>;
+
+export const ItemSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('material'), ...itemBase }),
+  z.object({
+    kind: z.literal('weapon'),
+    ...itemBase,
+    weapon: z.object({ damage: pos, staminaCost: nonneg, reach: pos, width: pos, knockback: nonneg }),
+    /** Forge upgrades, in order: each adds `damage` and costs souls plus items. */
+    upgrades: z
+      .array(
+        z.object({ damage: pos, souls: z.number().int().nonnegative(), items: z.array(ItemCountSchema) }),
+      )
+      .default([]),
+  }),
+  z.object({
+    kind: z.literal('armor'),
+    ...itemBase,
+    armor: z.object({ defense: z.number().min(0).max(0.9) }),
+  }),
+  z.object({
+    kind: z.literal('ring'),
+    ...itemBase,
+    ring: z.object({ stat: StatSchema, amount: pos }),
+  }),
+  z.object({
+    kind: z.literal('consumable'),
+    ...itemBase,
+    effect: z.discriminatedUnion('type', [
+      z.object({ type: z.literal('heal'), amount: pos }),
+      z.object({ type: z.literal('buff'), stat: StatSchema, amount: pos, seconds: pos }),
+    ]),
+  }),
+]);
+export type ItemDef = z.infer<typeof ItemSchema>;
+export type ItemKind = ItemDef['kind'];
+export const ItemsSchema = z.record(z.string(), ItemSchema);
+
+export const RecipeSchema = z.object({
+  output: z.object({ item: z.string(), count: z.number().int().min(1).default(1) }),
+  inputs: z.array(ItemCountSchema).min(1),
+  souls: z.number().int().nonnegative(),
+  /** Where it can be crafted; null means anywhere. */
+  station: StationSchema.nullable(),
+});
+export type RecipeDef = z.infer<typeof RecipeSchema>;
+export const RecipesSchema = z.record(z.string(), RecipeSchema);
+
 // ------------------------------------------------------------------ player
 
 export const PlayerSchema = z.object({
@@ -28,18 +97,14 @@ export const PlayerSchema = z.object({
   interactRange: pos,
   /** How far (px) the player is nudged around a corner it clips while walking straight. 0 disables. */
   cornerSlide: nonneg,
+  /** Swing timing and rolls. Damage, reach and stamina cost come from the equipped weapon. */
   attack: z.object({
-    damage: pos,
     variance: fraction,
     critChance: fraction,
     critMultiplier: z.number().min(1),
-    staminaCost: nonneg,
     duration: ticks,
     activeFrom: ticks,
     activeTo: ticks,
-    reach: pos,
-    width: pos,
-    knockback: nonneg,
     hitstop: ticks,
   }),
   roll: z.object({
@@ -53,17 +118,28 @@ export const PlayerSchema = z.object({
   flask: z.object({ charges: z.number().int().min(0), heal: pos, duration: ticks, healAt: ticks }),
   hurt: z.object({ iframes: ticks, stun: ticks, knockback: nonneg }),
   death: z.object({ soulPenalty: fraction, respawnDelay: ticks }),
+  /** How many different stacks the player can carry. */
+  inventorySlots: z.number().int().min(1),
+  /** A new game starts with this weapon equipped and these items carried. */
+  start: z.object({ weapon: z.string(), items: z.array(ItemCountSchema).default([]) }),
 });
 export type PlayerDef = z.infer<typeof PlayerSchema>;
 
 // ------------------------------------------------------------------ loot
 
 /** A pickup that may spawn when something dies or a tile is cut. */
-export const DropSchema = z.object({
-  kind: z.enum(['souls', 'ember']),
-  chance: fraction,
-  amount: range,
-});
+export const DropSchema = z
+  .object({
+    kind: z.enum(['souls', 'ember', 'item']),
+    /** Required for `item` drops: the item id. */
+    item: z.string().optional(),
+    chance: fraction,
+    amount: range,
+  })
+  .refine(
+    (d) => (d.kind === 'item') === (d.item !== undefined),
+    'an item drop needs `item`, other drops must not set it',
+  );
 export type DropDef = z.infer<typeof DropSchema>;
 
 // ------------------------------------------------------------------ enemies
@@ -203,6 +279,7 @@ export const PrefabEntitySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('enemy'), archetype: z.string() }),
   z.object({ kind: z.literal('torch') }),
   z.object({ kind: z.literal('playerSpawn') }),
+  z.object({ kind: z.literal('station'), station: StationSchema }),
 ]);
 export type PrefabEntityDef = z.infer<typeof PrefabEntitySchema>;
 

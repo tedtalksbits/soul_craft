@@ -1,0 +1,93 @@
+{
+  "field_bandage": {
+    "output": { "item": "field_bandage", "count": 1 },
+    "inputs": [
+      { "item": "fungal_cap", "count": 2 },
+      { "item": "slime_gel", "count": 1 }
+    ],
+    "souls": 5,
+    "station": null
+  },
+  "iron_sword": {
+    "output": { "item": "iron_sword", "count": 1 },
+    "inputs": [
+      { "item": "iron_scrap", "count": 6 },
+      { "item": "ashwood", "count": 2 }
+    ],
+    "souls": 150,
+    "station": "forge"
+  },
+  "bone_cleaver": {
+    "output": { "item": "bone_cleaver", "count": 1 },
+    "inputs": [
+      { "item": "bone_shard", "count": 6 },
+      { "item": "iron_scrap", "count": 3 },
+      { "item": "ashwood", "count": 3 }
+    ],
+    "souls": 250,
+    "station": "forge"
+  },
+  "padded_jacket": {
+    "output": { "item": "padded_jacket", "count": 1 },
+    "inputs": [
+      { "item": "fungal_cap", "count": 5 },
+      { "item": "slime_gel", "count": 2 }
+    ],
+    "souls": 60,
+    "station": "forge"
+  },
+  "iron_mail": {
+    "output": { "item": "iron_mail", "count": 1 },
+    "inputs": [
+      { "item": "iron_scrap", "count": 10 },
+      { "item": "ashwood", "count": 1 }
+    ],
+    "souls": 220,
+    "station": "forge"
+  },
+  "ring_of_vigor": {
+    "output": { "item": "ring_of_vigor", "count": 1 },
+    "inputs": [
+      { "item": "bone_shard", "count": 3 },
+      { "item": "glowspore", "count": 2 }
+    ],
+    "souls": 300,
+    "station": "forge"
+  },
+  "ring_of_breath": {
+    "output": { "item": "ring_of_breath", "count": 1 },
+    "inputs": [
+      { "item": "slime_gel", "count": 3 },
+      { "item": "glowspore", "count": 2 }
+    ],
+    "souls": 300,
+    "station": "forge"
+  },
+  "ember_tonic": {
+    "output": { "item": "ember_tonic", "count": 1 },
+    "inputs": [
+      { "item": "glowspore", "count": 2 },
+      { "item": "slime_gel", "count": 1 }
+    ],
+    "souls": 40,
+    "station": "alchemy"
+  },
+  "stoneskin_draught": {
+    "output": { "item": "stoneskin_draught", "count": 1 },
+    "inputs": [
+      { "item": "fungal_cap", "count": 2 },
+      { "item": "bone_shard", "count": 1 }
+    ],
+    "souls": 40,
+    "station": "alchemy"
+  },
+  "breath_tonic": {
+    "output": { "item": "breath_tonic", "count": 1 },
+    "inputs": [
+      { "item": "glowspore", "count": 1 },
+      { "item": "fungal_cap", "count": 2 }
+    ],
+    "souls": 40,
+    "station": "alchemy"
+  }
+}

@@ -58,7 +58,7 @@ function bonfireBase(s: Surface): void {
 }
 
 export function buildProps(): { png: Buffer; json: SpriteSheetFile } {
-  const sheet = new Sheet(64, 96);
+  const sheet = new Sheet(64, 120);
   const f = (i: number) => sheet.frame(i, 16, 24);
   // row 0: unlit bonfire, sign
   bonfireBase(f(0));
@@ -89,6 +89,25 @@ export function buildProps(): { png: Buffer; json: SpriteSheetFile } {
     s.ellipse(8.5, 20 - i, 2.5 + i * 0.5, 2.5 + i * 0.5, hex('#ff7a30'));
     s.rect(8, 19 - i, 1, 1, hex('#ffe0a0'));
   });
+  // row 4: crafting stations
+  const forge = f(16);
+  forge.ellipse(8, 22.5, 7, 1.6, SHADOW);
+  forge.rect(2, 15, 12, 7, hex('#3a3532'));
+  forge.rect(3, 16, 10, 3, hex('#5a524a'));
+  forge.rect(4, 17, 8, 2, hex('#ff7a30'));
+  forge.rect(6, 17, 3, 1, hex('#ffd080'));
+  forge.rect(4, 10, 9, 3, hex('#5f646b'));
+  forge.rect(2, 10, 3, 2, hex('#5f646b'));
+  forge.rect(7, 13, 3, 2, hex('#41454b'));
+  const table = f(17);
+  table.ellipse(8, 22.5, 7, 1.6, SHADOW);
+  table.rect(1, 15, 14, 2, hex('#6e5236'));
+  table.rect(2, 17, 2, 6, hex('#4a3825'));
+  table.rect(12, 17, 2, 6, hex('#4a3825'));
+  table.rect(3, 11, 3, 4, hex('#7ad8d0'));
+  table.rect(4, 9, 1, 2, hex('#c8c0a8'));
+  table.rect(9, 12, 4, 3, hex('#ff9a30'));
+  table.rect(10, 10, 2, 2, hex('#c8c0a8'));
   return {
     png: sheet.toPNG(),
     json: {
@@ -96,7 +115,7 @@ export function buildProps(): { png: Buffer; json: SpriteSheetFile } {
       frameWidth: 16,
       frameHeight: 24,
       anchor: [0.5, 1],
-      frames: { bonfire_unlit: 0, sign: 1 },
+      frames: { bonfire_unlit: 0, sign: 1, forge: 16, alchemy: 17 },
       animations: {
         bonfire_lit: { frames: [4, 5, 6, 7], fps: 8, loop: true },
         torch: { frames: [8, 9, 10, 11], fps: 8, loop: true },
@@ -140,5 +159,154 @@ export function buildFont(): { png: Buffer; json: SpriteSheetFile } {
   return {
     png: sheet.toPNG(),
     json: { image: 'font.png', frameWidth: 4, frameHeight: 6, anchor: [0, 0], frames, animations: {} },
+  };
+}
+
+// ------------------------------------------------------------------ item icons (16x16)
+
+type IconDraw = (s: Surface) => void;
+const ICON_SHADOW = hex('#000000', 70);
+
+const blade =
+  (base: string, light: string, guard: string): IconDraw =>
+  (s) => {
+    s.line(3, 13, 12, 4, hex(base));
+    s.line(4, 13, 13, 4, hex(light));
+    s.rect(3, 11, 3, 1, hex(guard));
+    s.rect(4, 10, 1, 3, hex(guard));
+    s.line(1, 15, 3, 13, hex('#5c4535'));
+  };
+const flask =
+  (liquid: string): IconDraw =>
+  (s) => {
+    s.ellipse(8, 14.5, 4, 1, ICON_SHADOW);
+    s.ellipse(8, 10.5, 4, 4, hex(liquid));
+    s.rect(6, 9, 2, 2, hex('#ffffff', 120));
+    s.rect(7, 3, 3, 4, hex('#c8c0a8', 200));
+    s.rect(7, 2, 3, 1, hex('#6e5236'));
+  };
+const ring =
+  (gem: string): IconDraw =>
+  (s) => {
+    s.ellipse(8, 14.5, 4, 1, ICON_SHADOW);
+    s.ellipse(8, 10, 4.5, 4, hex('#c8c0a8'));
+    s.ellipse(8, 10, 2.5, 2.2, hex('#000000', 0));
+    for (let y = 8; y <= 12; y++)
+      for (let x = 6; x <= 10; x++) if ((x - 8) ** 2 + (y - 10) ** 2 < 5) s.px(x, y, hex('#000000', 0));
+    s.rect(7, 5, 3, 3, hex(gem));
+  };
+
+const ICONS: [string, IconDraw][] = [
+  [
+    'ashwood',
+    (s) => {
+      s.ellipse(8, 14, 6, 1.2, ICON_SHADOW);
+      s.rect(2, 8, 12, 4, hex('#7a7468'));
+      s.rect(2, 9, 12, 1, hex('#9a9488'));
+      s.ellipse(13.5, 10, 1.5, 2, hex('#c8b898'));
+    },
+  ],
+  [
+    'fungal_cap',
+    (s) => {
+      s.ellipse(8, 14, 5, 1.2, ICON_SHADOW);
+      s.rect(7, 9, 2, 5, hex('#c8bba0'));
+      s.ellipse(8, 9, 6, 4, hex('#7a3f8a'), 'top');
+      s.rect(5, 6, 1, 1, hex('#e8d6ff'));
+      s.rect(10, 7, 1, 1, hex('#e8d6ff'));
+    },
+  ],
+  [
+    'glowspore',
+    (s) => {
+      s.ellipse(8, 9, 4, 4, hex('#7ad8d0', 120));
+      s.ellipse(8, 9, 2, 2, hex('#c8fff4'));
+      s.rect(4, 5, 1, 1, hex('#7ad8d0'));
+      s.rect(12, 12, 1, 1, hex('#7ad8d0'));
+    },
+  ],
+  [
+    'iron_scrap',
+    (s) => {
+      s.ellipse(8, 14, 6, 1.2, ICON_SHADOW);
+      s.rect(3, 9, 6, 4, hex('#6b6a64'));
+      s.rect(7, 7, 6, 4, hex('#888680'));
+      s.rect(9, 8, 2, 1, hex('#9a5a2e'));
+    },
+  ],
+  [
+    'bone_shard',
+    (s) => {
+      s.ellipse(8, 14, 5, 1.2, ICON_SHADOW);
+      s.line(4, 12, 12, 5, hex('#e7dec4'));
+      s.line(5, 12, 12, 6, hex('#c8c0a8'));
+      s.rect(11, 4, 2, 2, hex('#e7dec4'));
+    },
+  ],
+  [
+    'slime_gel',
+    (s) => {
+      s.ellipse(8, 14, 5, 1.2, ICON_SHADOW);
+      s.ellipse(8, 11, 5, 3.5, hex('#4a8a6a'));
+      s.rect(6, 9, 2, 1, hex('#8ad8a8'));
+    },
+  ],
+  ['chipped_sword', blade('#9da2a8', '#d8dcde', '#d0a85c')],
+  ['iron_sword', blade('#7d8188', '#c3c7cb', '#5f646b')],
+  [
+    'bone_cleaver',
+    (s) => {
+      s.line(2, 14, 8, 8, hex('#5c4535'));
+      s.ellipse(10, 6, 4, 3.5, hex('#e7dec4'));
+      s.rect(8, 6, 3, 2, hex('#c8c0a8'));
+    },
+  ],
+  [
+    'padded_jacket',
+    (s) => {
+      s.rect(4, 4, 8, 10, hex('#5c5446'));
+      s.rect(2, 4, 3, 6, hex('#5c5446'));
+      s.rect(11, 4, 3, 6, hex('#5c5446'));
+      s.rect(7, 4, 2, 10, hex('#3d372e'));
+      s.rect(4, 9, 8, 1, hex('#6e6250'));
+    },
+  ],
+  [
+    'iron_mail',
+    (s) => {
+      s.rect(4, 4, 8, 10, hex('#6b6f75'));
+      s.rect(2, 4, 3, 6, hex('#6b6f75'));
+      s.rect(11, 4, 3, 6, hex('#6b6f75'));
+      for (let y = 5; y < 14; y += 2)
+        for (let x = 4 + (y % 4 === 1 ? 1 : 0); x < 12; x += 2) s.px(x, y, hex('#4a4d53'));
+    },
+  ],
+  ['ring_vigor', ring('#c43a2a')],
+  ['ring_breath', ring('#7ad8d0')],
+  [
+    'bandage',
+    (s) => {
+      s.ellipse(8, 14, 5, 1.2, ICON_SHADOW);
+      s.ellipse(8, 10, 5, 4, hex('#c8b898'));
+      s.ellipse(8, 10, 2, 1.6, hex('#6e6250'));
+      s.rect(11, 12, 3, 1, hex('#c8b898'));
+    },
+  ],
+  ['potion_ember', flask('#ff7a30')],
+  ['potion_stone', flask('#8a8778')],
+  ['potion_breath', flask('#7ad8d0')],
+];
+
+export function buildItems(): { png: Buffer; json: SpriteSheetFile } {
+  const cols = 8;
+  const sheet = new Sheet(cols * 16, Math.ceil(ICONS.length / cols) * 16);
+  const frames: Record<string, number> = {};
+  ICONS.forEach(([name, draw], i) => {
+    draw(sheet.frame(i, 16, 16));
+    frames[name] = i;
+  });
+  return {
+    png: sheet.toPNG(),
+    json: { image: 'items.png', frameWidth: 16, frameHeight: 16, anchor: [0.5, 1], frames, animations: {} },
   };
 }

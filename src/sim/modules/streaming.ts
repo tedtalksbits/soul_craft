@@ -3,7 +3,7 @@
  * entities (enemies, bonfires, signs, torches) on load and removes them on
  * unload. Also tracks which named area the player is in.
  */
-import { Body, Bonfire, Enemy, Sign, Spawned, Sprite, Torch } from '../components';
+import { Body, Bonfire, Enemy, Sign, Spawned, Sprite, Station, Torch } from '../components';
 import { CHUNK, LOAD_RADIUS, TILE, UNLOAD_RADIUS } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
@@ -79,6 +79,14 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
       const e = ecs.create();
       ecs.add(e, Body, { x: sp.x, y: sp.y, w: 4, h: 4 });
       ecs.add(e, Torch, {});
+      ecs.add(e, Spawned, spawned);
+      ecs.add(e, Sprite, { sheet: PROPS_SHEET });
+      return;
+    }
+    case 'station': {
+      const e = ecs.create();
+      ecs.add(e, Body, { x: sp.x, y: sp.y, w: 14, h: 8 });
+      ecs.add(e, Station, { station: ent.station });
       ecs.add(e, Spawned, spawned);
       ecs.add(e, Sprite, { sheet: PROPS_SHEET });
       return;

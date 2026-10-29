@@ -1,6 +1,6 @@
 | Done || Done || Done || Done || Done || Done |# Character Art Design Doc
 
-Last updated: 2026-10-29 (archer ported, hollow revised; see "Port report: archer". Next: the knight)
+Last updated: 2026-10-29 (knight ported; see "Port report: knight". All four humanoids are in. Next: the slime)
 
 ## Purpose
 
@@ -141,7 +141,7 @@ Everything is 8-directional. Timings come from the game's durations (60 ticks/s)
 | `drink`   | 2      | 3 (333)        | no   | player                 | 667 ms: raise the flask, then drink. The heal lands at 400 ms                                                   | Done                          |
 | `sit`     | 1      | —              | no   | player                 | Resting at a bonfire, until the player moves                                                                    | Done                          |
 | `dead`    | 1      | —              | no   | all                    | Player: 3.5 s before respawn. Enemies: shown during the 667 ms death fade                                       | Done                          |
-| `stunned` | 2      | 3 (333)        | yes  | knight                 | 1167 ms after its charge ends                                                                                   | —                             |
+| `stunned` | 2      | 3 (333)        | yes  | knight                 | 1167 ms after its charge ends                                                                                   | Done                          |
 
 Equipment drawn into each sprite: the player carries a sword at their side and a shield; the hollow a rusty blade;
 the archer a bow; the knight a tower shield and a sword.
@@ -312,6 +312,18 @@ Written by the implementation agent, 2026-10-29, for `archer.py` and the revised
   - Arrows are drawn from the release height.
   - The archer is removed from placeholder generation; the knight is the last placeholder.
 
+### Port report: knight
+
+- **Installed as delivered**, no edits: `tools/art/knight.py` (`pnpm art knight`). It runs clean with warnings
+  as errors, and `pnpm art knight` reproduces the delivered PNG byte for byte.
+- **Hitbox** retuned to 18 × 14 (was 14 × 14), matching the 1.4× width. March speed stays 42 px/s against the
+  42.9 px/s stride, close enough that the feet read as planted.
+- **Stunned in left and down-left:** accepted as is. The tilted, dropped shield plus the exposed helm and
+  shoulders read as open, and the hit flash covers the rest. Revisit only if playtesting says otherwise.
+- **Placeholders:** the knight is removed from placeholder generation, so no placeholder humanoids are left.
+- **Shared fit module:** not yet. When it happens, the hollow and archer are regenerated in the same change so any
+  1 px offset shifts land together and are checked in game.
+
 ### Changes the implementation agent will make (not art work)
 
 So the art below is actually shown, the game gets these changes as each character is ported:
@@ -320,7 +332,7 @@ So the art below is actually shown, the game gets these changes as each characte
 - **Archer:** add a 12-tick (200 ms) `loose` state after each shot, shown with `attack`; today it goes straight
   back to moving. It keeps facing the player while it sees them, and plays `walk` in reverse when backing off.
   _Done 2026-10-29._
-- **Knight:** its `attack` (the charge) loops.
+- **Knight:** its `attack` (the charge) loops. _Done 2026-10-29 (from the sheet's `loop`)._
 - **Attack poses:** they follow the aim direction rather than the movement direction. _Done 2026-10-29._
 - **Pivots:** health bars use `head`; arrows use `release`. _Done 2026-10-29._
 - **Retuning:** hitboxes as proposed per enemy below, and player move speed matched to the final walk stride

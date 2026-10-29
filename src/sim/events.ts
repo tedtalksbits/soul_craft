@@ -1,5 +1,6 @@
 import type { Entity } from '../core/ecs';
-import type { PickupKind } from './components';
+import type { StatId, StationId } from '../content/schemas';
+import type { EquipSlot, PickupKind } from './components';
 
 /**
  * Everything the simulation tells the outside world. The client turns these
@@ -36,6 +37,16 @@ export type SimEvent =
   | { type: 'read'; lines: string[] }
   | { type: 'playerDied'; soulsLost: number }
   | { type: 'playerRespawned' }
-  | { type: 'areaEntered'; name: string; firstVisit: boolean };
+  | { type: 'areaEntered'; name: string; firstVisit: boolean }
+  | { type: 'itemGained'; item: string; count: number }
+  | { type: 'inventoryFull'; item: string }
+  | { type: 'equipped'; item: string; slot: EquipSlot }
+  | { type: 'unequipped'; item: string; slot: EquipSlot }
+  | { type: 'buffStarted'; stat: StatId; item: string; seconds: number }
+  | { type: 'buffEnded'; stat: StatId }
+  | { type: 'crafted'; recipe: string; item: string; count: number }
+  | { type: 'craftFailed'; recipe: string; reason: string }
+  | { type: 'upgraded'; item: string; level: number }
+  | { type: 'stationOpened'; station: StationId };
 
 export type SimEventType = SimEvent['type'];

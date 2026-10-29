@@ -10,6 +10,7 @@ import {
   Body,
   Dying,
   Enemy,
+  Equipment,
   Facing,
   Health,
   Invulnerable,
@@ -27,6 +28,7 @@ import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
 import { applyDamage, rollDamage } from './combat';
 import { interact } from './interaction';
+import { beginUse, finishUse, giveStartingKit, playerStats } from './items';
 import { resetEnemies } from './streaming';
 import { strikeTiles } from './terrain';
 
@@ -51,6 +53,7 @@ export function spawnPlayer(sim: Simulation, x: number, y: number): Entity {
     souls: 0,
     flasks: def.flask.charges,
     maxFlasks: def.flask.charges,
+    using: null,
   });
   ecs.add(e, Body, { x, y, w: def.body.w, h: def.body.h });
   ecs.add(e, Motion, { vx: 0, vy: 0, kx: 0, ky: 0, hitWall: false });
@@ -59,6 +62,7 @@ export function spawnPlayer(sim: Simulation, x: number, y: number): Entity {
   ecs.add(e, Stamina, { value: def.maxStamina, max: def.maxStamina, delay: 0 });
   ecs.add(e, Team, { team: 'player' });
   ecs.add(e, Sprite, { sheet: def.sprite });
+  giveStartingKit(sim, e);
   return e;
 }
 
@@ -69,12 +73,13 @@ export function attackBox(sim: Simulation, e: Entity): Box | null {
   if (!p || !body || p.state !== 'attack') return null;
   const a = sim.content.player.attack;
   if (p.t < a.activeFrom || p.t > a.activeTo) return null;
+  const { reach, width } = playerStats(sim, e);
   const ax = Math.abs(p.dirX);
   const ay = Math.abs(p.dirY);
-  const w = ax * a.reach + ay * a.width;
-  const h = ax * a.width + ay * a.reach;
-  const cx = body.x + p.dirX * (body.w / 2 + a.reach / 2);
-  const cy = body.y + p.dirY * (body.h / 2 + a.reach / 2);
+  const w = ax * reach + ay * width;
+  const h = ax * width + ay * reach;
+  const cx = body.x + p.dirX * (body.w / 2 + reach / 2);
+  const cy = body.y + p.dirY * (body.h / 2 + reach / 2);
   return { x: cx - w / 2, y: cy - h / 2, w, h };
 }
 
@@ -91,7 +96,7 @@ function updatePlayer(sim: Simulation): void {
   p.t++;
   if (stamina.delay > 0) stamina.delay--;
   else if (p.state !== 'roll' && p.state !== 'attack')
-    stamina.value = Math.min(stamina.max, stamina.value + def.staminaRegen);
+    stamina.value = Math.min(stamina.max, stamina.value + playerStats(sim, e).staminaRegen);
 
   if (p.state === 'dead') {
     motion.vx = motion.vy = 0;
@@ -122,6 +127,7 @@ function updatePlayer(sim: Simulation): void {
       else if (act & Action.roll && stamina.value >= def.roll.minStamina)
         startRoll(sim, p, facing, stamina, mx, my);
       else if (act & Action.heal) startDrink(sim, p);
+      else if (act & Action.item) useQuickItem(sim);
       else if (act & Action.use) interact(sim);
       break;
     }
@@ -153,11 +159,17 @@ function updatePlayer(sim: Simulation): void {
       motion.vx = mx * def.moveSpeed * 0.3;
       motion.vy = my * def.moveSpeed * 0.3;
       if (p.t === def.flask.healAt) {
-        const healed = Math.min(health.max - health.hp, def.flask.heal);
-        health.hp += healed;
-        sim.events.emit({ type: 'healed', amount: healed });
+        if (p.using !== null) finishUse(sim, e, p.using);
+        else {
+          const healed = Math.min(health.max - health.hp, def.flask.heal);
+          health.hp += healed;
+          sim.events.emit({ type: 'healed', amount: healed });
+        }
       }
-      if (p.t >= def.flask.duration) setState(p, 'free');
+      if (p.t >= def.flask.duration) {
+        p.using = null;
+        setState(p, 'free');
+      }
       break;
     case 'sit':
       motion.vx = motion.vy = 0;
@@ -181,7 +193,7 @@ function startAttack(sim: Simulation, e: Entity, p: Player, facing: Facing, stam
     p.dirY = dy;
     facing.dir = dirFromVec(dx, dy, facing.dir);
   } else [p.dirX, p.dirY] = DIR_VEC[facing.dir];
-  stamina.value -= def.attack.staminaCost;
+  stamina.value -= playerStats(sim, e).staminaCost;
   stamina.delay = def.staminaRegenDelay;
   p.struck = [];
   setState(p, 'attack');
@@ -210,7 +222,14 @@ function startDrink(sim: Simulation, p: Player): void {
     return;
   }
   p.flasks--;
+  p.using = null;
   setState(p, 'drink');
+}
+
+/** Drinks/applies the consumable in the quick slot, if any are left. */
+function useQuickItem(sim: Simulation): void {
+  const quick = sim.ecs.need(sim.player, Equipment).quick;
+  if (quick !== null) beginUse(sim, quick);
 }
 
 function strike(sim: Simulation, e: Entity, p: Player): void {
@@ -219,16 +238,17 @@ function strike(sim: Simulation, e: Entity, p: Player): void {
   if (!box) return;
   const def = sim.content.player;
   const body = ecs.need(e, Body);
+  const stats = playerStats(sim, e);
 
   for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
     if (p.struck.includes(target) || ecs.has(target, Dying) || !overlaps(box, bodyBox(tb))) continue;
     p.struck.push(target);
-    const roll = rollDamage(sim.rng, def.attack);
+    const roll = rollDamage(sim.rng, { ...def.attack, damage: stats.damage });
     const result = applyDamage(sim, target, {
       ...roll,
       fromX: body.x,
       fromY: body.y,
-      knockback: def.attack.knockback,
+      knockback: stats.knockback,
     });
     if (result === 'hit') sim.hitstop = Math.max(sim.hitstop, def.attack.hitstop);
     if (result === 'blocked') {
@@ -265,6 +285,7 @@ export function respawnPlayer(sim: Simulation): void {
   stamina.value = stamina.max;
   p.flasks = p.maxFlasks;
   p.buffered = null;
+  p.using = null;
   setState(p, 'free');
   Object.assign(motion, { vx: 0, vy: 0, kx: 0, ky: 0 });
   ecs.add(e, Invulnerable, { ticks: RESPAWN_IFRAMES });

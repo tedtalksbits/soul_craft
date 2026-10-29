@@ -3,7 +3,7 @@
  * accumulate until a tick consumes them, so a tap is never lost between
  * render frames.
  */
-import { Action, type ActionName, type InputFrame } from '../sim/input';
+import { Action, type ActionName, type InputFrame, type PlayerAction } from '../sim/input';
 
 type Binding = ActionName | 'up' | 'down' | 'left' | 'right';
 
@@ -17,6 +17,7 @@ export const BINDINGS: Readonly<Record<Binding, readonly string[]>> = {
   roll: ['ShiftLeft', 'ShiftRight', 'KeyK'],
   heal: ['KeyR', 'KeyH'],
   use: ['KeyE', 'Enter'],
+  item: ['KeyQ'],
 };
 
 const CAPTURED = new Set(['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
@@ -28,6 +29,7 @@ export class InputCapture {
   private readonly held = new Set<string>();
   private pressed = 0;
   private aim: { x: number; y: number } | null = null;
+  private actions: PlayerAction[] = [];
 
   constructor(
     target: HTMLElement,
@@ -50,6 +52,14 @@ export class InputCapture {
     target.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
+  /**
+   * Queues a menu action (equip, craft...) for the next tick. Actions go through even while
+   * game input is held, since the menu holding it is where they come from.
+   */
+  queueAction(action: PlayerAction): void {
+    this.actions.push(action);
+  }
+
   /** The frame for the next tick. Clears accumulated presses. */
   consume(): InputFrame {
     const on = (b: Binding) => this.enabled && BINDINGS[b].some((k) => this.held.has(k));
@@ -61,9 +71,11 @@ export class InputCapture {
       aim: this.aim,
       pressed: this.pressed,
       held,
+      ...(this.actions.length > 0 ? { actions: this.actions } : {}),
     };
     this.pressed = 0;
     this.aim = null;
+    this.actions = [];
     return frame;
   }
 
@@ -72,6 +84,7 @@ export class InputCapture {
     this.held.clear();
     this.pressed = 0;
     this.aim = null;
+    this.actions = [];
   }
 }
 

@@ -136,6 +136,21 @@ export class Audio {
           0.1,
           'sawtooth',
         );
+      case 'itemGained':
+        return this.arp([659, 988], 50, 0.2, 0.04);
+      case 'crafted':
+        this.burst(0.12, 2600, 0.15, 'highpass');
+        return this.arp([523, 784], 80, 0.35, 0.05);
+      case 'upgraded':
+        this.burst(0.25, 3200, 0.3, 'highpass');
+        return this.arp([392, 523, 784, 1047], 90, 0.7, 0.05);
+      case 'craftFailed':
+      case 'inventoryFull':
+        return this.tone([[150, 1]], 0.15, 0.06, 'square');
+      case 'buffStarted':
+        return this.arp([440, 554, 659], 60, 0.5, 0.05);
+      case 'stationOpened':
+        return this.burst(0.1, 900, 0.12, 'bandpass', [500, 1400]);
       case 'playerRespawned':
       case 'areaEntered':
         return;

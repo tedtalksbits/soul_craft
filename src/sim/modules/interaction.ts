@@ -6,7 +6,8 @@
 import type { Entity } from '../../core/ecs';
 import { DIR_VEC } from '../../core/math';
 import { CommandError } from '../../core/commands';
-import { Body, Bonfire, Facing, Health, Player, Sign, Stamina } from '../components';
+import { STATIONS } from '../../content/schemas';
+import { Body, Bonfire, Facing, Health, Player, Sign, Stamina, Station } from '../components';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { resetEnemies } from './streaming';
@@ -14,6 +15,7 @@ import { resetEnemies } from './streaming';
 export type Interaction =
   | { kind: 'bonfire'; entity: Entity; label: string }
   | { kind: 'sign'; entity: Entity; label: string }
+  | { kind: 'station'; entity: Entity; label: string }
   | { kind: 'leave'; label: string };
 
 /** How far in front of the player the interaction probe sits. */
@@ -44,6 +46,12 @@ export function findInteraction(sim: Simulation): Interaction | null {
     const lit = sim.state.litBonfires[bonfire.id] === true;
     consider(b, () => ({ kind: 'bonfire', entity: be, label: lit ? 'Rest' : 'Light bonfire' }));
   }
+  for (const [te, station, b] of ecs.query(Station, Body))
+    consider(b, () => ({
+      kind: 'station',
+      entity: te,
+      label: `Use ${STATIONS[station.station].toLowerCase()}`,
+    }));
   for (const [se, , b] of ecs.query(Sign, Body))
     consider(b, () => ({ kind: 'sign', entity: se, label: 'Read' }));
   return best;
@@ -53,6 +61,8 @@ export function interact(sim: Simulation): void {
   const target = findInteraction(sim);
   if (!target || target.kind === 'leave') return;
   if (target.kind === 'bonfire') restAt(sim, target.entity);
+  else if (target.kind === 'station')
+    sim.events.emit({ type: 'stationOpened', station: sim.ecs.need(target.entity, Station).station });
   else sim.events.emit({ type: 'read', lines: [...sim.ecs.need(target.entity, Sign).lines] });
 }
 

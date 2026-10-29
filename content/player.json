@@ -9,17 +9,12 @@
   "interactRange": 18,
   "cornerSlide": 5,
   "attack": {
-    "damage": 12,
     "variance": 0.1,
     "critChance": 0.1,
     "critMultiplier": 1.5,
-    "staminaCost": 14,
     "duration": 16,
     "activeFrom": 3,
     "activeTo": 9,
-    "reach": 16,
-    "width": 18,
-    "knockback": 3,
     "hitstop": 3
   },
   "roll": {
@@ -32,5 +27,7 @@
   },
   "flask": { "charges": 3, "heal": 45, "duration": 40, "healAt": 24 },
   "hurt": { "iframes": 50, "stun": 14, "knockback": 2.6 },
-  "death": { "soulPenalty": 0.5, "respawnDelay": 210 }
+  "death": { "soulPenalty": 0.5, "respawnDelay": 210 },
+  "inventorySlots": 24,
+  "start": { "weapon": "chipped_sword", "items": [] }
 }

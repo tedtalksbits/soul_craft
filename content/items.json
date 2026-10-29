@@ -1,0 +1,153 @@
+{
+  "ashwood": {
+    "kind": "material",
+    "name": "Ashwood",
+    "description": "Grey timber from trees that grew in ash. Felled trees give it up.",
+    "icon": "ashwood",
+    "stack": 99
+  },
+  "fungal_cap": {
+    "kind": "material",
+    "name": "Fungal Cap",
+    "description": "A tough, fibrous cap from the Fungal Wilds.",
+    "icon": "fungal_cap",
+    "stack": 99
+  },
+  "glowspore": {
+    "kind": "material",
+    "name": "Glowspore",
+    "description": "Faintly warm spores shaken from giant mushrooms. Prized by alchemists.",
+    "icon": "glowspore",
+    "stack": 99
+  },
+  "iron_scrap": {
+    "kind": "material",
+    "name": "Iron Scrap",
+    "description": "Rusted iron prised from the Hollow and their gear.",
+    "icon": "iron_scrap",
+    "stack": 99
+  },
+  "bone_shard": {
+    "kind": "material",
+    "name": "Bone Shard",
+    "description": "Pale, dense bone. Takes an edge better than it should.",
+    "icon": "bone_shard",
+    "stack": 99
+  },
+  "slime_gel": {
+    "kind": "material",
+    "name": "Slime Gel",
+    "description": "Sticky and faintly alive. Binds salves and potions.",
+    "icon": "slime_gel",
+    "stack": 99
+  },
+  "chipped_sword": {
+    "kind": "weapon",
+    "name": "Chipped Sword",
+    "description": "The Firekeeper's old blade. It remembers how to cut.",
+    "icon": "chipped_sword",
+    "stack": 1,
+    "weapon": { "damage": 12, "staminaCost": 14, "reach": 16, "width": 18, "knockback": 3 },
+    "upgrades": [
+      { "damage": 2, "souls": 40, "items": [{ "item": "iron_scrap", "count": 2 }] },
+      { "damage": 2, "souls": 80, "items": [{ "item": "iron_scrap", "count": 4 }] },
+      { "damage": 3, "souls": 150, "items": [{ "item": "iron_scrap", "count": 6 }] }
+    ]
+  },
+  "iron_sword": {
+    "kind": "weapon",
+    "name": "Iron Sword",
+    "description": "Hammered from scrap at a village forge. Heavier, truer.",
+    "icon": "iron_sword",
+    "stack": 1,
+    "weapon": { "damage": 16, "staminaCost": 16, "reach": 17, "width": 18, "knockback": 3.4 },
+    "upgrades": [
+      { "damage": 3, "souls": 120, "items": [{ "item": "iron_scrap", "count": 4 }] },
+      { "damage": 3, "souls": 200, "items": [{ "item": "iron_scrap", "count": 6 }] },
+      {
+        "damage": 4,
+        "souls": 320,
+        "items": [
+          { "item": "iron_scrap", "count": 8 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      }
+    ]
+  },
+  "bone_cleaver": {
+    "kind": "weapon",
+    "name": "Bone Cleaver",
+    "description": "A brutal edge of fused bone on an ashwood haft. Hits hard, tires the arm.",
+    "icon": "bone_cleaver",
+    "stack": 1,
+    "weapon": { "damage": 22, "staminaCost": 24, "reach": 15, "width": 22, "knockback": 4.5 },
+    "upgrades": [
+      { "damage": 4, "souls": 200, "items": [{ "item": "bone_shard", "count": 4 }] },
+      { "damage": 4, "souls": 320, "items": [{ "item": "bone_shard", "count": 6 }] }
+    ]
+  },
+  "padded_jacket": {
+    "kind": "armor",
+    "name": "Padded Jacket",
+    "description": "Layers of fungal fibre bound with gel. Takes the edge off a blow.",
+    "icon": "padded_jacket",
+    "stack": 1,
+    "armor": { "defense": 0.1 }
+  },
+  "iron_mail": {
+    "kind": "armor",
+    "name": "Iron Mail",
+    "description": "Scrap rings, patiently riveted. Heavy, but it holds.",
+    "icon": "iron_mail",
+    "stack": 1,
+    "armor": { "defense": 0.22 }
+  },
+  "ring_of_vigor": {
+    "kind": "ring",
+    "name": "Ring of Vigor",
+    "description": "A bone band set with a glowing spore. Raises maximum health.",
+    "icon": "ring_vigor",
+    "stack": 1,
+    "ring": { "stat": "maxHp", "amount": 20 }
+  },
+  "ring_of_breath": {
+    "kind": "ring",
+    "name": "Ring of Breath",
+    "description": "Cool to the touch. Stamina returns faster.",
+    "icon": "ring_breath",
+    "stack": 1,
+    "ring": { "stat": "staminaRegen", "amount": 0.3 }
+  },
+  "field_bandage": {
+    "kind": "consumable",
+    "name": "Field Bandage",
+    "description": "Fungal fibre and gel. Restores a little health. Craftable anywhere.",
+    "icon": "bandage",
+    "stack": 10,
+    "effect": { "type": "heal", "amount": 25 }
+  },
+  "ember_tonic": {
+    "kind": "consumable",
+    "name": "Ember Tonic",
+    "description": "Burns going down. Strikes hit 20% harder for a minute.",
+    "icon": "potion_ember",
+    "stack": 5,
+    "effect": { "type": "buff", "stat": "damage", "amount": 0.2, "seconds": 60 }
+  },
+  "stoneskin_draught": {
+    "kind": "consumable",
+    "name": "Stoneskin Draught",
+    "description": "Chalky and bitter. Takes 15% off incoming damage for a minute.",
+    "icon": "potion_stone",
+    "stack": 5,
+    "effect": { "type": "buff", "stat": "defense", "amount": 0.15, "seconds": 60 }
+  },
+  "breath_tonic": {
+    "kind": "consumable",
+    "name": "Breath Tonic",
+    "description": "Clears the lungs. Stamina returns 50% faster for a minute.",
+    "icon": "potion_breath",
+    "stack": 5,
+    "effect": { "type": "buff", "stat": "staminaRegen", "amount": 0.5, "seconds": 60 }
+  }
+}

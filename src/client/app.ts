@@ -16,9 +16,11 @@ import { findInteraction } from '../sim/modules/interaction';
 import { Simulation } from '../sim/simulation';
 import type { Assets } from './assets';
 import { Audio } from './audio';
-import { InputCapture } from './input';
+import { InputCapture, isTyping } from './input';
 import { FixedLoop } from './loop';
 import type { GameRenderer } from './render/renderer';
+import { iconElement } from './ui/icons';
+import { InventoryScreen } from './ui/inventory';
 import { Ui } from './ui/ui';
 
 /** Autosave this often while playing, in addition to every bonfire rest. */
@@ -37,6 +39,7 @@ export class App {
   readonly input: InputCapture;
   readonly loop: FixedLoop;
   readonly ui: Ui;
+  readonly inventory: InventoryScreen;
   readonly audio = new Audio();
   /** Extra reasons to hold input, e.g. the dev console having focus. */
   readonly inputHolds = new Set<string>();
@@ -57,9 +60,34 @@ export class App {
     this.snapshots = new SnapshotLibrary(store);
     this.ui = new Ui(uiRoot);
     this.input = new InputCapture(renderer.canvas, (x, y) => renderer.toWorld(x, y));
+    this.inventory = new InventoryScreen(uiRoot, {
+      sim: () => this.sim,
+      icon: (item) => this.itemIcon(item),
+      act: (action) => this.input.queueAction(action),
+    });
     this.loop = new FixedLoop(
       () => this.tick(),
       (dt) => this.frame(dt),
+    );
+    // Capture phase, so an open inventory takes Escape before the pause menu sees it.
+    addEventListener(
+      'keydown',
+      (e) => {
+        if (e.repeat || isTyping(e)) return;
+        if (this.inventory.isOpen && ['Escape', 'Tab', 'KeyI'].includes(e.code)) {
+          e.preventDefault();
+          this.inventory.close();
+        } else if (
+          (e.code === 'Tab' || e.code === 'KeyI') &&
+          this.sim &&
+          !this.ui.blocking &&
+          this.inputHolds.size === 0
+        ) {
+          e.preventDefault();
+          this.inventory.open('items');
+        }
+      },
+      { capture: true },
     );
     addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && !e.defaultPrevented) this.togglePause();
@@ -91,6 +119,12 @@ export class App {
   onFrame(fn: (dtMs: number) => void): () => void {
     this.frameListeners.add(fn);
     return () => this.frameListeners.delete(fn);
+  }
+
+  /** An item's icon from the items sheet, as a DOM element. */
+  itemIcon(item: string, scale = 2): HTMLElement {
+    const def = this.content.items[item];
+    return iconElement(def ? this.assets.sheet('items')?.frameRect(def.icon) : undefined, scale);
   }
 
   setTitleFooter(text: string): void {
@@ -165,6 +199,7 @@ export class App {
     this.slot = slot;
     this.lastSaveTick = sim?.tick ?? 0;
     this.input.reset();
+    this.inventory.close();
     this.ui.hideScreen();
     this.ui.resetHud();
     this.renderer.attach(sim);
@@ -188,6 +223,9 @@ export class App {
 
   private tick(): void {
     const sim = this.sim;
+    // The inventory holds game input but not the game: the world keeps moving around an open pack.
+    if (this.inventory.isOpen) this.inputHolds.add('menu');
+    else this.inputHolds.delete('menu');
     this.input.enabled = !this.ui.blocking && this.inputHolds.size === 0;
     if (!sim || this.ui.blocking) return;
     sim.step(this.input.consume());
@@ -198,8 +236,10 @@ export class App {
         this.audio.handle(e);
         this.react(e);
       }
+      this.toastGains(events);
       for (const fn of this.eventListeners) fn(events);
     }
+    this.inventory.refresh();
     if (this.slot && sim.tick - this.lastSaveTick >= AUTOSAVE_INTERVAL_TICKS) void this.save();
   }
 
@@ -214,7 +254,22 @@ export class App {
         return;
       case 'flaskEmpty':
         return this.ui.toast('The flask is empty. Rest at a bonfire.');
+      case 'stationOpened':
+        return this.inventory.open('craft', e.station);
+      case 'crafted': {
+        const name = this.content.item(e.item).name;
+        return this.ui.toast(e.count > 1 ? `Crafted ${name} ×${e.count}` : `Crafted ${name}`);
+      }
+      case 'craftFailed':
+        return this.ui.toast(`Cannot craft: ${e.reason}`);
+      case 'upgraded':
+        return this.ui.banner(`${this.content.item(e.item).name.toUpperCase()} +${e.level}`, 'good');
+      case 'inventoryFull':
+        return this.ui.toast(`No room for ${this.content.item(e.item).name}`);
+      case 'buffStarted':
+        return this.ui.toast(`${this.content.item(e.item).name}: ${e.seconds}s`);
       case 'playerDied':
+        this.inventory.close();
         this.ui.banner('YOU DIED', 'death');
         window.setTimeout(() => this.ui.fade(true), DEATH_FADE_MS);
         return;
@@ -228,9 +283,17 @@ export class App {
     }
   }
 
+  /** One toast for everything picked up this tick, so a burst of drops reads as one line. */
+  private toastGains(events: readonly SimEvent[]): void {
+    const parts = events.flatMap((e) =>
+      e.type === 'itemGained' ? [`+${e.count} ${this.content.item(e.item).name}`] : [],
+    );
+    if (parts.length > 0) this.ui.toast(parts.join(', '), 1800);
+  }
+
   private frame(dtMs: number): void {
     const sim = this.sim;
-    if (sim && !this.ui.blocking) {
+    if (sim && !this.ui.blocking && !this.inventory.isOpen) {
       const target = findInteraction(sim);
       this.ui.prompt(target ? `E: ${target.label}` : null);
     } else this.ui.prompt(null);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Body } from '../../src/sim/components';
+import { Body, Pickup } from '../../src/sim/components';
 import { TILE } from '../../src/sim/constants';
 import { tileDamageKey } from '../../src/sim/modules/terrain';
 import type { Simulation } from '../../src/sim/simulation';
@@ -34,13 +34,14 @@ describe('cuttable terrain', () => {
     expect(sim.state.tileDamage).toEqual({});
   });
 
-  it('drops nothing when trees and mushrooms break', () => {
+  it('drops crafting materials, never souls, when trees and mushrooms break', () => {
     const sim = newSim();
     tileToTheRight(sim, 'giant_shroom');
-    const events = [...swing(sim), ...swing(sim), ...run(sim, 60)];
+    const events = [...swing(sim), ...swing(sim)];
     expect(ofType(events, 'tileCut')).toHaveLength(1);
-    expect(ofType(events, 'pickedUp')).toEqual([]);
-    expect([...sim.ecs.query(Body)].length).toBe([...newSim().ecs.query(Body)].length);
+    const drops = [...sim.ecs.query(Pickup)].map(([, p]) => p);
+    expect(drops.map((p) => p.item)).toContain('fungal_cap');
+    expect(drops.every((p) => p.kind === 'item')).toBe(true);
   });
 
   it('remembers partial damage across a save and restore', () => {

@@ -28,17 +28,18 @@ it are lint-enforced (see `CLAUDE.md`).
 Gameplay is split into `SimModule`s (`src/sim/modules/`). Each contributes systems tagged with a phase and
 its own dev commands. Every tick runs the phases in order:
 
-| Phase     | Systems                                                    |
-| --------- | ---------------------------------------------------------- |
-| `world`   | chunk streaming, entity spawn/despawn, area tracking       |
-| `control` | player state machine                                       |
-| `ai`      | enemy brains                                               |
-| `physics` | movement + tile collision, projectiles                     |
-| `combat`  | contact damage, pickups                                    |
-| `cleanup` | death timers, i-frame timers; then the ECS flushes deletes |
+| Phase     | Systems                                                             |
+| --------- | ------------------------------------------------------------------- |
+| `world`   | chunk streaming, entity spawn/despawn, area tracking                |
+| `control` | menu actions (equip, use, craft, upgrade), player state machine     |
+| `ai`      | enemy brains                                                        |
+| `physics` | movement + tile collision, projectiles                              |
+| `combat`  | contact damage, pickups                                             |
+| `cleanup` | death timers, i-frame and buff timers; then the ECS flushes deletes |
 
 Cross-module rules live in one place: all damage goes through `combat.applyDamage`, which handles i-frames,
-blocking, knockback, hurt states, deaths and loot.
+blocking, knockback, hurt states, deaths and loot. All player stats (weapon damage and reach, armour, rings,
+buffs) come from `items.playerStats`; nothing reads `player.json` attack numbers directly any more.
 
 ### ECS
 
@@ -59,7 +60,8 @@ edits, which are stored as overrides in `SimState`. Unloaded space reads as soli
 
 ## Client
 
-`App` owns the current `Simulation` and moves data across the boundary: `InputCapture` → `InputFrame`,
+`App` owns the current `Simulation` and moves data across the boundary: `InputCapture` → `InputFrame` (key
+presses, plus menu actions such as equip or craft queued by the inventory screen; see ADR 0009),
 `SimEvent`s → renderer / audio / DOM UI, autosave on rest and every two minutes. `FixedLoop` ticks at 60 Hz
 and renders every animation frame.
 
