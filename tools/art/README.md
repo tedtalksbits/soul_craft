@@ -15,6 +15,7 @@ pnpm art slime          # regenerate assets/sprites/slime.png + slime.json
 pnpm art items          # regenerate assets/sprites/items.png + items.json (seconds)
 pnpm art stations       # regenerate assets/sprites/stations.png + stations.json (seconds)
 pnpm art ui_kit         # re-cut the DOM UI pieces in assets/ui/ from assets/ui/source/kit.png (seconds)
+pnpm art icons          # regenerate assets/sprites/sigils.* + abilities.* from assets/sprites/source/ (seconds)
 ```
 
 Output is deterministic, so running a tool without changing it produces no diff. `pnpm dev`
@@ -33,6 +34,7 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 | `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels)                                                                                      |
 | `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 32×48 `frames`, voxel-rendered like the characters                                                                                            |
 | `ui_kit.py`    | `assets/ui/` | 9-slice UI pieces and their states, cut from one PixelLab sheet (`assets/ui/source/kit.png`)                                                                                              |
+| `icons.py`     | `sigils.*`   | 16×16 tintable class sigils, plus `abilities.*` (ability icons), picked from PixelLab rolls in `assets/sprites/source/`                                                                   |
 
 ## How the Ashen One generator works
 

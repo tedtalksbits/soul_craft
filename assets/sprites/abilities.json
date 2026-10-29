@@ -1,0 +1,18 @@
+{
+  "image": "abilities.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "anchor": [0.5, 1],
+  "frames": {
+    "ground_slam": 0,
+    "shield_charge": 1,
+    "earthshatter": 2,
+    "ash_bomb": 3,
+    "shadowstep": 4,
+    "bladestorm": 5,
+    "fire_pot": 6,
+    "repel": 7,
+    "cinder_storm": 8
+  },
+  "animations": {}
+}
