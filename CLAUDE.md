@@ -1,7 +1,8 @@
 # Soul Craft: agent and contributor guide
 
-A top-down Souls-like action RPG (TypeScript, PixiJS, Vite). Read `docs/architecture.md` before changing
-anything structural. Decisions and their reasons live in `docs/adr/`.
+A top-down Souls-like action RPG (TypeScript, PixiJS, Vite). Read `docs/roadmap.md` for what the game is for and
+what is planned, and `docs/architecture.md` before changing anything structural. Decisions and their reasons
+live in `docs/adr/`. When a milestone lands or a roadmap decision is made, update `docs/roadmap.md`.
 
 ## Commands
 
