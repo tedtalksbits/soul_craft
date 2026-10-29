@@ -3,6 +3,7 @@ import { App } from './client/app';
 import { Assets } from './client/assets';
 import { bundledContentFiles } from './client/content-source';
 import { GameRenderer } from './client/render/renderer';
+import { preloadUiKit } from './client/ui/ui-kit';
 import { buildContent, ContentError } from './content/content';
 
 async function boot(): Promise<void> {
@@ -12,7 +13,7 @@ async function boot(): Promise<void> {
   if (!wrap || !stage || !uiRoot) throw new Error('index.html is missing #wrap, #stage or #ui');
 
   const content = buildContent(bundledContentFiles());
-  const assets = await Assets.load();
+  const [assets] = await Promise.all([Assets.load(), preloadUiKit()]);
   const renderer = await GameRenderer.create(wrap, stage, assets);
   const app = new App(content, assets, renderer, uiRoot);
 
