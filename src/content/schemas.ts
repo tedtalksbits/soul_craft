@@ -150,7 +150,14 @@ export type DropDef = z.infer<typeof DropSchema>;
 // ------------------------------------------------------------------ enemies
 
 const BrainSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('hopper'), hopSpeed: pos, hopTicks: ticks, hopCooldown: range }),
+  z.object({
+    type: z.literal('hopper'),
+    /** Ticks squashed in place before each hop: the tell that a hop is coming. */
+    crouchTicks: ticks,
+    hopSpeed: pos,
+    hopTicks: ticks,
+    hopCooldown: range,
+  }),
   z.object({
     type: z.literal('lunger'),
     range: pos,

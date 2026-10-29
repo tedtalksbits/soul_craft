@@ -53,3 +53,23 @@ describe('archer', () => {
     expect(sim.ecs.need(e, Facing).dir).toBe('left');
   });
 });
+
+describe('slime', () => {
+  it('crouches in place before each hop, then flies', () => {
+    const sim = newSim();
+    sim.state.cheats.god = true;
+    const e = spawnNear(sim, 'slime', 50, 0);
+    const brain = sim.content.enemies['slime']?.brain;
+    if (brain?.type !== 'hopper') throw new Error('slime is not a hopper');
+    const ai = sim.ecs.need(e, Ai);
+    const body = sim.ecs.need(e, Body);
+    ai.cooldown = 0;
+    run(sim, 1);
+    expect(ai.state).toBe('hop');
+    const start = body.x;
+    run(sim, brain.crouchTicks - 1);
+    expect(body.x).toBe(start);
+    run(sim, 6);
+    expect(body.x).toBeLessThan(start);
+  });
+});

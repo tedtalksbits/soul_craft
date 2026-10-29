@@ -102,7 +102,9 @@ const hopper: Brain<'hopper'> = (c, b) => {
   const { ai, sim } = c;
   c.contact.amount = c.def.contactDamage;
   if (ai.state === 'hop') {
-    if (ai.t <= b.hopTicks) {
+    // Crouch in place first (the sprite's squash frame), then fly for hopTicks.
+    if (ai.t <= b.crouchTicks) return;
+    if (ai.t <= b.crouchTicks + b.hopTicks) {
       c.motion.vx = ai.dirX;
       c.motion.vy = ai.dirY;
     } else setAi(ai, 'idle');

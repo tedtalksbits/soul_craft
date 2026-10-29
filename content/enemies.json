@@ -14,7 +14,7 @@
     ],
     "recoilTicks": 14,
     "knockbackTaken": 1,
-    "brain": { "type": "hopper", "hopSpeed": 2.2, "hopTicks": 18, "hopCooldown": [50, 80] }
+    "brain": { "type": "hopper", "crouchTicks": 6, "hopSpeed": 2.2, "hopTicks": 18, "hopCooldown": [50, 80] }
   },
   "hollow": {
     "name": "Hollow",

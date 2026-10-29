@@ -1,6 +1,6 @@
 | Done || Done || Done || Done || Done || Done |# Character Art Design Doc
 
-Last updated: 2026-10-29 (knight ported; see "Port report: knight". All four humanoids are in. Next: the slime)
+Last updated: 2026-10-29 (slime look and timing decided; see "Slime". Next: the slime delivery)
 
 ## Purpose
 
@@ -534,6 +534,39 @@ source goes into `tools/art` with the sheets, so anyone can re-render after a ch
 
 Answered 2026-10-28: see "Implementation report on the current import" and "Enemies".
 
+### Slime
+
+Role in game: the "Fungal Slime", the forest's most common enemy. 22 HP, contact damage 8, a 10 × 8 hitbox. It
+hops toward the player when it sees them and wanders in shorter hops when it doesn't. Low danger in ones, a
+nuisance in swarms.
+
+**Look (chosen 2026-10-29): B, fungal violet.** Dusky violet gel with glowing teal nodules and two small
+mushroom caps sprouting from the top. The caps use the `fungal_cap` icon's colours and the glow echoes
+`glowspore`. About 18 px wide. Rejected: A (bog gel with a skull; at 18 px the skull reads as one eyeball and
+green gel vanishes on the forest floor) and C (lantern teal; its gel drop would look like the glowspore icon).
+`slime_gel` in `items.py` changes to the violet ramp with the delivery.
+
+**Directions: none.** A round body under screen-fixed light renders as eight near-identical copies, so the sheet
+has undirected `idle`, `hop`, `hurt`, `dead`; the game falls back to undirected names. The hop squashes and
+stretches straight up.
+
+**Timing, all clocked from the sim:**
+
+| Animation | Frames | fps (ms/frame) | Loop | Game time                                                                                    |
+| --------- | ------ | -------------- | ---- | -------------------------------------------------------------------------------------------- |
+| `idle`    | 2      | 2 (500)        | yes  | between hops (50–80 ticks)                                                                   |
+| `hop`     | 4      | 10 (100)       | no   | 400 ms: crouch in place 6 ticks, then 18 ticks of flight. Frame 0 = crouch, 1–3 = the flight |
+| `hurt`    | 1      | —              | no   | 233 ms recoil (14 ticks)                                                                     |
+| `dead`    | 1      | —              | no   | the 667 ms death fade                                                                        |
+
+- **Hop frames:** 0 squashed flat in place (the tell, on the ground), 1 stretched launch, about 4 px up, 2 the top
+  of the arc, about 8 px up, 3 the landing splat, back on the ground.
+- **The lift is in the art:** the sim has no height for enemies. Keep a ground shadow at the anchor in every frame,
+  so the body visibly leaves the ground and the shadow stays put.
+- A chasing hop covers about 40 px (2.2 px/tick for 18 ticks); a wandering hop about 20 px. The 8 px peak suits
+  both.
+- The anchor, the ground line 3 rows up and the 48 × 48 frame are as for the characters.
+
 ## Open questions
 
 - [x] Roll direction: 8 directions, like every animation; the voxel pipeline makes them free. The game picks the
@@ -542,8 +575,6 @@ Answered 2026-10-28: see "Implementation report on the current import" and "Enem
 - [x] `dead` has one pose per facing (8 directions).
 - [x] The knight's charge is a 3-frame looping run cycle, not a held pose.
 - [x] Final timings are in the Animations table and each enemy's notes.
-- [ ] The slime ("Fungal Slime", the forest's most common enemy) is also in the game and has no spec yet. It is
-      non-humanoid (a hopping blob, 10 × 8 px hitbox), so it needs its own model rather than the Ashen One's.
-      Proposal: after the knight, about 18 px wide, purple-teal fungal accents.
+- [x] The slime's look: B, fungal violet with teal nodules and two mushroom caps. Undirected sheet. See "Slime".
 - [x] Walk speed: the stride is 12.9 px at 10 fps, so the player now moves 64.5 px/s (`moveSpeed` 1.075, was
       1.35) and the feet stay planted.
