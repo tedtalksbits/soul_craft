@@ -22,7 +22,7 @@ import { SettingsStore } from './settings';
 import { Tutorial } from './tutorial';
 import { FixedLoop } from './loop';
 import type { GameRenderer } from './render/renderer';
-import { iconElement } from './ui/icons';
+import { iconElement, tintedIcon } from './ui/icons';
 import { InventoryScreen } from './ui/inventory';
 import { Ui, type ClassLabel } from './ui/ui';
 
@@ -71,6 +71,8 @@ export class App {
       icon: (item) => this.itemIcon(item),
       act: (action) => this.input.queueAction(action),
       bindings: () => this.input.bindings,
+      sigil: (cls) => this.sigilIcon(cls, 2),
+      abilityIcon: (ability) => this.abilityIcon(ability, 2),
     });
     this.loop = new FixedLoop(
       () => this.tick(),
@@ -96,7 +98,7 @@ export class App {
     addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && !e.defaultPrevented) this.togglePause();
     });
-    this.tutorial = new Tutorial(this.settings, this.ui);
+    this.tutorial = new Tutorial(this.settings, this.ui, (ability) => this.abilityIcon(ability, 2));
     this.settings.watch((s) => {
       this.input.bindings = s.bindings;
       this.ui.bindings = s.bindings;
@@ -136,6 +138,22 @@ export class App {
   }
 
   /** An item's icon from the items sheet, as a DOM element. */
+  /** A class's sigil, tinted with its element. */
+  sigilIcon(cls: string, scale = 2): HTMLElement {
+    const def = this.content.classes[cls];
+    return tintedIcon(this.assets.sheet('sigils')?.frameRect(cls), def?.element.base ?? '#ffffff', scale);
+  }
+
+  /** An ability's icon, tinted with its class's element. */
+  abilityIcon(ability: string, scale = 2): HTMLElement {
+    const cls = Object.values(this.content.classes).find((c) => Object.values(c.abilities).includes(ability));
+    return tintedIcon(
+      this.assets.sheet('abilities')?.frameRect(ability),
+      cls?.element.base ?? '#ffffff',
+      scale,
+    );
+  }
+
   itemIcon(item: string, scale = 2): HTMLElement {
     const def = this.content.items[item];
     return iconElement(def ? this.assets.sheet('items')?.frameRect(def.icon) : undefined, scale);
@@ -166,7 +184,14 @@ export class App {
   /** How menus name a class; null for one the content no longer has. */
   private classLabel(id: string): ClassLabel | null {
     const cls = this.content.classes[id];
-    return cls ? { name: cls.name, element: cls.element.name, color: cls.element.light } : null;
+    return cls
+      ? {
+          name: cls.name,
+          element: cls.element.name,
+          color: cls.element.light,
+          sigil: () => this.sigilIcon(id, 1),
+        }
+      : null;
   }
 
   /** The class the running game is playing, as menus show it. */
@@ -183,6 +208,8 @@ export class App {
       current: null,
       mode: 'newGame',
       bindings: this.input.bindings,
+      sigil: (cls) => this.sigilIcon(cls, 3),
+      abilityIcon: (ability) => this.abilityIcon(ability, 2),
       pick: (cls) => void this.newGame(slot, randomSeed(), cls).then(() => this.save()),
       cancel: () => void this.showTitle(),
     });
@@ -197,6 +224,8 @@ export class App {
       current: sim.ecs.get(sim.player, Abilities)?.class ?? null,
       mode: 'bonfire',
       bindings: this.input.bindings,
+      sigil: (cls) => this.sigilIcon(cls, 3),
+      abilityIcon: (ability) => this.abilityIcon(ability, 2),
       pick: (cls) => {
         this.input.queueAction({ type: 'setClass', class: cls });
         this.ui.hideScreen();

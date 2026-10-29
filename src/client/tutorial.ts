@@ -31,6 +31,7 @@ export class Tutorial {
   constructor(
     private readonly settings: SettingsStore,
     private readonly ui: Ui,
+    private readonly abilityIcon: (ability: string) => HTMLElement,
   ) {}
 
   update(sim: Simulation): void {
@@ -64,6 +65,7 @@ export class Tutorial {
         text: def.description,
         footer: `All your abilities: ${primaryKey(this.settings.current.bindings, 'inventory')}, then Abilities.`,
         color: cls.element.light,
+        icon: this.abilityIcon(ability),
       });
       this.settings.update({ seenHints: [...seen, id] });
       this.quietUntil = sim.tick + GAP_TICKS;

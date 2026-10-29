@@ -30,6 +30,9 @@ export interface InventoryHost {
   act(action: PlayerAction): void;
   /** The player's key bindings, for key hints. */
   bindings(): Bindings;
+  /** Tinted class sigils and ability icons. */
+  sigil(cls: string): HTMLElement;
+  abilityIcon(ability: string): HTMLElement;
 }
 
 type Tab = 'items' | 'craft' | 'abilities';
@@ -294,7 +297,12 @@ export class InventoryScreen {
       return h(
         'div',
         { class: 'ability-row' },
-        h('kbd', {}, primaryKey(this.host.bindings(), SLOT_BINDING[slot])),
+        h(
+          'div',
+          { class: 'keys' },
+          this.host.abilityIcon(cls.abilities[slot]),
+          h('kbd', {}, primaryKey(this.host.bindings(), SLOT_BINDING[slot])),
+        ),
         h(
           'div',
           { class: 'what' },
@@ -312,6 +320,7 @@ export class InventoryScreen {
       h(
         'div',
         { class: 'class-head' },
+        this.host.sigil(a.class),
         h('h2', {}, cls.name),
         h('span', { class: 'element' }, cls.element.name),
       ),

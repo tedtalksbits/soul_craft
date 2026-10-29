@@ -882,3 +882,33 @@ kbd {
   font-size: 0.8em;
   color: var(--dim);
 }
+
+/* ------------------------------------------------------------------ class sigils and ability icons */
+
+/* An ability's icon with its key under it. */
+.keys {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+.class-card .card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+.class-card .card-head .element {
+  margin-top: 0;
+}
+.class-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+}
+.inventory .abilities .class-head {
+  align-items: center;
+}
+.hint-card .keys .icon {
+  margin-bottom: 2px;
+}

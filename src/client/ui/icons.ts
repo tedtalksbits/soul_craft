@@ -16,3 +16,21 @@ export function iconElement(rect: FrameRect | undefined, scale = 2): HTMLElement
   s.backgroundSize = `${rect.sheetW * scale}px ${rect.sheetH * scale}px`;
   return el;
 }
+
+/**
+ * A grayscale glyph (class sigils, ability icons) tinted with a color, like Pixi's tint on the
+ * HUD: the glyph multiplies the color, then is masked to its own shape so the transparent
+ * area stays clear. Keeps the icons' shading while letting content pick the color.
+ */
+export function tintedIcon(rect: FrameRect | undefined, color: string, scale = 2): HTMLElement {
+  const el = iconElement(rect, scale);
+  if (!rect) return el;
+  const s = el.style;
+  s.backgroundColor = color;
+  s.backgroundBlendMode = 'multiply';
+  s.maskImage = `url("${rect.url}")`;
+  s.maskPosition = s.backgroundPosition;
+  s.maskSize = s.backgroundSize;
+  s.maskRepeat = 'no-repeat';
+  return el;
+}

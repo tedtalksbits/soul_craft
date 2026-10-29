@@ -80,7 +80,9 @@ A class (`classes.json`) names one ability per slot: `aoe` (F), `class` (C) and 
 as Destiny's elements are: every ability effect and its damage numbers, the player's light, the charged-super
 wisps and super glow, the HUD slots, the class cards, the toast on a class change and the class tag on the title,
 pause and bonfire menus are drawn in it (all through `src/client/render/class-palette.ts`). Menus always show
-the class and element names beside the color, so nothing depends on color alone. Keep the three classes'
+the class and element names beside the color, so nothing depends on color alone. Each class has a sigil in
+`assets/sprites/sigils.*` and each ability an icon in `assets/sprites/abilities.*` (16×16 frames named by id, made by
+`pnpm art icons`). Both are gray glyphs that the game tints with the element; a new class or ability needs one. Keep the three classes'
 `base` colors well apart in hue (today blue, violet, orange). Players pick a class on the new-game screen and can change it from the
 bonfire menu while resting. `player.json → start.class` is the default for games started without that screen
 (scenarios, `?new`, tests).

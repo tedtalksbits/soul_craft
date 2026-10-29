@@ -14,11 +14,13 @@ export interface ClassLabel {
   name: string;
   element: string;
   color: string;
+  /** A new element showing the class's sigil (one per use: an element can only be in one place). */
+  sigil(): HTMLElement;
 }
 
-/** "Vanguard · Ward", in the element's color. */
+/** The sigil, then "Vanguard · Ward", in the element's color. */
 function classTag(label: ClassLabel): HTMLElement {
-  const el = h('span', { class: 'class-tag' }, `${label.name} · ${label.element}`);
+  const el = h('span', { class: 'class-tag' }, label.sigil(), `${label.name} · ${label.element}`);
   el.style.color = label.color;
   return el;
 }
@@ -147,14 +149,21 @@ export class Ui {
   }
 
   /** A tutorial card above the prompt: a key, what it does, and where to read more. */
-  hint(o: { key: string; title: string; text: string; footer: string; color: string }): void {
+  hint(o: {
+    key: string;
+    title: string;
+    text: string;
+    footer: string;
+    color: string;
+    icon?: HTMLElement;
+  }): void {
     this.hintEl?.remove();
     const title = h('div', { class: 'title' }, o.title);
     title.style.color = o.color;
     this.hintEl = h(
       'div',
       { class: 'hint-card' },
-      h('kbd', {}, o.key),
+      h('div', { class: 'keys' }, o.icon ?? null, h('kbd', {}, o.key)),
       h('div', {}, title, h('div', { class: 'text' }, o.text), h('div', { class: 'footer' }, o.footer)),
     );
     this.root.append(this.hintEl);

@@ -13,6 +13,8 @@ export interface ClassScreenOptions {
   current: string | null;
   mode: 'newGame' | 'bonfire';
   bindings: Bindings;
+  sigil(cls: string): HTMLElement;
+  abilityIcon(ability: string): HTMLElement;
   pick(id: string): void;
   cancel(): void;
 }
@@ -30,15 +32,24 @@ export function classScreen(o: ClassScreenOptions): HTMLElement {
       return h(
         'li',
         {},
-        h('kbd', {}, primaryKey(o.bindings, SLOT_BINDING[slot])),
+        h(
+          'div',
+          { class: 'keys' },
+          o.abilityIcon(cls.abilities[slot]),
+          h('kbd', {}, primaryKey(o.bindings, SLOT_BINDING[slot])),
+        ),
         h('div', {}, h('div', { class: 'ability' }, def.name), h('div', { class: 'what' }, def.description)),
       );
     });
     const card = h(
       'div',
       { class: isCurrent ? 'class-card current' : 'class-card' },
-      h('h2', {}, cls.name),
-      h('div', { class: 'element' }, cls.element.name),
+      h(
+        'div',
+        { class: 'card-head' },
+        o.sigil(id),
+        h('div', {}, h('h2', {}, cls.name), h('div', { class: 'element' }, cls.element.name)),
+      ),
       h('p', { class: 'about' }, cls.description),
       h('ul', {}, ...abilities),
       h(

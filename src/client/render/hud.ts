@@ -46,6 +46,11 @@ export class Hud {
   bindings: Bindings = DEFAULT_BINDINGS;
   /** Key labels: the three ability slots, then the quick item. */
   private readonly keyLabels: PixelText[];
+  /** The class sigil and the three ability icons, tinted with the class's element. */
+  private readonly sigil = new Sprite();
+  private readonly abilityIcons = [new Sprite(), new Sprite(), new Sprite()];
+  /** Drawn over the icons: cooldown fills and the super's glow. */
+  private readonly over = new Graphics();
 
   constructor(
     private readonly assets: Assets,
@@ -56,13 +61,86 @@ export class Hud {
     this.souls = new PixelText(assets);
     this.quickCount = new PixelText(assets);
     this.keyLabels = [0, 1, 2, 3].map(() => new PixelText(assets));
-    this.root.addChild(this.g, this.flasks, this.souls, this.quickIcon, this.quickCount, ...this.keyLabels);
+    this.root.addChild(
+      this.g,
+      this.sigil,
+      ...this.abilityIcons,
+      this.over,
+      this.flasks,
+      this.souls,
+      this.quickIcon,
+      this.quickCount,
+      ...this.keyLabels,
+    );
   }
 
   /** The view changed size (window resize, fill mode): the bottom and right edges move. */
   resize(w: number, h: number): void {
     this.viewW = w;
     this.viewH = h;
+  }
+
+  /**
+   * The class sigil, then F / C / V: each ability's icon in the class's color. A ready ability
+   * is bright; one cooling down is dim, with the slot filling back up from the bottom. The
+   * super fills with energy, glows when full, and shows the time left while it runs.
+   */
+  private drawAbilities(sim: Simulation, g: Graphics): void {
+    const over = this.over.clear();
+    const a = sim.ecs.get(sim.player, Abilities);
+    const cls = a ? sim.content.classes[a.class] : undefined;
+    const shown = a !== undefined && cls !== undefined;
+    this.sigil.visible = shown;
+    for (const icon of this.abilityIcons) icon.visible = shown;
+    if (!a || !cls) return;
+    const pal = classPalette(sim.content, a.class);
+    const y = this.viewH - 6 - SLOT;
+
+    const sigil = this.assets.sheet('sigils')?.named.get(a.class);
+    this.sigil.visible = sigil !== undefined;
+    if (sigil) {
+      this.sigil.texture = sigil;
+      this.sigil.tint = pal.base;
+      this.sigil.position.set(SIGIL_X, y);
+    }
+
+    ABILITY_SLOTS.forEach((slot, i) => {
+      const x = slotX(i);
+      const def = sim.content.abilities[cls.abilities[slot]];
+      let fill: number;
+      if (slot === 'super') fill = a.energy / FULL_ENERGY;
+      else {
+        const total = (def?.cooldown ?? 0) * TICK_RATE;
+        fill = total > 0 ? 1 - a.cooldowns[slot] / total : 1;
+      }
+      const ready = fill >= 1;
+      g.rect(x - 1, y - 1, SLOT + 2, SLOT + 2).fill({ color: 0x000000, alpha: 0.65 });
+      g.rect(x, y, SLOT, SLOT).fill({ color: pal.dark, alpha: 0.6 });
+
+      const icon = this.abilityIcons[i];
+      const tex = this.assets.sheet('abilities')?.named.get(cls.abilities[slot]);
+      if (icon) {
+        icon.visible = tex !== undefined;
+        if (tex) icon.texture = tex;
+        icon.tint = ready ? pal.light : pal.base;
+        icon.alpha = ready ? 1 : 0.45;
+        icon.position.set(x, y);
+      }
+      if (!ready) {
+        const h = Math.round(SLOT * Math.min(1, fill));
+        over.rect(x, y + SLOT - h, SLOT, h).fill({ color: pal.base, alpha: 0.3 });
+      } else if (slot === 'super') {
+        const pulse = 0.4 + 0.4 * Math.sin(this.clockMs / 160);
+        over.rect(x - 2, y - 2, SLOT + 4, SLOT + 4).stroke({ color: pal.light, alpha: pulse, width: 1 });
+      }
+    });
+    const emp = sim.ecs.get(sim.player, Empowered);
+    const seconds = sim.content.abilities[cls.abilities.super]?.effects.find(
+      (fx) => fx.type === 'empower',
+    )?.seconds;
+    if (emp && seconds) {
+      over.rect(slotX(2), y - 4, Math.round(SLOT * (emp.ticks / (seconds * TICK_RATE))), 2).fill(pal.base);
+    }
   }
 
   /** Each slot's key in its top-left corner, so the HUD itself says what to press. */
@@ -75,7 +153,7 @@ export class Hud {
       t.visible = code !== undefined && (binding !== 'item' || quickShown);
       t.set(code ? hudKeyLabel(code) : '', 0xffffff);
       if (binding === 'item') t.position.set(27, 17);
-      else t.position.set(6 + i * (SLOT + SLOT_GAP) + 1, y + 1);
+      else t.position.set(slotX(i) + 1, y + 1);
     });
   }
 
@@ -141,7 +219,7 @@ export class Hud {
     }
 
     this.clockMs += dtMs;
-    abilitySlots(sim, g, this.viewH, this.clockMs);
+    this.drawAbilities(sim, g);
     this.labelKeys(tex !== undefined);
 
     // Souls count up toward the true value.
@@ -159,52 +237,16 @@ export class Hud {
   }
 }
 
-/** Ability slot size (px) and where the row of three sits. */
-const SLOT = 12;
+/** Ability slot size (px): the icons' size, shown at 1x. */
+const SLOT = 16;
 const SLOT_GAP = 3;
 
-/**
- * F / C / V: one square each in the class color. AoE and class slots fill back up from
- * the bottom as they cool down; the super fills with energy, glows when full, and shows
- * the time left while it runs.
- */
+/** The slots that get a key label: the three abilities, then the quick item. */
 const LABELED: readonly Binding[] = ['aoe', 'classAbility', 'super', 'item'];
 
-function abilitySlots(sim: Simulation, g: Graphics, viewH: number, clockMs: number): void {
-  const a = sim.ecs.get(sim.player, Abilities);
-  if (!a) return;
-  const cls = sim.content.classes[a.class];
-  if (!cls) return;
-  const pal = classPalette(sim.content, a.class);
-  const color = pal.base;
-  const y = viewH - 6 - SLOT;
-  ABILITY_SLOTS.forEach((slot, i) => {
-    const x = 6 + i * (SLOT + SLOT_GAP);
-    const def = sim.content.abilities[cls.abilities[slot]];
-    let fill: number;
-    if (slot === 'super') fill = a.energy / FULL_ENERGY;
-    else {
-      const total = (def?.cooldown ?? 0) * TICK_RATE;
-      fill = total > 0 ? 1 - a.cooldowns[slot] / total : 1;
-    }
-    const ready = fill >= 1;
-    g.rect(x - 1, y - 1, SLOT + 2, SLOT + 2).fill({ color: 0x000000, alpha: 0.65 });
-    g.rect(x, y, SLOT, SLOT).fill({ color: pal.dark, alpha: 0.6 });
-    const h = Math.round(SLOT * Math.min(1, fill));
-    g.rect(x, y + SLOT - h, SLOT, h).fill({ color, alpha: ready ? 0.9 : 0.4 });
-    if (slot === 'super' && ready) {
-      const pulse = 0.4 + 0.4 * Math.sin(clockMs / 160);
-      g.rect(x - 2, y - 2, SLOT + 4, SLOT + 4).stroke({ color, alpha: pulse, width: 1 });
-    }
-  });
-  const emp = sim.ecs.get(sim.player, Empowered);
-  const sup = sim.content.abilities[cls.abilities.super];
-  const seconds = sup?.effects.find((fx) => fx.type === 'empower')?.seconds;
-  if (emp && seconds) {
-    const x = 6 + 2 * (SLOT + SLOT_GAP);
-    g.rect(x, y - 4, Math.round(SLOT * (emp.ticks / (seconds * TICK_RATE))), 2).fill(color);
-  }
-}
+/** The class sigil sits at the left; the three ability slots follow it. */
+const SIGIL_X = 6;
+const slotX = (i: number) => SIGIL_X + SLOT + 4 + i * (SLOT + SLOT_GAP);
 
 function bar(
   g: Graphics,
