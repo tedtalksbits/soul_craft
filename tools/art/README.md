@@ -7,17 +7,18 @@ PNG and JSON along with the script change.
 
 ```bash
 pnpm art:setup          # once: creates tools/art/.venv and installs requirements.txt (needs Python 3.10+)
-pnpm art ashen_one      # regenerate assets/sprites/player.png + player.json
+pnpm art ashen_one      # regenerate assets/sprites/player.png + player.json (about 80 s)
 ```
 
 Output is deterministic, so running a tool without changing it produces no diff. `pnpm dev`
-hot-reloads the sheet as soon as it is written.
+hot-reloads the sheet as soon as it is written. The character and animation spec lives in
+[`docs/CHARACTER_ART.md`](../../docs/CHARACTER_ART.md).
 
 ## Tools
 
-| Tool           | Writes     | Contents                                                |
-| -------------- | ---------- | ------------------------------------------------------- |
-| `ashen_one.py` | `player.*` | The Ashen One: idle + 4-frame walk, 8 directions, 48×48 |
+| Tool           | Writes     | Contents                                                                                             |
+| -------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `ashen_one.py` | `player.*` | The Ashen One: idle, walk, attack, roll, drink, sit, dead, hurt; 8 directions, 48×48 (sheet 384×864) |
 
 ## How the Ashen One generator works
 
@@ -27,12 +28,19 @@ lit from the upper left, quantised to 4-step material ramps (`RAMPS`), then give
 
 - **Add an animation:** add poses and an entry to `ANIMATIONS` (`name, poses, fps, loop`). Each pose
   becomes a sheet row and `<name>_<direction>` animations are written for all eight directions. Pose
-  parameters are documented on `build`. New poses (attack, roll, hurt…) may need new parameters, such as
-  arm angles or a whole-body tilt.
-- **Directions:** columns follow `DIRS` (down, down_right, right, up_right, up, up_left, left, down_left).
-  The renderer prefers 8-way keys and falls back to 4-way ones.
-- **Pivots:** points the engine attaches effects to, in pixels from the feet anchor. `swing` (the sword
-  arc centre) is computed from the model's sword hand, so it follows proportion changes.
+  controls are documented on `build`: leg angles or explicit knee/ankle points, `hip_z`, whole-body `tilt`
+  (with `ground` to drop onto the floor), torso `lean`/`twist`, `head_tilt`, `bob_extra`, hand targets with
+  two-bone IK (`handR`/`handL`, elbow poles), and `sword`/`shield`/`flask` placement.
+- **Timing:** `fps` must fit the gameplay duration in `content/player.json`. In game, one-shot actions
+  (attack, roll, hurt, drink, sit, dead) are clocked from the sim state's tick counter, so frames stay in
+  step with hit windows.
+- **Fitting into the frame:** animations in `FIT` (roll, sit, dead) reach towards the camera and would clip
+  at the bottom of the frame, so each direction is shifted by whole pixels. The shift is written as the
+  animation's `offset` in the JSON and undone by the renderer, so the body stays where it lies.
+- **Directions:** columns follow `DIRECTIONS` (down, down_right, right, up_right, up, up_left, left,
+  down_left). The renderer prefers 8-way keys and falls back to 4-way ones.
+- **Pivots:** points the engine attaches effects to, in pixels from the feet anchor (`PIVOTS`). `swing` is
+  the sword arc centre.
 - **Palette:** edit `RAMPS`; each material is (highlight, base, shadow, deep).
 
 ## Conventions for new character tools

@@ -17,6 +17,8 @@ export interface Anim {
   textures: Texture[];
   fps: number;
   loop: boolean;
+  /** Sprite offset from the anchor in pixels (see SpriteSheetSchema). */
+  offset: readonly [number, number];
 }
 
 export class SpriteSheet {
@@ -48,7 +50,7 @@ export class SpriteSheet {
       const textures = a.frames
         .map((f) => (typeof f === 'number' ? this.frames[f] : this.named.get(f)))
         .filter((t) => t !== undefined);
-      if (textures.length > 0) this.anims.set(key, { textures, fps: a.fps, loop: a.loop });
+      if (textures.length > 0) this.anims.set(key, { textures, fps: a.fps, loop: a.loop, offset: a.offset });
     }
   }
 
@@ -57,7 +59,7 @@ export class SpriteSheet {
     const anim = this.anims.get(key);
     if (anim) return anim;
     const still = this.named.get(key);
-    return still ? { textures: [still], fps: 1, loop: false } : undefined;
+    return still ? { textures: [still], fps: 1, loop: false, offset: [0, 0] } : undefined;
   }
 }
 

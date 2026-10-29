@@ -5,7 +5,7 @@
   "maxStamina": 100,
   "staminaRegen": 1.1,
   "staminaRegenDelay": 30,
-  "moveSpeed": 1.35,
+  "moveSpeed": 1.075,
   "interactRange": 18,
   "attack": {
     "damage": 12,

@@ -5,28 +5,14 @@
  */
 import { Container, Graphics, Sprite as PixiSprite } from 'pixi.js';
 import type { Entity } from '../../core/ecs';
-import {
-  Ai,
-  Body,
-  Bonfire,
-  Dying,
-  Enemy,
-  Facing,
-  Health,
-  Invulnerable,
-  Motion,
-  Pickup,
-  Player,
-  Sign,
-  Sprite,
-  Torch,
-} from '../../sim/components';
+import { Ai, Body, Dying, Health, Invulnerable, Pickup, Player, Sprite } from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
 import { TELEGRAPH_STATES } from '../../sim/modules/brains';
 import { DEATH_TICKS } from '../../sim/modules/combat';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
-import { resolveDir8, type Dir8 } from './facing';
+import { selectAnim } from './anim-select';
+import type { Dir8 } from './facing';
 import { PixelText } from './pixel-text';
 
 const HIT_FLASH_MS = 110;
@@ -70,12 +56,12 @@ export class EntityLayer {
       seen.add(e);
       const view = this.views.get(e) ?? this.create(e);
       const sheet = this.assets.sheet(spriteDef.sheet);
-      const { key, dir8 } = resolveAnim(sim, e, view.dir8, (k) => sheet?.anim(k) !== undefined);
+      const { key, dir8, elapsedMs } = selectAnim(sim, e, view.dir8, (k) => sheet?.anim(k) !== undefined);
       view.dir8 = dir8;
-      if (key !== view.anim) {
-        view.anim = key;
-        view.animMs = 0;
-      } else view.animMs += dtMs;
+      if (elapsedMs !== undefined) view.animMs = elapsedMs;
+      else if (key !== view.anim) view.animMs = 0;
+      else view.animMs += dtMs;
+      view.anim = key;
       const anim = sheet?.anim(key);
       if (anim) {
         const n = Math.floor((view.animMs / 1000) * anim.fps);
@@ -85,6 +71,8 @@ export class EntityLayer {
         view.glow.texture = tex;
         view.sprite.anchor.set(...sheet!.def.anchor);
         view.glow.anchor.set(...sheet!.def.anchor);
+        view.sprite.position.set(...anim.offset);
+        view.glow.position.set(...anim.offset);
       }
 
       const z = ecs.get(e, Pickup)?.z ?? 0;
@@ -215,64 +203,4 @@ class HealthBar {
       this.combo.position.set(x + w + 3, -2);
     }
   }
-}
-
-/**
- * Picks the animation key for an entity, trying the most specific name first:
- * eight-way, then four-way, then undirected, then walk/idle fallbacks.
- */
-function resolveAnim(
-  sim: Simulation,
-  e: Entity,
-  previous: Dir8 | undefined,
-  exists: (key: string) => boolean,
-): { key: string; dir8: Dir8 } {
-  const { ecs } = sim;
-  const dir = ecs.get(e, Facing)?.dir ?? 'down';
-  const motion = ecs.get(e, Motion);
-  const moving = motion !== undefined && Math.abs(motion.vx) + Math.abs(motion.vy) > 0.05;
-  const dir8 = resolveDir8(previous, dir, motion?.vx ?? 0, motion?.vy ?? 0);
-  let pose: string;
-
-  const player = ecs.get(e, Player);
-  const ai = ecs.get(e, Ai);
-  const pickup = ecs.get(e, Pickup);
-  if (player) {
-    pose = player.state === 'free' ? (moving ? 'walk' : 'idle') : player.state;
-  } else if (ai && ecs.has(e, Enemy)) {
-    if (ecs.has(e, Dying)) pose = 'hurt';
-    else
-      switch (ai.state) {
-        case 'windup':
-        case 'draw':
-          pose = 'windup';
-          break;
-        case 'lunge':
-        case 'charge':
-          pose = 'attack';
-          break;
-        case 'recoil':
-          pose = 'hurt';
-          break;
-        default:
-          pose = ai.state === 'hop' || ai.state === 'stunned' ? ai.state : moving ? 'walk' : 'idle';
-      }
-  } else if (ecs.has(e, Bonfire)) {
-    pose = sim.state.litBonfires[ecs.need(e, Bonfire).id] ? 'bonfire_lit' : 'bonfire_unlit';
-  } else if (ecs.has(e, Torch)) pose = 'torch';
-  else if (ecs.has(e, Sign)) pose = 'sign';
-  else if (pickup) pose = pickup.kind;
-  else pose = 'idle';
-
-  const candidates = [
-    `${pose}_${dir8}`,
-    `${pose}_${dir}`,
-    pose,
-    `walk_${dir8}`,
-    `walk_${dir}`,
-    `idle_${dir8}`,
-    `idle_${dir}`,
-    'idle',
-  ];
-  return { key: candidates.find(exists) ?? pose, dir8 };
 }

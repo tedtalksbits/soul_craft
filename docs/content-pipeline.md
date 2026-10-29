@@ -74,6 +74,8 @@ LibreSprite…). Saving hot-reloads the sheet.
 of travel, held while standing still. A missing pose falls back to walk/idle frames rather than failing.
 
 **Pivots** (optional) name points relative to the anchor, in pixels, that effects attach to.
+An animation may also carry an **offset** (pixels, x right, y down) added to the sprite position; generators
+set it when they shift a pose to fit the frame, so the body still lands where it should.
 `swing` places the player's sword arc; without one it sits 9 px above the feet.
 
 - Player poses: `idle`, `walk`, `attack`, `roll`, `hurt`, `drink`, `sit`, `dead`

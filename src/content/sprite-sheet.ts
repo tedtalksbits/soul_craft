@@ -27,6 +27,11 @@ export const SpriteSheetSchema = z.object({
         frames: z.array(frameRef).min(1),
         fps: z.number().positive(),
         loop: z.boolean().default(true),
+        /**
+         * Pixel offset (x right, y down) added to the sprite's position for this animation.
+         * Generators set it when they had to shift a pose to fit the frame (lying, rolling).
+         */
+        offset: z.tuple([z.number(), z.number()]).default([0, 0]),
       }),
     )
     .default({}),
