@@ -53,7 +53,7 @@ ESLint enforces the "never" column for the pure layers. Do not disable those rul
   `Math.random`.
 - The sim never calls the client. The client never mutates sim state except through `InputFrame`s, dev
   commands and `setContent`.
-- Tests for sim behaviour are headless: build a `Simulation`, feed `InputFrame`s, assert on state and events
+- Tests for sim behavior are headless: build a `Simulation`, feed `InputFrame`s, assert on state and events
   (`tests/helpers.ts`). Every bug fix gets a test that fails without it.
 - Comments explain _why_. Keep files focused; prefer a new module over growing an unrelated one.
 - Strict TypeScript, no `any`, no non-essential `as` casts. `pnpm check` clean is the bar for "done".

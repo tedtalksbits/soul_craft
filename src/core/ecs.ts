@@ -2,7 +2,7 @@
  * A small entity-component store.
  *
  * Components are plain, JSON-serializable data, so the whole world can be
- * snapshotted, saved and restored exactly. Behaviour lives in systems
+ * snapshotted, saved and restored exactly. Behavior lives in systems
  * (src/sim/modules), never on components.
  */
 

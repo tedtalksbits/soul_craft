@@ -20,7 +20,7 @@ import { CHUNK, TILE } from '../constants';
 export interface SpawnPoint {
   /** Stable across sessions: used to remember kills and to respawn. */
   id: string;
-  /** World pixels, centre of the tile. */
+  /** World pixels, center of the tile. */
   x: number;
   y: number;
   entity: PrefabEntityDef;
@@ -195,7 +195,7 @@ export class WorldGenerator {
     const out: PrefabPlacement[] = [];
     const rxs = new Set([Math.floor(x0 / span), Math.floor((x0 + CHUNK - 1) / span)]);
     const rys = new Set([Math.floor(y0 / span), Math.floor((y0 + CHUNK - 1) / span)]);
-    // The origin prefab is centred on (0, 0) and can poke into neighbouring regions.
+    // The origin prefab is centered on (0, 0) and can poke into neighbouring regions.
     rxs.add(0);
     rys.add(0);
     for (const rx of rxs) {
@@ -213,7 +213,7 @@ export class WorldGenerator {
     if (!p) throw new Error('origin placement missing');
     for (const [y, row] of p.prefab.rows.entries()) {
       for (const [x, ch] of [...row].entries()) {
-        if (p.prefab.legend[ch]?.entity?.kind === 'playerSpawn') return tileCentre(p.x0 + x, p.y0 + y);
+        if (p.prefab.legend[ch]?.entity?.kind === 'playerSpawn') return tileCenter(p.x0 + x, p.y0 + y);
       }
     }
     throw new Error('origin prefab has no playerSpawn');
@@ -252,7 +252,7 @@ export class WorldGenerator {
           if (!entry) continue;
           if (entry.tile) tiles[(ty - oy) * CHUNK + (tx - ox)] = c.tileId(entry.tile);
           if (entry.entity && entry.entity.kind !== 'playerSpawn') {
-            spawns.push({ id: `${p.id}#${px},${py}`, ...tileCentre(tx, ty), entity: entry.entity });
+            spawns.push({ id: `${p.id}#${px},${py}`, ...tileCenter(tx, ty), entity: entry.entity });
           }
         }
       }
@@ -291,7 +291,7 @@ export class WorldGenerator {
         const local = c.biomes[this.biomeAt(tx, ty)] ?? biome;
         out.push({
           id: `${chunkKey(cx, cy)}#${i}`,
-          ...tileCentre(tx, ty),
+          ...tileCenter(tx, ty),
           entity: { kind: 'enemy', archetype: rng.weighted(local.spawns.table) },
         });
         break;
@@ -304,6 +304,6 @@ function prefabSize(p: PrefabDef): { pw: number; ph: number } {
   return { pw: p.rows[0]?.length ?? 0, ph: p.rows.length };
 }
 
-export function tileCentre(tx: number, ty: number): { x: number; y: number } {
+export function tileCenter(tx: number, ty: number): { x: number; y: number } {
   return { x: tx * TILE + TILE / 2, y: ty * TILE + TILE / 2 };
 }

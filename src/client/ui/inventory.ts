@@ -24,14 +24,14 @@ type Tab = 'items' | 'craft';
 
 const SLOT_LABELS: Readonly<Record<EquipSlot, string>> = {
   weapon: 'Weapon',
-  armor: 'Armour',
+  armor: 'Armor',
   ring0: 'Ring',
   ring1: 'Ring',
 };
 
 const STAT_LABELS = {
   damage: 'damage',
-  defense: 'defence',
+  defense: 'defense',
   staminaRegen: 'stamina regen',
   maxHp: 'max HP',
 } as const;
@@ -161,7 +161,7 @@ export class InventoryScreen {
     const stats = playerStats(sim, e);
     const statRows: [string, string][] = [
       ['Damage', String(Math.round(stats.damage))],
-      ['Defence', `${Math.round(stats.defense * 100)}%`],
+      ['Defense', `${Math.round(stats.defense * 100)}%`],
       ['Max HP', String(stats.maxHp)],
       ['Stamina regen', `${Math.round(stats.staminaRegen * TICK_RATE)}/s`],
     ];

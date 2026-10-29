@@ -27,7 +27,7 @@ const TICK_MS = 1000 / TICK_RATE;
 
 /** Player states whose animation plays once, in step with the state's own timer. */
 const PLAYER_TIMED = new Set(['attack', 'roll', 'hurt', 'drink', 'sit', 'dead', 'cast']);
-/** Enemy AI states that are timed actions rather than open-ended behaviour. */
+/** Enemy AI states that are timed actions rather than open-ended behavior. */
 const ENEMY_TIMED = new Set(['windup', 'draw', 'loose', 'lunge', 'charge', 'recoil', 'stunned', 'hop']);
 
 export interface AnimChoice {

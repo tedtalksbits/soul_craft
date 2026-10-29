@@ -29,7 +29,7 @@ This replaces the original 16×24, 4-direction spec.
 | Frame size       | 48×48 px, 1 art pixel = 1 game pixel, no scaling                                                                                                                                                                  |
 | Character height | Measured to the top of the silhouette: player 37 px including the plume. Hollow about 33–34 px (hunched), archer about 36 px, knight 38–40 px and visibly bulkier                                                 |
 | Directions       | 8 for **every** animation, including roll, drink, sit, dead and stunned. The voxel pipeline renders directions for free and the game already picks them                                                           |
-| Anchor           | `[0.5, 1]` normalised = the point (24, 48): bottom edge of the frame, between columns 23 and 24. The generator's ground plane is pixel row 45 (`FOOT_ROW`); the lowest sole and outline pixels land on rows 46–47 |
+| Anchor           | `[0.5, 1]` normalized = the point (24, 48): bottom edge of the frame, between columns 23 and 24. The generator's ground plane is pixel row 45 (`FOOT_ROW`); the lowest sole and outline pixels land on rows 46–47 |
 | Tiles            | Stay 16 px; a character is about 2¼ tiles tall                                                                                                                                                                    |
 | View             | 384×216 game view, three-quarter overhead camera                                                                                                                                                                  |
 | Timing           | The game simulates at 60 ticks/s. Animation timings below are derived from the gameplay durations in `content/*.json`; art must fit them, not the other way round                                                 |
@@ -54,10 +54,10 @@ Souls. The rules below apply to all four so they sit together on screen.
 - **Background:** transparent. No ground, no drop shadow (the game draws the shadow).
 - **Detail:** low. Every character must read by silhouette alone at 1×; one signature feature per character that
   stays visible from all 8 directions.
-- **Palette:** muted and limited. Each character gets its own accent; steel greys and near-black `#111111` are
+- **Palette:** muted and limited. Each character gets its own accent; steel grays and near-black `#111111` are
   shared.
 
-The four characters must be told apart instantly by silhouette and accent colour, since the player reads threats
+The four characters must be told apart instantly by silhouette and accent color, since the player reads threats
 at a glance.
 
 ## Technical spec
@@ -86,7 +86,7 @@ consecutive rows in the order the generator lists them (`ANIMATIONS`), so a fram
 `row × 8 + column`. The player sheet is currently 384×240: row 0 is idle, rows 1–4 are walk frames 0–3.
 
 **JSON (as committed):** a sidecar beside each sheet in the format of `src/content/sprite-sheet.ts`. It is not a
-list of rectangles: it gives the grid (`frameWidth`, `frameHeight`), the normalised `anchor`, named `pivots`, and
+list of rectangles: it gives the grid (`frameWidth`, `frameHeight`), the normalized `anchor`, named `pivots`, and
 `animations` keyed `<animation>_<direction>` (e.g. `walk_down_right`), each with frame indices, `fps` and `loop`.
 The generator writes it; nobody edits it by hand.
 
@@ -95,7 +95,7 @@ model so they follow proportion changes.
 
 | Pivot     | Who     | Used for                                                         | Status                    |
 | --------- | ------- | ---------------------------------------------------------------- | ------------------------- |
-| `swing`   | player  | Centre of the sword-arc effect: body centre at sword-hand height | Committed: `[0, -13]`     |
+| `swing`   | player  | Center of the sword-arc effect: body center at sword-hand height | Committed: `[0, -13]`     |
 | `head`    | enemies | Top of the silhouette; the health bar sits 4 px above it         | Committed: hollow, archer |
 | `release` | archer  | Bow hand; arrows are drawn from this height                      | Committed, per direction  |
 
@@ -110,7 +110,7 @@ the opposite of how far the drawing was moved inside the frame. Pattern noise mu
 
 An animation entry may carry its own `pivots`, overriding the sheet-level ones. The archer uses this for
 `release` on each `attack_<dir>`: arrows are drawn at the release height for their direction of flight. Only the
-height is used, because the sim fires arrows from the body centre and a sideways offset would put the visible
+height is used, because the sim fires arrows from the body center and a sideways offset would put the visible
 arrow off its real path.
 
 **Delivery checklist** (so a script installs without edits):
@@ -156,17 +156,17 @@ slightly hunched, compact silhouette.
 
 - **Signature:** a tall crimson plume on the helm, curving back, visible from every angle.
 - **Head:** closed, dull, dented steel helm with a narrow dark eye slit. No face.
-- **Body:** worn chainmail under a grey-steel breastplate, dark leather belt, small tarnished gold buckle, steel
+- **Body:** worn chainmail under a gray-steel breastplate, dark leather belt, small tarnished gold buckle, steel
   pauldrons.
 - **Cape:** tattered deep-crimson cloak with a frayed hem, down to the back of the knees.
-- **Legs:** dark grey trousers, scuffed leather boots.
+- **Legs:** dark gray trousers, scuffed leather boots.
 - **Right hand:** plain chipped straight sword, held lowered at the side, pale blade, small brass crossguard.
   During `attack` the hand is empty and the effect supplies the blade.
 - **Left arm:** small round wooden shield, tarnished brass boss, iron rim.
 
 | Material                 | Base      | Shadow    |
 | ------------------------ | --------- | --------- |
-| Armour steel             | `#9da2a8` | `#5f646b` |
+| Armor steel              | `#9da2a8` | `#5f646b` |
 | Cape                     | `#8a2219` | `#5e1712` |
 | Plume                    | `#a3261c` | `#7a1c15` |
 | Gold trim, buckle, boss  | `#d0a85c` | `#9a7536` |
@@ -207,13 +207,13 @@ Written by the implementation agent, 2026-10-28, for commit `75d56b5`.
    `S`/`SE`; the delivered `S`/`SE` file names were only used to slice the original sheets. Animation keys are
    `<animation>_<direction>` (`idle_down`, `walk_up_left`). The renderer tries 8-way keys first, then 4-way,
    then undirected, then falls back to walk/idle, so missing animations never crash.
-2. **Anchor.** `[0.5, 1]`, the point (24, 48): bottom edge, horizontal centre. The model's ground plane is
+2. **Anchor.** `[0.5, 1]`, the point (24, 48): bottom edge, horizontal center. The model's ground plane is
    row 45; the soles and their outline end on rows 46–47. The character spans rows 11–47 (37 px including the
    plume) and roughly columns 7–40 depending on direction.
 3. **Frame timing.** idle: 1 frame, 1 fps, no loop (static). walk: 4 frames, 8 fps (125 ms/frame, 500 ms
    cycle), looping. Proposed final timings are in the Animations table; walk moves to 10 fps.
 4. **Swing-arc effect.** The game draws it (`src/client/render/effects.ts`), not the sprite.
-   - **Centre:** the `swing` pivot, body centre 13 px above the anchor.
+   - **Center:** the `swing` pivot, body center 13 px above the anchor.
    - **Shape:** a 2 px blade line (`#e4e8ea`), 15 px long, sweeps 149° (±1.3 rad) around the aim direction, from
      one side to the other, over the first 102 ms. A 3 px glow arc (`#fff0d2`, 50% fading to 25% opacity),
      14 px in radius, trails it.
@@ -317,7 +317,7 @@ Written by the implementation agent, 2026-10-29, for `archer.py` and the revised
 - **Installed as delivered** (`tools/art/slime.py`, `pnpm art slime`). It runs clean with warnings as errors, and
   `pnpm art slime` reproduces the delivered PNG byte for byte. Undirected `idle`, `hop`, `hurt`, `dead` with
   per-animation offsets. The hop rises 4 and 8 px over a ground shadow that stays put.
-- **Shadow:** the engine draws no shadows of its own, so the baked one is the only one. Its colour stays as delivered.
+- **Shadow:** the engine draws no shadows of its own, so the baked one is the only one. Its color stays as delivered.
 - **Gel icon:** `slime_gel` in `items.py` now uses the slime's violet ramp, so the drop matches the creature.
 - **Placeholders:** the slime is removed from placeholder generation. What's left is tiles, props and the font.
 
@@ -381,10 +381,10 @@ Signature feature: a ragged, hanging hood and shawl over a cracked kettle helm, 
 asymmetric shape that reads from every angle and contrasts with the Ashen One's upright plume.
 Silhouette: hunched and lopsided, the head low and forward of the body, a long blade trailing low. No cape, no
 plume, no shield.
-Head: a cracked, rust-streaked kettle helm under a torn grey-brown hood. The face beneath is in shadow
+Head: a cracked, rust-streaked kettle helm under a torn gray-brown hood. The face beneath is in shadow
 (`#111111`) with no visible eyes.
-Body / armour / clothing: rotted padded gambeson, a few rusted mail scraps at the shoulders, rope belt,
-wrapped shins, bare grey-ashen forearms.
+Body / armor / clothing: rotted padded gambeson, a few rusted mail scraps at the shoulders, rope belt,
+wrapped shins, bare gray-ashen forearms.
 Right hand: a long rusty straight sword with a notched edge, held low with the tip near the ground.
 Left hand: empty, bony fingers curled and held out for balance.
 Palette (proposal):
@@ -399,7 +399,7 @@ Palette (proposal):
 | Wraps and rope                | `#6e6250` | `#4a4236` |
 | Face shadow                   | `#111111` | —         |
 
-Accent colour: rust orange `#9a5a2e`, on the blade and helm streaks.
+Accent color: rust orange `#9a5a2e`, on the blade and helm streaks.
 Hitbox: 12 × 10 px (proposal; currently 10 × 10). Attack reach: the lunge starts within 26 px and travels 26 px.
 Damage is by body contact during the lunge.
 
@@ -415,7 +415,7 @@ Animation notes:
 - hurt: 1 frame, held for 267 ms. Head snapped back, arms flung out, a step backwards.
 - dead: crumpled forward onto its knees and face, blade dropped beside it, hood covering the head.
 
-Avoid: crimson anywhere (the player's colour), anything upright or plumed, any shield.
+Avoid: crimson anywhere (the player's color), anything upright or plumed, any shield.
 
 ### Archer
 
@@ -432,7 +432,7 @@ they make a tall, thin, vertical silhouette from every angle.
 Silhouette: tall, narrow and vertical, with the bow's arc beside the body and the quiver's arrows poking up over
 the shoulder. The only enemy without a melee weapon.
 Head: a deep pointed moss-green hood. Inside it, a pale bony jaw (undead) with the rest of the face in shadow.
-Body / armour / clothing: a fitted leather jerkin over a ragged green tunic, bracer on the bow arm, back quiver
+Body / armor / clothing: a fitted leather jerkin over a ragged green tunic, bracer on the bow arm, back quiver
 with off-white fletching, soft boots.
 Right hand: draws the string; empty except while drawing.
 Left hand: holds the longbow.
@@ -447,7 +447,7 @@ Palette (proposal):
 | Bone (jaw, hands)              | `#c8c0a8` | `#8a8470` |
 | Face shadow                    | `#111111` | —         |
 
-Accent colour: moss green `#4a5a3a`.
+Accent color: moss green `#4a5a3a`.
 Hitbox: 10 × 10 px (current; keep it the narrowest). Range: prefers 60–110 px; arrows fly up to about 345 px.
 The arrow is drawn by the game (a 1 px line, `#c8b898`) from the `release` pivot.
 
@@ -475,14 +475,14 @@ every hit (sparks; the player is staggered) except while it is charging or stunn
 1167 ms; that is the window to hit it. 140 HP and barely moves when hit. Drops embers and souls. High danger.
 First impression: an oath-bound sentinel, too stubborn to die, that hits like a battering ram.
 Height and build: 38–40 px. Bulky and broad-shouldered, about 1.4× the player's width, upright, wide planted
-stance, heavy armour.
+stance, heavy armor.
 Signature feature: a huge rectangular tower shield (about 26 px tall), always held towards the player. It is the
 first thing visible from every angle, and when stunned it visibly drops away from the body.
 Silhouette: a wide block, the shield's straight edges against the round shapes of the others. A great helm with
 a short crest.
 Head: a flat-topped great helm with a cross-shaped visor (`#111111`), a short dark crest and brass rivets. No
 face.
-Body / armour / clothing: heavy dark-steel plate, a faded navy tabard with a worn emblem, brass trim, mail
+Body / armor / clothing: heavy dark-steel plate, a faded navy tabard with a worn emblem, brass trim, mail
 skirt, plate boots.
 Right hand: a broad longsword, held low behind the shield; raised during windup.
 Left hand: the tower shield, held in front.
@@ -498,7 +498,7 @@ Palette (proposal):
 | Sword blade                | `#b9bec4` | `#858b92` |
 | Visor                      | `#111111` | —         |
 
-Accent colour: faded oath-navy `#34405e`, on the tabard and the shield emblem.
+Accent color: faded oath-navy `#34405e`, on the tabard and the shield emblem.
 Hitbox: 18 × 14 px (proposal; currently 14 × 14). Charge: starts within 120 px and travels up to 170 px; damage
 is by body contact.
 
@@ -550,7 +550,7 @@ hops toward the player when it sees them and wanders in shorter hops when it doe
 nuisance in swarms.
 
 **Look (chosen 2026-10-29): B, fungal violet.** Dusky violet gel with glowing teal nodules and two small
-mushroom caps sprouting from the top. The caps use the `fungal_cap` icon's colours and the glow echoes
+mushroom caps sprouting from the top. The caps use the `fungal_cap` icon's colors and the glow echoes
 `glowspore`. About 18 px wide. Rejected: A (bog gel with a skull; at 18 px the skull reads as one eyeball and
 green gel vanishes on the forest floor) and C (lantern teal; its gel drop would look like the glowspore icon).
 `slime_gel` in `items.py` changes to the violet ramp with the delivery.

@@ -37,7 +37,7 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 ## How the Ashen One generator works
 
 A voxel model (`build(pose)`, half-pixel voxels) is ray-cast orthographically from a 32° overhead camera,
-lit from the upper left, quantised to 4-step material ramps (`RAMPS`), then given depth-edge lines and a
+lit from the upper left, quantized to 4-step material ramps (`RAMPS`), then given depth-edge lines and a
 1 px outline. One model unit is one screen pixel, so the character stands about 36 px tall.
 
 - **Add an animation:** add poses and an entry to `ANIMATIONS` (`name, poses, fps, loop`). Each pose
@@ -57,7 +57,7 @@ lit from the upper left, quantised to 4-step material ramps (`RAMPS`), then give
 - **Directions:** columns follow `DIRECTIONS` (down, down_right, right, up_right, up, up_left, left,
   down_left). The renderer prefers 8-way keys and falls back to 4-way ones.
 - **Pivots:** points the engine attaches effects to, in pixels from the feet anchor (`PIVOTS`). `swing` is
-  the sword arc centre.
+  the sword arc center.
 - **Palette:** edit `RAMPS`; each material is (highlight, base, shadow, deep).
 
 ## Conventions for new character tools

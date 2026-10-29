@@ -28,7 +28,7 @@ function systemPython(): string {
   throw new Error('Python 3 is required for the art tools (https://www.python.org/downloads/)');
 }
 
-/** Python's json.dumps layout differs from Prettier's; normalise so lint-staged stays happy. */
+/** Python's json.dumps layout differs from Prettier's; normalize so lint-staged stays happy. */
 async function formatSpriteJson(): Promise<void> {
   for (const name of readdirSync(SPRITES).filter((f) => f.endsWith('.json'))) {
     const file = join(SPRITES, name);

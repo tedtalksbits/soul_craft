@@ -1,6 +1,6 @@
 /**
  * The ` (backquote) console. Typed commands with Tab completion and
- * persistent history. All behaviour lives in the command registry; this is
+ * persistent history. All behavior lives in the command registry; this is
  * only the text UI.
  */
 import { h } from '../client/ui/dom';

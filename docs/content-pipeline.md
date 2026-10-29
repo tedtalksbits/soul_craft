@@ -7,12 +7,12 @@ Everything a designer tunes lives in data, validated on load and hot-reloaded wh
 | File                  | What it defines                                                                    |
 | --------------------- | ---------------------------------------------------------------------------------- |
 | `player.json`         | Player stats: health, stamina, attack timing, roll, flask, pack size, starting kit |
-| `items.json`          | Items: materials, weapons, armour, rings, consumables                              |
+| `items.json`          | Items: materials, weapons, armor, rings, consumables                               |
 | `recipes.json`        | Crafting recipes: output, inputs, soul cost, station                               |
 | `classes.json`        | Classes: name, element, and their AoE, class and super abilities                   |
 | `abilities.json`      | Abilities: slot, cooldown, cast timing and a list of effects                       |
 | `enemies.json`        | Enemy archetypes: stats, drops and a `brain` with its own parameters               |
-| `tiles.json`          | Tile types: sprite frames, solidity, cutting, light, map colour                    |
+| `tiles.json`          | Tile types: sprite frames, solidity, cutting, light, map color                     |
 | `biomes.json`         | Ground, scatter rules, darkness, ambient particles, spawn tables                   |
 | `world.json`          | Terrain noise, biome rules, origin and region prefab placement                     |
 | `prefabs/<id>.json`   | Handmade set pieces as ASCII rows plus a legend                                    |

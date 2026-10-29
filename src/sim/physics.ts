@@ -7,7 +7,7 @@ export function bodyBox(b: Body): Box {
   return { x: b.x - b.w / 2, y: b.y - b.h / 2, w: b.w, h: b.h };
 }
 
-/** Whether a body centred at (x, y) would overlap a solid tile. */
+/** Whether a body centered at (x, y) would overlap a solid tile. */
 export function blockedAt(world: ChunkWorld, b: Body, x: number, y: number): boolean {
   const l = Math.floor((x - b.w / 2) / TILE);
   const r = Math.floor((x + b.w / 2 - 0.01) / TILE);

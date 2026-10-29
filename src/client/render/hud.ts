@@ -19,7 +19,7 @@ import type { Assets } from '../assets';
 import { classPalette } from './class-palette';
 import { PixelText } from './pixel-text';
 
-/** Buff pip colours, matching the potions that grant them. */
+/** Buff pip colors, matching the potions that grant them. */
 const BUFF_COLORS: Readonly<Record<StatId, number>> = {
   damage: 0xff7a30,
   defense: 0x8a8778,
@@ -79,14 +79,14 @@ export class Hud {
     const low = stamina.value < 20;
     bar(g, 6, 12, stW, 2, Math.max(0, stamina.value / stamina.max), low ? 0x9a7a30 : 0x5c9a44);
 
-    // Flask: a little bottle, greyed out when empty.
+    // Flask: a little bottle, grayed out when empty.
     const full = player.flasks > 0;
     g.rect(8, 18, 3, 2).fill(0xc8b898);
     g.rect(7, 20, 5, 6).fill(full ? 0xff9a30 : 0x555555);
     this.flasks.set(String(player.flasks), full ? 0xe8e0cc : 0x888888);
     this.flasks.position.set(15, 20);
 
-    // Quick item (Q): its icon and how many are left, greyed out at zero.
+    // Quick item (Q): its icon and how many are left, grayed out at zero.
     const quick = sim.ecs.get(e, Equipment)?.quick ?? null;
     const quickDef = quick ? sim.content.items[quick] : undefined;
     const tex = quickDef ? this.assets.sheet('items')?.named.get(quickDef.icon) : undefined;
@@ -137,7 +137,7 @@ const SLOT = 12;
 const SLOT_GAP = 3;
 
 /**
- * F / C / V: one square each in the class colour. AoE and class slots fill back up from
+ * F / C / V: one square each in the class color. AoE and class slots fill back up from
  * the bottom as they cool down; the super fills with energy, glows when full, and shows
  * the time left while it runs.
  */

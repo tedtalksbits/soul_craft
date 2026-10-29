@@ -27,7 +27,7 @@ describe('content files', () => {
       const text = (err as ContentError).problems.join('\n');
       expect(text).toMatch(/enemies\.json: ghost\./);
       expect(text).toMatch(/prefabs\/broken\.json: .*"a" is not in the legend/);
-      expect(text).toMatch(/typo\.json: not a recognised content file/);
+      expect(text).toMatch(/typo\.json: not a recognized content file/);
     }
   });
 });

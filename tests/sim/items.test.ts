@@ -67,7 +67,7 @@ describe('equipment', () => {
     expect(playerStats(sim, sim.player).damage).toBe(16);
   });
 
-  it('armour absorbs a fraction of incoming damage', () => {
+  it('armor absorbs a fraction of incoming damage', () => {
     const sim = newSim();
     addItem(sim, sim.player, 'iron_mail', 1);
     act(sim, { type: 'equip', index: indexOf(sim, 'iron_mail') });

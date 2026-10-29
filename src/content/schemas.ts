@@ -13,7 +13,7 @@ const fraction = z.number().min(0).max(1);
 const range = z.tuple([z.number(), z.number()]).refine(([a, b]) => a <= b, 'range min must be <= max');
 const size = z.object({ w: pos, h: pos });
 const weighted = <T extends z.ZodType>(item: T) => z.array(z.tuple([item, pos])).min(1);
-const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'expected a #rrggbb colour');
+const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'expected a #rrggbb color');
 
 // ------------------------------------------------------------------ classes & abilities
 
@@ -22,7 +22,7 @@ export const AbilitySlotSchema = z.enum(['aoe', 'class', 'super']);
 export type AbilitySlot = z.infer<typeof AbilitySlotSchema>;
 export const ABILITY_SLOTS: readonly AbilitySlot[] = AbilitySlotSchema.options;
 
-/** `self` centres on the player; `aim` lands at the cursor, at most `range` px away. */
+/** `self` centers on the player; `aim` lands at the cursor, at most `range` px away. */
 const AbilityTargetSchema = z.enum(['self', 'aim']);
 
 /**
@@ -328,7 +328,7 @@ export const TileSchema = z.object({
     })
     .optional(),
   light: z.object({ radius: pos, intensity: fraction }).optional(),
-  /** Colour on the world map and minimap. */
+  /** Color on the world map and minimap. */
   map: color,
 });
 export type TileDef = z.infer<typeof TileSchema>;
@@ -367,7 +367,7 @@ export const WorldSchema = z.object({
     .array(z.object({ biome: z.string(), moisture: range.optional(), temperature: range.optional() }))
     .min(1),
   /**
-   * The starting area: `prefab` is centred on tile (0, 0); no water, scattered
+   * The starting area: `prefab` is centered on tile (0, 0); no water, scattered
    * prefabs or enemy spawns within `safeRadius` tiles; `biome` (if set) is
    * forced within twice that radius so every seed starts somewhere readable.
    */

@@ -1,6 +1,6 @@
 /**
  * Enemy brains. Each is a small state machine over the shared `Ai` component,
- * parameterised entirely by its content definition. The state names here are
+ * parameterized entirely by its content definition. The state names here are
  * also what the renderer uses to pick animations and telegraphs, and what the
  * AI debug overlay prints.
  */

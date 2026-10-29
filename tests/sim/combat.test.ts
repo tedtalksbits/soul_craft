@@ -57,7 +57,7 @@ describe('player melee', () => {
   });
 });
 
-describe('enemy defences', () => {
+describe('enemy defenses', () => {
   it('a shield knight blocks unless stunned', () => {
     const sim = newSim();
     face(sim, 'right');
@@ -77,7 +77,7 @@ describe('enemy defences', () => {
   });
 });
 
-describe('player defence', () => {
+describe('player defense', () => {
   it('rolling grants invulnerability frames', () => {
     const sim = newSim();
     press(sim, ['roll'], 4, [1, 0]);

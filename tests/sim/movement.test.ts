@@ -7,7 +7,7 @@ import { newSim } from '../helpers';
 
 /**
  * Builds a wall one tile to the right of the player with a one-tile gap in it,
- * and puts a 12x10 body `offset` px below the gap's centre line.
+ * and puts a 12x10 body `offset` px below the gap's center line.
  */
 function gapAhead(sim: Simulation, offset: number): { body: Body; wallX: number } {
   const pb = sim.ecs.need(sim.player, Body);
@@ -24,7 +24,7 @@ const walkRight = (sim: Simulation, body: Body, slide: number) => {
 };
 
 describe('corner sliding', () => {
-  it('threads a one-tile gap when slightly off-centre', () => {
+  it('threads a one-tile gap when slightly off-center', () => {
     const sim = newSim();
     const { body, wallX } = gapAhead(sim, 5);
     walkRight(sim, body, 5);

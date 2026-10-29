@@ -81,7 +81,7 @@ function damagePlayer(
   if (player.state === 'dead' || sim.state.cheats.god || (ecs.get(e, Invulnerable)?.ticks ?? 0) > 0)
     return 'ignored';
 
-  // Armour and buffs absorb a fraction of every blow; something always gets through.
+  // Armor and buffs absorb a fraction of every blow; something always gets through.
   const amount = Math.max(1, Math.round(hit.amount * (1 - playerStats(sim, e).defense)));
   health.hp = Math.max(0, health.hp - amount);
   ecs.add(e, Invulnerable, { ticks: def.hurt.iframes });

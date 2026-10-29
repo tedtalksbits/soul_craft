@@ -7,7 +7,7 @@ import { defineComponent, type Entity } from '../core/ecs';
 import type { Dir } from '../core/math';
 import type { AbilitySlot, StatId, StationId } from '../content/schemas';
 
-/** Collision box, centred on (x, y), in world pixels. */
+/** Collision box, centered on (x, y), in world pixels. */
 export interface Body {
   x: number;
   y: number;

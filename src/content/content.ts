@@ -153,7 +153,7 @@ export function buildContent(files: ContentFiles): Content {
     const known =
       path in SINGLE_FILES ||
       Object.keys(DIRECTORIES).some((d) => new RegExp(`^${d}/[a-z0-9_-]+\\.json$`).test(path));
-    if (!known) problems.push(`${path}: not a recognised content file (check the name and folder)`);
+    if (!known) problems.push(`${path}: not a recognized content file (check the name and folder)`);
   }
 
   const player = parse('player.json', SINGLE_FILES['player.json']);

@@ -2,7 +2,7 @@
   "ashwood": {
     "kind": "material",
     "name": "Ashwood",
-    "description": "Grey timber from trees that grew in ash. Felled trees give it up.",
+    "description": "Gray timber from trees that grew in ash. Felled trees give it up.",
     "icon": "ashwood",
     "stack": 99
   },
@@ -23,7 +23,7 @@
   "iron_scrap": {
     "kind": "material",
     "name": "Iron Scrap",
-    "description": "Rusted iron prised from the Hollow and their gear.",
+    "description": "Rusted iron pried from the Hollow and their gear.",
     "icon": "iron_scrap",
     "stack": 99
   },

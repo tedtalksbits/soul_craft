@@ -11,11 +11,11 @@ export const SpriteSheetSchema = z.object({
   image: z.string(),
   frameWidth: z.number().int().positive(),
   frameHeight: z.number().int().positive(),
-  /** Normalised pivot within a frame. `[0.5, 1]` puts it at the feet. */
+  /** Normalized pivot within a frame. `[0.5, 1]` puts it at the feet. */
   anchor: z.tuple([z.number(), z.number()]).default([0.5, 1]),
   /**
    * Named attachment points in pixels relative to the anchor (x right, y down), e.g. `swing`:
-   * where the player's sword arc is centred. Lets art of any size line up with effects.
+   * where the player's sword arc is centered. Lets art of any size line up with effects.
    */
   pivots: z.record(z.string(), z.tuple([z.number(), z.number()])).default({}),
   /** Named single frames, e.g. tile variants. */

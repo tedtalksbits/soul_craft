@@ -28,7 +28,7 @@ const FRAME_MS = 1000 / 60;
 const SLASH_MS = 170;
 /** Which sprite sheet each projectile kind is fired from (its release pivots set the flight height). */
 const PROJECTILE_SHEET: Readonly<Record<ProjectileKind, string>> = { arrow: 'archer' };
-/** Shimmer colour behind loot flying to the player. */
+/** Shimmer color behind loot flying to the player. */
 const TRAIL_COLOR: Readonly<Record<PickupKind, number>> = {
   souls: 0xb8ccff,
   ember: 0xffb050,
@@ -36,9 +36,9 @@ const TRAIL_COLOR: Readonly<Record<PickupKind, number>> = {
 };
 /** Flight height when the shooter's sheet has no release pivot (sized for 24px placeholders). */
 const DEFAULT_FLIGHT_HEIGHT = -8;
-/** Chip colour for anything woody that a sword bites into. */
+/** Chip color for anything woody that a sword bites into. */
 const WOOD = 0x6e5236;
-/** Arc centre above the feet when a sheet has no `swing` pivot (sized for 24px-tall sprites). */
+/** Arc center above the feet when a sheet has no `swing` pivot (sized for 24px-tall sprites). */
 const DEFAULT_SWING_PIVOT: readonly [number, number] = [0, -9];
 
 interface Particle {
@@ -407,7 +407,7 @@ export class Effects {
   }
 }
 
-/** A tile's map colour (its dominant colour), used to tint debris; leaf green if unknown. */
+/** A tile's map color (its dominant color), used to tint debris; leaf green if unknown. */
 function tileColor(content: Content | undefined, id: string): number {
   const hex = content?.tiles.find((t) => t.id === id)?.map;
   return hex === undefined ? 0x7a9a50 : parseInt(hex.slice(1), 16);

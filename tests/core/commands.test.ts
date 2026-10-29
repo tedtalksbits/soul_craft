@@ -69,7 +69,7 @@ describe('CommandRegistry', () => {
 });
 
 describe('tokenize / splitScript', () => {
-  it('honours quotes and comments', () => {
+  it('honors quotes and comments', () => {
     expect(tokenize(`say "hello there" 'x y' z`)).toEqual(['say', 'hello there', 'x y', 'z']);
     expect(splitScript('a 1; b\n# comment\n\nc')).toEqual(['a 1', 'b', 'c']);
   });

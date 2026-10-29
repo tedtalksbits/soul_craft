@@ -24,7 +24,7 @@ so what it shows and what the sim allows cannot drift.
 Related decisions made with it:
 
 - **Potions are buffs alongside the flask**, not a replacement for it. The Estus-style flask stays the
-  emergency heal, refilled at bonfires. Crafted consumables are timed buffs (damage, defence, stamina regen) or a
+  emergency heal, refilled at bonfires. Crafted consumables are timed buffs (damage, defense, stamina regen) or a
   small heal (bandage), and use the same drink state, so using one in combat carries the same risk.
 - **Quality is predictable**: gear tiers come from materials (iron sword beats chipped sword), and a weapon is
   improved by forge upgrades (+1, +2, +3) with fixed costs. Random perks or rolled quality are deferred until

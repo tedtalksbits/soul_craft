@@ -19,7 +19,7 @@ export function valueNoise(seed: number, x: number, y: number): number {
   return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
 }
 
-/** Fractal value noise normalised to [0, 1). */
+/** Fractal value noise normalized to [0, 1). */
 export function fbm(seed: number, x: number, y: number, octaves = 4): number {
   let sum = 0;
   let amp = 1;

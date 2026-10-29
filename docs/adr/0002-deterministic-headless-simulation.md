@@ -15,7 +15,7 @@ wall-clock time, no `Math.random`, no DOM or Pixi. ESLint enforces this.
 
 ## Consequences
 
-- Determinism is tested (`tests/sim/determinism.test.ts`), and behaviour tests are fast and headless.
+- Determinism is tested (`tests/sim/determinism.test.ts`), and behavior tests are fast and headless.
 - Presentation (particles, shake, damage numbers) is free to use non-deterministic randomness.
 - Hitstop is sim state, so presses during a freeze are carried over rather than lost.
 - Cross-engine float determinism is not guaranteed; lockstep co-op would need fixed-point math or a

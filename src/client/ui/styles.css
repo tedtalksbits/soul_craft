@@ -71,7 +71,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   /* The plaque's rounded ends are its whole height, so the box is exactly the art's height and the
-     text is centred over the slices. */
+     text is centered over the slices. */
   display: flex;
   align-items: center;
   gap: 0.4em;

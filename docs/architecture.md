@@ -19,7 +19,7 @@ tiles and `SimState` (kills, lit bonfires, checkpoint, tile edits, cheats). It a
 via `step(input)`.
 
 It is **deterministic**: same content + seed + input frames gives the same world, tick for tick
-(`tests/sim/determinism.test.ts`). That is what makes snapshots exact, bugs replayable, behaviour testable
+(`tests/sim/determinism.test.ts`). That is what makes snapshots exact, bugs replayable, behavior testable
 without a browser and, later, co-op feasible (lockstep or server-authoritative). The rules that preserve
 it are lint-enforced (see `CLAUDE.md`).
 
@@ -38,7 +38,7 @@ its own dev commands. Every tick runs the phases in order:
 | `cleanup` | death timers, i-frame and buff timers; then the ECS flushes deletes |
 
 Cross-module rules live in one place: all damage goes through `combat.applyDamage`, which handles i-frames,
-blocking, knockback, hurt states, deaths and loot. All player stats (weapon damage and reach, armour, rings,
+blocking, knockback, hurt states, deaths and loot. All player stats (weapon damage and reach, armor, rings,
 buffs) come from `items.playerStats`; nothing reads `player.json` attack numbers directly any more.
 
 ### ECS
