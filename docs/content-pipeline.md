@@ -47,6 +47,10 @@ Movement assistance for the player lives in `player.json`: `cornerSlide` is how 
 nudged around a corner it clips while walking straight (0 turns it off). Enemies get none, so a knight's
 charge still slams into corners.
 
+The loot magnet is `player.json → magnet`: landed drops within `radius` px fly to the player, starting at
+`speed` px/tick and gaining `accel` per tick up to `maxSpeed`. Once caught, a drop keeps coming. Items the pack has
+no room for are not pulled. `radius: 0` turns it off.
+
 ### Items and recipes
 
 Every item has `kind`, `name`, `description`, `icon` (a frame name in `assets/sprites/items.json`) and

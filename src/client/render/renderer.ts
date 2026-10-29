@@ -93,6 +93,8 @@ export class GameRenderer {
       this.effects.handle(e, this.sim?.content);
       if (this.sim && (e.type === 'healed' || e.type === 'rested'))
         this.effects.aroundPlayer(this.sim, e.type === 'healed' ? 'heal' : 'rest');
+      if (this.sim && (e.type === 'pickedUp' || e.type === 'itemGained'))
+        this.effects.aroundPlayer(this.sim, 'collect');
     }
   }
 

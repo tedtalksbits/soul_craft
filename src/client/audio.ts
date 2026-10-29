@@ -11,6 +11,8 @@ export class Audio {
   private out: GainNode | null = null;
   private noise: AudioBuffer | null = null;
   muted = false;
+  /** Pickups in quick succession chime a step higher each, like coins in a run. */
+  private chain = { count: 0, at: 0 };
 
   /** Call from a user gesture. Safe to call repeatedly. */
   unlock(): void {
@@ -76,17 +78,19 @@ export class Audio {
         if (e.hits <= 1) return this.burst(0.08, 2400, 0.12, 'highpass');
         this.burst(0.35, 300, 0.55, 'lowpass');
         return this.burst(0.15, 1500, 0.2, 'bandpass', [1800, 600]);
-      case 'pickedUp':
+      case 'pickedUp': {
+        const p = this.chainPitch();
         return e.kind === 'souls'
           ? this.tone(
               [
-                [880, 1],
-                [1320, 0.6],
+                [880 * p, 1],
+                [1320 * p, 0.6],
               ],
               0.4,
               0.025,
             )
-          : this.arp([880, 1175], 60, 0.25, 0.06);
+          : this.arp([880 * p, 1175 * p], 60, 0.25, 0.06);
+      }
       case 'healed':
         return this.arp([523, 659, 784], 70, 0.5, 0.06);
       case 'flaskEmpty':
@@ -136,8 +140,10 @@ export class Audio {
           0.1,
           'sawtooth',
         );
-      case 'itemGained':
-        return this.arp([659, 988], 50, 0.2, 0.04);
+      case 'itemGained': {
+        const p = this.chainPitch();
+        return this.arp([659 * p, 988 * p], 50, 0.2, 0.04);
+      }
       case 'crafted':
         this.burst(0.12, 2600, 0.15, 'highpass');
         return this.arp([523, 784], 80, 0.35, 0.05);
@@ -155,6 +161,14 @@ export class Audio {
       case 'areaEntered':
         return;
     }
+  }
+
+  /** Pitch multiplier for the next pickup chime: up a whole tone per quick pickup, up to an octave. */
+  private chainPitch(): number {
+    const now = performance.now();
+    this.chain.count = now - this.chain.at < 450 ? Math.min(this.chain.count + 1, 6) : 0;
+    this.chain.at = now;
+    return Math.pow(2, (this.chain.count * 2) / 12);
   }
 
   private burst(

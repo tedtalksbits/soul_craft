@@ -1,7 +1,8 @@
-import { Body, Health, Pickup, Player, Sprite, type PickupKind } from '../components';
+import type { Entity } from '../../core/ecs';
+import { Body, Health, Magnetized, Pickup, Player, Sprite, type PickupKind } from '../components';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
-import { addItem } from './items';
+import { addItem, roomFor } from './items';
 
 /** Ticks before a fresh drop can be collected, so it visibly pops out first. */
 const COLLECT_DELAY = 20;
@@ -39,10 +40,9 @@ function updatePickups(sim: Simulation): void {
     pickup.z = Math.max(0, pickup.z + pickup.vz);
     if (pickup.z === 0) pickup.vz = 0;
 
-    const reachable =
-      pickup.age > COLLECT_DELAY &&
-      player.state !== 'dead' &&
-      Math.hypot(body.x - pb.x, body.y - pb.y) < COLLECT_RADIUS;
+    const live = pickup.age > COLLECT_DELAY && player.state !== 'dead';
+    if (live) pull(sim, e, pickup, body, pb);
+    const reachable = live && Math.hypot(body.x - pb.x, body.y - pb.y) < COLLECT_RADIUS;
     if (reachable) {
       if (pickup.kind === 'item' && pickup.item !== null) {
         const left = addItem(sim, p, pickup.item, pickup.amount);
@@ -61,6 +61,34 @@ function updatePickups(sim: Simulation): void {
       ecs.destroy(e);
     } else if (pickup.age > LIFETIME[pickup.kind]) ecs.destroy(e);
   }
+}
+
+/**
+ * The loot magnet: once a drop has landed near the player it flies in, slowly at first and
+ * then faster. Items the pack has no room for are left alone, so a full pack does not
+ * collect a crowd of drops at the player's feet.
+ */
+function pull(sim: Simulation, e: Entity, pickup: Pickup, body: Body, pb: Body): void {
+  const magnet = sim.content.player.magnet;
+  const dx = pb.x - body.x;
+  const dy = pb.y - body.y;
+  const dist = Math.hypot(dx, dy);
+  let state = sim.ecs.get(e, Magnetized);
+  const fits = pickup.kind !== 'item' || pickup.item === null || roomFor(sim, sim.player, pickup.item) > 0;
+  if (!fits) {
+    if (state) sim.ecs.remove(e, Magnetized);
+    return;
+  }
+  if (!state) {
+    if (dist >= magnet.radius || pickup.z > 0) return;
+    state = sim.ecs.add(e, Magnetized, { ticks: 0 });
+    pickup.vz = 1; // a little hop as it is caught
+  }
+  state.ticks++;
+  if (dist === 0) return;
+  const step = Math.min(dist, magnet.maxSpeed, magnet.speed + magnet.accel * state.ticks);
+  body.x += (dx / dist) * step;
+  body.y += (dy / dist) * step;
 }
 
 export const pickupsModule: SimModule = {

@@ -6,7 +6,16 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import type { Content } from '../../content/content';
 import type { BiomeDef } from '../../content/schemas';
-import { Body, Player, Projectile, Sprite as SpriteDef, type ProjectileKind } from '../../sim/components';
+import {
+  Body,
+  Magnetized,
+  Pickup,
+  Player,
+  Projectile,
+  Sprite as SpriteDef,
+  type PickupKind,
+  type ProjectileKind,
+} from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
@@ -18,6 +27,12 @@ const FRAME_MS = 1000 / 60;
 const SLASH_MS = 170;
 /** Which sprite sheet each projectile kind is fired from (its release pivots set the flight height). */
 const PROJECTILE_SHEET: Readonly<Record<ProjectileKind, string>> = { arrow: 'archer' };
+/** Shimmer colour behind loot flying to the player. */
+const TRAIL_COLOR: Readonly<Record<PickupKind, number>> = {
+  souls: 0xb8ccff,
+  ember: 0xffb050,
+  item: 0xfff0c8,
+};
 /** Flight height when the shooter's sheet has no release pivot (sized for 24px placeholders). */
 const DEFAULT_FLIGHT_HEIGHT = -8;
 /** Chip colour for anything woody that a sword bites into. */
@@ -168,9 +183,14 @@ export class Effects {
   }
 
   /** Particles at the player's position, for events that carry no coordinates. */
-  aroundPlayer(sim: Simulation, kind: 'heal' | 'rest'): void {
+  aroundPlayer(sim: Simulation, kind: 'heal' | 'rest' | 'collect'): void {
     const b = sim.ecs.get(sim.player, Body);
     if (!b) return;
+    if (kind === 'collect') {
+      // A small upward sparkle as loot lands in the pack.
+      this.burst(b.x, b.y, { count: 6, color: 0xfff0c8, speed: 0.9, life: 18, add: true, z: 10, vz: 0.8 });
+      return;
+    }
     this.burst(b.x, b.y, {
       count: kind === 'heal' ? 16 : 24,
       color: 0xffb050,
@@ -193,6 +213,7 @@ export class Effects {
     if (this.shake < 0.3) this.shake = 0;
     this.hurtFlash = Math.max(0, this.hurtFlash - 0.05 * k);
     this.ambient(biome, view, k);
+    this.magnetTrails(sim, k);
 
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i]!;
@@ -239,6 +260,21 @@ export class Effects {
     this.slash = null;
     this.shake = 0;
     this.hurtFlash = 0;
+  }
+
+  /** Loot caught by the magnet leaves a short shimmer trail, denser as it speeds up. */
+  private magnetTrails(sim: Simulation, k: number): void {
+    for (const [, pull, pickup, b] of sim.ecs.query(Magnetized, Pickup, Body)) {
+      if (Math.random() > Math.min(1, 0.3 + pull.ticks * 0.03) * k) continue;
+      this.burst(b.x, b.y, {
+        count: 1,
+        color: TRAIL_COLOR[pickup.kind],
+        speed: 0.15,
+        life: 14,
+        add: true,
+        z: pickup.z + 3,
+      });
+    }
   }
 
   burst(x: number, y: number, o: BurstOptions): void {

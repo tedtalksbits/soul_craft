@@ -178,6 +178,13 @@ export interface Pickup {
 }
 export const Pickup = defineComponent<Pickup>('pickup');
 
+/** A pickup being pulled to the player by the loot magnet. Once caught, it does not let go. */
+export interface Magnetized {
+  /** Ticks since the pull started; the pull accelerates with it. */
+  ticks: number;
+}
+export const Magnetized = defineComponent<Magnetized>('magnetized');
+
 export interface Bonfire {
   id: string;
   name: string;

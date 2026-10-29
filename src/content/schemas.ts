@@ -118,6 +118,11 @@ export const PlayerSchema = z.object({
   flask: z.object({ charges: z.number().int().min(0), heal: pos, duration: ticks, healAt: ticks }),
   hurt: z.object({ iframes: ticks, stun: ticks, knockback: nonneg }),
   death: z.object({ soulPenalty: fraction, respawnDelay: ticks }),
+  /**
+   * Loot within `radius` px flies to the player once it has landed. The pull starts at
+   * `speed` px/tick and gains `accel` each tick up to `maxSpeed`. Radius 0 turns it off.
+   */
+  magnet: z.object({ radius: nonneg, speed: pos, accel: nonneg, maxSpeed: pos }),
   /** How many different stacks the player can carry. */
   inventorySlots: z.number().int().min(1),
   /** A new game starts with this weapon equipped and these items carried. */
