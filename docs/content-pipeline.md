@@ -9,6 +9,8 @@ Everything a designer tunes lives in data, validated on load and hot-reloaded wh
 | `player.json`         | Player stats: health, stamina, attack timing, roll, flask, pack size, starting kit |
 | `items.json`          | Items: materials, weapons, armour, rings, consumables                              |
 | `recipes.json`        | Crafting recipes: output, inputs, soul cost, station                               |
+| `classes.json`        | Classes: name, colour, and their AoE, class and super abilities                    |
+| `abilities.json`      | Abilities: slot, cooldown, cast timing and a list of effects                       |
 | `enemies.json`        | Enemy archetypes: stats, drops and a `brain` with its own parameters               |
 | `tiles.json`          | Tile types: sprite frames, solidity, cutting, light, map colour                    |
 | `biomes.json`         | Ground, scatter rules, darkness, ambient particles, spawn tables                   |
@@ -70,6 +72,27 @@ A recipe is `{ output { item, count }, inputs [{ item, count }], souls, station 
 `"forge"`, `"alchemy"` or `null` (craftable anywhere). Stations are prefab entities; the player must stand
 within twice the interact range. Enemy and tile `drops` can be `{ "kind": "item", "item": "iron_scrap", ... }`.
 Every item id named anywhere is cross-checked on load.
+
+### Classes and abilities
+
+A class (`classes.json`) names one ability per slot: `aoe` (F), `class` (C) and `super` (V), plus a `color`
+used by the ability effects and HUD. The start class is `player.json → start.class`.
+
+An ability (`abilities.json`) has a `slot`, a `cooldown` in seconds (AoE and class; supers spend a full energy
+bar instead), a `cast` (`ticks` the player is locked, effects land on tick `release`), and `effects`, applied in
+order:
+
+- `blast`: hits everything within `radius`, at `self` or the cursor (`at: "aim"`, capped at `range`), after
+  an optional `fuse` in ticks. `damage`, `knockback`, and `stagger` (ticks the enemy is stopped, guard down).
+- `zone`: burning ground, at `self` or the cursor. Starts after `delay`, hurts every `interval` ticks for
+  `duration` ticks.
+- `dash`: carries the player `distance` px over `ticks`, optionally with i-frames, hitting what it passes
+  (`width`, `damage`, `knockback`, `stagger`).
+- `empower`: a super mode for `seconds`: `damage` and `crit` bonuses, `defense` (0.5 = half damage taken),
+  `staminaFree` swings.
+
+Ability hits go through shields. Super energy is `player.json → energy`: `perDamage` dealt, `perKill` and
+`perSecond`. The super's own hits don't charge it. Every class must name an existing ability of the right slot.
 
 ### Prefabs
 

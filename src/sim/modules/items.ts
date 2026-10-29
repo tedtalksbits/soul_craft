@@ -9,7 +9,16 @@
 import { CommandError } from '../../core/commands';
 import type { Entity } from '../../core/ecs';
 import type { ItemDef, StatId } from '../../content/schemas';
-import { Buffs, Equipment, Health, Inventory, Player, type EquipSlot, type ItemStack } from '../components';
+import {
+  Buffs,
+  Empowered,
+  Equipment,
+  Health,
+  Inventory,
+  Player,
+  type EquipSlot,
+  type ItemStack,
+} from '../components';
 import { TICK_RATE } from '../constants';
 import type { PlayerAction } from '../input';
 import type { SimCommand, SimModule } from '../module';
@@ -27,6 +36,8 @@ export interface PlayerStats {
   maxHp: number;
   /** Stamina regained per tick. */
   staminaRegen: number;
+  /** Chance a sword hit crits. */
+  critChance: number;
 }
 
 /** Bare fists, for when no weapon is equipped. */
@@ -125,15 +136,17 @@ export function playerStats(sim: Simulation, e: Entity): PlayerStats {
       : UNARMED;
   const armorDef = eq?.armor ? sim.content.items[eq.armor.item] : undefined;
   const armor = armorDef?.kind === 'armor' ? armorDef.armor.defense : 0;
+  const emp = sim.ecs.get(e, Empowered);
   return {
-    damage: weapon.damage * (1 + bonus(sim, e, 'damage')),
-    staminaCost: weapon.staminaCost,
+    damage: weapon.damage * (1 + bonus(sim, e, 'damage') + (emp?.damage ?? 0)),
+    staminaCost: emp?.staminaFree ? 0 : weapon.staminaCost,
     reach: weapon.reach,
     width: weapon.width,
     knockback: weapon.knockback,
-    defense: Math.min(MAX_DEFENSE, armor + bonus(sim, e, 'defense')),
+    defense: Math.min(MAX_DEFENSE, armor + bonus(sim, e, 'defense') + (emp?.defense ?? 0)),
     maxHp: def.maxHp + bonus(sim, e, 'maxHp'),
     staminaRegen: def.staminaRegen * (1 + bonus(sim, e, 'staminaRegen')),
+    critChance: Math.min(1, def.attack.critChance + (emp?.crit ?? 0)),
   };
 }
 

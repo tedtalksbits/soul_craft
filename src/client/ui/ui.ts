@@ -163,7 +163,7 @@ export class Ui {
         h(
           'div',
           { class: 'hint' },
-          'WASD move · J / click attack · Shift roll · R flask · Q quick item · E use · Tab pack · Esc pause',
+          'WASD move · J / click attack · Shift roll · F / C / V abilities · R flask · Q quick item · E use · Tab pack · Esc pause',
         ),
         footer ? h('div', { class: 'hint' }, footer) : null,
       ),

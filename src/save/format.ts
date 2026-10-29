@@ -11,7 +11,7 @@ import { Player } from '../sim/components';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -105,6 +105,22 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
             pickup: (components['pickup'] ?? []).map(([e, p]) => [e, { ...asRecord(p), item: null }]),
           },
         },
+      },
+    };
+  },
+  /** v3 -> v4: classes. The player becomes a Vanguard with every ability ready and no super energy. */
+  3: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const ecs = asRecord(snapshot['ecs']);
+    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
+    const playerRow = components['player']?.[0];
+    if (!playerRow) throw new SaveError('save has no player');
+    const abilities = { class: 'vanguard', cooldowns: { aoe: 0, class: 0 }, energy: 0, casting: null };
+    return {
+      ...save,
+      snapshot: {
+        ...snapshot,
+        ecs: { ...ecs, components: { ...components, abilities: [[playerRow[0], abilities]] } },
       },
     };
   },

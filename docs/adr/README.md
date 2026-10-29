@@ -14,3 +14,4 @@ it with a new one and link both ways. Template: copy `0000-template.md`.
 | [0007](0007-command-registry-dev-tools.md)        | One command registry for console, scenarios and tests             |
 | [0008](0008-character-art-from-source.md)         | Character art is generated from source scripts in tools/art       |
 | [0009](0009-player-actions-through-input.md)      | Menu actions (equip, craft...) travel through the InputFrame      |
+| [0010](0010-classes-and-data-driven-abilities.md) | Classes, and abilities built from a few effect primitives         |

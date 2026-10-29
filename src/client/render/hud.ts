@@ -1,7 +1,18 @@
 import { Container, Graphics, Sprite } from 'pixi.js';
 import type { StatId } from '../../content/schemas';
 import { TICK_RATE } from '../../sim/constants';
-import { Buffs, Equipment, Health, Inventory, Player, Stamina } from '../../sim/components';
+import { ABILITY_SLOTS } from '../../content/schemas';
+import {
+  Abilities,
+  Buffs,
+  Empowered,
+  Equipment,
+  Health,
+  Inventory,
+  Player,
+  Stamina,
+} from '../../sim/components';
+import { FULL_ENERGY } from '../../sim/modules/energy';
 import { countItem } from '../../sim/modules/items';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
@@ -27,6 +38,8 @@ export class Hud {
   private chipHoldMs = 0;
   private lastHp = -1;
   private shownSouls = -1;
+  /** Drives the full-super glow. */
+  private clockMs = 0;
 
   constructor(
     private readonly assets: Assets,
@@ -100,6 +113,9 @@ export class Hud {
       bx += 8;
     }
 
+    this.clockMs += dtMs;
+    abilitySlots(sim, g, this.viewH, this.clockMs);
+
     // Souls count up toward the true value.
     if (this.shownSouls < 0) this.shownSouls = player.souls;
     const diff = player.souls - this.shownSouls;
@@ -112,6 +128,50 @@ export class Hud {
     g.rect(sx - 13, sy - 4, this.souls.pixelWidth + 19, 12).fill({ color: 0x000000, alpha: 0.5 });
     g.rect(sx - 9, sy + 1, 3, 3).fill(0xe8f0ff);
     g.rect(sx - 8, sy - 1, 1, 2).fill(0xa8c0ff);
+  }
+}
+
+/** Ability slot size (px) and where the row of three sits. */
+const SLOT = 12;
+const SLOT_GAP = 3;
+
+/**
+ * F / C / V: one square each in the class colour. AoE and class slots fill back up from
+ * the bottom as they cool down; the super fills with energy, glows when full, and shows
+ * the time left while it runs.
+ */
+function abilitySlots(sim: Simulation, g: Graphics, viewH: number, clockMs: number): void {
+  const a = sim.ecs.get(sim.player, Abilities);
+  if (!a) return;
+  const cls = sim.content.classes[a.class];
+  if (!cls) return;
+  const color = Number.parseInt(cls.color.slice(1), 16);
+  const y = viewH - 6 - SLOT;
+  ABILITY_SLOTS.forEach((slot, i) => {
+    const x = 6 + i * (SLOT + SLOT_GAP);
+    const def = sim.content.abilities[cls.abilities[slot]];
+    let fill: number;
+    if (slot === 'super') fill = a.energy / FULL_ENERGY;
+    else {
+      const total = (def?.cooldown ?? 0) * TICK_RATE;
+      fill = total > 0 ? 1 - a.cooldowns[slot] / total : 1;
+    }
+    const ready = fill >= 1;
+    g.rect(x - 1, y - 1, SLOT + 2, SLOT + 2).fill({ color: 0x000000, alpha: 0.65 });
+    g.rect(x, y, SLOT, SLOT).fill({ color, alpha: 0.18 });
+    const h = Math.round(SLOT * Math.min(1, fill));
+    g.rect(x, y + SLOT - h, SLOT, h).fill({ color, alpha: ready ? 0.9 : 0.4 });
+    if (slot === 'super' && ready) {
+      const pulse = 0.4 + 0.4 * Math.sin(clockMs / 160);
+      g.rect(x - 2, y - 2, SLOT + 4, SLOT + 4).stroke({ color, alpha: pulse, width: 1 });
+    }
+  });
+  const emp = sim.ecs.get(sim.player, Empowered);
+  const sup = sim.content.abilities[cls.abilities.super];
+  const seconds = sup?.effects.find((fx) => fx.type === 'empower')?.seconds;
+  if (emp && seconds) {
+    const x = 6 + 2 * (SLOT + SLOT_GAP);
+    g.rect(x, y - 4, Math.round(SLOT * (emp.ticks / (seconds * TICK_RATE))), 2).fill(color);
   }
 }
 

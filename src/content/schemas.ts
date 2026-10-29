@@ -15,6 +15,93 @@ const size = z.object({ w: pos, h: pos });
 const weighted = <T extends z.ZodType>(item: T) => z.array(z.tuple([item, pos])).min(1);
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'expected a #rrggbb colour');
 
+// ------------------------------------------------------------------ classes & abilities
+
+/** The three ability slots, on F / C / V. Supers spend energy; the others have cooldowns. */
+export const AbilitySlotSchema = z.enum(['aoe', 'class', 'super']);
+export type AbilitySlot = z.infer<typeof AbilitySlotSchema>;
+export const ABILITY_SLOTS: readonly AbilitySlot[] = AbilitySlotSchema.options;
+
+/** `self` centres on the player; `aim` lands at the cursor, at most `range` px away. */
+const AbilityTargetSchema = z.enum(['self', 'aim']);
+
+/**
+ * The building blocks every ability is made of. A kit is just a list of these,
+ * applied at the cast's release tick, so new abilities need no code.
+ */
+export const AbilityEffectSchema = z.discriminatedUnion('type', [
+  /** A hit on everything in a circle, after an optional fuse. Unblockable: shields don't stop it. */
+  z.object({
+    type: z.literal('blast'),
+    at: AbilityTargetSchema,
+    range: nonneg.default(0),
+    radius: pos,
+    damage: nonneg,
+    knockback: nonneg,
+    /** Ticks the enemies hit are staggered (stopped, guard broken). */
+    stagger: ticks,
+    fuse: ticks.default(0),
+  }),
+  /** Ground that hurts whatever stands in it, every `interval` ticks for `duration` ticks. */
+  z.object({
+    type: z.literal('zone'),
+    at: AbilityTargetSchema,
+    range: nonneg.default(0),
+    radius: pos,
+    delay: ticks.default(0),
+    duration: ticks,
+    interval: ticks.refine((n) => n > 0, 'interval must be at least 1 tick'),
+    damage: pos,
+  }),
+  /** A lunge along the aim. Hits (once each) what the player passes through. */
+  z.object({
+    type: z.literal('dash'),
+    distance: pos,
+    ticks: ticks.refine((n) => n > 0, 'a dash needs at least 1 tick'),
+    iframes: z.boolean(),
+    width: pos,
+    damage: nonneg,
+    knockback: nonneg,
+    stagger: ticks,
+  }),
+  /** A timed super mode. Fractions are bonuses: damage 0.6 = +60%, defense 0.5 = half damage taken. */
+  z.object({
+    type: z.literal('empower'),
+    seconds: pos,
+    damage: nonneg,
+    defense: fraction,
+    crit: fraction,
+    staminaFree: z.boolean(),
+  }),
+]);
+export type AbilityEffect = z.infer<typeof AbilityEffectSchema>;
+
+export const AbilitySchema = z
+  .object({
+    name: z.string(),
+    description: z.string(),
+    slot: AbilitySlotSchema,
+    /** Seconds between uses. Supers ignore it: they spend a full energy bar instead. */
+    cooldown: nonneg.default(0),
+    /** The player is locked for `ticks`; the effects land on tick `release`. */
+    cast: z.object({ ticks: ticks, release: ticks }),
+    effects: z.array(AbilityEffectSchema).min(1),
+  })
+  .refine((a) => a.cast.release < a.cast.ticks, 'cast.release must come before the cast ends')
+  .refine((a) => a.slot === 'super' || a.cooldown > 0, 'AoE and class abilities need a cooldown');
+export type AbilityDef = z.infer<typeof AbilitySchema>;
+export const AbilitiesSchema = z.record(z.string(), AbilitySchema);
+
+export const ClassSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  /** The class's colour in ability effects and the HUD. */
+  color,
+  abilities: z.object({ aoe: z.string(), class: z.string(), super: z.string() }),
+});
+export type ClassDef = z.infer<typeof ClassSchema>;
+export const ClassesSchema = z.record(z.string(), ClassSchema);
+
 // ------------------------------------------------------------------ items & crafting
 
 /** Crafting stations placed in the world. Recipes with `station: null` can be crafted anywhere. */
@@ -125,8 +212,10 @@ export const PlayerSchema = z.object({
   magnet: z.object({ radius: nonneg, speed: pos, accel: nonneg, maxSpeed: pos }),
   /** How many different stacks the player can carry. */
   inventorySlots: z.number().int().min(1),
-  /** A new game starts with this weapon equipped and these items carried. */
-  start: z.object({ weapon: z.string(), items: z.array(ItemCountSchema).default([]) }),
+  /** A new game starts as this class, with this weapon equipped and these items carried. */
+  start: z.object({ class: z.string(), weapon: z.string(), items: z.array(ItemCountSchema).default([]) }),
+  /** Super energy, 0-100. Full charges the super; sword and ability hits fill it, the super's own hits don't. */
+  energy: z.object({ perDamage: nonneg, perKill: nonneg, perSecond: nonneg }),
 });
 export type PlayerDef = z.infer<typeof PlayerSchema>;
 

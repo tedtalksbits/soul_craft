@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createSave, parseSave, SAVE_FORMAT, SAVE_VERSION, SaveError } from '../../src/save/format';
 import { SaveManager } from '../../src/save/save-manager';
 import { MemoryStore } from '../../src/save/store';
-import { Equipment, Inventory, Player } from '../../src/sim/components';
+import { Abilities, Equipment, Inventory, Player } from '../../src/sim/components';
 import { Simulation } from '../../src/sim/simulation';
 import { content, newSim, run } from '../helpers';
 
@@ -101,5 +101,26 @@ describe('v2 -> v3', () => {
     const sim = Simulation.restore(migrated.snapshot, content);
     expect(sim.ecs.need(sim.player, Equipment).weapon?.item).toBe('chipped_sword');
     expect(sim.ecs.need(sim.player, Inventory).stacks).toEqual([]);
+  });
+});
+
+describe('v3 -> v4', () => {
+  it('makes an old save a Vanguard with every ability ready', () => {
+    const current = createSave(newSim(7), '1');
+    const components = { ...current.snapshot.ecs.components };
+    Reflect.deleteProperty(components, 'abilities');
+    const v3 = {
+      ...current,
+      version: 3,
+      snapshot: { ...current.snapshot, ecs: { ...current.snapshot.ecs, components } },
+    };
+    const migrated = parseSave(JSON.parse(JSON.stringify(v3)));
+    const sim = Simulation.restore(migrated.snapshot, content);
+    expect(sim.ecs.need(sim.player, Abilities)).toEqual({
+      class: 'vanguard',
+      cooldowns: { aoe: 0, class: 0 },
+      energy: 0,
+      casting: null,
+    });
   });
 });

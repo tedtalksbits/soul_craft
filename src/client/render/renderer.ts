@@ -17,6 +17,7 @@ import type { Assets } from '../assets';
 import { ChunkLayer } from './chunk-layer';
 import { Effects } from './effects';
 import { EntityLayer } from './entity-layer';
+import { AbilityFx } from './ability-fx';
 import { Hud } from './hud';
 import { Lighting } from './lighting';
 
@@ -35,6 +36,7 @@ export class GameRenderer {
   readonly chunks: ChunkLayer;
   readonly entities: EntityLayer;
   readonly effects: Effects;
+  readonly abilityFx: AbilityFx;
   readonly hud: Hud;
   private readonly lighting = new Lighting(VIEW_W, VIEW_H);
   private sim: Simulation | null = null;
@@ -47,8 +49,16 @@ export class GameRenderer {
     this.chunks = new ChunkLayer(assets);
     this.entities = new EntityLayer(assets);
     this.effects = new Effects(assets);
+    this.abilityFx = new AbilityFx(this.effects);
     this.hud = new Hud(assets, VIEW_W, VIEW_H);
-    this.world.addChild(this.chunks.root, this.entities.root, this.effects.root, this.debugWorld);
+    this.world.addChild(
+      this.chunks.root,
+      this.abilityFx.ground,
+      this.entities.root,
+      this.effects.root,
+      this.abilityFx.air,
+      this.debugWorld,
+    );
     app.stage.addChild(this.world, this.lighting.root, this.debugScreen, this.hud.root);
     addEventListener('resize', () => this.resize());
     this.resize();
@@ -80,6 +90,7 @@ export class GameRenderer {
     this.chunks.clear();
     this.entities.clear();
     this.effects.clear();
+    this.abilityFx.clear();
     this.hud.reset();
     this.world.visible = sim !== null;
     this.hud.root.visible = sim !== null;
@@ -91,6 +102,7 @@ export class GameRenderer {
     for (const e of events) {
       this.entities.handle(e);
       this.effects.handle(e, this.sim?.content);
+      this.abilityFx.handle(e, this.sim?.content);
       if (this.sim && (e.type === 'healed' || e.type === 'rested'))
         this.effects.aroundPlayer(this.sim, e.type === 'healed' ? 'heal' : 'rest');
       if (this.sim && (e.type === 'pickedUp' || e.type === 'itemGained'))
@@ -121,6 +133,7 @@ export class GameRenderer {
         ? sim.content.biomes[sim.world.gen.biomeAt(Math.floor(pb.x / TILE), Math.floor(pb.y / TILE))]
         : undefined;
       this.effects.update(sim, dtMs, { ...cam, w: VIEW_W, h: VIEW_H }, biome);
+      this.abilityFx.update(sim, dtMs);
       const area = pb ? sim.world.areaAt(pb.x, pb.y) : undefined;
       this.lighting.update(
         this.app.renderer,

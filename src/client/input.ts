@@ -18,7 +18,13 @@ export const BINDINGS: Readonly<Record<Binding, readonly string[]>> = {
   heal: ['KeyR', 'KeyH'],
   use: ['KeyE', 'Enter'],
   item: ['KeyQ'],
+  aoe: ['KeyF'],
+  classAbility: ['KeyC'],
+  super: ['KeyV'],
 };
+
+/** Ability keys aim at the mouse cursor, like a click does. */
+const AIMED = Action.aoe | Action.classAbility | Action.super;
 
 const CAPTURED = new Set(['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 const ACTIONS = Object.keys(Action) as ActionName[];
@@ -29,6 +35,8 @@ export class InputCapture {
   private readonly held = new Set<string>();
   private pressed = 0;
   private aim: { x: number; y: number } | null = null;
+  /** Where the mouse last was over the game, in client pixels; null until it moves there. */
+  private pointer: { x: number; y: number } | null = null;
   private actions: PlayerAction[] = [];
 
   constructor(
@@ -40,8 +48,14 @@ export class InputCapture {
       if (CAPTURED.has(e.code)) e.preventDefault();
       if (e.repeat) return;
       this.held.add(e.code);
-      for (const a of ACTIONS) if (BINDINGS[a].includes(e.code)) this.pressed |= Action[a];
+      for (const a of ACTIONS) {
+        if (!BINDINGS[a].includes(e.code)) continue;
+        this.pressed |= Action[a];
+        if (Action[a] & AIMED && this.pointer) this.aim = this.toWorld(this.pointer.x, this.pointer.y);
+      }
     });
+    target.addEventListener('mousemove', (e) => (this.pointer = { x: e.clientX, y: e.clientY }));
+    target.addEventListener('mouseleave', () => (this.pointer = null));
     addEventListener('keyup', (e) => this.held.delete(e.code));
     addEventListener('blur', () => this.held.clear());
     target.addEventListener('mousedown', (e) => {

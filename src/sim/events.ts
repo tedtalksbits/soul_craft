@@ -1,5 +1,5 @@
 import type { Entity } from '../core/ecs';
-import type { StatId, StationId } from '../content/schemas';
+import type { AbilitySlot, StatId, StationId } from '../content/schemas';
 import type { EquipSlot, PickupKind } from './components';
 
 /**
@@ -47,6 +47,15 @@ export type SimEvent =
   | { type: 'crafted'; recipe: string; item: string; count: number }
   | { type: 'craftFailed'; recipe: string; reason: string }
   | { type: 'upgraded'; item: string; level: number }
-  | { type: 'stationOpened'; station: StationId };
+  | { type: 'stationOpened'; station: StationId }
+  /** An ability's effects landed. (x, y) is the caster; (tx, ty) where it was aimed. */
+  | { type: 'abilityUsed'; ability: string; slot: AbilitySlot; x: number; y: number; tx: number; ty: number }
+  /** An ability key was pressed but the ability isn't ready. */
+  | { type: 'abilityNotReady'; slot: AbilitySlot }
+  | { type: 'abilityReady'; slot: AbilitySlot }
+  | { type: 'blast'; ability: string; x: number; y: number; radius: number }
+  | { type: 'empowered'; ability: string; seconds: number }
+  | { type: 'empowerEnded'; ability: string }
+  | { type: 'classChanged'; class: string };
 
 export type SimEventType = SimEvent['type'];

@@ -13,6 +13,7 @@ import {
   Player,
   Spawned,
   Sprite,
+  Staggered,
   Team,
 } from '../components';
 import type { SimCommand, SimModule } from '../module';
@@ -78,6 +79,15 @@ function updateEnemies(sim: Simulation): void {
     const dist = Math.hypot(dx, dy) || 1;
     const sees = !playerDead && dist < def.aggroRange;
 
+    const staggered = ecs.get(e, Staggered);
+    if (staggered) {
+      contact.amount = 0;
+      if (--staggered.ticks <= 0) {
+        ecs.remove(e, Staggered);
+        setAi(ai, 'chase');
+      }
+      continue;
+    }
     if (ai.state === 'recoil') {
       if (ai.t > def.recoilTicks) setAi(ai, 'chase');
       continue;

@@ -18,10 +18,12 @@ import {
   Motion,
   Player,
   Spawned,
+  Staggered,
 } from '../components';
 import type { SimModule } from '../module';
 import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
+import { gainEnergy } from './energy';
 import { playerStats } from './items';
 import { dropPickup } from './pickups';
 
@@ -32,6 +34,10 @@ export interface Hit {
   fromX: number;
   fromY: number;
   knockback: number;
+  /** Goes through shields (ability blasts, burning ground, dashes). */
+  unblockable?: boolean;
+  /** Fills the player's super energy (sword and ability hits; not the super's own). */
+  charges?: boolean;
 }
 
 export type HitResult = 'hit' | 'blocked' | 'ignored';
@@ -110,13 +116,17 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
   if (!enemy) return 'ignored';
   const def = sim.content.enemy(enemy.archetype);
 
-  if (def.brain.type === 'shieldKnight' && ai && ai.state !== 'stunned' && ai.state !== 'charge') {
+  // The shield stops everything but abilities, and is down while stunned, staggered or charging.
+  const guarding = ai && ai.state !== 'stunned' && ai.state !== 'charge' && !ecs.has(e, Staggered);
+  if (def.brain.type === 'shieldKnight' && guarding && !hit.unblockable) {
     sim.events.emit({ type: 'blocked', x: body.x, y: body.y - 4 });
     return 'blocked';
   }
 
   health.hp = Math.max(0, health.hp - hit.amount);
   push(sim, e, body, hit, def.knockbackTaken);
+  const energy = sim.content.player.energy;
+  if (hit.charges) gainEnergy(sim, hit.amount * energy.perDamage + (health.hp <= 0 ? energy.perKill : 0));
   sim.events.emit({
     type: 'damaged',
     target: e,
@@ -130,7 +140,7 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
   });
 
   if (health.hp <= 0) killEnemy(sim, e);
-  else if (ai && ai.state !== 'stunned') {
+  else if (ai && ai.state !== 'stunned' && !ecs.has(e, Staggered)) {
     if (def.recoilTicks > 0) {
       ai.state = 'recoil';
       ai.t = 0;

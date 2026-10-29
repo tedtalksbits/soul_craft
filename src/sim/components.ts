@@ -5,7 +5,7 @@
  */
 import { defineComponent, type Entity } from '../core/ecs';
 import type { Dir } from '../core/math';
-import type { StatId, StationId } from '../content/schemas';
+import type { AbilitySlot, StatId, StationId } from '../content/schemas';
 
 /** Collision box, centred on (x, y), in world pixels. */
 export interface Body {
@@ -57,7 +57,7 @@ export interface Invulnerable {
 }
 export const Invulnerable = defineComponent<Invulnerable>('invulnerable');
 
-export type PlayerStateName = 'free' | 'attack' | 'roll' | 'hurt' | 'drink' | 'sit' | 'dead';
+export type PlayerStateName = 'free' | 'attack' | 'roll' | 'hurt' | 'drink' | 'sit' | 'dead' | 'cast';
 export interface Player {
   state: PlayerStateName;
   /** Ticks spent in the current state. */
@@ -76,6 +76,66 @@ export interface Player {
   using: string | null;
 }
 export const Player = defineComponent<Player>('player');
+
+/** The player's class and the state of its three abilities. */
+export interface Abilities {
+  class: string;
+  /** Ticks until the AoE and class abilities are ready again (0 = ready). */
+  cooldowns: { aoe: number; class: number };
+  /** Super energy, 0-100. The super needs a full bar. */
+  energy: number;
+  /** The ability being cast in the `cast` state, and where it was aimed; null otherwise. */
+  casting: { ability: string; slot: AbilitySlot; aimX: number; aimY: number } | null;
+}
+export const Abilities = defineComponent<Abilities>('abilities');
+
+/**
+ * A super's timed mode on the player. The numbers are copied from the ability when it
+ * starts, so editing content mid-super cannot change one already running.
+ */
+export interface Empowered {
+  ability: string;
+  ticks: number;
+  damage: number;
+  defense: number;
+  crit: number;
+  staminaFree: boolean;
+}
+export const Empowered = defineComponent<Empowered>('empowered');
+
+/** An enemy knocked off balance: no moving, no attacking, no blocking until it recovers. */
+export interface Staggered {
+  ticks: number;
+}
+export const Staggered = defineComponent<Staggered>('staggered');
+
+/** What an ability hit does to each enemy it reaches. */
+export interface AbilityHit {
+  ability: string;
+  damage: number;
+  knockback: number;
+  stagger: number;
+  /** Whether the hit fills super energy (everything but the super's own hits). */
+  charges: boolean;
+}
+
+/** A thrown charge waiting on its fuse (Ash Bomb, Fire Pot), at its Body's position. */
+export interface Blast extends AbilityHit {
+  radius: number;
+  fuse: number;
+}
+export const Blast = defineComponent<Blast>('blast');
+
+/** Burning ground (Fire Pot, Cinder Storm) at its Body's position. */
+export interface Zone extends AbilityHit {
+  radius: number;
+  /** Ticks since the zone was made. It starts hurting after `delay`, then every `interval`. */
+  t: number;
+  delay: number;
+  duration: number;
+  interval: number;
+}
+export const Zone = defineComponent<Zone>('zone');
 
 /** One inventory slot: an item, how many, and (for weapons) its forge upgrade level. */
 export interface ItemStack {

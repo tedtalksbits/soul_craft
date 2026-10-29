@@ -30,5 +30,6 @@
   "death": { "soulPenalty": 0.5, "respawnDelay": 210 },
   "magnet": { "radius": 40, "speed": 0.4, "accel": 0.12, "maxSpeed": 5 },
   "inventorySlots": 24,
-  "start": { "weapon": "chipped_sword", "items": [] }
+  "start": { "class": "vanguard", "weapon": "chipped_sword", "items": [] },
+  "energy": { "perDamage": 0.12, "perKill": 2, "perSecond": 0.25 }
 }

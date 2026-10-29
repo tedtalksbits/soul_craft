@@ -13,6 +13,10 @@ export const Action = {
   use: 1 << 3,
   /** Use the quick-slot consumable. */
   item: 1 << 4,
+  /** The class's three abilities (F, C, V). */
+  aoe: 1 << 5,
+  classAbility: 1 << 6,
+  super: 1 << 7,
 } as const;
 export type ActionName = keyof typeof Action;
 
@@ -26,7 +30,9 @@ export type PlayerAction =
   | { type: 'use'; item: string }
   | { type: 'setQuick'; item: string | null }
   | { type: 'craft'; recipe: string }
-  | { type: 'upgrade' };
+  | { type: 'upgrade' }
+  /** Change class. Only allowed while resting at a bonfire. */
+  | { type: 'setClass'; class: string };
 
 export interface InputFrame {
   /** Movement intent, each axis in [-1, 1]. */

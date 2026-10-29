@@ -254,6 +254,8 @@ export class App {
         return;
       case 'flaskEmpty':
         return this.ui.toast('The flask is empty. Rest at a bonfire.');
+      case 'classChanged':
+        return this.ui.toast(`You are now a ${this.content.playerClass(e.class).name}.`);
       case 'stationOpened':
         return this.inventory.open('craft', e.station);
       case 'crafted': {

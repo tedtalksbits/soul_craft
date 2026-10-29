@@ -157,6 +157,35 @@ export class Audio {
         return this.arp([440, 554, 659], 60, 0.5, 0.05);
       case 'stationOpened':
         return this.burst(0.1, 900, 0.12, 'bandpass', [500, 1400]);
+      case 'abilityUsed':
+        if (e.slot === 'super') {
+          this.burst(0.6, 500, 0.4, 'lowpass');
+          return this.arp([196, 262, 330, 392], 70, 0.9, 0.06);
+        }
+        return this.burst(0.18, e.slot === 'aoe' ? 1400 : 2600, 0.22, 'bandpass', [400, 3200]);
+      case 'blast':
+        this.burst(0.25 + e.radius / 200, 160, 0.5 + e.radius / 160, 'lowpass');
+        return this.burst(0.2, 1100, 0.25, 'bandpass', [900, 300]);
+      case 'abilityNotReady':
+        return this.tone([[180, 1]], 0.08, 0.04, 'square');
+      case 'abilityReady':
+        return e.slot === 'super'
+          ? this.arp([523, 659, 784, 1047], 60, 0.6, 0.05)
+          : this.tone([[1175, 1]], 0.12, 0.02);
+      case 'empowered':
+        return this.tone(
+          [
+            [110, 1],
+            [165, 0.7],
+          ],
+          1.2,
+          0.08,
+          'sawtooth',
+        );
+      case 'empowerEnded':
+        return this.arp([392, 330, 262], 80, 0.4, 0.04);
+      case 'classChanged':
+        return this.arp([294, 392, 494], 90, 0.6, 0.05);
       case 'playerRespawned':
       case 'areaEntered':
         return;

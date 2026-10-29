@@ -1,0 +1,152 @@
+{
+  "ground_slam": {
+    "name": "Ground Slam",
+    "description": "Drive your weight into the earth. Staggers and hurls back everything around you.",
+    "slot": "aoe",
+    "cooldown": 12,
+    "cast": { "ticks": 20, "release": 10 },
+    "effects": [
+      { "type": "blast", "at": "self", "radius": 36, "damage": 26, "knockback": 4.5, "stagger": 40 }
+    ]
+  },
+  "shield_charge": {
+    "name": "Shield Charge",
+    "description": "Rush behind your shield. Whatever you meet is knocked down and left open, shields included.",
+    "slot": "class",
+    "cooldown": 8,
+    "cast": { "ticks": 16, "release": 2 },
+    "effects": [
+      {
+        "type": "dash",
+        "distance": 56,
+        "ticks": 12,
+        "iframes": true,
+        "width": 18,
+        "damage": 12,
+        "knockback": 3,
+        "stagger": 60
+      }
+    ]
+  },
+  "earthshatter": {
+    "name": "Earthshatter",
+    "description": "Split the ground in a wide ring, then stand fast: for a while you shrug off half of every blow.",
+    "slot": "super",
+    "cast": { "ticks": 30, "release": 16 },
+    "effects": [
+      { "type": "blast", "at": "self", "radius": 80, "damage": 90, "knockback": 6, "stagger": 120 },
+      { "type": "empower", "seconds": 10, "damage": 0, "defense": 0.5, "crit": 0, "staminaFree": false }
+    ]
+  },
+  "ash_bomb": {
+    "name": "Ash Bomb",
+    "description": "Lob a packed charge of ash at the cursor. It bursts a moment later.",
+    "slot": "aoe",
+    "cooldown": 10,
+    "cast": { "ticks": 14, "release": 6 },
+    "effects": [
+      {
+        "type": "blast",
+        "at": "aim",
+        "range": 96,
+        "radius": 28,
+        "damage": 34,
+        "knockback": 3,
+        "stagger": 30,
+        "fuse": 24
+      }
+    ]
+  },
+  "shadowstep": {
+    "name": "Shadowstep",
+    "description": "Slip through the air in a blink, untouchable. Further and faster than a roll, and free of stamina.",
+    "slot": "class",
+    "cooldown": 6,
+    "cast": { "ticks": 12, "release": 1 },
+    "effects": [
+      {
+        "type": "dash",
+        "distance": 72,
+        "ticks": 9,
+        "iframes": true,
+        "width": 12,
+        "damage": 0,
+        "knockback": 0,
+        "stagger": 0
+      }
+    ]
+  },
+  "bladestorm": {
+    "name": "Bladestorm",
+    "description": "Become the blade. Swings cost no stamina, strike harder and find gaps far more often.",
+    "slot": "super",
+    "cast": { "ticks": 18, "release": 8 },
+    "effects": [
+      { "type": "empower", "seconds": 10, "damage": 0.6, "defense": 0, "crit": 0.3, "staminaFree": true }
+    ]
+  },
+  "fire_pot": {
+    "name": "Fire Pot",
+    "description": "Hurl a pot of ember oil at the cursor. It bursts and leaves the ground burning.",
+    "slot": "aoe",
+    "cooldown": 12,
+    "cast": { "ticks": 14, "release": 6 },
+    "effects": [
+      {
+        "type": "blast",
+        "at": "aim",
+        "range": 96,
+        "radius": 26,
+        "damage": 16,
+        "knockback": 1.5,
+        "stagger": 0,
+        "fuse": 18
+      },
+      {
+        "type": "zone",
+        "at": "aim",
+        "range": 96,
+        "radius": 26,
+        "delay": 18,
+        "duration": 240,
+        "interval": 30,
+        "damage": 8
+      }
+    ]
+  },
+  "repel": {
+    "name": "Repel",
+    "description": "A pulse of heat that throws everything near you back and breaks their wind-ups.",
+    "slot": "class",
+    "cooldown": 7,
+    "cast": { "ticks": 12, "release": 4 },
+    "effects": [{ "type": "blast", "at": "self", "radius": 44, "damage": 4, "knockback": 7, "stagger": 45 }]
+  },
+  "cinder_storm": {
+    "name": "Cinder Storm",
+    "description": "Call a storm of falling embers down on the cursor. Nothing standing in it lasts long.",
+    "slot": "super",
+    "cast": { "ticks": 26, "release": 14 },
+    "effects": [
+      {
+        "type": "blast",
+        "at": "aim",
+        "range": 110,
+        "radius": 64,
+        "damage": 30,
+        "knockback": 2,
+        "stagger": 30
+      },
+      {
+        "type": "zone",
+        "at": "aim",
+        "range": 110,
+        "radius": 64,
+        "delay": 0,
+        "duration": 360,
+        "interval": 20,
+        "damage": 14
+      }
+    ]
+  }
+}

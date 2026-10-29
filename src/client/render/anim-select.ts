@@ -4,6 +4,7 @@
  */
 import type { Entity } from '../../core/ecs';
 import {
+  Abilities,
   Ai,
   Body,
   Bonfire,
@@ -14,6 +15,7 @@ import {
   Pickup,
   Player,
   Sign,
+  Staggered,
   Station,
   Torch,
 } from '../../sim/components';
@@ -24,7 +26,7 @@ import { dir8FromVec, resolveDir8, type Dir8 } from './facing';
 const TICK_MS = 1000 / TICK_RATE;
 
 /** Player states whose animation plays once, in step with the state's own timer. */
-const PLAYER_TIMED = new Set(['attack', 'roll', 'hurt', 'drink', 'sit', 'dead']);
+const PLAYER_TIMED = new Set(['attack', 'roll', 'hurt', 'drink', 'sit', 'dead', 'cast']);
 /** Enemy AI states that are timed actions rather than open-ended behaviour. */
 const ENEMY_TIMED = new Set(['windup', 'draw', 'loose', 'lunge', 'charge', 'recoil', 'stunned', 'hop']);
 
@@ -67,13 +69,17 @@ export function selectAnim(
   const dying = ecs.get(e, Dying);
   if (player) {
     pose = player.state === 'free' ? (moving ? 'walk' : 'idle') : player.state;
+    if (player.state === 'cast') pose = castPose(sim, e);
     if (PLAYER_TIMED.has(player.state)) elapsedMs = player.t * TICK_MS;
-    // Swings and rolls face where they go (the aim may be any angle), not the drift of motion.
-    if (player.state === 'attack' || player.state === 'roll') dir8 = dir8FromVec(player.dirX, player.dirY);
+    // Swings, rolls and casts face where they go (the aim may be any angle), not the drift of motion.
+    if (player.state === 'attack' || player.state === 'roll' || player.state === 'cast')
+      dir8 = dir8FromVec(player.dirX, player.dirY);
   } else if (ai && ecs.has(e, Enemy)) {
     if (dying) {
       pose = 'dead';
       elapsedMs = dying.t * TICK_MS;
+    } else if (ecs.has(e, Staggered)) {
+      pose = 'stunned';
     } else {
       switch (ai.state) {
         case 'windup':
@@ -134,7 +140,17 @@ export function selectAnim(
 }
 
 /** Closest stand-in when a sheet lacks a pose (placeholder sheets have `hurt` but no `dead`). */
-const FALLBACK: Readonly<Record<string, string>> = { dead: 'hurt' };
+const FALLBACK: Readonly<Record<string, string>> = { dead: 'hurt', stunned: 'hurt' };
+
+/**
+ * The player has no cast animations yet: a dash plays the roll, anything else the swing.
+ * Until the art agent delivers cast poses.
+ */
+function castPose(sim: Simulation, e: Entity): string {
+  const casting = sim.ecs.get(e, Abilities)?.casting;
+  const def = casting ? sim.content.abilities[casting.ability] : undefined;
+  return def?.effects.some((fx) => fx.type === 'dash') ? 'roll' : 'attack';
+}
 
 function towardPlayer(sim: Simulation, e: Entity): Dir8 | undefined {
   const from = sim.ecs.get(e, Body);

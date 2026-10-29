@@ -10,6 +10,7 @@ import { STATIONS } from '../../content/schemas';
 import { Body, Bonfire, Facing, Health, Player, Sign, Stamina, Station } from '../components';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
+import { refreshAbilities } from './abilities';
 import { resetEnemies } from './streaming';
 
 export type Interaction =
@@ -86,6 +87,7 @@ export function restAt(sim: Simulation, bonfireEntity: Entity): void {
   p.flasks = p.maxFlasks;
   p.state = 'sit';
   p.t = 0;
+  refreshAbilities(sim);
   resetEnemies(sim);
   sim.events.emit({ type: 'rested', id: bonfire.id, name: bonfire.name });
 }

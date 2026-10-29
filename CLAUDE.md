@@ -41,6 +41,8 @@ ESLint enforces the "never" column for the pure layers. Do not disable those rul
   plus its schema variant.
 - **An item or recipe** → `content/items.json` / `content/recipes.json` (see `docs/content-pipeline.md`), with an
   icon frame in the `items` sheet. Menu verbs are `PlayerAction`s on the `InputFrame` (ADR 0009), never direct calls.
+- **A class or ability** → `content/classes.json` / `content/abilities.json`, built from the effect types in
+  `AbilityEffectSchema` (ADR 0010). Only a new kind of effect needs code, in `src/sim/modules/abilities.ts`.
 - **Art** → `assets/sprites/<name>.png` + `<name>.json` (format: `src/content/sprite-sheet.ts`). Sheets made by a
   generator in `tools/art/` (currently `player`) are never hand-edited: change the script and regenerate.
 - **A dev command** → the owning module's `commands` (sim-level) or `src/dev/dev-tools.ts` (client-level).

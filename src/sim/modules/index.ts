@@ -1,4 +1,5 @@
 import type { SimModule } from '../module';
+import { abilitiesModule } from './abilities';
 import { combatModule } from './combat';
 import { craftingModule } from './crafting';
 import { enemiesModule } from './enemies';
@@ -19,6 +20,7 @@ export const SIM_MODULES: readonly SimModule[] = [
   // Menu actions (equip, use, craft) apply before the player acts this tick.
   itemsModule,
   craftingModule,
+  abilitiesModule,
   playerModule,
   enemiesModule,
   movementModule,

@@ -26,6 +26,7 @@ import { Action } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
+import { pressedSlot, refreshAbilities, giveStartingClass, startCast, updateCast } from './abilities';
 import { applyDamage, rollDamage } from './combat';
 import { interact } from './interaction';
 import { beginUse, finishUse, giveStartingKit, playerStats } from './items';
@@ -63,6 +64,7 @@ export function spawnPlayer(sim: Simulation, x: number, y: number): Entity {
   ecs.add(e, Team, { team: 'player' });
   ecs.add(e, Sprite, { sheet: def.sprite });
   giveStartingKit(sim, e);
+  giveStartingClass(sim, e);
   return e;
 }
 
@@ -123,7 +125,9 @@ function updatePlayer(sim: Simulation): void {
         act |= p.buffered.action;
         p.buffered = null;
       }
-      if (act & Action.attack && stamina.value > 0) startAttack(sim, e, p, facing, stamina);
+      const slot = pressedSlot(act);
+      if (slot) startCast(sim, slot);
+      else if (act & Action.attack && stamina.value > 0) startAttack(sim, e, p, facing, stamina);
       else if (act & Action.roll && stamina.value >= def.roll.minStamina)
         startRoll(sim, p, facing, stamina, mx, my);
       else if (act & Action.heal) startDrink(sim, p);
@@ -174,6 +178,9 @@ function updatePlayer(sim: Simulation): void {
     case 'sit':
       motion.vx = motion.vy = 0;
       if (mx || my || input.pressed & Action.use) setState(p, 'free');
+      break;
+    case 'cast':
+      updateCast(sim);
       break;
   }
 }
@@ -243,12 +250,13 @@ function strike(sim: Simulation, e: Entity, p: Player): void {
   for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
     if (p.struck.includes(target) || ecs.has(target, Dying) || !overlaps(box, bodyBox(tb))) continue;
     p.struck.push(target);
-    const roll = rollDamage(sim.rng, { ...def.attack, damage: stats.damage });
+    const roll = rollDamage(sim.rng, { ...def.attack, damage: stats.damage, critChance: stats.critChance });
     const result = applyDamage(sim, target, {
       ...roll,
       fromX: body.x,
       fromY: body.y,
       knockback: stats.knockback,
+      charges: true,
     });
     if (result === 'hit') sim.hitstop = Math.max(sim.hitstop, def.attack.hitstop);
     if (result === 'blocked') {
@@ -290,6 +298,7 @@ export function respawnPlayer(sim: Simulation): void {
   Object.assign(motion, { vx: 0, vy: 0, kx: 0, ky: 0 });
   ecs.add(e, Invulnerable, { ticks: RESPAWN_IFRAMES });
   for (const [proj] of ecs.query(Projectile)) ecs.destroy(proj);
+  refreshAbilities(sim);
   resetEnemies(sim);
   sim.events.emit({ type: 'playerRespawned' });
 }

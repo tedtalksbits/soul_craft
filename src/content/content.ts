@@ -8,7 +8,10 @@
  */
 import type { z } from 'zod';
 import {
+  ABILITY_SLOTS,
+  AbilitiesSchema,
   BiomesSchema,
+  ClassesSchema,
   EnemiesSchema,
   ItemsSchema,
   PlayerSchema,
@@ -17,7 +20,9 @@ import {
   ScenarioSchema,
   TilesSchema,
   WorldSchema,
+  type AbilityDef,
   type BiomeDef,
+  type ClassDef,
   type DropDef,
   type EnemyDef,
   type ItemCount,
@@ -48,6 +53,8 @@ const SINGLE_FILES = {
   'world.json': WorldSchema,
   'items.json': ItemsSchema,
   'recipes.json': RecipesSchema,
+  'abilities.json': AbilitiesSchema,
+  'classes.json': ClassesSchema,
 } as const;
 
 const DIRECTORIES = {
@@ -69,6 +76,8 @@ export class Content {
     readonly scenarios: Readonly<Record<string, ScenarioDef>>,
     readonly items: Readonly<Record<string, ItemDef>>,
     readonly recipes: Readonly<Record<string, RecipeDef>>,
+    readonly abilities: Readonly<Record<string, AbilityDef>>,
+    readonly classes: Readonly<Record<string, ClassDef>>,
   ) {
     this.tileIndex = new Map(tiles.map((t, i) => [t.id, i]));
   }
@@ -89,6 +98,18 @@ export class Content {
   enemy(archetype: string): EnemyDef {
     const def = this.enemies[archetype];
     if (!def) throw new Error(`Unknown enemy archetype "${archetype}"`);
+    return def;
+  }
+
+  ability(id: string): AbilityDef {
+    const def = this.abilities[id];
+    if (!def) throw new Error(`Unknown ability "${id}"`);
+    return def;
+  }
+
+  playerClass(id: string): ClassDef {
+    const def = this.classes[id];
+    if (!def) throw new Error(`Unknown class "${id}"`);
     return def;
   }
 
@@ -142,17 +163,51 @@ export function buildContent(files: ContentFiles): Content {
   const world = parse('world.json', SINGLE_FILES['world.json']);
   const items = parse('items.json', SINGLE_FILES['items.json']);
   const recipes = parse('recipes.json', SINGLE_FILES['recipes.json']);
+  const abilities = parse('abilities.json', SINGLE_FILES['abilities.json']);
+  const classes = parse('classes.json', SINGLE_FILES['classes.json']);
   const prefabs = parseDir('prefabs', DIRECTORIES.prefabs);
   const scenarios = parseDir('scenarios', DIRECTORIES.scenarios);
 
-  if (!player || !enemies || !tiles || !biomes || !world || !items || !recipes)
+  if (!player || !enemies || !tiles || !biomes || !world || !items || !recipes || !abilities || !classes)
     throw new ContentError(problems);
 
   checkReferences({ enemies, tiles, biomes, world, prefabs }, problems);
   checkItems({ player, enemies, tiles, items, recipes }, problems);
+  checkClasses({ player, abilities, classes }, problems);
   if (problems.length > 0) throw new ContentError(problems);
 
-  return new Content(files, player, enemies, tiles, biomes, world, prefabs, scenarios, items, recipes);
+  return new Content(
+    files,
+    player,
+    enemies,
+    tiles,
+    biomes,
+    world,
+    prefabs,
+    scenarios,
+    items,
+    recipes,
+    abilities,
+    classes,
+  );
+}
+
+/** Every class names an existing ability of the right slot for each slot; the start class exists. */
+function checkClasses(
+  c: { player: PlayerDef; abilities: Record<string, AbilityDef>; classes: Record<string, ClassDef> },
+  problems: string[],
+): void {
+  if (!(c.player.start.class in c.classes))
+    problems.push(`player.json: start.class: unknown class "${c.player.start.class}"`);
+  for (const [id, cls] of Object.entries(c.classes)) {
+    for (const slot of ABILITY_SLOTS) {
+      const ability = cls.abilities[slot];
+      const def = c.abilities[ability];
+      if (!def) problems.push(`classes.json: ${id}.abilities.${slot}: unknown ability "${ability}"`);
+      else if (def.slot !== slot)
+        problems.push(`classes.json: ${id}.abilities.${slot}: "${ability}" is a ${def.slot} ability`);
+    }
+  }
 }
 
 function checkReferences(
