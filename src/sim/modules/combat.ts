@@ -38,6 +38,8 @@ export interface Hit {
   unblockable?: boolean;
   /** Fills the player's super energy (sword and ability hits; not the super's own). */
   charges?: boolean;
+  /** The ability dealing it, so damage numbers can show its class color. */
+  ability?: string;
 }
 
 export type HitResult = 'hit' | 'blocked' | 'ignored';
@@ -94,6 +96,7 @@ function damagePlayer(
     y: body.y,
     hp: health.hp,
     maxHp: health.max,
+    ability: hit.ability ?? null,
   });
 
   if (health.hp <= 0) {
@@ -137,6 +140,7 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
     y: body.y,
     hp: health.hp,
     maxHp: health.max,
+    ability: hit.ability ?? null,
   });
 
   if (health.hp <= 0) killEnemy(sim, e);

@@ -95,8 +95,12 @@ export const AbilitiesSchema = z.record(z.string(), AbilitySchema);
 export const ClassSchema = z.object({
   name: z.string(),
   description: z.string(),
-  /** The class's colour in ability effects and the HUD. */
-  color,
+  /**
+   * The class's element: the color its abilities, light, HUD and menus are drawn in, so the
+   * player can always tell which class they are. `base` is the main color; `light` and `dark`
+   * give glows and shadows depth. The name shows beside the color, never color alone.
+   */
+  element: z.object({ name: z.string(), light: color, base: color, dark: color }),
   abilities: z.object({ aoe: z.string(), class: z.string(), super: z.string() }),
 });
 export type ClassDef = z.infer<typeof ClassSchema>;

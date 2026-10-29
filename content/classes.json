@@ -1,19 +1,19 @@
 {
   "vanguard": {
     "name": "Vanguard",
-    "color": "#d0a85c",
+    "element": { "name": "Ward", "light": "#d4ecff", "base": "#6fb7f0", "dark": "#2c5c8c" },
     "description": "A wall of steel. Breaks guards, holds the line and outlasts what it cannot outpace.",
     "abilities": { "aoe": "ground_slam", "class": "shield_charge", "super": "earthshatter" }
   },
   "stalker": {
     "name": "Stalker",
-    "color": "#b8a8e8",
+    "element": { "name": "Shade", "light": "#e2d6ff", "base": "#a98ce8", "dark": "#4b3786" },
     "description": "Never where the blow lands. Strikes from range, slips away, and finishes in a flurry.",
     "abilities": { "aoe": "ash_bomb", "class": "shadowstep", "super": "bladestorm" }
   },
   "ashcaller": {
     "name": "Ashcaller",
-    "color": "#ff7a30",
+    "element": { "name": "Ember", "light": "#ffd8a8", "base": "#ff7a30", "dark": "#9a3a10" },
     "description": "Speaks to the ember. Controls ground with fire and keeps the dead at arm's length.",
     "abilities": { "aoe": "fire_pot", "class": "repel", "super": "cinder_storm" }
   }

@@ -16,6 +16,7 @@ import { FULL_ENERGY } from '../../sim/modules/energy';
 import { countItem } from '../../sim/modules/items';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
+import { classPalette } from './class-palette';
 import { PixelText } from './pixel-text';
 
 /** Buff pip colours, matching the potions that grant them. */
@@ -145,7 +146,8 @@ function abilitySlots(sim: Simulation, g: Graphics, viewH: number, clockMs: numb
   if (!a) return;
   const cls = sim.content.classes[a.class];
   if (!cls) return;
-  const color = Number.parseInt(cls.color.slice(1), 16);
+  const pal = classPalette(sim.content, a.class);
+  const color = pal.base;
   const y = viewH - 6 - SLOT;
   ABILITY_SLOTS.forEach((slot, i) => {
     const x = 6 + i * (SLOT + SLOT_GAP);
@@ -158,7 +160,7 @@ function abilitySlots(sim: Simulation, g: Graphics, viewH: number, clockMs: numb
     }
     const ready = fill >= 1;
     g.rect(x - 1, y - 1, SLOT + 2, SLOT + 2).fill({ color: 0x000000, alpha: 0.65 });
-    g.rect(x, y, SLOT, SLOT).fill({ color, alpha: 0.18 });
+    g.rect(x, y, SLOT, SLOT).fill({ color: pal.dark, alpha: 0.6 });
     const h = Math.round(SLOT * Math.min(1, fill));
     g.rect(x, y + SLOT - h, SLOT, h).fill({ color, alpha: ready ? 0.9 : 0.4 });
     if (slot === 'super' && ready) {

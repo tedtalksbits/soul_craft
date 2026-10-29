@@ -124,3 +124,11 @@ describe('v3 -> v4', () => {
     });
   });
 });
+
+describe('slot metadata', () => {
+  it('records the class played, for the slot list', () => {
+    const sim = Simulation.create({ seed: 8, content, playerClass: 'stalker' });
+    const save = parseSave(JSON.parse(JSON.stringify(createSave(sim, '2'))));
+    expect(save.meta.playerClass).toBe('stalker');
+  });
+});

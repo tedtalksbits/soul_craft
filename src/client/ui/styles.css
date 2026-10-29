@@ -644,3 +644,30 @@ kbd {
     max-height: 60vh;
   }
 }
+
+/* ------------------------------------------------------------------ class identity */
+
+/* Each card glows in its class's element color; the current class glows brighter. */
+.class-card {
+  filter: drop-shadow(0 0 5px var(--class-dark, transparent));
+}
+.class-card.current,
+.class-card:hover {
+  filter: drop-shadow(0 0 8px var(--class-color, transparent));
+}
+.class-card .element {
+  margin-top: -0.4em;
+  font-size: 0.8em;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--class-light, var(--dim));
+}
+.class-tag {
+  font-family: var(--display);
+  font-size: 0.85em;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 6px #000;
+}
+.rest-menu .class-tag {
+  text-align: center;
+}

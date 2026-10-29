@@ -21,7 +21,7 @@ import { FixedLoop } from './loop';
 import type { GameRenderer } from './render/renderer';
 import { iconElement } from './ui/icons';
 import { InventoryScreen } from './ui/inventory';
-import { Ui } from './ui/ui';
+import { Ui, type ClassLabel } from './ui/ui';
 
 /** Autosave this often while playing, in addition to every bonfire rest. */
 const AUTOSAVE_INTERVAL_TICKS = TICK_RATE * 120;
@@ -142,9 +142,23 @@ export class App {
         newGame: (slot) => this.chooseClassFor(slot),
         continueGame: (slot) => void this.continueSlot(slot),
         deleteSlot: (slot) => void this.saves.delete(slot).then(() => this.showTitle()),
+        classLabel: (id) => this.classLabel(id),
       },
       this.titleFooter,
     );
+  }
+
+  /** How menus name a class; null for one the content no longer has. */
+  private classLabel(id: string): ClassLabel | null {
+    const cls = this.content.classes[id];
+    return cls ? { name: cls.name, element: cls.element.name, color: cls.element.light } : null;
+  }
+
+  /** The class the running game is playing, as menus show it. */
+  private currentClassLabel(): ClassLabel | null {
+    const sim = this.sim;
+    const id = sim ? sim.ecs.get(sim.player, Abilities)?.class : undefined;
+    return id ? this.classLabel(id) : null;
   }
 
   /** The new-game class screen; picking a class starts the game in `slot`. */
@@ -239,10 +253,13 @@ export class App {
       return;
     }
     this.ui.closeDialog();
-    this.ui.showPause({
-      resume: () => this.ui.hideScreen(),
-      saveAndQuit: () => void this.quitToTitle(),
-    });
+    this.ui.showPause(
+      {
+        resume: () => this.ui.hideScreen(),
+        saveAndQuit: () => void this.quitToTitle(),
+      },
+      this.currentClassLabel(),
+    );
   }
 
   // ------------------------------------------------------------------ per tick / frame
@@ -281,8 +298,13 @@ export class App {
       case 'flaskEmpty':
         return this.ui.toast('The flask is empty. Rest at a bonfire.');
       case 'classChanged': {
-        const name = this.content.playerClass(e.class).name;
-        return this.ui.toast(`You are now ${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name}.`);
+        const cls = this.content.playerClass(e.class);
+        const article = /^[aeiou]/i.test(cls.name) ? 'an' : 'a';
+        return this.ui.toast(
+          `You are now ${article} ${cls.name}, of the ${cls.element.name}.`,
+          3200,
+          cls.element.light,
+        );
       }
       case 'stationOpened':
         return this.inventory.open('craft', e.station);
@@ -329,7 +351,7 @@ export class App {
       this.ui.prompt(target ? target.label : null, 'E');
     } else this.ui.prompt(null);
     const resting = free && sim.ecs.get(sim.player, Player)?.state === 'sit';
-    this.ui.restMenu(resting, () => this.changeClass());
+    this.ui.restMenu(resting ? this.currentClassLabel() : null, () => this.changeClass());
     this.renderer.render(dtMs, () => {
       for (const fn of this.frameListeners) fn(dtMs);
     });

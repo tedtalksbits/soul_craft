@@ -9,7 +9,7 @@ Everything a designer tunes lives in data, validated on load and hot-reloaded wh
 | `player.json`         | Player stats: health, stamina, attack timing, roll, flask, pack size, starting kit |
 | `items.json`          | Items: materials, weapons, armour, rings, consumables                              |
 | `recipes.json`        | Crafting recipes: output, inputs, soul cost, station                               |
-| `classes.json`        | Classes: name, colour, and their AoE, class and super abilities                    |
+| `classes.json`        | Classes: name, element, and their AoE, class and super abilities                   |
 | `abilities.json`      | Abilities: slot, cooldown, cast timing and a list of effects                       |
 | `enemies.json`        | Enemy archetypes: stats, drops and a `brain` with its own parameters               |
 | `tiles.json`          | Tile types: sprite frames, solidity, cutting, light, map colour                    |
@@ -75,8 +75,13 @@ Every item id named anywhere is cross-checked on load.
 
 ### Classes and abilities
 
-A class (`classes.json`) names one ability per slot: `aoe` (F), `class` (C) and `super` (V), plus a `color`
-used by the ability effects and HUD. Players pick a class on the new-game screen and can change it from the
+A class (`classes.json`) names one ability per slot: `aoe` (F), `class` (C) and `super` (V), plus an
+`element`: a name and three colors (`light`, `base`, `dark`). The element is how players tell classes apart,
+as Destiny's elements are: every ability effect and its damage numbers, the player's light, the charged-super
+wisps and super glow, the HUD slots, the class cards, the toast on a class change and the class tag on the title,
+pause and bonfire menus are drawn in it (all through `src/client/render/class-palette.ts`). Menus always show
+the class and element names beside the color, so nothing depends on color alone. Keep the three classes'
+`base` colors well apart in hue (today blue, violet, orange). Players pick a class on the new-game screen and can change it from the
 bonfire menu while resting. `player.json → start.class` is the default for games started without that screen
 (scenarios, `?new`, tests).
 

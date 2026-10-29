@@ -7,7 +7,23 @@ import { TICK_RATE } from '../../sim/constants';
 import { classScreen, type ClassScreenOptions } from './classes';
 import { h } from './dom';
 
+/** A class as menus show it: its name, its element's name, and the element's color (CSS). */
+export interface ClassLabel {
+  name: string;
+  element: string;
+  color: string;
+}
+
+/** "Vanguard · Ward", in the element's color. */
+function classTag(label: ClassLabel): HTMLElement {
+  const el = h('span', { class: 'class-tag' }, `${label.name} · ${label.element}`);
+  el.style.color = label.color;
+  return el;
+}
+
 export interface TitleHandlers {
+  /** The class a save was playing, or null for saves from before classes. */
+  classLabel(id: string): ClassLabel | null;
   newGame(slot: SaveSlot): void;
   continueGame(slot: SaveSlot): void;
   deleteSlot(slot: SaveSlot): void;
@@ -66,20 +82,24 @@ export class Ui {
     this.screenCancel = () => o.cancel();
   }
 
-  /** The bonfire's own menu, shown while resting. Rebuilt only when it appears. */
-  restMenu(show: boolean, changeClass: () => void): void {
-    if (!show) {
+  /** The bonfire's own menu, shown while resting. Rebuilt only when it appears or the class changes. */
+  restMenu(label: ClassLabel | null, changeClass: () => void): void {
+    if (!label) {
       this.restEl?.remove();
       this.restEl = null;
       return;
     }
-    if (this.restEl) return;
+    const key = `${label.name}|${label.element}`;
+    if (this.restEl?.dataset.shown === key) return;
+    this.restEl?.remove();
     this.restEl = h(
       'div',
       { class: 'rest-menu' },
       h('div', { class: 'title' }, 'Bonfire'),
+      classTag(label),
       h('button', { onclick: changeClass }, 'Change class'),
     );
+    this.restEl.dataset.shown = key;
     this.root.append(this.restEl);
   }
 
@@ -96,8 +116,10 @@ export class Ui {
     }
   }
 
-  toast(text: string, ms = 2600): void {
+  /** A short message; `color` (CSS) tints the text, e.g. a class change in the class's color. */
+  toast(text: string, ms = 2600, color?: string): void {
     this.toastEl.textContent = text;
+    this.toastEl.style.color = color ?? '';
     this.toastEl.classList.remove('hidden');
     clearTimeout(this.toastTimer);
     this.toastTimer = window.setTimeout(() => this.toastEl.classList.add('hidden'), ms);
@@ -159,7 +181,12 @@ export class Ui {
 
   showTitle(slots: readonly SlotInfo[], handlers: TitleHandlers, footer: string): void {
     const rows = slots.map((s) => {
-      const label = h('div', { class: 'info' }, h('div', { class: 'name' }, `Slot ${s.slot}`));
+      const cls = s.meta?.playerClass ? handlers.classLabel(s.meta.playerClass) : null;
+      const label = h(
+        'div',
+        { class: 'info' },
+        h('div', { class: 'name' }, `Slot ${s.slot}`, cls ? ' ' : null, cls ? classTag(cls) : null),
+      );
       const buttons: HTMLElement[] = [];
       if (s.meta) {
         const when = new Date(s.meta.savedAt).toLocaleString();
@@ -210,13 +237,14 @@ export class Ui {
     );
   }
 
-  showPause(handlers: PauseHandlers): void {
+  showPause(handlers: PauseHandlers, cls: ClassLabel | null): void {
     this.setScreen(
       'pause',
       h(
         'div',
         { class: 'screen' },
         h('h1', {}, 'PAUSED'),
+        cls ? h('div', { class: 'sub' }, classTag(cls)) : null,
         h(
           'div',
           { class: 'menu' },
@@ -241,7 +269,7 @@ export class Ui {
     this.fade(false);
     this.areaEl?.remove();
     this.bannerEl?.remove();
-    this.restMenu(false, () => undefined);
+    this.restMenu(null, () => undefined);
   }
 
   private setScreen(kind: ScreenKind, el: HTMLElement): void {

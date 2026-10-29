@@ -105,6 +105,16 @@ describe('AoE abilities', () => {
     expect(ofType(again, 'abilityNotReady')).toEqual([{ type: 'abilityNotReady', slot: 'aoe' }]);
   });
 
+  it('tags its damage with the ability, so the client can color the numbers; the sword stays untagged', () => {
+    const sim = asClass('vanguard');
+    face(sim, 'right');
+    pin(sim, 'hollow', 16);
+    const sword = press(sim, ['attack'], 20);
+    expect(ofType(sword, 'damaged').map((e) => e.ability)).toEqual([null]);
+    const slam = cast(sim, 'aoe', castTicks('ground_slam'));
+    expect(ofType(slam, 'damaged').map((e) => e.ability)).toEqual(['ground_slam']);
+  });
+
   it('a cast interrupted before its release costs nothing', () => {
     const sim = asClass('vanguard');
     sim.state.cheats.god = false;

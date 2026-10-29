@@ -2,13 +2,16 @@
  * Ability visuals: what the class abilities look like in the world. Ground
  * marks (burning zones, a lobbed charge's landing ring) draw under the
  * entities; blast shockwaves, the thrown charge and super auras draw above.
- * Purely cosmetic: everything derives from sim state and events.
+ * Everything is drawn in the caster's class palette, so the color alone says
+ * which class is playing. Purely cosmetic: it all derives from sim state and events.
  */
 import { Container, Graphics } from 'pixi.js';
 import type { Content } from '../../content/content';
-import { Abilities, Blast, Body, Empowered, Player, Zone } from '../../sim/components';
+import { Abilities, Blast, Body, Empowered, Enemy, Player, Staggered, Zone } from '../../sim/components';
+import { FULL_ENERGY } from '../../sim/modules/energy';
 import type { SimEvent } from '../../sim/events';
 import type { Simulation } from '../../sim/simulation';
+import { abilityPalette, classPalette } from './class-palette';
 import type { Effects } from './effects';
 
 const FRAME_MS = 1000 / 60;
@@ -44,6 +47,8 @@ export class AbilityFx {
   private readonly rings: Ring[] = [];
   private readonly lobs: Lob[] = [];
   private clockMs = 0;
+  /** A class change to celebrate on the next update, when the player's position is known. */
+  private attuned: string | null = null;
 
   constructor(private readonly effects: Effects) {
     this.air.addChild(this.airG);
@@ -53,8 +58,9 @@ export class AbilityFx {
     if (!content) return;
     switch (e.type) {
       case 'blast': {
-        const color = abilityColor(content, e.ability);
-        this.rings.push({ x: e.x, y: e.y, radius: e.radius, color, ageMs: 0 });
+        const pal = abilityPalette(content, e.ability);
+        const color = pal.base;
+        this.rings.push({ x: e.x, y: e.y, radius: e.radius, color: pal.light, ageMs: 0 });
         this.effects.burst(e.x, e.y, {
           count: Math.round(e.radius / 2),
           color,
@@ -81,7 +87,7 @@ export class AbilityFx {
       case 'abilityUsed': {
         const def = content.abilities[e.ability];
         if (!def) return;
-        const color = abilityColor(content, e.ability);
+        const color = abilityPalette(content, e.ability).light;
         // A lobbed charge flies from the caster to where it will burst, over its fuse.
         for (const fx of def.effects) {
           if (fx.type === 'blast' && fx.at === 'aim' && fx.fuse > 0) {
@@ -103,6 +109,9 @@ export class AbilityFx {
       case 'empowered':
         this.effects.shake = Math.min(8, this.effects.shake + 3);
         return;
+      case 'classChanged':
+        this.attuned = e.class;
+        return;
       default:
         return;
     }
@@ -118,10 +127,11 @@ export class AbilityFx {
     // Burning ground: a flickering rim, embers rising from inside.
     for (const [, zone, body] of ecs.query(Zone, Body)) {
       if (zone.t < zone.delay) continue;
-      const color = abilityColor(content, zone.ability);
+      const pal = abilityPalette(content, zone.ability);
+      const color = pal.base;
       const fade = Math.min(1, (zone.delay + zone.duration - zone.t) / 30);
       const flicker = 0.75 + 0.25 * Math.sin(this.clockMs / 70 + body.x);
-      g.ellipse(body.x, body.y, zone.radius, zone.radius * 0.7).fill({ color, alpha: 0.12 * fade });
+      g.ellipse(body.x, body.y, zone.radius, zone.radius * 0.7).fill({ color: pal.dark, alpha: 0.22 * fade });
       g.ellipse(body.x, body.y, zone.radius, zone.radius * 0.7).stroke({
         color,
         alpha: 0.55 * fade * flicker,
@@ -147,7 +157,7 @@ export class AbilityFx {
 
     // A lit charge waiting to burst: the area it will cover, blinking faster as the fuse runs down.
     for (const [, blast, body] of ecs.query(Blast, Body)) {
-      const color = abilityColor(content, blast.ability);
+      const color = abilityPalette(content, blast.ability).light;
       const blink = Math.sin(this.clockMs / Math.max(30, blast.fuse * 4)) > 0 ? 0.55 : 0.25;
       g.ellipse(body.x, body.y, blast.radius, blast.radius * 0.7).stroke({ color, alpha: blink, width: 1 });
     }
@@ -181,12 +191,41 @@ export class AbilityFx {
       air.ellipse(ring.x, ring.y, r, r * 0.7).stroke({ color: ring.color, alpha: 1 - t, width: 2 });
     }
 
-    // The player: dash trails and super auras.
+    // The player: dash trails, a charged super, super auras, a class change.
     const p = ecs.get(sim.player, Player);
     const pb = ecs.get(sim.player, Body);
     const a = ecs.get(sim.player, Abilities);
     if (p && pb && a) {
-      const color = Number.parseInt((content.classes[a.class]?.color ?? '#ffffff').slice(1), 16);
+      const pal = classPalette(content, a.class);
+      const color = pal.base;
+      if (this.attuned) {
+        const burst = classPalette(content, this.attuned);
+        this.effects.burst(pb.x, pb.y, {
+          count: 36,
+          color: burst.light,
+          speed: 1.4,
+          life: 44,
+          add: true,
+          z: 10,
+          vz: 0.9,
+        });
+        this.rings.push({ x: pb.x, y: pb.y, radius: 34, color: burst.base, ageMs: 0 });
+        this.attuned = null;
+      }
+      // A charged super shows on the player, not just the HUD: faint wisps rising off them.
+      if (a.energy >= FULL_ENERGY && !ecs.has(sim.player, Empowered) && Math.random() < 0.18 * k) {
+        this.effects.burst(pb.x + (Math.random() - 0.5) * 10, pb.y - 2, {
+          count: 1,
+          color: pal.light,
+          speed: 0.05,
+          life: 34,
+          add: true,
+          z: 4 + Math.random() * 14,
+          vz: 0.35,
+          grav: 0,
+          drag: 0.99,
+        });
+      }
       const casting = a.casting ? content.abilities[a.casting.ability] : undefined;
       const dash = casting?.effects.find((fx) => fx.type === 'dash');
       if (p.state === 'cast' && dash && casting && p.t >= casting.cast.release && Math.random() < 0.9 * k)
@@ -214,20 +253,33 @@ export class AbilityFx {
         });
       }
     }
+    this.staggerSparks(sim, k);
+  }
+
+  /** Staggered enemies spark in the class color (only the player staggers things). */
+  private staggerSparks(sim: Simulation, k: number): void {
+    const a = sim.ecs.get(sim.player, Abilities);
+    if (!a) return;
+    const color = classPalette(sim.content, a.class).light;
+    for (const [, , , body] of sim.ecs.query(Staggered, Enemy, Body)) {
+      if (Math.random() > 0.35 * k) continue;
+      this.effects.burst(body.x + (Math.random() - 0.5) * body.w, body.y - 6 - Math.random() * 10, {
+        count: 1,
+        color,
+        speed: 0.6,
+        life: 12,
+        add: true,
+        z: 8,
+        vz: 0.4,
+      });
+    }
   }
 
   clear(): void {
+    this.attuned = null;
     this.rings.length = 0;
     this.lobs.length = 0;
     this.ground.clear();
     this.airG.clear();
   }
-}
-
-/** An ability's colour: its class's colour, or white for an ability no class uses. */
-export function abilityColor(content: Content, ability: string): number {
-  for (const cls of Object.values(content.classes)) {
-    if (Object.values(cls.abilities).includes(ability)) return Number.parseInt(cls.color.slice(1), 16);
-  }
-  return 0xffffff;
 }

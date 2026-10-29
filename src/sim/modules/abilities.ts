@@ -280,6 +280,7 @@ function abilityDamage(sim: Simulation, target: Entity, fromX: number, fromY: nu
     knockback: hit.knockback,
     unblockable: true,
     charges: hit.charges,
+    ability: hit.ability,
   });
   if (result === 'hit' && hit.stagger > 0) stagger(sim, target, hit.stagger);
   return result;

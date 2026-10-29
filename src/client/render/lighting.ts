@@ -1,20 +1,26 @@
 /**
  * Darkness plus point lights. Each frame a screen-sized render texture is
  * filled with the area's darkness, lights are erased out of it, and it is
- * drawn over the world. Warm lights also get an additive glow.
+ * drawn over the world. Some lights also get a colored additive glow: warm
+ * for fire, and the class color for the player, so their class shows even in
+ * the dark.
  */
 import { Container, Graphics, RenderTexture, Sprite, Texture, type Renderer } from 'pixi.js';
-import { Body, Bonfire, Player, Torch } from '../../sim/components';
+import { Abilities, Body, Bonfire, Empowered, Player, Torch } from '../../sim/components';
 import { TILE } from '../../sim/constants';
 import type { Simulation } from '../../sim/simulation';
+import { classPalette } from './class-palette';
 
 interface Light {
   x: number;
   y: number;
   radius: number;
   intensity: number;
-  warm: boolean;
+  /** An additive glow over the light, or null for plain light. */
+  glow: { color: number; alpha: number; scale: number } | null;
 }
+
+const FIRE = 0xff8c32;
 
 const GRADIENT_SIZE = 128;
 
@@ -80,19 +86,27 @@ export class Lighting {
       s.blendMode = 'erase';
       return s;
     });
-    const warm = lights.filter((l) => l.warm);
-    syncPool(this.glows, warm.length, () => {
+    const glowing = lights.filter((l) => l.glow !== null);
+    syncPool(this.glows, glowing.length, () => {
       const s = new Sprite(this.lightTex);
       s.anchor.set(0.5);
       s.blendMode = 'add';
-      s.tint = 0xff8c32;
       return s;
     });
     lights.forEach((l, i) => place(this.erasers.children[i] as Sprite, l, cam, l.radius * 2, l.intensity));
-    warm.forEach((l, i) => place(this.glows.children[i] as Sprite, l, cam, l.radius * 1.1, 0.22));
+    glowing.forEach((l, i) => {
+      const s = this.glows.children[i] as Sprite;
+      if (!l.glow) return;
+      s.tint = l.glow.color;
+      place(s, l, cam, l.radius * l.glow.scale, l.glow.alpha);
+    });
     renderer.render({ container: this.scene, target: this.target, clear: true });
 
-    this.vignette.tint = hurt > 0 ? 0xff3020 : 0xffffff;
+    // Hurt flashes red; a running super tints the screen's edges in the class color.
+    const a = sim.ecs.get(sim.player, Abilities);
+    const superTint =
+      a && sim.ecs.has(sim.player, Empowered) ? classPalette(sim.content, a.class).base : null;
+    this.vignette.tint = hurt > 0 ? 0xff3020 : (superTint ?? 0xffffff);
     this.vignette.alpha = 1 + hurt * 0.5;
   }
 
@@ -100,14 +114,24 @@ export class Lighting {
     const { ecs } = sim;
     const lights: Light[] = [];
     const pb = ecs.get(sim.player, Body);
+    const a = ecs.get(sim.player, Abilities);
     if (pb && ecs.get(sim.player, Player)?.state !== 'dead') {
-      lights.push({ x: pb.x, y: pb.y - 6, radius: 64, intensity: 0.85, warm: false });
+      const empowered = ecs.has(sim.player, Empowered);
+      const glow = a
+        ? {
+            color: classPalette(sim.content, a.class).base,
+            alpha: empowered ? 0.3 : 0.1,
+            scale: empowered ? 1.4 : 0.8,
+          }
+        : null;
+      lights.push({ x: pb.x, y: pb.y - 6, radius: 64, intensity: 0.85, glow });
     }
+    const fire = (scale: number) => ({ color: FIRE, alpha: 0.22, scale });
     for (const [, , b] of ecs.query(Torch, Body))
-      lights.push({ x: b.x, y: b.y - 12, radius: 60, intensity: 1, warm: true });
+      lights.push({ x: b.x, y: b.y - 12, radius: 60, intensity: 1, glow: fire(1.1) });
     for (const [, bonfire, b] of ecs.query(Bonfire, Body)) {
       if (sim.state.litBonfires[bonfire.id])
-        lights.push({ x: b.x, y: b.y - 8, radius: 90, intensity: 1, warm: true });
+        lights.push({ x: b.x, y: b.y - 8, radius: 90, intensity: 1, glow: fire(1.1) });
     }
     const tx0 = Math.floor(cam.x / TILE) - 2;
     const ty0 = Math.floor(cam.y / TILE) - 2;
@@ -120,7 +144,7 @@ export class Lighting {
             y: ty * TILE + 6,
             radius: light.radius,
             intensity: light.intensity,
-            warm: false,
+            glow: null,
           });
       }
     }

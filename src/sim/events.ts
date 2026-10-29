@@ -18,6 +18,8 @@ export type SimEvent =
       y: number;
       hp: number;
       maxHp: number;
+      /** The ability that dealt it, or null for a sword, contact or arrow hit. */
+      ability: string | null;
     }
   | { type: 'blocked'; x: number; y: number }
   | { type: 'killed'; target: Entity; archetype: string; x: number; y: number; souls: number }

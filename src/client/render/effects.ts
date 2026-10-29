@@ -19,6 +19,7 @@ import {
 import type { SimEvent } from '../../sim/events';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
+import { abilityPalette } from './class-palette';
 import { dir8FromVec } from './facing';
 import { PixelText } from './pixel-text';
 
@@ -119,7 +120,8 @@ export class Effects {
             e.x,
             e.y - 20,
             e.crit ? `${e.amount}!` : String(e.amount),
-            e.crit ? 0xffd040 : 0xffffff,
+            // Ability damage reads in its class's color (like Destiny's elemental numbers); the sword's is white.
+            e.crit ? 0xffd040 : e.ability && content ? abilityPalette(content, e.ability).base : 0xffffff,
             e.crit ? 2 : 1,
           );
           this.shake = Math.min(5, this.shake + (e.crit ? 2.5 : 1.2));

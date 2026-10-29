@@ -7,7 +7,7 @@
  * and add a migration from the previous version. See docs/saves.md.
  */
 import { z } from 'zod';
-import { Player } from '../sim/components';
+import { Abilities, Player } from '../sim/components';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
@@ -35,6 +35,8 @@ const MetaSchema = z.object({
   location: z.string(),
   souls: z.number(),
   seed: z.number(),
+  /** The class played, for the slot list. Optional: saves from before classes have none. */
+  playerClass: z.string().optional(),
 });
 export type SaveMeta = z.infer<typeof MetaSchema>;
 
@@ -142,6 +144,7 @@ export function createSave(sim: Simulation, slot: string, now: Date = new Date()
       playTicks: sim.tick,
       location: sim.state.currentArea ?? 'Unknown',
       souls: player.souls,
+      playerClass: sim.ecs.get(sim.player, Abilities)?.class,
       seed: sim.state.seed,
     },
     snapshot: sim.snapshot(),

@@ -33,6 +33,7 @@ export function classScreen(o: ClassScreenOptions): HTMLElement {
       'div',
       { class: isCurrent ? 'class-card current' : 'class-card' },
       h('h2', {}, cls.name),
+      h('div', { class: 'element' }, cls.element.name),
       h('p', { class: 'about' }, cls.description),
       h('ul', {}, ...abilities),
       h(
@@ -41,7 +42,9 @@ export function classScreen(o: ClassScreenOptions): HTMLElement {
         isCurrent ? 'Your class' : o.mode === 'newGame' ? `Begin as ${cls.name}` : `Become ${cls.name}`,
       ),
     );
-    card.style.setProperty('--class-color', cls.color);
+    card.style.setProperty('--class-color', cls.element.base);
+    card.style.setProperty('--class-light', cls.element.light);
+    card.style.setProperty('--class-dark', cls.element.dark);
     return card;
   });
   return h(
