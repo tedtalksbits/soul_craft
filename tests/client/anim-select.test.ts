@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { selectAnim } from '../../src/client/render/anim-select';
-import { Ai, Body, Dying, Player } from '../../src/sim/components';
+import { castFrame, selectAnim } from '../../src/client/render/anim-select';
+import { Abilities, Ai, Body, Dying, Player } from '../../src/sim/components';
 import { inputFrame } from '../../src/sim/input';
 import { face, newSim, press, run, spawnNear } from '../helpers';
 
@@ -90,5 +90,41 @@ describe('selectAnim: archers', () => {
     const choice = selectAnim(sim, e, undefined, all);
     expect(choice.key).toBe('attack_down_right');
     expect(choice.elapsedMs).toBeCloseTo(50);
+  });
+});
+
+describe('cast poses', () => {
+  const slam = { release: 10, ticks: 20, loopAfterRelease: false };
+
+  it('lands the release frame exactly on the release tick, whatever the cast length', () => {
+    expect(castFrame({ ...slam, t: 9 }, 5, 2, 15)).toBe(1);
+    expect(castFrame({ ...slam, t: 10 }, 5, 2, 15)).toBe(2);
+    const superCast = { release: 16, ticks: 30, loopAfterRelease: false };
+    expect(castFrame({ ...superCast, t: 15 }, 5, 2, 15)).toBe(1);
+    expect(castFrame({ ...superCast, t: 16 }, 5, 2, 15)).toBe(2);
+  });
+
+  it('plays the frames before and after the release in order, ending on the last', () => {
+    const frames = Array.from({ length: 21 }, (_, t) => castFrame({ ...slam, t }, 5, 2, 15));
+    expect(frames[0]).toBe(0);
+    expect(frames).toEqual([...frames].sort((a, b) => a - b));
+    expect(frames[20]).toBe(4);
+  });
+
+  it('loops the run frames after the release for a dash', () => {
+    const charge = { release: 2, ticks: 16, loopAfterRelease: true };
+    const run = Array.from({ length: 14 }, (_, i) => castFrame({ ...charge, t: 2 + i }, 3, 1, 12));
+    expect(new Set(run)).toEqual(new Set([1, 2]));
+    expect(castFrame({ ...charge, t: 0 }, 3, 1, 12)).toBe(0);
+  });
+
+  it('casts play their ability’s pose, timed from the sim', () => {
+    const sim = newSim();
+    sim.ecs.need(sim.player, Abilities).class = 'vanguard';
+    run(sim, 1, inputFrame({ press: ['aoe'] }));
+    run(sim, 4);
+    const choice = selectAnim(sim, sim.player, undefined, (k) => k.startsWith('cast_slam'));
+    expect(choice.key.startsWith('cast_slam')).toBe(true);
+    expect(choice.cast).toMatchObject({ release: 10, ticks: 20, loopAfterRelease: false });
   });
 });

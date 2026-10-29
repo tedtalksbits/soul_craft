@@ -312,6 +312,18 @@ Written by the implementation agent, 2026-10-29, for `archer.py` and the revised
   - Arrows are drawn from the release height.
   - The archer is removed from placeholder generation; the knight is the last placeholder.
 
+### Port report: Ashen One cast poses
+
+- **Installed as delivered** (`tools/art/ashen_one.py`, +109/−1). The first 18 rows of `player.png` (every
+  existing frame) are pixel-identical to before, and all 64 existing animation entries are unchanged. The sheet is
+  now 384×1776.
+- **Five cast poses** (`cast_slam`, `cast_throw`, `cast_charge`, `cast_push`, `cast_raise`), each marking its
+  `release` frame. The game stretches each pose to its ability's cast so the release frame lands on the hit.
+  `cast_throw` carries the throwing hand's per-direction `[x, y]` as `pivots.release`; lobbed charges start there.
+- **Which ability plays which pose** is content (`pose` in `abilities.json`). Shadowstep keeps the roll.
+- **Accepted as designed:** the sword rises beside the helm, on the sword side, rather than above it. The arm can't
+  reach higher, and behind the head the helm hid the blade.
+
 ### Port report: slime
 
 - **Installed as delivered** (`tools/art/slime.py`, `pnpm art slime`). It runs clean with warnings as errors, and

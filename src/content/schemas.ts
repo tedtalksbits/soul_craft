@@ -85,6 +85,11 @@ export const AbilitySchema = z
     cooldown: nonneg.default(0),
     /** The player is locked for `ticks`; the effects land on tick `release`. */
     cast: z.object({ ticks: ticks, release: ticks }),
+    /**
+     * The player animation the cast plays (the base name, e.g. `cast_slam`). A pose with a
+     * `release` frame is timed so that frame shows on the release tick.
+     */
+    pose: z.string().default('attack'),
     effects: z.array(AbilityEffectSchema).min(1),
   })
   .refine((a) => a.cast.release < a.cast.ticks, 'cast.release must come before the cast ends')

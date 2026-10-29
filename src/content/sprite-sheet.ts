@@ -34,6 +34,12 @@ export const SpriteSheetSchema = z.object({
         offset: z.tuple([z.number(), z.number()]).default([0, 0]),
         /** Per-animation pivots (same units as the sheet's), overriding the sheet-level ones. */
         pivots: z.record(z.string(), z.tuple([z.number(), z.number()])).default({}),
+        /**
+         * For a cast pose: the frame (index into `frames`) its effect lands on. The game times the
+         * frames before it to end on the ability's release tick and spreads the rest over the cast's
+         * remainder, so one pose fits casts of any length.
+         */
+        release: z.number().int().nonnegative().optional(),
       }),
     )
     .default({}),

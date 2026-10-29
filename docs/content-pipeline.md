@@ -86,8 +86,8 @@ bonfire menu while resting. `player.json → start.class` is the default for gam
 (scenarios, `?new`, tests).
 
 An ability (`abilities.json`) has a `slot`, a `cooldown` in seconds (AoE and class; supers spend a full energy
-bar instead), a `cast` (`ticks` the player is locked, effects land on tick `release`), and `effects`, applied in
-order:
+bar instead), a `cast` (`ticks` the player is locked, effects land on tick `release`), a `pose` (the player
+animation it plays, e.g. `cast_slam`; default `attack`), and `effects`, applied in order:
 
 - `blast`: hits everything within `radius`, at `self` or the cursor (`at: "aim"`, capped at `range`), after
   an optional `fuse` in ticks. `damage`, `knockback`, and `stagger` (ticks the enemy is stopped, guard down).
@@ -148,9 +148,16 @@ set it when they shift a pose to fit the frame, so the body still lands where it
 `swing` places the player's sword arc; without one it sits 9 px above the feet.
 Animations may also carry their own `pivots`, overriding the sheet-level ones for that animation (the
 archer's per-direction `release` on `attack_<dir>`). In use: `swing` (player sword arc), `head` (enemy health
-bar, 4 px above), `release` (arrow flight height).
+bar, 4 px above), `release` (arrow flight height; on `cast_throw_<dir>`, the throwing hand's `[x, y]`, where a
+lobbed charge starts).
 
-- Player poses: `idle`, `walk`, `attack`, `roll`, `hurt`, `drink`, `sit`, `dead`
+A cast pose may mark its **`release`** frame (an index into its `frames`). The game then times the pose to its
+ability: the frames before the release share the ticks up to the ability's release tick, the release frame shows
+exactly when the effect lands, and the rest share the remainder of the cast (a dash loops them instead). One pose
+serves a quick class ability and a slow super alike.
+
+- Player poses: `idle`, `walk`, `attack`, `roll`, `hurt`, `drink`, `sit`, `dead`, and the cast poses `cast_slam`,
+  `cast_throw`, `cast_charge`, `cast_push`, `cast_raise`
 - Enemy poses: `idle`, `walk`, `windup` (telegraph), `attack`, `hurt`, `stunned`, `hop`
 - Props: `bonfire_lit`, `bonfire_unlit`, `torch`, `sign`, `souls`, `ember`
 - Tiles: named frames referenced from `tiles.json`. `overlay: true` tiles are transparent and drawn over the

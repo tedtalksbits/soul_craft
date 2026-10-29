@@ -20,6 +20,8 @@ export interface Anim {
   /** Sprite offset from the anchor in pixels (see SpriteSheetSchema). */
   offset: readonly [number, number];
   pivots: Readonly<Record<string, readonly [number, number]>>;
+  /** For a cast pose, the frame its effect lands on (see SpriteSheetSchema). */
+  release: number | undefined;
 }
 
 /** Where a named frame sits in its sheet's PNG, for drawing it outside Pixi (DOM icons). */
@@ -64,7 +66,14 @@ export class SpriteSheet {
         .map((f) => (typeof f === 'number' ? this.frames[f] : this.named.get(f)))
         .filter((t) => t !== undefined);
       if (textures.length > 0)
-        this.anims.set(key, { textures, fps: a.fps, loop: a.loop, offset: a.offset, pivots: a.pivots });
+        this.anims.set(key, {
+          textures,
+          fps: a.fps,
+          loop: a.loop,
+          offset: a.offset,
+          pivots: a.pivots,
+          release: a.release,
+        });
     }
   }
 
@@ -81,7 +90,9 @@ export class SpriteSheet {
     const anim = this.anims.get(key);
     if (anim) return anim;
     const still = this.named.get(key);
-    return still ? { textures: [still], fps: 1, loop: false, offset: [0, 0], pivots: {} } : undefined;
+    return still
+      ? { textures: [still], fps: 1, loop: false, offset: [0, 0], pivots: {}, release: undefined }
+      : undefined;
   }
 }
 

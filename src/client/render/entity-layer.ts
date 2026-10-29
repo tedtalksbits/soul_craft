@@ -11,7 +11,7 @@ import { TELEGRAPH_STATES } from '../../sim/modules/brains';
 import { DEATH_TICKS } from '../../sim/modules/combat';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
-import { selectAnim } from './anim-select';
+import { castFrame, selectAnim } from './anim-select';
 import type { Dir8 } from './facing';
 import { PixelText } from './pixel-text';
 
@@ -60,7 +60,7 @@ export class EntityLayer {
       seen.add(e);
       const view = this.views.get(e) ?? this.create(e);
       const sheet = this.assets.sheet(spriteDef.sheet);
-      const { key, dir8, elapsedMs, reverse } = selectAnim(
+      const { key, dir8, elapsedMs, reverse, cast } = selectAnim(
         sim,
         e,
         view.dir8,
@@ -77,6 +77,7 @@ export class EntityLayer {
         const len = anim.textures.length;
         let idx = anim.loop ? n % len : Math.min(n, len - 1);
         if (reverse && anim.loop) idx = len - 1 - idx;
+        if (cast && anim.release !== undefined) idx = castFrame(cast, len, anim.release, anim.fps);
         const tex = anim.textures[idx] ?? this.assets.missingTexture;
         view.sprite.texture = tex;
         view.glow.texture = tex;

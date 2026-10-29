@@ -42,6 +42,33 @@ export interface AnimChoice {
   elapsedMs: number | undefined;
   /** Play the animation backwards: an enemy stepping away from the player it is watching. */
   reverse: boolean;
+  /** For a player cast: its timing, so a pose with a release frame can land on the release tick. */
+  cast: CastTiming | null;
+}
+
+export interface CastTiming {
+  /** Ticks into the cast. */
+  t: number;
+  /** The tick the effects land on, and the cast's length. */
+  release: number;
+  ticks: number;
+  /** A dash: after the release the pose's remaining frames loop (a run cycle) instead of playing once. */
+  loopAfterRelease: boolean;
+}
+
+/**
+ * Which frame of a cast pose to show. Frames before `releaseFrame` share the ticks up to the
+ * release, the release frame shows on the release tick, and the rest share the remainder (or
+ * loop at `fps` for a dash). So one pose fits a quick class ability and a slow super alike.
+ */
+export function castFrame(c: CastTiming, frameCount: number, releaseFrame: number, fps: number): number {
+  const r = Math.min(releaseFrame, frameCount - 1);
+  if (c.t < c.release) return r === 0 ? 0 : Math.min(r - 1, Math.floor((c.t / c.release) * r));
+  const after = c.t - c.release;
+  const rest = frameCount - r;
+  if (c.loopAfterRelease) return r + (Math.floor((after / TICK_RATE) * fps) % rest);
+  const span = Math.max(1, c.ticks - c.release);
+  return Math.min(frameCount - 1, r + Math.floor((after / span) * rest));
 }
 
 /**
@@ -62,6 +89,7 @@ export function selectAnim(
   let pose: string;
   let elapsedMs: number | undefined;
   let reverse = false;
+  let cast: CastTiming | null = null;
 
   const player = ecs.get(e, Player);
   const ai = ecs.get(e, Ai);
@@ -69,7 +97,13 @@ export function selectAnim(
   const dying = ecs.get(e, Dying);
   if (player) {
     pose = player.state === 'free' ? (moving ? 'walk' : 'idle') : player.state;
-    if (player.state === 'cast') pose = castPose(sim, e);
+    if (player.state === 'cast') {
+      const c = castPose(sim, e, player.t);
+      if (c) {
+        pose = c.pose;
+        cast = c.timing;
+      }
+    }
     if (PLAYER_TIMED.has(player.state)) elapsedMs = player.t * TICK_MS;
     // Swings, rolls and casts face where they go (the aim may be any angle), not the drift of motion.
     if (player.state === 'attack' || player.state === 'roll' || player.state === 'cast')
@@ -136,20 +170,22 @@ export function selectAnim(
     ...directed('walk'),
     ...directed('idle'),
   ];
-  return { key: candidates.find(exists) ?? pose, dir8, elapsedMs, reverse };
+  return { key: candidates.find(exists) ?? pose, dir8, elapsedMs, reverse, cast };
 }
 
 /** Closest stand-in when a sheet lacks a pose (placeholder sheets have `hurt` but no `dead`). */
 const FALLBACK: Readonly<Record<string, string>> = { dead: 'hurt', stunned: 'hurt' };
 
-/**
- * The player has no cast animations yet: a dash plays the roll, anything else the swing.
- * Until the art agent delivers cast poses.
- */
-function castPose(sim: Simulation, e: Entity): string {
+/** The pose and timing of the cast in progress, from the ability's content. */
+function castPose(sim: Simulation, e: Entity, t: number): { pose: string; timing: CastTiming } | null {
   const casting = sim.ecs.get(e, Abilities)?.casting;
   const def = casting ? sim.content.abilities[casting.ability] : undefined;
-  return def?.effects.some((fx) => fx.type === 'dash') ? 'roll' : 'attack';
+  if (!def) return null;
+  const dash = def.effects.some((fx) => fx.type === 'dash');
+  return {
+    pose: def.pose,
+    timing: { t, release: def.cast.release, ticks: def.cast.ticks, loopAfterRelease: dash },
+  };
 }
 
 function towardPlayer(sim: Simulation, e: Entity): Dir8 | undefined {

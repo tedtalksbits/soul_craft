@@ -52,7 +52,7 @@ export class GameRenderer {
     this.chunks = new ChunkLayer(assets);
     this.entities = new EntityLayer(assets);
     this.effects = new Effects(assets);
-    this.abilityFx = new AbilityFx(this.effects);
+    this.abilityFx = new AbilityFx(this.effects, assets);
     this.hud = new Hud(assets, VIEW_W, VIEW_H);
     this.world.addChild(
       this.chunks.root,

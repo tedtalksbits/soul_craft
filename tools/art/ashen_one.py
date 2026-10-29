@@ -15,6 +15,8 @@ numpy + Pillow only, all randomness seeded: same script, same pixels.
 Delivered by the art agent 2026-10-29 as player.py (all eight player
 animations); adapted to emit the engine's JSON exactly, to fit poses into the
 frame by whole pixels and to record those shifts as per-animation offsets.
+Cast poses (cast_slam, cast_throw, cast_charge, cast_push, cast_raise) added by
+the art agent 2026-10-29; each cast entry records its RELEASE frame as `release`.
 """
 import json
 import os
@@ -395,7 +397,8 @@ def build(pose):
     CN /= (np.linalg.norm(CN, axis=-1, keepdims=True) + 1e-9)
     N[M == 3] = CN[M == 3]
 
-    return {'ankles': {k: v[2] for k, v in legs.items()}, 'hip_z': hip_z}
+    return {'ankles': {k: v[2] for k, v in legs.items()}, 'hip_z': hip_z,
+            'hands': {k: to_world(torso, v[2]) + [0, 0, drop] for k, v in arms.items()}}
 
 # ---------------------------------------------------------------- renderer
 W, H = 48, 48
@@ -508,6 +511,38 @@ def P(*dicts, **kw):
     out.update(kw)
     return out
 
+# ---- class-ability casts. The game stretches each to its ability's cast length, so the frame
+# listed in CAST_RELEASE lands exactly when the effect hits; fps only sets the default pace.
+def forearm_shield(hand, pole, out=(1.0, 0.0, 0.0), along=0.35, lift=1.1):
+    """Shield placement for a left-hand target: on the forearm, a little out from it, facing out."""
+    el, hd = two_bone(SHOULDER[1], hand, UPPER_ARM, FOREARM, pole)
+    f = (el - hd) / np.linalg.norm(el - hd)
+    n = np.asarray(out, float)
+    n = n - (n @ f) * f
+    n /= np.linalg.norm(n)
+    return dict(offset=tuple(round(float(v), 2) for v in (el - hd) * along + n * lift),
+                normal=tuple(round(float(v), 2) for v in n))
+
+# cast_slam: down on one knee, the sword point driven into the ground in front of him
+DOWN_KNEE = dict(hip_z=7.0, kneeL=(2.4, -5.0, 10.6), ankleL=(2.4, -5.4, 6.15),
+                 kneeR=(-2.2, 1.6, 6.1), ankleR=(-2.2, 6.6, 6.0), footR=(0, 1.0, -0.25),
+                 lean=8, twist=0, hand_frame='body', handR=(-2.8, -8.0, 18.0), poleR=(-1, 0.4, -0.5),
+                 sword_dir=(-0.1, -0.38, -0.92), handL=(4.0, -4.6, 13.0), head_tilt=18,
+                 shield=dict(offset=(1.4, 0.2, 0.0), normal=(0.9, -0.4, 0.1)))
+
+# cast_throw: a lob with the left (shield) hand; the hand is empty, the game draws the object
+TH0, TH1, TH2, TH3 = (5.6, 4.4, 12.2), (3.8, -7.2, 20.0), (2.2, -7.4, 16.4), (5.8, -2.6, 15.0)
+PL0, PL1, PL2, PL3 = (1, 0.4, -0.4), (1, 0.2, -0.8), (1, 0.2, -0.8), (1, 0.3, -0.6)
+
+# cast_charge: shield squared to the front (it faces dead ahead with the torso turned -25)
+SQUARE = dict(offset=(-0.4, -1.3, 0.0), normal=(0.42, -0.91, 0.0))
+CHARGE_BODY = dict(lean=30, twist=-25, head_tilt=22, handL=(2.4, -6.0, 18.6), poleL=(1, 0.6, -0.4), shield=SQUARE,
+                   handR=(-6.6, 3.2, 15.0), poleR=(-1, 0.4, -0.6), sword_dir=(-0.15, 0.75, -0.64), plume=1.2, flare=1.2)
+
+# cast_raise: the sword raised straight up beside the helm (the hand can't reach above it)
+RAISE_UP = dict(legR=(4, 0), legL=(-4, 0), lean=-6, head_tilt=-14, handR=(-4.4, -1.6, 27.6), poleR=(-1, 0.2, -0.2),
+                sword_dir=(0.0, 0.06, 1.0), handL=(6.8, -2.0, 16.0))
+
 ANIMATIONS = [
     # (name, poses, fps, loop)
     ('idle', [P(STAND),
@@ -561,6 +596,61 @@ ANIMATIONS = [
           handL=(8.5, -2.5, 18.0), shield=dict(offset=(1.6, -0.6, 0.4), normal=(0.5, -0.85, 0.2)),
           flare=-0.4, plume=-0.5),
     ], round(1000 / 233, 2), False),
+    ('cast_slam', [
+        # 0 gather: crouched, sword drawn back up over the right shoulder, shield braced
+        P(legR=(52, -44), legL=(46, -52), lean=20, twist=-24, head_tilt=10, handR=(-6.0, 2.2, 22.4), poleR=(-1, 0.6, -0.6),
+          sword_dir=(-0.15, 0.55, 0.82), handL=(4.4, -5.2, 17.4), shield=dict(offset=(-0.4, -1.0, 0.0), normal=(0.25, -0.97, 0.0)),
+          flare=0.3, plume=0.3),
+        # 1 apex: up on the toes, sword high above the helm
+        P(legR=(6, 0), legL=(-4, 0), hip_z=13.4, footR=(0, -0.6, -0.8), footL=(0, -0.6, -0.8), lean=-6, twist=-8, head_tilt=-10,
+          handR=(-4.4, -1.2, 27.4), poleR=(-1, 0.2, -0.3), sword_dir=(0.0, 0.18, 0.98), handL=(6.6, -2.4, 16.6),
+          shield=dict(offset=(1.6, 0.0, 0.0), normal=(0.75, -0.65, 0.1)), flare=0.6, plume=0.6),
+        P(DOWN_KNEE, flare=1.8, cape_spread=0.4, phase=1.0, plume=1.2),         # 2 RELEASE: knee down, cape flared
+        P(DOWN_KNEE, flare=0.8, cape_spread=0.2, phase=1.4, plume=0.6),         # 3 hold: the cape settling
+        # 4 recover: rising from the knee, the sword coming up out of the ground
+        P(hip_z=9.6, kneeL=(2.4, -4.4, 8.9), ankleL=(2.4, -4.8, 3.55), kneeR=(-2.2, 0.4, 6.4), ankleR=(-2.2, 4.4, 3.55),
+          footR=(0, 1.0, -0.4), lean=14, head_tilt=6, hand_frame='body', handR=(-3.4, -6.0, 18.4), poleR=(-1, 0.4, -0.5),
+          sword_dir=(-0.1, -0.45, -0.89), handL=(5.4, -3.6, 15.4), shield=dict(offset=(1.6, -0.2, 0.0), normal=(0.75, -0.65, 0.1)),
+          flare=0.4, phase=1.8),
+    ], 15, False),
+    ('cast_throw', [
+        P(legR=(10, 4), legL=(-16, -10), lean=-6, twist=30, head_tilt=4, handL=TH0, poleL=PL0,
+          shield=forearm_shield(TH0, PL0), flare=0.2),                             # 0 reach back, weight on the back foot
+        P(legR=(30, 12), legL=(-22, -30), lean=8, twist=-20, handL=TH1, poleL=PL1,
+          shield=forearm_shield(TH1, PL1), flare=0.7, plume=0.5),                  # 1 RELEASE: hand open at the shoulder, stepping
+        P(legR=(30, 12), legL=(-26, -40), lean=16, twist=-30, head_tilt=4, handL=TH2, poleL=PL2,
+          shield=forearm_shield(TH2, PL2), flare=0.9, plume=0.7),                  # 2 follow-through, leaning in
+        P(legR=(12, 4), legL=(-6, -4), lean=4, twist=-8, handL=TH3, poleL=PL3,
+          shield=forearm_shield(TH3, PL3), flare=0.4),                             # 3 recover
+    ], 17, False),
+    ('cast_charge', [
+        P(legR=(-22, -36), legL=(38, -28), lean=22, twist=-25, head_tilt=16, handL=(2.6, -5.6, 18.0), poleL=(1, 0.6, -0.4),
+          shield=SQUARE, handR=(-6.6, 3.0, 15.4), poleR=(-1, 0.4, -0.6), sword_dir=(-0.15, 0.75, -0.64),
+          flare=0.4, plume=0.4),                                                   # 0 brace: low, shield squared, sword hand back
+        P(CHARGE_BODY, legR=(-42, -76), legL=(48, 22), phase=0.4),                # 1 RELEASE / run A (the game loops 1-2)
+        P(CHARGE_BODY, legR=(48, 22), legL=(-42, -76), phase=1.2),                # 2 run B
+    ], 12, False),
+    ('cast_push', [
+        P(legR=(12, -6), legL=(10, -8), lean=12, bob_extra=-1.2, head_tilt=15,
+          handR=(-2.8, -4.0, 18.6), poleR=(-1, 0.2, -1), sword_dir=(-0.05, 0.1, 0.99),
+          handL=(2.8, -4.4, 18.8), poleL=(1, 0.2, -1), shield=dict(offset=(-0.5, -1.0, 0.0), normal=(0.1, -1.0, 0.0)),
+          flare=0.2),                                                              # 0 gather: arms drawn in, hunched
+        P(legR=(-14, -10), legL=(20, 6), lean=-8, head_tilt=-12,
+          handR=(-12.4, -0.5, 19.0), poleR=(0, 1, -1), sword_dir=(-0.45, 0.05, -0.89),
+          handL=(2.2, -7.6, 19.4), poleL=(1, 0.4, -0.6), shield=dict(offset=(-0.4, -1.2, 0.0), normal=(0.05, -1.0, 0.05)),
+          flare=2.2, plume=1.6, phase=1.2),                                        # 1 RELEASE: shield out, sword arm wide
+        P(legR=(-6, -4), legL=(8, 2), lean=2, handR=(-7.6, -1.6, 15.0), handL=(6.0, -3.4, 15.4),
+          flare=0.8, plume=0.6, phase=1.6),                                        # 2 recover
+    ], 15, False),
+    ('cast_raise', [
+        P(legR=(4, 0), legL=(-4, 0), lean=10, head_tilt=28, bob_extra=-0.6,
+          handR=(1.5, -4.8, 13.2), poleR=(-1, 0.3, -0.5), sword_dir=(0.85, -0.25, -0.45),
+          handL=(5.2, -3.2, 14.5)),                                                # 0 gather: head bowed, sword low across
+        P(legR=(4, 0), legL=(-4, 0), lean=2, head_tilt=6, handR=(-3.0, -3.0, 22.0), poleR=(-1, 0.4, -0.4),
+          sword_dir=(0.2, -0.35, 0.92), handL=(5.8, -2.8, 15.2), flare=0.4),     # 1 rise
+        P(RAISE_UP, flare=1.4, phase=0.8, plume=0.8),                              # 2 RELEASE: sword up, head back, cape lifting
+        P(RAISE_UP, bob_extra=-0.4, head_tilt=-11, flare=0.9, phase=1.0, plume=0.5),   # 3 hold until the cast ends
+    ], 10, False),
 ]
 
 # Every animation is fitted: the sword tip and trailing foot reach below the ground line
@@ -569,6 +659,16 @@ FIT = {name for name, *_ in ANIMATIONS}
 
 # pivots in pixels relative to the anchor (x right, y down)
 PIVOTS = {'swing': [0, -13]}   # body centre: where the game draws the sword arc
+
+# the RELEASE frame of each cast, counted from 0 within the animation (written as `release`)
+CAST_RELEASE = {'cast_slam': 2, 'cast_throw': 1, 'cast_charge': 1, 'cast_push': 1, 'cast_raise': 2}
+
+def project(p_world, theta):
+    """Pixel position of a world point relative to the anchor (24, 48), x right, y down, fit not applied."""
+    w = rot(np.asarray(p_world, float)[None], theta)[0]
+    sx = w[0]
+    sy = w[1] * np.sin(PHI) + w[2] * np.cos(PHI)
+    return sx, (FOOT_ROW - sy) - H
 
 # ---------------------------------------------------------------- fitting
 def screen_extent(theta):
@@ -642,6 +742,8 @@ def generate(out_dir='.'):
             shifts = {d: fit_shift(ext[d]) for d, _ in DIRECTIONS}
         for fi, pose in enumerate(poses):
             info = build(pose)
+            if name == 'cast_throw' and fi == CAST_RELEASE[name]:
+                throw_hand = info['hands']['L']            # the open hand at release
             if name == 'walk' and fi == 0:
                 a = info['ankles']
                 report['walk_stride_px'] = round(float(abs(a['R'][1] - a['L'][1])), 1)
@@ -656,6 +758,12 @@ def generate(out_dir='.'):
             dx, dsy = shifts[d]
             if dx or dsy:
                 entry['offset'] = [int(-dx), int(dsy)]   # undo the fit shift in game
+            if name in CAST_RELEASE:
+                entry['release'] = CAST_RELEASE[name]
+            if name == 'cast_throw':
+                # as for the archer's arrows: where the thrown object leaves the hand, per direction
+                rx, ry = (int(round(v)) for v in project(throw_hand, np.radians(dict(DIRECTIONS)[d])))
+                entry['pivots'] = {'release': [rx, ry]}
             meta_anims[f'{name}_{d}'] = entry
         row += len(poses)
         print(f'{name}: {len(poses)} frame(s)', flush=True)

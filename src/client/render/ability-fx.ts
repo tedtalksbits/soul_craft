@@ -12,13 +12,17 @@ import { FULL_ENERGY } from '../../sim/modules/energy';
 import type { SimEvent } from '../../sim/events';
 import type { Simulation } from '../../sim/simulation';
 import { abilityPalette, classPalette } from './class-palette';
+import type { Assets } from '../assets';
 import type { Effects } from './effects';
+import { dir8FromVec } from './facing';
 
 const FRAME_MS = 1000 / 60;
 /** How long a blast's shockwave ring takes to expand and fade. */
 const RING_MS = 320;
 /** How high (px) a lobbed charge arcs at the middle of its flight. */
 const LOB_HEIGHT = 18;
+/** Where a lob starts when the caster's pose has no hand pivot: about chest height. */
+const DEFAULT_THROW_HEIGHT = 13;
 
 interface Ring {
   x: number;
@@ -30,7 +34,9 @@ interface Ring {
 
 interface Lob {
   fromX: number;
+  /** The ground point under the hand at the throw, and the height of the hand above it. */
   fromY: number;
+  fromHeight: number;
   toX: number;
   toY: number;
   color: number;
@@ -50,7 +56,10 @@ export class AbilityFx {
   /** A class change to celebrate on the next update, when the player's position is known. */
   private attuned: string | null = null;
 
-  constructor(private readonly effects: Effects) {
+  constructor(
+    private readonly effects: Effects,
+    private readonly assets: Assets,
+  ) {
     this.air.addChild(this.airG);
   }
 
@@ -91,9 +100,12 @@ export class AbilityFx {
         // A lobbed charge flies from the caster to where it will burst, over its fuse.
         for (const fx of def.effects) {
           if (fx.type === 'blast' && fx.at === 'aim' && fx.fuse > 0) {
+            const hand = this.throwingHand(content, def.pose, e.tx - e.x, e.ty - e.y);
+            const feetY = e.y + content.player.body.h / 2;
             this.lobs.push({
-              fromX: e.x,
-              fromY: e.y,
+              fromX: e.x + (hand?.[0] ?? 0),
+              fromY: feetY,
+              fromHeight: hand ? -hand[1] : DEFAULT_THROW_HEIGHT,
               toX: e.tx,
               toY: e.ty,
               color,
@@ -170,8 +182,10 @@ export class AbilityFx {
         this.lobs.splice(i, 1);
         continue;
       }
+      // Along the ground from under the hand to the landing point, falling from the hand's height.
       const x = lob.fromX + (lob.toX - lob.fromX) * t;
-      const y = lob.fromY + (lob.toY - lob.fromY) * t - 8 - Math.sin(t * Math.PI) * LOB_HEIGHT;
+      const height = lob.fromHeight * (1 - t) + Math.sin(t * Math.PI) * LOB_HEIGHT;
+      const y = lob.fromY + (lob.toY - lob.fromY) * t - height;
       air
         .circle(x, y, 2)
         .fill(0x2a2420)
@@ -273,6 +287,20 @@ export class AbilityFx {
         vz: 0.4,
       });
     }
+  }
+
+  /**
+   * The throwing hand's position relative to the feet, from the cast pose's per-direction
+   * `release` pivot, so a lobbed charge leaves from the hand rather than the chest.
+   */
+  private throwingHand(
+    content: Content,
+    pose: string,
+    dx: number,
+    dy: number,
+  ): readonly [number, number] | null {
+    const sheet = this.assets.sheet(content.player.sprite);
+    return sheet?.anim(`${pose}_${dir8FromVec(dx, dy)}`)?.pivots['release'] ?? null;
   }
 
   clear(): void {

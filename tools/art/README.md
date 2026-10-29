@@ -23,16 +23,16 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 
 ## Tools
 
-| Tool           | Writes       | Contents                                                                                              |
-| -------------- | ------------ | ----------------------------------------------------------------------------------------------------- |
-| `ashen_one.py` | `player.*`   | The Ashen One: idle, walk, attack, roll, drink, sit, dead, hurt; 8 directions, 48×48 (sheet 384×864)  |
-| `hollow.py`    | `hollow.*`   | The Hollow: idle, walk, windup, attack, hurt, dead; 8 directions, 48×48 (sheet 384×624); `head` pivot |
-| `archer.py`    | `archer.*`   | The Archer: the same six animations; `head` plus per-direction `release` on `attack_<dir>`            |
-| `knight.py`    | `knight.*`   | The Oathbound Knight: idle, walk, windup, attack (looping charge), stunned, dead; `head` pivot        |
-| `slime.py`     | `slime.*`    | The Fungal Slime: undirected idle, hop (lift drawn in, ground shadow), hurt, dead; `head` pivot       |
-| `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels)  |
-| `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 32×48 `frames`, voxel-rendered like the characters        |
-| `ui_kit.py`    | `assets/ui/` | 9-slice UI pieces and their states, cut from one PixelLab sheet (`assets/ui/source/kit.png`)          |
+| Tool           | Writes       | Contents                                                                                                                                                                                  |
+| -------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ashen_one.py` | `player.*`   | The Ashen One: idle, walk, attack, roll, drink, sit, dead, hurt and five cast poses (slam, throw, charge, push, raise, each with a `release` frame); 8 directions, 48×48 (sheet 384×1776) |
+| `hollow.py`    | `hollow.*`   | The Hollow: idle, walk, windup, attack, hurt, dead; 8 directions, 48×48 (sheet 384×624); `head` pivot                                                                                     |
+| `archer.py`    | `archer.*`   | The Archer: the same six animations; `head` plus per-direction `release` on `attack_<dir>`                                                                                                |
+| `knight.py`    | `knight.*`   | The Oathbound Knight: idle, walk, windup, attack (looping charge), stunned, dead; `head` pivot                                                                                            |
+| `slime.py`     | `slime.*`    | The Fungal Slime: undirected idle, hop (lift drawn in, ground shadow), hurt, dead; `head` pivot                                                                                           |
+| `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels)                                                                                      |
+| `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 32×48 `frames`, voxel-rendered like the characters                                                                                            |
+| `ui_kit.py`    | `assets/ui/` | 9-slice UI pieces and their states, cut from one PixelLab sheet (`assets/ui/source/kit.png`)                                                                                              |
 
 ## How the Ashen One generator works
 
