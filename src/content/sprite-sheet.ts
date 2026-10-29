@@ -32,6 +32,8 @@ export const SpriteSheetSchema = z.object({
          * Generators set it when they had to shift a pose to fit the frame (lying, rolling).
          */
         offset: z.tuple([z.number(), z.number()]).default([0, 0]),
+        /** Per-animation pivots (same units as the sheet's), overriding the sheet-level ones. */
+        pivots: z.record(z.string(), z.tuple([z.number(), z.number()])).default({}),
       }),
     )
     .default({}),

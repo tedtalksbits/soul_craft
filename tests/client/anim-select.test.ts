@@ -70,3 +70,25 @@ describe('selectAnim', () => {
     expect(selectAnim(sim, e, 'up', all).key).toBe('attack_down_left');
   });
 });
+
+describe('selectAnim: archers', () => {
+  it('walks backwards, still facing the player, when backing away', () => {
+    const sim = newSim();
+    sim.state.cheats.god = true;
+    const e = spawnNear(sim, 'archer', 30, 0);
+    sim.ecs.need(e, Ai).cooldown = 999;
+    run(sim, 10);
+    const choice = selectAnim(sim, e, undefined, all);
+    expect(choice.key).toBe('walk_left');
+    expect(choice.reverse).toBe(true);
+  });
+
+  it('shows the release as its attack after a shot', () => {
+    const sim = newSim();
+    const e = spawnNear(sim, 'archer', -60, -60);
+    Object.assign(sim.ecs.need(e, Ai), { state: 'loose', t: 3 });
+    const choice = selectAnim(sim, e, undefined, all);
+    expect(choice.key).toBe('attack_down_right');
+    expect(choice.elapsedMs).toBeCloseTo(50);
+  });
+});

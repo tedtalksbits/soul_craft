@@ -25,7 +25,7 @@ const TICK_MS = 1000 / TICK_RATE;
 /** Player states whose animation plays once, in step with the state's own timer. */
 const PLAYER_TIMED = new Set(['attack', 'roll', 'hurt', 'drink', 'sit', 'dead']);
 /** Enemy AI states that are timed actions rather than open-ended behaviour. */
-const ENEMY_TIMED = new Set(['windup', 'draw', 'lunge', 'charge', 'recoil', 'stunned', 'hop']);
+const ENEMY_TIMED = new Set(['windup', 'draw', 'loose', 'lunge', 'charge', 'recoil', 'stunned', 'hop']);
 
 export interface AnimChoice {
   key: string;
@@ -37,6 +37,8 @@ export interface AnimChoice {
    * ambient loops (idle, walk), which run on wall-clock time.
    */
   elapsedMs: number | undefined;
+  /** Play the animation backwards: an enemy stepping away from the player it is watching. */
+  reverse: boolean;
 }
 
 /**
@@ -56,6 +58,7 @@ export function selectAnim(
   let dir8 = resolveDir8(previous, dir, motion?.vx ?? 0, motion?.vy ?? 0);
   let pose: string;
   let elapsedMs: number | undefined;
+  let reverse = false;
 
   const player = ecs.get(e, Player);
   const ai = ecs.get(e, Ai);
@@ -78,11 +81,28 @@ export function selectAnim(
           // Telegraphs track the player in all 8 directions, so the attack that follows lines up.
           dir8 = towardPlayer(sim, e) ?? dir8;
           break;
+        case 'loose':
+          pose = 'attack';
+          dir8 = towardPlayer(sim, e) ?? dir8;
+          break;
         case 'lunge':
         case 'charge':
           pose = 'attack';
           dir8 = dir8FromVec(ai.dirX, ai.dirY);
           break;
+        case 'chase': {
+          // Chasers watch the player; one backing away (an archer keeping its distance)
+          // walks backwards rather than turning its back.
+          pose = moving ? 'walk' : 'idle';
+          const toward = towardPlayer(sim, e);
+          if (toward) dir8 = toward;
+          const pb = ecs.get(sim.player, Body);
+          const eb = ecs.get(e, Body);
+          if (moving && pb && eb) {
+            reverse = motion.vx * (pb.x - eb.x) + motion.vy * (pb.y - eb.y) < 0;
+          }
+          break;
+        }
         case 'recoil':
           pose = 'hurt';
           break;
@@ -106,7 +126,7 @@ export function selectAnim(
     ...directed('walk'),
     ...directed('idle'),
   ];
-  return { key: candidates.find(exists) ?? pose, dir8, elapsedMs };
+  return { key: candidates.find(exists) ?? pose, dir8, elapsedMs, reverse };
 }
 
 /** Closest stand-in when a sheet lacks a pose (placeholder sheets have `hurt` but no `dead`). */

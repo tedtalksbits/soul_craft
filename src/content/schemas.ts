@@ -83,6 +83,8 @@ const BrainSchema = z.discriminatedUnion('type', [
     type: z.literal('archer'),
     preferredRange: range,
     drawTicks: ticks,
+    /** Recovery after each shot: the bow comes down before the archer moves again. */
+    looseTicks: ticks,
     cooldown: range,
     arrowSpeed: pos,
     arrowDamage: pos,

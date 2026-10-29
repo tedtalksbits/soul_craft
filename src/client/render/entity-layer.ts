@@ -60,7 +60,12 @@ export class EntityLayer {
       seen.add(e);
       const view = this.views.get(e) ?? this.create(e);
       const sheet = this.assets.sheet(spriteDef.sheet);
-      const { key, dir8, elapsedMs } = selectAnim(sim, e, view.dir8, (k) => sheet?.anim(k) !== undefined);
+      const { key, dir8, elapsedMs, reverse } = selectAnim(
+        sim,
+        e,
+        view.dir8,
+        (k) => sheet?.anim(k) !== undefined,
+      );
       view.dir8 = dir8;
       if (elapsedMs !== undefined) view.animMs = elapsedMs;
       else if (key !== view.anim) view.animMs = 0;
@@ -69,7 +74,9 @@ export class EntityLayer {
       const anim = sheet?.anim(key);
       if (anim) {
         const n = Math.floor((view.animMs / 1000) * anim.fps);
-        const idx = anim.loop ? n % anim.textures.length : Math.min(n, anim.textures.length - 1);
+        const len = anim.textures.length;
+        let idx = anim.loop ? n % len : Math.min(n, len - 1);
+        if (reverse && anim.loop) idx = len - 1 - idx;
         const tex = anim.textures[idx] ?? this.assets.missingTexture;
         view.sprite.texture = tex;
         view.glow.texture = tex;

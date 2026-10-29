@@ -18,7 +18,7 @@ import {
 import type { SimCommand, SimModule } from '../module';
 import { blockedAt } from '../physics';
 import type { Simulation } from '../simulation';
-import { runBrain, setAi, TELEGRAPH_STATES } from './brains';
+import { runBrain, setAi } from './brains';
 
 export function spawnEnemy(
   sim: Simulation,
@@ -84,7 +84,10 @@ function updateEnemies(sim: Simulation): void {
     }
     runBrain({ sim, e, def, enemy, ai, body, motion, facing, contact, dx, dy, dist, sees });
 
-    if (!TELEGRAPH_STATES.has(ai.state) && Math.abs(motion.vx) + Math.abs(motion.vy) > 0.05) {
+    // An enemy that can see the player keeps its eyes on them (an archer backing away
+    // included); otherwise it faces where it is going.
+    if (sees) facing.dir = dirFromVec(dx, dy, facing.dir);
+    else if (Math.abs(motion.vx) + Math.abs(motion.vy) > 0.05) {
       facing.dir = dirFromVec(motion.vx, motion.vy, facing.dir);
     }
   }

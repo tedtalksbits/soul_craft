@@ -1,5 +1,5 @@
 /**
- * Placeholder humanoid sheets (archer, knight). 16x24 frames,
+ * Placeholder humanoid sheets (the knight, until its real art lands). 16x24 frames,
  * anchored at the feet. One row per animation; directional animations get a
  * row per facing. The renderer resolves `<pose>_<dir>`, then `<pose>`.
  */
@@ -8,7 +8,7 @@ import { hex, Sheet, type RGBA, type Surface } from './pixel-canvas';
 
 type Dir = 'down' | 'up' | 'left' | 'right';
 const DIRS: Dir[] = ['down', 'up', 'left', 'right'];
-export type Kind = 'archer' | 'knight';
+export type Kind = 'knight';
 
 interface Palette {
   body: RGBA;
@@ -20,14 +20,6 @@ interface Palette {
 }
 
 const PALETTES: Record<Kind, Palette> = {
-  archer: {
-    body: hex('#b0aa98'),
-    dark: hex('#6a665a'),
-    cape: hex('#3a4436'),
-    trim: hex('#8a7a50'),
-    face: hex('#000000'),
-    head: hex('#d8d0bc'),
-  },
   knight: {
     body: hex('#62666e'),
     dark: hex('#383b40'),
@@ -64,7 +56,8 @@ function drawFigure(s: Surface, kind: Kind, dir: Dir, pose: Pose, frame: number)
   const lean = pose === 'attack' && frame >= 1 ? 1 : pose === 'hurt' ? -1 : 0;
   const [lx, ly] = ({ down: [0, lean], up: [0, -lean], left: [-lean, 0], right: [lean, 0] } as const)[dir];
   const B = (x: number, y: number, w: number, h: number, c: RGBA) => P(x + lx, y + ly - bob, w, h, c);
-  const bulk = kind === 'knight' ? 1 : 0;
+  // The knight is the only placeholder left: drawn a pixel bulkier than the old humanoid base.
+  const bulk = 1;
 
   s.ellipse(8, 23, 6, 2.2, SHADOW);
   P(-4, -5 + (step > 0 ? -1 : 0), 3, 5, pal.dark);
@@ -78,7 +71,7 @@ function drawFigure(s: Surface, kind: Kind, dir: Dir, pose: Pose, frame: number)
     B(3 + bulk, -12, 2, 6, pal.cape);
   }
   B(-4 - bulk, -18 - bulk, 8 + bulk * 2, 7 + bulk, pal.head);
-  if (kind === 'knight') B(-4, -15, 8, 1, hex('#1a1a1e'));
+  B(-4, -15, 8, 1, hex('#1a1a1e')); // visor slit
   if (pose === 'hurt') {
     if (dir === 'down') {
       B(-3, -15, 1, 1, pal.face);
@@ -92,37 +85,23 @@ function drawFigure(s: Surface, kind: Kind, dir: Dir, pose: Pose, frame: number)
   } else if (dir === 'left') B(-4, -15, 3, 1, pal.face);
   else if (dir === 'right') B(1, -15, 3, 1, pal.face);
 
-  drawGear(B, kind, dir, pose, pal);
+  drawKnightGear(B, dir, pose, pal);
 }
 
-function drawGear(
+/** Tower shield (except from behind) and a sword raised during the windup. */
+function drawKnightGear(
   B: (x: number, y: number, w: number, h: number, c: RGBA) => void,
-  kind: Kind,
   dir: Dir,
   pose: Pose,
   pal: Palette,
 ): void {
-  const raised = pose === 'windup';
-  switch (kind) {
-    case 'archer': {
-      const drawn = raised;
-      const bx = dir === 'left' ? -7 : 4;
-      for (let i = -4; i <= 4; i++)
-        B(bx + (drawn ? 1 : 0) + Math.round(Math.cos((i / 4) * 1.2) * 2), -10 + i, 1, 1, hex('#7a5a3a'));
-      if (drawn) B(bx - 2, -10, 4, 1, hex('#c8b898'));
-      return;
-    }
-    case 'knight': {
-      const sh = { down: [-3, -12], up: [-3, -14], left: [-8, -13], right: [3, -13] }[dir];
-      if (dir !== 'up') {
-        B(sh[0]!, sh[1]!, 7, 9, hex('#5a3e26'));
-        B(sh[0]! + 2, sh[1]! + 3, 3, 3, pal.trim);
-      }
-      const y = raised ? -24 : -13;
-      B(dir === 'left' ? 6 : -7, y, 2, 11, hex('#c8ccd0'));
-      return;
-    }
+  const sh = { down: [-3, -12], up: [-3, -14], left: [-8, -13], right: [3, -13] }[dir];
+  if (dir !== 'up') {
+    B(sh[0]!, sh[1]!, 7, 9, hex('#5a3e26'));
+    B(sh[0]! + 2, sh[1]! + 3, 3, 3, pal.trim);
   }
+  const y = pose === 'windup' ? -24 : -13;
+  B(dir === 'left' ? 6 : -7, y, 2, 11, hex('#c8ccd0'));
 }
 
 function drawSingle(s: Surface, kind: Kind, pose: (typeof SINGLE)[number]['pose'], frame: number): void {

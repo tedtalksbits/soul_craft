@@ -6,15 +6,20 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import type { Content } from '../../content/content';
 import type { BiomeDef } from '../../content/schemas';
-import { Body, Player, Projectile, Sprite as SpriteDef } from '../../sim/components';
+import { Body, Player, Projectile, Sprite as SpriteDef, type ProjectileKind } from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
+import { dir8FromVec } from './facing';
 import { PixelText } from './pixel-text';
 
 const MAX_PARTICLES = 700;
 const FRAME_MS = 1000 / 60;
 const SLASH_MS = 170;
+/** Which sprite sheet each projectile kind is fired from (its release pivots set the flight height). */
+const PROJECTILE_SHEET: Readonly<Record<ProjectileKind, string>> = { arrow: 'archer' };
+/** Flight height when the shooter's sheet has no release pivot (sized for 24px placeholders). */
+const DEFAULT_FLIGHT_HEIGHT = -8;
 /** Chip colour for anything woody that a sword bites into. */
 const WOOD = 0x6e5236;
 /** Arc centre above the feet when a sheet has no `swing` pivot (sized for 24px-tall sprites). */
@@ -327,12 +332,23 @@ export class Effects {
     g.clear();
     for (const [, proj, body] of sim.ecs.query(Projectile, Body)) {
       const x = body.x;
-      const y = body.y - 8;
+      const y = body.y + this.flightHeight(proj);
       g.moveTo(x, y)
         .lineTo(x - proj.vx * 3, y - proj.vy * 3)
         .stroke({ width: 1, color: 0xc8b898 });
       g.rect(Math.round(x), Math.round(y), 1, 1).fill(0xe8e0d0);
     }
+  }
+
+  /**
+   * Height (negative = up) a projectile flies at above its ground position: the shooter's
+   * release pivot for the direction of flight, so an arrow leaves from the bow hand.
+   */
+  private flightHeight(proj: Projectile): number {
+    const sheet = this.assets.sheet(PROJECTILE_SHEET[proj.kind]);
+    const dir = dir8FromVec(proj.vx, proj.vy);
+    const release = sheet?.anim(`attack_${dir}`)?.pivots['release'] ?? sheet?.def.pivots['release'];
+    return release ? release[1] : DEFAULT_FLIGHT_HEIGHT;
   }
 
   private acquire(color: number, size: number, add: boolean): Sprite {

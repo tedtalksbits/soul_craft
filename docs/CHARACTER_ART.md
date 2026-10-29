@@ -1,6 +1,6 @@
 | Done || Done || Done || Done || Done || Done |# Character Art Design Doc
 
-Last updated: 2026-10-29 (hollow ported and player crop fixed; see "Port report: hollow")
+Last updated: 2026-10-29 (archer ported, hollow revised; see "Port report: archer". Next: the knight)
 
 ## Purpose
 
@@ -93,11 +93,11 @@ The generator writes it; nobody edits it by hand.
 **Pivots:** named points in pixels relative to the anchor (x right, y down), computed by the generator from the
 model so they follow proportion changes.
 
-| Pivot     | Who     | Used for                                                         | Status                         |
-| --------- | ------- | ---------------------------------------------------------------- | ------------------------------ |
-| `swing`   | player  | Centre of the sword-arc effect: body centre at sword-hand height | Committed: `[0, -13]`          |
-| `head`    | enemies | Top of the silhouette; the health bar sits 4 px above it         | Proposal, required for enemies |
-| `release` | archer  | Bow hand; arrows are drawn from this height                      | Proposal, required for archer  |
+| Pivot     | Who     | Used for                                                         | Status                    |
+| --------- | ------- | ---------------------------------------------------------------- | ------------------------- |
+| `swing`   | player  | Centre of the sword-arc effect: body centre at sword-hand height | Committed: `[0, -13]`     |
+| `head`    | enemies | Top of the silhouette; the health bar sits 4 px above it         | Committed: hollow, archer |
+| `release` | archer  | Bow hand; arrows are drawn from this height                      | Committed, per direction  |
 
 **Generator contract:** each character is one Python script in `tools/art` using numpy and Pillow only
 (no SciPy), deterministic (seeded randomness), keeping the shared camera, light, ramp shading and outline code
@@ -107,6 +107,20 @@ delivers the script; the implementation agent runs it with `pnpm art <tool>`. Ev
 frame (`FIT` = all of them), and the JSON `offset` is the **correction the game adds** to the sprite position:
 the opposite of how far the drawing was moved inside the frame. Pattern noise must use integer hashing, not
 `sin()`, so output is identical on every machine.
+
+An animation entry may carry its own `pivots`, overriding the sheet-level ones. The archer uses this for
+`release` on each `attack_<dir>`: arrows are drawn at the release height for their direction of flight. Only the
+height is used, because the sim fires arrows from the body centre and a sideways offset would put the visible
+arrow off its real path.
+
+**Delivery checklist** (so a script installs without edits):
+
+- Write to `<repo>/assets/sprites` by default:
+  `os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'assets', 'sprites')`.
+- Write the JSON as UTF-8 with a trailing newline.
+- Wrap the depth-edge comparison in `compose()` in `np.errstate(invalid='ignore')`.
+- Define `coords()` once.
+- Start the module docstring with the character name, the output files and `Usage: pnpm art <tool>`.
 
 The shared renderer stays copied in each script for now (decided 2026-10-29, superseding the earlier plan to
 extract `tools/art/voxel.py` at the second character): the art agent works on standalone scripts, and a shared
@@ -277,6 +291,27 @@ Written by the implementation agent, 2026-10-29, for the delivery `hollow.py`.
   - Windups face the player in 8 directions; lunges and charges face their committed direction.
   - The hollow's hitbox is now 12×10.
 
+## Port report: archer (and hollow revision)
+
+Written by the implementation agent, 2026-10-29, for `archer.py` and the revised `hollow.py`.
+
+- **Archer accepted:** 384×624 sheet (idle 0–1, walk 2–5, windup 6–7, attack 8–10, hurt 11, dead 12), 35 px tall
+  (`head` −35), walk stride 11.2 px at 6 fps = 33.6 px/s against its 33 px/s, so its speed is unchanged. Hard
+  alpha, nothing clipped. The four conventions arrived built in. The script lives at `tools/art/archer.py`
+  (`pnpm art archer`).
+- **Per-direction release:** accepted, height only. The script writes the eight release points onto the
+  `attack_<dir>` animations as `pivots.release`, and the sheet-level pivot stays as their average. Effects draw each
+  arrow at the release height for its direction of flight (−17 px towards the camera, −28 away).
+- **Hollow revision accepted:** lifted hood highlight, integer hash, and an attack that thrusts out over the sword
+  side in body coordinates. `attack_down` now reads as a clear diagonal lunge.
+- **Repo adaptations applied to both:** the delivery checklist above. With those built in, a script needs no edits.
+- **Game changes made:**
+  - The archer has a `loose` state (`looseTicks`, 12) after each shot, shown with `attack`.
+  - **Facing rule:** any enemy that can see the player faces the player, otherwise it faces its direction of
+    travel. A retreating archer keeps its eyes on you, and the renderer plays its walk in reverse.
+  - Arrows are drawn from the release height.
+  - The archer is removed from placeholder generation; the knight is the last placeholder.
+
 ### Changes the implementation agent will make (not art work)
 
 So the art below is actually shown, the game gets these changes as each character is ported:
@@ -284,9 +319,10 @@ So the art below is actually shown, the game gets these changes as each characte
 - **Enemy death:** dying enemies show `dead` during their 667 ms fade (today they show `hurt`). _Done 2026-10-29._
 - **Archer:** add a 12-tick (200 ms) `loose` state after each shot, shown with `attack`; today it goes straight
   back to moving. It keeps facing the player while it sees them, and plays `walk` in reverse when backing off.
+  _Done 2026-10-29._
 - **Knight:** its `attack` (the charge) loops.
 - **Attack poses:** they follow the aim direction rather than the movement direction. _Done 2026-10-29._
-- **Pivots:** health bars use `head` (_done 2026-10-29_); arrows use `release`.
+- **Pivots:** health bars use `head`; arrows use `release`. _Done 2026-10-29._
 - **Retuning:** hitboxes as proposed per enemy below, and player move speed matched to the final walk stride
   (_done 2026-10-29: 1.075 px/tick = 64.5 px/s_).
 

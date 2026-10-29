@@ -51,6 +51,7 @@
       "type": "archer",
       "preferredRange": [60, 110],
       "drawTicks": 30,
+      "looseTicks": 12,
       "cooldown": [100, 140],
       "arrowSpeed": 2.3,
       "arrowDamage": 10

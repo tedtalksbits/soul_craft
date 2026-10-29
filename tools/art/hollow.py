@@ -1,25 +1,20 @@
 """The Hollow (enemy) sprite generator.
 
-Same conventions as ashen_one.py: numpy + Pillow only, all randomness seeded,
-the shared renderer unchanged. Writes the engine sprite sheet:
-
-    assets/sprites/hollow.png    8 columns (down, down_right, right, up_right, up,
-                                 up_left, left, down_left), one row per animation
-                                 frame, animations in ANIMATIONS order
-    assets/sprites/hollow.json   format: src/content/sprite-sheet.ts
+Writes the engine sprite sheet assets/sprites/hollow.png + hollow.json (format:
+src/content/sprite-sheet.ts): 8 columns (down, down_right, right, up_right, up,
+up_left, left, down_left), one row per animation frame, animations in ANIMATIONS
+order. numpy + Pillow only, seeded, integer hashing: same script, same pixels.
 
 Usage: pnpm art hollow                    (see tools/art/README.md)
        python tools/art/hollow.py [output_dir]
 
-Delivered by the art agent 2026-10-29. Adapted: `image` added to the JSON;
-offsets use the engine's sign (added to the sprite position); the head pivot
-undoes each direction's fit offset; the pattern hash uses integer maths so
-output is identical on every machine.
+Delivered by the art agent 2026-10-29 (second revision: lifted hood highlight, reworked attack,
+integer hash). Repo adaptations: this docstring, default output folder, UTF-8 JSON with a
+trailing newline, the NaN warning silenced, a shadowed coords() removed.
 """
 import json
 import os
 import sys
-from pathlib import Path
 
 import numpy as np
 from PIL import Image
@@ -33,7 +28,7 @@ def hx(h):
 
 # material: (highlight, base, shadow, deep); base/shadow from the spec, the rest derived
 RAMPS = {
-    1:  ('#625d4a', '#4e4a3c', '#34312a', '#22201d'),  # hood and shawl
+    1:  ('#7a7359', '#4e4a3c', '#34312a', '#22201d'),  # hood and shawl (lifted highlight: separates from dark grass)
     2:  ('#736a58', '#5c5446', '#3d372e', '#27231d'),  # padded jacket
     3:  ('#888680', '#6b6a64', '#45443f', '#2a2925'),  # rusted iron
     4:  ('#bd703a', '#9a5a2e', '#6b3c1e', '#4a2713'),  # rust
@@ -158,18 +153,23 @@ def roty(a):            # negative drops the sword side (-x)
     c, s = np.cos(a), np.sin(a)
     return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
 
-def hash3(x, y, z, scale=1.0):
-    """Deterministic 0..1 noise on the part's own coordinates, so patterns don't swim between frames.
+def ihash3(x, y, z, scale=1.0):
+    """Deterministic 0..1 noise from integer cell coordinates, using only integer arithmetic.
 
-    Integer hashing of the lattice cell: sin()-based hashes amplify last-bit differences
-    between CPUs and numpy builds, which would make output machine-dependent.
+    No sin/exp: the result is bit-identical on every CPU and numpy build. Patterns are taken
+    in each part's own coordinates, so they don't swim between frames.
     """
-    xi = np.floor(x * scale).astype(np.int64)
-    yi = np.floor(y * scale).astype(np.int64)
-    zi = np.floor(z * scale).astype(np.int64)
-    h = (xi * 73856093) ^ (yi * 19349663) ^ (zi * 83492791)
-    h = (h ^ (h >> 13)) * 1274126177
-    return ((h ^ (h >> 16)) & 0xFFFF) / 65535.0
+    xi = np.floor(np.asarray(x) * scale).astype(np.int64).astype(np.uint64)
+    yi = np.floor(np.asarray(y) * scale).astype(np.int64).astype(np.uint64)
+    zi = np.floor(np.asarray(z) * scale).astype(np.int64).astype(np.uint64)
+    with np.errstate(over='ignore'):
+        h = xi * np.uint64(0x9E3779B1) ^ yi * np.uint64(0x85EBCA77) ^ zi * np.uint64(0xC2B2AE3D)
+        h ^= h >> np.uint64(15)
+        h *= np.uint64(0x2C1B3C6D)
+        h ^= h >> np.uint64(12)
+        h *= np.uint64(0x297A2D39)
+        h ^= h >> np.uint64(15)
+    return (h & np.uint64(0xFFFF)).astype(np.float64) / 65535.0
 
 THIGH, SHIN = 5.0, 5.0
 UPPER_ARM, FOREARM = 3.4, 3.3
@@ -203,7 +203,7 @@ def draw_blade(put, C, grip, bdir, length):
     x, y, z = C
     # rust: blotches along the blade, measured along its length so they stay put
     t = ((x - gc[0]) * bdir[0] + (y - gc[1]) * bdir[1] + (z - gc[2]) * bdir[2])
-    rusty = blade & (hash3(t, 0 * t, 0 * t, 0.9) > 0.66)
+    rusty = blade & (ihash3(t, 0 * t, 0 * t, 0.9) > 0.66)
     put(blade, 3)
     put(rusty, 4)
     for f, side in ((0.35, 1), (0.55, 1), (0.72, -1)):                              # notches
@@ -221,6 +221,7 @@ def build(pose):
     head_tilt       + chin down, - head back
     bob_extra       upper-body drop in model units
     handR / handL   hand targets in torso coordinates (two-bone IK); poleR/poleL bend the elbows
+    hand_frame      'body' to give hand targets and blade_dir in body coordinates instead (unaffected by twist)
     blade_dir       blade direction in torso coordinates, or tip=(x, y, z) in body coordinates
                     (the blade then reaches for that point, e.g. resting on the ground)
     blade           'hand' (default) or 'ground' (dropped, placed after landing)
@@ -280,6 +281,8 @@ def build(pose):
     for side, sx in (('R', -1), ('L', 1)):
         S = SHOULDER[sx]
         tgt = np.asarray(pose['hand' + side], float)
+        if pose.get('hand_frame', 'torso') == 'body':
+            tgt = to_local(rel_torso, tgt)
         pole = pose.get('pole' + side, (sx * 1.0, 0.5, -0.4))
         el, hd = two_bone(S, tgt, UPPER_ARM, FOREARM, pole)
         put(capsule(CT, S, el, 1.05, 0.95), 2)
@@ -318,7 +321,7 @@ def build(pose):
     brim = (brim_d < 4.5) & (brim_d > 2.0) & (np.abs(hz_ - brim_z) < 0.4)
     put(brim, 3)
     helm = (M == 3) & (dome | brim)
-    put(helm & (hash3(hx_, hy_, hz_, 1.6) > 0.62), 4)                                    # rust streaks
+    put(helm & (ihash3(hx_, hy_, hz_, 1.6) > 0.62), 4)                                    # rust streaks
     crack = dome & (np.abs(hx_ - c[0] - 0.7 - 0.35 * (hz_ - c[2])) < 0.3) & (hy_ < c[1])
     put(crack & (M != 1), 10)
 
@@ -338,7 +341,10 @@ def build(pose):
             tip_b = np.array([g_b[0] + u[0] * h, g_b[1] + u[1] * h, 0.5 - dz])
             draw_blade(put, CT, grip, to_local(rel_torso, tip_b) - grip, DRAG_LEN)
         else:
-            draw_blade(put, CT, grip, pose.get('blade_dir', (-0.1, -0.5, -0.86)), BLADE_LEN)
+            bd = np.asarray(pose.get('blade_dir', (-0.1, -0.5, -0.86)), float)
+            if pose.get('hand_frame', 'torso') == 'body':
+                bd = rel_torso[0].T @ bd
+            draw_blade(put, CT, grip, bd, BLADE_LEN)
 
     # ---- drop to the ground
     shift_k = 0
@@ -490,18 +496,20 @@ ANIMATIONS = [
           handL=(4.8, -6.4, 17.0)),
     ], 5, False),
     ('attack', [
+        # (hands and blade in body coordinates: the thrust angles out over the sword side,
+        #  so it still reads as a diagonal when the hollow lunges straight at the camera)
         # push off
-        P(legR=(-36, -30), legL=(30, 8), lean=32, twist=6, roll=-6, head_tilt=6,
-          handR=(-3.6, -6.4, 15.6), poleR=(-1, 0.4, -0.6), blade_dir=(-0.05, -0.97, 0.22),
-          handL=(4.6, 1.8, 15.0)),
+        P(legR=(-36, -30), legL=(30, 8), lean=32, twist=6, roll=-6, head_tilt=6, hand_frame='body',
+          handR=(-4.8, -5.6, 15.8), poleR=(-1, 0.4, -0.6), blade_dir=(-0.36, -0.88, 0.30),
+          handL=(4.6, 2.6, 15.2)),
         # full thrust: this is the frame the hit lands on
-        P(legR=(-46, -42), legL=(44, 18), lean=40, twist=24, roll=-6, head_tilt=8,
-          handR=(-1.2, -11.0, 14.6), poleR=(-1, 0.3, -0.4), blade_dir=(0.05, -1.0, -0.05),
-          handL=(4.8, 3.0, 16.0)),
+        P(legR=(-46, -42), legL=(44, 18), lean=40, twist=24, roll=-6, head_tilt=8, hand_frame='body',
+          handR=(-3.8, -10.0, 15.2), poleR=(-1, 0.3, -0.4), blade_dir=(-0.50, -0.85, 0.14),
+          handL=(4.4, 3.6, 16.2)),
         # overextended stumble: the tip dips towards the ground, head lolls
-        P(legR=(-34, -54), legL=(52, 30), lean=52, twist=14, roll=-10, head_tilt=22,
-          handR=(-2.2, -10.0, 9.8), poleR=(-1, 0.3, -0.4), blade_dir=(0.1, -0.72, -0.69),
-          handL=(5.2, 2.5, 14.0)),
+        P(legR=(-34, -54), legL=(52, 30), lean=52, twist=14, roll=-10, head_tilt=22, hand_frame='body',
+          handR=(-3.8, -9.2, 10.4), poleR=(-1, 0.3, -0.4), blade_dir=(-0.42, -0.62, -0.66),
+          handL=(5.0, 3.0, 14.2)),
     ], 18, False),
     ('hurt', [
         # head snapped back, arms flung out
@@ -519,6 +527,7 @@ ANIMATIONS = [
     ], 1, False),
 ]
 
+
 # ---------------------------------------------------------------- fitting (whole pixels)
 def screen_extent(theta):
     occ = np.argwhere(M > 0)
@@ -528,8 +537,8 @@ def screen_extent(theta):
     sy = w[:, 1] * np.sin(PHI) + w[:, 2] * np.cos(PHI)
     return sx.min(), sx.max(), sy.min(), sy.max()
 
-def fit_offset(extents):
-    """Whole-pixel shift (dx right, dy down) that keeps the silhouette inside the frame; (0, 0) if it fits."""
+def fit_shift(extents):
+    """Whole-pixel move of the drawing (dx right, dy down) that keeps it inside the frame; (0, 0) if it fits."""
     x0, x1 = min(e[0] for e in extents), max(e[1] for e in extents)
     y0, y1 = min(e[2] for e in extents), max(e[3] for e in extents)
     lim_x, lo_y, hi_y = 22.0, -1.0, 43.5
@@ -545,7 +554,7 @@ def fit_offset(extents):
         up = -int(np.ceil(y1 - hi_y))
     return dx, -up
 
-def render_offset(theta, dx_px, dy_px):
+def render_shifted(theta, dx_px, dy_px):
     """Render with the drawing moved by whole pixels, by offsetting the grid origin (no voxels lost)."""
     global xs, ys
     if dx_px == 0 and dy_px == 0:
@@ -559,9 +568,21 @@ def render_offset(theta, dx_px, dy_px):
     finally:
         xs, ys = xs0, ys0
 
+def project(p_world, theta):
+    """Pixel position of a world point relative to the anchor (24, 48), x right, y down, fit not applied."""
+    w = rot(np.asarray(p_world, float)[None], theta)[0]
+    sx = w[0]
+    sy = w[1] * np.sin(PHI) + w[2] * np.cos(PHI)
+    return sx, (FOOT_ROW - sy) - H
+
 # ---------------------------------------------------------------- export (engine format)
-def generate(out_dir='.', name='hollow'):
-    rows, anims, report = [], {}, {}
+def generate(out_dir='.', name='character', extra_pivots=None):
+    """Render every animation and write <name>.png and <name>.json.
+
+    JSON offsets are the engine's correction: it adds `offset` to undo the in-frame fit,
+    so offset = -(how far the drawing was moved).
+    """
+    rows, anims, report, infos, shifts = [], {}, {}, {}, {}
     row = 0
     for anim, poses, fps, loop in ANIMATIONS:
         ext = {d: [] for d, _ in DIRECTIONS}
@@ -569,20 +590,16 @@ def generate(out_dir='.', name='hollow'):
             build(pose)
             for d, ang in DIRECTIONS:
                 ext[d].append(screen_extent(np.radians(ang)))
-        offsets = {d: fit_offset(ext[d]) for d, _ in DIRECTIONS}
+        moved = {d: fit_shift(ext[d]) for d, _ in DIRECTIONS}
+        shifts[anim] = moved
         for fi, pose in enumerate(poses):
-            info = build(pose)
-            if anim == 'walk' and fi == 0:
-                a = info['ankles']
-                report['walk_stride_px'] = round(float(abs(a['R'][1] - a['L'][1])), 1)
-            rows.append([Image.fromarray(compose(*render_offset(np.radians(ang), *offsets[d])), 'RGBA')
+            infos[(anim, fi)] = build(pose)
+            rows.append([Image.fromarray(compose(*render_shifted(np.radians(ang), *moved[d])), 'RGBA')
                          for d, ang in DIRECTIONS])
         for c, (d, _) in enumerate(DIRECTIONS):
             entry = {'frames': [(row + i) * 8 + c for i in range(len(poses))], 'fps': fps, 'loop': loop}
-            if offsets[d] != (0, 0):
-                # fit_offset is how far the drawing moved inside the frame; the engine wants
-                # the correction to add back, so the sign flips.
-                entry['offset'] = [-offsets[d][0], -offsets[d][1]]
+            if moved[d] != (0, 0):
+                entry['offset'] = [-moved[d][0], -moved[d][1]]
             anims[f'{anim}_{d}'] = entry
         row += len(poses)
         print(f'{anim}: {len(poses)} frame(s)', flush=True)
@@ -592,27 +609,30 @@ def generate(out_dir='.', name='hollow'):
         for c, im in enumerate(imgs):
             sheet.paste(im, (c * W, r * H))
 
-    # head pivot: the top of the idle silhouette relative to the anchor, as drawn in game
-    # (each direction's fit offset undone), taking the highest across the 8 directions
+    # head pivot: top of the idle silhouette with each direction's fit undone
     alpha = np.array(sheet)[..., 3] > 0
     tops = []
     for c, (d, _) in enumerate(DIRECTIONS):
-        frame_top = int(np.where(alpha[0:H, c * W:(c + 1) * W].any(1))[0].min())
-        tops.append(frame_top - H + anims[f'idle_{d}'].get('offset', [0, 0])[1])
-    top = min(tops)
-    pivots = {'head': [0, top]}
+        top = int(np.where(alpha[0:H, c * W:(c + 1) * W].any(1))[0].min())
+        tops.append(top - shifts['idle'][d][1])
+    pivots = {'head': [0, min(tops) - H]}
+    if extra_pivots:
+        pivots.update(extra_pivots(infos, report))
 
     os.makedirs(out_dir, exist_ok=True)
     sheet.save(os.path.join(out_dir, f'{name}.png'))
     meta = {'image': f'{name}.png', 'frameWidth': W, 'frameHeight': H, 'anchor': [0.5, 1],
-            'pivots': pivots, 'frames': {}, 'animations': anims}
+            'pivots': pivots, 'animations': anims}
     with open(os.path.join(out_dir, f'{name}.json'), 'w', encoding='utf-8') as f:
         json.dump(meta, f, indent=2)
         f.write('\n')
-    report['height_px'] = -top
+    report['height_px'] = H - min(tops)
     return sheet, meta, report
 
+DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'assets', 'sprites')
+
 if __name__ == '__main__':
-    default_out = Path(__file__).resolve().parents[2] / 'assets' / 'sprites'
-    sheet, meta, report = generate(sys.argv[1] if len(sys.argv) > 1 else str(default_out))
+    sheet, meta, report = generate(sys.argv[1] if len(sys.argv) > 1 else DEFAULT_OUT, 'hollow')
+    a = build(ANIMATIONS[1][1][0])['ankles']
+    report['walk_stride_px'] = round(float(abs(a['R'][1] - a['L'][1])), 1)
     print('sheet', sheet.size, 'pivots', meta['pivots'], report)

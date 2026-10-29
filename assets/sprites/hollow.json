@@ -6,7 +6,6 @@
   "pivots": {
     "head": [0, -32]
   },
-  "frames": {},
   "animations": {
     "idle_down": {
       "frames": [0, 8],
@@ -153,49 +152,49 @@
       "frames": [64, 72, 80],
       "fps": 18,
       "loop": false,
-      "offset": [0, 12]
+      "offset": [0, 14]
     },
     "attack_down_right": {
       "frames": [65, 73, 81],
       "fps": 18,
       "loop": false,
-      "offset": [0, 10]
+      "offset": [0, 15]
     },
     "attack_right": {
       "frames": [66, 74, 82],
       "fps": 18,
       "loop": false,
-      "offset": [4, 8]
+      "offset": [5, 8]
     },
     "attack_up_right": {
       "frames": [67, 75, 83],
       "fps": 18,
       "loop": false,
-      "offset": [0, 7]
+      "offset": [7, 3]
     },
     "attack_up": {
       "frames": [68, 76, 84],
       "fps": 18,
       "loop": false,
-      "offset": [0, 6]
+      "offset": [0, 4]
     },
     "attack_up_left": {
       "frames": [69, 77, 85],
       "fps": 18,
       "loop": false,
-      "offset": [0, 7]
+      "offset": [0, 2]
     },
     "attack_left": {
       "frames": [70, 78, 86],
       "fps": 18,
       "loop": false,
-      "offset": [-4, 9]
+      "offset": [-5, 1]
     },
     "attack_down_left": {
       "frames": [71, 79, 87],
       "fps": 18,
       "loop": false,
-      "offset": [0, 12]
+      "offset": [-7, 6]
     },
     "hurt_down": {
       "frames": [88],

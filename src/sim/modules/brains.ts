@@ -158,7 +158,7 @@ const lunger: Brain<'lunger'> = (c, b) => {
   }
 };
 
-/** Archers: hold a preferred distance, draw, loose an arrow. */
+/** Archers: hold a preferred distance facing the player, draw, loose an arrow, recover. */
 const archer: Brain<'archer'> = (c, b) => {
   const { ai, sim } = c;
   c.contact.amount = c.def.contactDamage;
@@ -176,8 +176,13 @@ const archer: Brain<'archer'> = (c, b) => {
         damage: b.arrowDamage,
       });
       sim.events.emit({ type: 'enemyAttack', entity: c.e, kind: 'shoot' });
-      setAi(ai, 'chase');
+      setAi(ai, 'loose');
     }
+    return;
+  }
+  if (ai.state === 'loose') {
+    facePlayer(c);
+    if (ai.t >= b.looseTicks) setAi(ai, 'chase');
     return;
   }
   if (!c.sees) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Ai, Body, Motion } from '../../src/sim/components';
+import { Ai, Body, Facing, Motion } from '../../src/sim/components';
 import { newSim, run, spawnNear } from '../helpers';
 
 describe('chasing enemies', () => {
@@ -25,4 +25,31 @@ describe('chasing enemies', () => {
       expect(Math.abs(eb.x - pb.x)).toBeGreaterThan(5);
     },
   );
+});
+
+describe('archer', () => {
+  it('recovers in a `loose` state after each shot before moving again', () => {
+    const sim = newSim();
+    sim.state.cheats.god = true;
+    const e = spawnNear(sim, 'archer', 90, 0);
+    const ai = sim.ecs.need(e, Ai);
+    ai.cooldown = 0;
+    const states: string[] = [];
+    for (let i = 0; i < 80; i++) {
+      run(sim, 1);
+      if (states[states.length - 1] !== ai.state) states.push(ai.state);
+    }
+    expect(states).toEqual(expect.arrayContaining(['draw', 'loose', 'chase']));
+    expect(states.indexOf('loose')).toBe(states.indexOf('draw') + 1);
+  });
+
+  it('keeps facing the player while backing away', () => {
+    const sim = newSim();
+    sim.state.cheats.god = true;
+    const e = spawnNear(sim, 'archer', 30, 0);
+    sim.ecs.need(e, Ai).cooldown = 999;
+    run(sim, 10);
+    expect(sim.ecs.need(e, Motion).vx).toBeGreaterThan(0);
+    expect(sim.ecs.need(e, Facing).dir).toBe('left');
+  });
 });

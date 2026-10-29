@@ -90,6 +90,9 @@ of travel, held while standing still. A missing pose falls back to walk/idle fra
 An animation may also carry an **offset** (pixels, x right, y down) added to the sprite position; generators
 set it when they shift a pose to fit the frame, so the body still lands where it should.
 `swing` places the player's sword arc; without one it sits 9 px above the feet.
+Animations may also carry their own `pivots`, overriding the sheet-level ones for that animation (the
+archer's per-direction `release` on `attack_<dir>`). In use: `swing` (player sword arc), `head` (enemy health
+bar, 4 px above), `release` (arrow flight height).
 
 - Player poses: `idle`, `walk`, `attack`, `roll`, `hurt`, `drink`, `sit`, `dead`
 - Enemy poses: `idle`, `walk`, `windup` (telegraph), `attack`, `hurt`, `stunned`, `hop`
