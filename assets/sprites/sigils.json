@@ -1,0 +1,12 @@
+{
+  "image": "sigils.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "anchor": [0.5, 1],
+  "frames": {
+    "vanguard": 0,
+    "stalker": 1,
+    "ashcaller": 2
+  },
+  "animations": {}
+}
