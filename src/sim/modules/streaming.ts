@@ -12,6 +12,7 @@ import type { SpawnPoint } from '../world/generator';
 import { spawnEnemy } from './enemies';
 
 const PROPS_SHEET = 'props';
+const STATIONS_SHEET = 'stations';
 
 export function updateStreaming(sim: Simulation): void {
   const { ecs, world } = sim;
@@ -88,7 +89,7 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
       ecs.add(e, Body, { x: sp.x, y: sp.y, w: 14, h: 8 });
       ecs.add(e, Station, { station: ent.station });
       ecs.add(e, Spawned, spawned);
-      ecs.add(e, Sprite, { sheet: PROPS_SHEET });
+      ecs.add(e, Sprite, { sheet: STATIONS_SHEET });
       return;
     }
     case 'playerSpawn':

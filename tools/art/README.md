@@ -10,6 +10,9 @@ pnpm art:setup          # once: creates tools/art/.venv and installs requirement
 pnpm art ashen_one      # regenerate assets/sprites/player.png + player.json (about 80 s)
 pnpm art hollow         # regenerate assets/sprites/hollow.png + hollow.json (about 80 s)
 pnpm art archer         # regenerate assets/sprites/archer.png + archer.json (about 80 s)
+pnpm art knight         # regenerate assets/sprites/knight.png + knight.json
+pnpm art items          # regenerate assets/sprites/items.png + items.json (seconds)
+pnpm art stations       # regenerate assets/sprites/stations.png + stations.json (seconds)
 ```
 
 Output is deterministic, so running a tool without changing it produces no diff. `pnpm dev`
@@ -18,11 +21,14 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 
 ## Tools
 
-| Tool           | Writes     | Contents                                                                                              |
-| -------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
-| `ashen_one.py` | `player.*` | The Ashen One: idle, walk, attack, roll, drink, sit, dead, hurt; 8 directions, 48×48 (sheet 384×864)  |
-| `hollow.py`    | `hollow.*` | The Hollow: idle, walk, windup, attack, hurt, dead; 8 directions, 48×48 (sheet 384×624); `head` pivot |
-| `archer.py`    | `archer.*` | The Archer: the same six animations; `head` plus per-direction `release` on `attack_<dir>`            |
+| Tool           | Writes       | Contents                                                                                              |
+| -------------- | ------------ | ----------------------------------------------------------------------------------------------------- |
+| `ashen_one.py` | `player.*`   | The Ashen One: idle, walk, attack, roll, drink, sit, dead, hurt; 8 directions, 48×48 (sheet 384×864)  |
+| `hollow.py`    | `hollow.*`   | The Hollow: idle, walk, windup, attack, hurt, dead; 8 directions, 48×48 (sheet 384×624); `head` pivot |
+| `archer.py`    | `archer.*`   | The Archer: the same six animations; `head` plus per-direction `release` on `attack_<dir>`            |
+| `knight.py`    | `knight.*`   | The Oathbound Knight: idle, walk, windup, attack (looping charge), stunned, dead; `head` pivot        |
+| `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels)  |
+| `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 16×24 `frames`, voxel-rendered like the characters        |
 
 ## How the Ashen One generator works
 

@@ -312,6 +312,19 @@ Written by the implementation agent, 2026-10-29, for `archer.py` and the revised
   - Arrows are drawn from the release height.
   - The archer is removed from placeholder generation; the knight is the last placeholder.
 
+### Port report: items and stations
+
+- **Icons accepted as delivered** (`tools/art/items.py`, `pnpm art items`). Painting pixel grids instead of voxels is
+  the right call at 16 px.
+- **Two repo adaptations:**
+  - Still images are written as named `frames` (`"forge": 0`), not one-frame animations. `frames` is the
+    format's slot for stills, and menus and the HUD look icons up there. Any future single-image sheet does the same.
+  - `props.py` is installed as `stations.py` and writes `stations.png`/`stations.json`. The `props` sheet already
+    holds the bonfire, sign, torch, souls and ember, and writing `props.*` would have erased them. Each tool owns
+    its own sheet and never overwrites another tool's.
+- **Scale:** at 16×24 the stations read as too small next to the knight, so they are re-requested at 32×48, about
+  the knight's width. Until then the station hitboxes stay at 14 × 8.
+
 ### Port report: knight
 
 - **Installed as delivered**, no edits: `tools/art/knight.py` (`pnpm art knight`). It runs clean with warnings

@@ -1,0 +1,11 @@
+{
+  "image": "stations.png",
+  "frameWidth": 16,
+  "frameHeight": 24,
+  "anchor": [0.5, 1],
+  "frames": {
+    "forge": 0,
+    "alchemy": 1
+  },
+  "animations": {}
+}
