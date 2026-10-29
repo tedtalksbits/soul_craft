@@ -9,7 +9,7 @@ import { IndexedDbStore } from '../save/indexeddb-store';
 import { SaveManager, type SaveSlot } from '../save/save-manager';
 import { SnapshotLibrary } from '../save/snapshot-library';
 import type { KeyValueStore } from '../save/store';
-import { Player } from '../sim/components';
+import { Abilities, Player } from '../sim/components';
 import { TICK_RATE } from '../sim/constants';
 import type { SimEvent } from '../sim/events';
 import { findInteraction } from '../sim/modules/interaction';
@@ -139,9 +139,7 @@ export class App {
     this.ui.showTitle(
       slots,
       {
-        newGame: (slot) => {
-          void this.newGame(slot).then(() => this.save());
-        },
+        newGame: (slot) => this.chooseClassFor(slot),
         continueGame: (slot) => void this.continueSlot(slot),
         deleteSlot: (slot) => void this.saves.delete(slot).then(() => this.showTitle()),
       },
@@ -149,8 +147,35 @@ export class App {
     );
   }
 
-  newGame(slot: SaveSlot | null, seed: number = randomSeed()): Promise<Simulation> {
-    const sim = Simulation.create({ seed, content: this.content });
+  /** The new-game class screen; picking a class starts the game in `slot`. */
+  private chooseClassFor(slot: SaveSlot): void {
+    this.ui.showClasses({
+      content: this.content,
+      current: null,
+      mode: 'newGame',
+      pick: (cls) => void this.newGame(slot, randomSeed(), cls).then(() => this.save()),
+      cancel: () => void this.showTitle(),
+    });
+  }
+
+  /** The bonfire's class screen. The change goes to the sim as a `setClass` action. */
+  private changeClass(): void {
+    const sim = this.sim;
+    if (!sim) return;
+    this.ui.showClasses({
+      content: this.content,
+      current: sim.ecs.get(sim.player, Abilities)?.class ?? null,
+      mode: 'bonfire',
+      pick: (cls) => {
+        this.input.queueAction({ type: 'setClass', class: cls });
+        this.ui.hideScreen();
+      },
+      cancel: () => this.ui.hideScreen(),
+    });
+  }
+
+  newGame(slot: SaveSlot | null, seed: number = randomSeed(), playerClass?: string): Promise<Simulation> {
+    const sim = Simulation.create({ seed, content: this.content, ...(playerClass ? { playerClass } : {}) });
     this.setSim(sim, slot);
     return Promise.resolve(sim);
   }
@@ -207,6 +232,7 @@ export class App {
   }
 
   private togglePause(): void {
+    if (this.ui.cancelScreen()) return;
     if (!this.sim || this.ui.screen === 'title') return;
     if (this.ui.screen === 'pause') {
       this.ui.hideScreen();
@@ -254,8 +280,10 @@ export class App {
         return;
       case 'flaskEmpty':
         return this.ui.toast('The flask is empty. Rest at a bonfire.');
-      case 'classChanged':
-        return this.ui.toast(`You are now a ${this.content.playerClass(e.class).name}.`);
+      case 'classChanged': {
+        const name = this.content.playerClass(e.class).name;
+        return this.ui.toast(`You are now ${/^[aeiou]/i.test(name) ? 'an' : 'a'} ${name}.`);
+      }
       case 'stationOpened':
         return this.inventory.open('craft', e.station);
       case 'crafted': {
@@ -295,10 +323,13 @@ export class App {
 
   private frame(dtMs: number): void {
     const sim = this.sim;
-    if (sim && !this.ui.blocking && !this.inventory.isOpen) {
+    const free = sim !== null && !this.ui.blocking && !this.inventory.isOpen;
+    if (sim && free) {
       const target = findInteraction(sim);
       this.ui.prompt(target ? target.label : null, 'E');
     } else this.ui.prompt(null);
+    const resting = free && sim.ecs.get(sim.player, Player)?.state === 'sit';
+    this.ui.restMenu(resting, () => this.changeClass());
     this.renderer.render(dtMs, () => {
       for (const fn of this.frameListeners) fn(dtMs);
     });

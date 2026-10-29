@@ -4,6 +4,7 @@
  */
 import type { SaveSlot, SlotInfo } from '../../save/save-manager';
 import { TICK_RATE } from '../../sim/constants';
+import { classScreen, type ClassScreenOptions } from './classes';
 import { h } from './dom';
 
 export interface TitleHandlers {
@@ -17,6 +18,8 @@ export interface PauseHandlers {
   saveAndQuit(): void;
 }
 
+type ScreenKind = 'title' | 'pause' | 'classes';
+
 export class Ui {
   private readonly promptEl = h('div', { class: 'prompt hidden' });
   private readonly toastEl = h('div', { class: 'toast hidden' });
@@ -26,7 +29,10 @@ export class Ui {
   private areaEl: HTMLElement | null = null;
   private dialogState: { el: HTMLElement; lines: string[]; index: number } | null = null;
   private screenEl: HTMLElement | null = null;
-  private screenKind: 'title' | 'pause' | null = null;
+  private screenKind: ScreenKind | null = null;
+  /** What Escape does on the open screen, if anything. */
+  private screenCancel: (() => void) | null = null;
+  private restEl: HTMLElement | null = null;
 
   constructor(private readonly root: HTMLElement) {
     root.append(this.promptEl, this.toastEl, this.fadeEl);
@@ -44,8 +50,37 @@ export class Ui {
     return this.dialogState !== null || this.screenEl !== null;
   }
 
-  get screen(): 'title' | 'pause' | null {
+  get screen(): ScreenKind | null {
     return this.screenKind;
+  }
+
+  /** Escape on a screen that has a way back. Returns false when it has none. */
+  cancelScreen(): boolean {
+    if (!this.screenCancel) return false;
+    this.screenCancel();
+    return true;
+  }
+
+  showClasses(o: ClassScreenOptions): void {
+    this.setScreen('classes', classScreen(o));
+    this.screenCancel = () => o.cancel();
+  }
+
+  /** The bonfire's own menu, shown while resting. Rebuilt only when it appears. */
+  restMenu(show: boolean, changeClass: () => void): void {
+    if (!show) {
+      this.restEl?.remove();
+      this.restEl = null;
+      return;
+    }
+    if (this.restEl) return;
+    this.restEl = h(
+      'div',
+      { class: 'rest-menu' },
+      h('div', { class: 'title' }, 'Bonfire'),
+      h('button', { onclick: changeClass }, 'Change class'),
+    );
+    this.root.append(this.restEl);
   }
 
   /** Called every frame, so the DOM is only rebuilt when the key or text changes. */
@@ -196,6 +231,7 @@ export class Ui {
     this.screenEl?.remove();
     this.screenEl = null;
     this.screenKind = null;
+    this.screenCancel = null;
   }
 
   /** Clears transient in-game UI (used when leaving or switching worlds). */
@@ -205,9 +241,10 @@ export class Ui {
     this.fade(false);
     this.areaEl?.remove();
     this.bannerEl?.remove();
+    this.restMenu(false, () => undefined);
   }
 
-  private setScreen(kind: 'title' | 'pause', el: HTMLElement): void {
+  private setScreen(kind: ScreenKind, el: HTMLElement): void {
     this.hideScreen();
     this.screenEl = el;
     this.screenKind = kind;

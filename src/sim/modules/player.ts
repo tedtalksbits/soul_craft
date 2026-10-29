@@ -40,7 +40,7 @@ const RESPAWN_IFRAMES = 60;
 /** Respawn this far below the bonfire so the player is not standing in it. */
 const RESPAWN_OFFSET_Y = 16;
 
-export function spawnPlayer(sim: Simulation, x: number, y: number): Entity {
+export function spawnPlayer(sim: Simulation, x: number, y: number, playerClass?: string): Entity {
   const { ecs } = sim;
   const def = sim.content.player;
   const e = ecs.create();
@@ -64,7 +64,7 @@ export function spawnPlayer(sim: Simulation, x: number, y: number): Entity {
   ecs.add(e, Team, { team: 'player' });
   ecs.add(e, Sprite, { sheet: def.sprite });
   giveStartingKit(sim, e);
-  giveStartingClass(sim, e);
+  giveStartingClass(sim, e, playerClass);
   return e;
 }
 

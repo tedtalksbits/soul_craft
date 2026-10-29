@@ -63,7 +63,13 @@ export class Simulation {
     this.world = new ChunkWorld(state, content);
   }
 
-  static create(opts: { seed: number; content: Content; modules?: readonly SimModule[] }): Simulation {
+  /** A new game. `playerClass` defaults to the content's start class. */
+  static create(opts: {
+    seed: number;
+    content: Content;
+    playerClass?: string;
+    modules?: readonly SimModule[];
+  }): Simulation {
     const seed = opts.seed >>> 0;
     const sim = new Simulation(opts.content, initialState(seed), new World(), new Rng(seed), {
       tick: 0,
@@ -72,7 +78,7 @@ export class Simulation {
       modules: opts.modules ?? SIM_MODULES,
     });
     const spawn = sim.world.gen.originSpawn();
-    spawnPlayer(sim, spawn.x, spawn.y);
+    spawnPlayer(sim, spawn.x, spawn.y, opts.playerClass);
     updateStreaming(sim);
     sim.ecs.flush();
     return sim;

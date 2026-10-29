@@ -76,7 +76,9 @@ Every item id named anywhere is cross-checked on load.
 ### Classes and abilities
 
 A class (`classes.json`) names one ability per slot: `aoe` (F), `class` (C) and `super` (V), plus a `color`
-used by the ability effects and HUD. The start class is `player.json → start.class`.
+used by the ability effects and HUD. Players pick a class on the new-game screen and can change it from the
+bonfire menu while resting. `player.json → start.class` is the default for games started without that screen
+(scenarios, `?new`, tests).
 
 An ability (`abilities.json`) has a `slot`, a `cooldown` in seconds (AoE and class; supers spend a full energy
 bar instead), a `cast` (`ticks` the player is locked, effects land on tick `release`), and `effects`, applied in

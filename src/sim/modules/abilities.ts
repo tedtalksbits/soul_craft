@@ -44,10 +44,14 @@ export const SLOT_ACTION: Readonly<Record<AbilitySlot, number>> = {
 /** Hitstop when an ability blast connects: a beat shorter than a sword hit's feels right for AoE. */
 const BLAST_HITSTOP = 2;
 
-/** Gives a freshly spawned player their starting class, all abilities ready and an empty super. */
-export function giveStartingClass(sim: Simulation, e: Entity): void {
+/**
+ * Gives a freshly spawned player their class (chosen on the new-game screen, else the content's
+ * start class), all abilities ready and an empty super.
+ */
+export function giveStartingClass(sim: Simulation, e: Entity, playerClass?: string): void {
+  if (playerClass !== undefined) sim.content.playerClass(playerClass); // throws on an unknown class
   sim.ecs.add(e, Abilities, {
-    class: sim.content.player.start.class,
+    class: playerClass ?? sim.content.player.start.class,
     cooldowns: { aoe: 0, class: 0 },
     energy: 0,
     casting: null,

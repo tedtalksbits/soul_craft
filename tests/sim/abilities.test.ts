@@ -15,7 +15,7 @@ import { inputFrame, type ActionName } from '../../src/sim/input';
 import { applyDamage } from '../../src/sim/modules/combat';
 import { restAt } from '../../src/sim/modules/interaction';
 import { playerStats } from '../../src/sim/modules/items';
-import type { Simulation } from '../../src/sim/simulation';
+import { Simulation } from '../../src/sim/simulation';
 import { content, face, newSim, ofType, press, run, spawnNear } from '../helpers';
 
 /** A fresh game as the given class, invulnerable so enemies can't interrupt casts. */
@@ -53,6 +53,12 @@ describe('classes', () => {
       energy: 0,
       casting: null,
     });
+  });
+
+  it('a new game can start as any class, and refuses one that does not exist', () => {
+    const sim = Simulation.create({ seed: 1, content, playerClass: 'ashcaller' });
+    expect(abilities(sim).class).toBe('ashcaller');
+    expect(() => Simulation.create({ seed: 1, content, playerClass: 'bard' })).toThrow(/Unknown class/);
   });
 
   it('only changes class while resting at a bonfire', () => {

@@ -549,3 +549,98 @@ kbd {
     grid-template-columns: 1fr;
   }
 }
+
+/* ------------------------------------------------------------------ class screen and bonfire menu */
+
+/* Taller than the game frame on small windows: scroll rather than clip the heading and Back. */
+.screen.classes {
+  justify-content: safe center;
+  overflow-y: auto;
+  padding: 16px 0;
+  gap: 0.8em;
+}
+.screen.classes h1 {
+  font-size: 2.2em;
+  margin: 0;
+}
+.class-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 17em));
+  gap: 0.8em;
+  max-width: calc(100% - 32px);
+}
+.class-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  padding: 0.4em 0.6em;
+  border: 10px solid transparent;
+  border-image: url('/assets/ui/slot.png') 5 fill / 10px repeat;
+  image-rendering: pixelated;
+  text-align: left;
+}
+.class-card.current {
+  border-image-source: url('/assets/ui/slot_on.png');
+}
+.class-card h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: var(--class-color, var(--ink));
+}
+.class-card .about {
+  margin: 0;
+  color: var(--dim);
+  font-style: italic;
+}
+.class-card ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex: 1;
+}
+.class-card li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+.class-card .ability {
+  font-family: var(--display);
+  font-size: 0.95em;
+  color: var(--class-color, var(--ink));
+}
+.class-card .what {
+  font-size: 0.85em;
+  color: var(--dim);
+}
+.rest-menu {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  padding: 0.2em 0.4em;
+  border: 24px solid transparent;
+  border-image: url('/assets/ui/panel.png') 20 fill / 24px repeat;
+  image-rendering: pixelated;
+}
+.rest-menu .title {
+  font-family: var(--display);
+  letter-spacing: 0.15em;
+  color: var(--ember);
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .class-cards {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
+    max-height: 60vh;
+  }
+}
