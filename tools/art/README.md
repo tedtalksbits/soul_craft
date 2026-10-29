@@ -14,6 +14,7 @@ pnpm art knight         # regenerate assets/sprites/knight.png + knight.json
 pnpm art slime          # regenerate assets/sprites/slime.png + slime.json
 pnpm art items          # regenerate assets/sprites/items.png + items.json (seconds)
 pnpm art stations       # regenerate assets/sprites/stations.png + stations.json (seconds)
+pnpm art ui_kit         # re-cut the DOM UI pieces in assets/ui/ from assets/ui/source/kit.png (seconds)
 ```
 
 Output is deterministic, so running a tool without changing it produces no diff. `pnpm dev`
@@ -31,6 +32,7 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 | `slime.py`     | `slime.*`    | The Fungal Slime: undirected idle, hop (lift drawn in, ground shadow), hurt, dead; `head` pivot       |
 | `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels)  |
 | `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 32×48 `frames`, voxel-rendered like the characters        |
+| `ui_kit.py`    | `assets/ui/` | 9-slice UI pieces and their states, cut from one PixelLab sheet (`assets/ui/source/kit.png`)          |
 
 ## How the Ashen One generator works
 

@@ -48,10 +48,15 @@ export class Ui {
     return this.screenKind;
   }
 
-  prompt(text: string | null): void {
+  /** Called every frame, so the DOM is only rebuilt when the key or text changes. */
+  prompt(text: string | null, key?: string): void {
     if (text === null) this.promptEl.classList.add('hidden');
     else {
-      if (this.promptEl.textContent !== text) this.promptEl.textContent = text;
+      const shown = `${key ?? ''}|${text}`;
+      if (this.promptEl.dataset.shown !== shown) {
+        this.promptEl.dataset.shown = shown;
+        this.promptEl.replaceChildren(...(key ? [h('kbd', {}, key), ' '] : []), text);
+      }
       this.promptEl.classList.remove('hidden');
     }
   }
@@ -91,7 +96,7 @@ export class Ui {
       'div',
       { class: 'dialog', onclick: () => this.advanceDialog() },
       h('div', { class: 'text' }),
-      h('div', { class: 'more' }, 'E ▸'),
+      h('div', { class: 'more' }, h('kbd', {}, 'E'), ' ▸'),
     );
     this.root.append(el);
     this.dialogState = { el, lines, index: 0 };
