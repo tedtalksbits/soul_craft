@@ -297,7 +297,7 @@ export class App {
     const sim = this.sim;
     if (sim && !this.ui.blocking && !this.inventory.isOpen) {
       const target = findInteraction(sim);
-      this.ui.prompt(target ? `E: ${target.label}` : null);
+      this.ui.prompt(target ? target.label : null, 'E');
     } else this.ui.prompt(null);
     this.renderer.render(dtMs, () => {
       for (const fn of this.frameListeners) fn(dtMs);
