@@ -4,10 +4,11 @@
  * {@link interact} from the player controller.
  */
 import type { Entity } from '../../core/ecs';
-import { DIR_VEC } from '../../core/math';
+import { compassWord, DIR_VEC } from '../../core/math';
 import { CommandError } from '../../core/commands';
 import { STATIONS } from '../../content/schemas';
 import { Body, Bonfire, Facing, Health, Player, Sign, Stamina, Station } from '../components';
+import { TILE } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { refreshAbilities } from './abilities';
@@ -64,7 +65,32 @@ export function interact(sim: Simulation): void {
   if (target.kind === 'bonfire') restAt(sim, target.entity);
   else if (target.kind === 'station')
     sim.events.emit({ type: 'stationOpened', station: sim.ecs.need(target.entity, Station).station });
-  else sim.events.emit({ type: 'read', lines: [...sim.ecs.need(target.entity, Sign).lines] });
+  else {
+    const at = sim.ecs.need(target.entity, Body);
+    const lines = sim.ecs.need(target.entity, Sign).lines.map((line) => signText(sim, line, at));
+    sim.events.emit({ type: 'read', lines });
+  }
+}
+
+/** Signs closer than this many paces (tiles) to the village say you are in it rather than point. */
+const HERE_PACES = 6;
+
+/**
+ * Fills a sign's placeholders. `{village}` becomes where the starting village lies from the sign,
+ * so signposts across the world always point the way home.
+ */
+export function signText(sim: Simulation, line: string, at: { x: number; y: number }): string {
+  if (!line.includes('{village}')) return line;
+  const home = sim.world.gen.originSpawn();
+  const name = sim.content.prefabs[sim.content.world.origin.prefab]?.name ?? 'The village';
+  const dx = home.x - at.x;
+  const dy = home.y - at.y;
+  const paces = Math.round(Math.hypot(dx, dy) / TILE);
+  const where =
+    paces < HERE_PACES
+      ? `You stand in ${name}.`
+      : `${name} lies ${paces} paces to the ${compassWord(dx, dy)}.`;
+  return line.replace('{village}', where);
 }
 
 /** Lights (if needed) and rests at a bonfire: heal, refill, set checkpoint, respawn enemies. */

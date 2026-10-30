@@ -4,7 +4,14 @@
     "#": { "tile": "wall" },
     ".": { "tile": "flagstone" },
     "T": { "tile": "flagstone", "entity": { "kind": "torch" } },
-    "B": { "tile": "flagstone", "entity": { "kind": "bonfire", "name": "Wayshrine" } }
+    "B": { "tile": "flagstone", "entity": { "kind": "bonfire", "name": "Wayshrine" } },
+    "S": {
+      "tile": "flagstone",
+      "entity": {
+        "kind": "sign",
+        "lines": ["A worn waymarker, its letters cut deep against the ash.", "{village}"]
+      }
+    }
   },
   "rows": [
     "  #...#  ",
@@ -13,7 +20,7 @@
     ".........",
     "....B....",
     ".........",
-    "#.......#",
+    "#.S.....#",
     " ##...## ",
     "  #...#  "
   ]

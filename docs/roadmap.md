@@ -88,8 +88,11 @@ The world is endless and procedural, and nothing told you where anything was. Bu
    bar (N in the middle, S at both ends) rather than one that turns with the player. A marker hides once you are
    standing at it, and the death marker clears when you walk back to the spot. It can be hidden in Settings.
 
-**Low-cost landmarks** alongside: a faint light pillar above lit bonfires, visible from a distance, and signposts on
-roads pointing to Ashen Village.
+**Low-cost landmarks** alongside (done): a faint pillar of light above every lit bonfire, drawn over the darkness and
+tall enough to be seen before the bonfire itself; and a signpost in every wayshrine that says how far and which way
+Ashen Village lies (the world has no roads yet, so signposts stand at the wayshrines instead).
+
+**The Navigation milestone is complete.**
 
 **Considered and not chosen:** a minimap (the 384×216 view has no room to spare), raw coordinates on the HUD, and
 separate portals (bonfire travel covers them).

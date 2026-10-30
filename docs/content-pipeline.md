@@ -128,6 +128,9 @@ Ability hits go through shields. Super energy is `player.json → energy`: `perD
 }
 ```
 
+A sign's lines may include `{village}`, filled in when read with where the starting village lies from that sign
+("Ashen Village lies 140 paces to the north-east."), so signposts always point home.
+
 A prefab's optional `marker` (`village`, `shrine`, `camp`, `wayshrine`) puts it on the world map once the player
 has seen it, labeled with its `name`. Crafting stations are marked on their own. How far the player sees for the
 map is `player.json → exploration.revealRadius` (tiles); the map draws each tile in its `map` color.

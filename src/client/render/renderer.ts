@@ -18,6 +18,7 @@ import { ChunkLayer } from './chunk-layer';
 import { Effects } from './effects';
 import { EntityLayer } from './entity-layer';
 import { AbilityFx } from './ability-fx';
+import { Beacons } from './beacons';
 import { Hud } from './hud';
 import { VIEW_H, VIEW_W, viewFor } from './view-size';
 import { Lighting } from './lighting';
@@ -42,6 +43,7 @@ export class GameRenderer {
   readonly abilityFx: AbilityFx;
   readonly hud: Hud;
   private readonly lighting = new Lighting(VIEW_W, VIEW_H);
+  private readonly beacons = new Beacons();
   private sim: Simulation | null = null;
 
   private constructor(
@@ -62,7 +64,7 @@ export class GameRenderer {
       this.abilityFx.air,
       this.debugWorld,
     );
-    app.stage.addChild(this.world, this.lighting.root, this.debugScreen, this.hud.root);
+    app.stage.addChild(this.world, this.lighting.root, this.beacons.root, this.debugScreen, this.hud.root);
     addEventListener('resize', () => this.resize());
     this.resize();
   }
@@ -98,6 +100,7 @@ export class GameRenderer {
     this.world.visible = sim !== null;
     this.hud.root.visible = sim !== null;
     this.lighting.root.visible = sim !== null;
+    this.beacons.root.visible = sim !== null;
     if (sim) this.snapCamera(sim);
   }
 
@@ -145,6 +148,7 @@ export class GameRenderer {
         area?.darkness ?? biome?.darkness ?? 0,
         this.effects.hurtFlash,
       );
+      this.beacons.update(sim, cam, this.view, dtMs);
       this.hud.update(sim, dtMs);
     }
     beforeDraw?.();

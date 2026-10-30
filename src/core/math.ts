@@ -33,3 +33,20 @@ export interface Box {
 export function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
+
+const COMPASS_WORDS = [
+  'east',
+  'south-east',
+  'south',
+  'south-west',
+  'west',
+  'north-west',
+  'north',
+  'north-east',
+] as const;
+
+/** The 8-way compass word for a direction in world space, where y grows southward: "north-east". */
+export function compassWord(dx: number, dy: number): string {
+  const octant = Math.round(Math.atan2(dy, dx) / (Math.PI / 4));
+  return COMPASS_WORDS[(octant + 8) % 8] ?? 'north';
+}
