@@ -1,0 +1,16 @@
+{
+  "image": "arena.png",
+  "frameWidth": 16,
+  "frameHeight": 24,
+  "anchor": [0.5, 1],
+  "frames": {
+    "brazier": 0
+  },
+  "animations": {
+    "brazier_lit": {
+      "frames": [1, 2, 3],
+      "fps": 8,
+      "loop": true
+    }
+  }
+}

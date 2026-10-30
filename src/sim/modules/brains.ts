@@ -254,8 +254,8 @@ const shieldKnight: Brain<'shieldKnight'> = (c, b) => {
 
 /**
  * The Ashen Warden. Dormant until its fight starts, then it alternates a slam (raise its weapon,
- * then a ring of damage around it) when close with a charge when far, each followed by a recovery
- * window to punish. While shielded it walks back to the arena's center and channels; the bosses
+ * then a ring of damage around it, then the landing pose) when close with a charge when far, each
+ * followed by a recovery window to punish. While shielded it walks back to the arena's center and channels; the bosses
  * module calls its adds and breaks the shield.
  */
 const warden: Brain<'warden'> = (c, b) => {
@@ -294,8 +294,12 @@ const warden: Brain<'warden'> = (c, b) => {
             fromY: c.body.y,
             knockback: sim.content.player.hurt.knockback * 2,
           });
-        setAi(ai, 'recover');
+        setAi(ai, 'slam');
       }
+      return;
+    case 'slam':
+      c.contact.amount = 0;
+      if (ai.t >= b.slamTicks) setAi(ai, 'recover');
       return;
     case 'windup':
       facePlayer(c);

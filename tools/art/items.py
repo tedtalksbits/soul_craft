@@ -46,6 +46,8 @@ MATERIALS = {
     'ember':   ('oO*', ('#ffd27a', '#ff9a30', '#c4691c', '#7a3e10')),   # the player's flask
     'stone':   ('tT(', ('#cfc6b4', '#948a78', '#655d50', '#3a352d')),
     'breath':  ('qQ)', ('#d0f6ff', '#6ec8e8', '#3a8aae', '#1d4c62')),
+    'oath':    ('fF+', ('#fffcec', '#fff0b4', '#e6c266', '#9a7a30')),   # the Oath Ember's pale gold flame
+    'crimson': ('hH=', ('#ff9a7a', '#dc4a32', '#9e2c1e', '#5a1410')),   # the Sovereign Ember's crimson flame
 }
 
 def hx(h):
@@ -388,10 +390,48 @@ ICONS['kindling'] = [   # a living ember held in a small brass cradle: a boss's 
     "................",
 ]
 
+ICONS['relic_oath'] = [   # the Oath Ember: a pale gold flame sworn on a blade's crossguard
+    "................",
+    ".......F........",
+    "......FF........",
+    "......FfF.......",
+    ".....FfFf+......",
+    ".....FfFf+......",
+    "....FfFfff+.....",
+    "....Ffffff+.....",
+    ".....ffff++.....",
+    "..IIiiiiiiiii6..",
+    "..i66666666666..",
+    "......lL0.......",
+    "......lL0.......",
+    "......lL0.......",
+    ".....yYyy!......",
+    "................",
+]
+
+ICONS['relic_sovereign'] = [   # the Sovereign Ember: a crimson flame with a crown floating above its tip
+    "................",
+    "......y.y.y.....",
+    "......yYyYy!....",
+    "......yyvyy!....",
+    ".......!!!!.....",
+    "................",
+    "........H.......",
+    ".......hH.......",
+    ".......hHh......",
+    "......hHHh=.....",
+    ".....hhHHhh=....",
+    ".....hHHHhh=....",
+    ".....hhHhhh=....",
+    "......hhh==.....",
+    ".......===......",
+    "................",
+]
+
 ORDER = ['ashwood', 'fungal_cap', 'glowspore', 'iron_scrap', 'bone_shard', 'slime_gel',
          'chipped_sword', 'iron_sword', 'bone_cleaver', 'padded_jacket', 'iron_mail',
          'ring_vigor', 'ring_breath', 'bandage', 'potion_ember', 'potion_stone', 'potion_breath',
-         'stone', 'kindling']
+         'stone', 'kindling', 'relic_oath', 'relic_sovereign']
 
 # ---------------------------------------------------------------- shading and outline
 def paint(rows):

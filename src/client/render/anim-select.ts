@@ -30,7 +30,19 @@ const TICK_MS = 1000 / TICK_RATE;
 /** Player states whose animation plays once, in step with the state's own timer. */
 const PLAYER_TIMED = new Set(['attack', 'roll', 'hurt', 'drink', 'sit', 'dead', 'cast']);
 /** Enemy AI states that are timed actions rather than open-ended behavior. */
-const ENEMY_TIMED = new Set(['windup', 'draw', 'loose', 'lunge', 'charge', 'recoil', 'stunned', 'hop']);
+const ENEMY_TIMED = new Set([
+  'windup',
+  'draw',
+  'loose',
+  'lunge',
+  'charge',
+  'recoil',
+  'stunned',
+  'hop',
+  'raise',
+  'slam',
+  'recover',
+]);
 
 export interface AnimChoice {
   key: string;
@@ -148,6 +160,19 @@ export function selectAnim(
         }
         case 'recoil':
           pose = 'hurt';
+          break;
+        // The Warden's slam: the weapon rises (the tell), lands, and it stands open to hits.
+        case 'raise':
+          pose = 'raise';
+          dir8 = towardPlayer(sim, e) ?? dir8;
+          break;
+        case 'slam':
+        case 'recover':
+          pose = ai.state;
+          break;
+        // Shielded, it walks back to the arena's center, then channels there.
+        case 'channel':
+          pose = moving ? 'walk' : 'channel';
           break;
         default:
           pose = ai.state === 'hop' || ai.state === 'stunned' ? ai.state : moving ? 'walk' : 'idle';

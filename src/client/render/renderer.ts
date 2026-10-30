@@ -65,6 +65,7 @@ export class GameRenderer {
     this.world.addChild(
       this.chunks.root,
       this.abilityFx.ground,
+      this.bossFx.floor,
       this.entities.root,
       this.effects.root,
       this.abilityFx.air,

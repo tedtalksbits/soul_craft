@@ -22,7 +22,9 @@
     "potion_stone": 15,
     "potion_breath": 16,
     "stone": 17,
-    "kindling": 18
+    "kindling": 18,
+    "relic_oath": 19,
+    "relic_sovereign": 20
   },
   "animations": {}
 }

@@ -97,7 +97,7 @@
   },
   "ashen_warden": {
     "name": "Ashen Warden",
-    "sprite": "knight",
+    "sprite": "warden",
     "body": { "w": 22, "h": 16 },
     "hp": 600,
     "speed": 0.8,
@@ -119,6 +119,7 @@
       "slamWindupTicks": 40,
       "slamRadius": 38,
       "slamDamage": 30,
+      "slamTicks": 10,
       "chargeRange": 170,
       "chargeWindupTicks": 36,
       "chargeSpeed": 3.6,

@@ -1,4 +1,4 @@
-/** Placeholder props (bonfire, torch, sign, pickups, brazier) and the bitmap digit font. */
+/** Placeholder props (bonfire, torch, sign, pickups) and the bitmap digit font. */
 import type { SpriteSheetFile } from '../../src/content/sprite-sheet';
 import { hex, Sheet, type Surface } from './pixel-canvas';
 
@@ -18,7 +18,7 @@ function bonfireBase(s: Surface): void {
 }
 
 export function buildProps(): { png: Buffer; json: SpriteSheetFile } {
-  const sheet = new Sheet(64, 120);
+  const sheet = new Sheet(64, 96);
   const f = (i: number) => sheet.frame(i, 16, 24);
   // row 0: unlit bonfire, sign
   bonfireBase(f(0));
@@ -49,19 +49,6 @@ export function buildProps(): { png: Buffer; json: SpriteSheetFile } {
     s.ellipse(8.5, 20 - i, 2.5 + i * 0.5, 2.5 + i * 0.5, hex('#ff7a30'));
     s.rect(8, 19 - i, 1, 1, hex('#ffe0a0'));
   });
-  // row 4: boss arena brazier, cold then burning
-  const brazierBowl = (s: Surface) => {
-    s.ellipse(8, 22.5, 5, 1.4, hex('#000000', 90));
-    s.rect(7, 17, 2, 6, hex('#3a3532'));
-    s.rect(4, 14, 8, 3, hex('#5f646b'));
-    s.rect(5, 17, 6, 1, hex('#41454b'));
-  };
-  brazierBowl(f(16));
-  f(16).rect(5, 13, 6, 1, hex('#4a4440'));
-  [1, 0.85, 0.95].forEach((k, i) => {
-    brazierBowl(f(17 + i));
-    flame(f(17 + i), 8, 14, k, 2);
-  });
   return {
     png: sheet.toPNG(),
     json: {
@@ -69,13 +56,12 @@ export function buildProps(): { png: Buffer; json: SpriteSheetFile } {
       frameWidth: 16,
       frameHeight: 24,
       anchor: [0.5, 1],
-      frames: { bonfire_unlit: 0, sign: 1, brazier: 16 },
+      frames: { bonfire_unlit: 0, sign: 1 },
       animations: {
         bonfire_lit: { frames: [4, 5, 6, 7], fps: 8, loop: true },
         torch: { frames: [8, 9, 10, 11], fps: 8, loop: true },
         souls: { frames: [12, 13], fps: 3, loop: true },
         ember: { frames: [14, 15], fps: 3, loop: true },
-        brazier_lit: { frames: [17, 18, 19], fps: 8, loop: true },
       },
     },
   };

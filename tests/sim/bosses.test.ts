@@ -110,6 +110,11 @@ describe('the Ashen Warden', () => {
     const events = run(sim, 1);
     expect(ofType(events, 'bossSlam')).toHaveLength(1);
     expect(sim.ecs.need(sim.player, Health).hp).toBeLessThan(hp);
+    // It holds the landing pose, then stands open to punishment.
+    const ai = sim.ecs.need(warden, Ai);
+    expect(ai.state).toBe('slam');
+    run(sim, brain.slamTicks);
+    expect(ai.state).toBe('recover');
   });
 
   it('falls for good, drops the Kindling and the Sovereign Ember, and its adds go with it', () => {

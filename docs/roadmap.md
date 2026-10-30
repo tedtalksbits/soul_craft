@@ -45,13 +45,11 @@ Working principles:
 | **Navigation**                 | Bonfire travel, the world map (fog of war, landmarks, a pin), the compass strip, bonfire beacons, signposts that point home                                                                                                                                                           |
 | **4. Bosses and restoration**  | Five village restoration projects (well, storehouse, palisade, lamps, smithy) as the wood and stone sink; stone from rocks; the Ashen Warden in a fixed keep north of the village, with a fog gate, slam and charge, shield phases broken at braziers, adds and a boss bar (ADR 0012) |
 
-## Now: Milestone 4 art and tuning
+## Now: tuning Milestone 4
 
-Milestone 4 is built and playable on placeholder art. What is left:
+Milestone 4 is built, with its art: the Ashen Warden, the ruined and rebuilt village sites, the arena brazier and
+the relic icons are all generated from source (`tools/art`). What is left:
 
-- **Art from the art agent:** the Ashen Warden's sheet (it wears the knight's, drawn larger and ash-tinted), the
-  ruined and rebuilt version of each village project (a placeholder `village` sheet for now), the arena brazier,
-  and relic icons.
 - **Tune from playtests:** the Warden's health, slam and charge, its shield thresholds and adds; project costs;
   how fast rocks give stone.
 - **Carried over from Milestone 3:** tune abilities (cooldowns, damage, super charge rate, the class glow), and
@@ -143,7 +141,7 @@ stone** a long-term use, and souls another one.
   Later).
 - Still authored steps, never free-form base building.
 
-### Milestone 4: Bosses (built; art and tuning left, see Now)
+### Milestone 4: Bosses (built; tuning left, see Now)
 
 Destiny- and Tunic-style boss fights, each guarding a Kindling (the restoration thread). The first, the Ashen
 Warden, covers all of the list below except carried relics and pressure plates beyond its braziers (ADR 0012):
@@ -153,7 +151,7 @@ Warden, covers all of the list below except carried relics and pressure plates b
 - **Boss arenas** as prefabs placed in the world, with a fog gate and an entrance moment.
 - **A boss health bar**, phase transitions, and a reward (a material, an ability, a key item). The first boss
   takes over the **Sovereign Ember** (the super's relic), which a second shrine guardian drops until then.
-- **Boss art** from the art agent.
+- **Boss art** from the art agent (done: the Warden, the village sites, the brazier, relic icons).
 - **Restoration projects** (the wood and stone sink above): the small projects, stone from rocks, and the first
   major project, opened by the first boss's Kindling.
 
@@ -172,7 +170,6 @@ teaches it.
 
 - **Gathering tools:** a crafted axe and pickaxe. Trees and rocks break with the sword for now; tools would make
   gathering a progression step (faster, more yield, or required for harder nodes).
-- Relic icons (the Oath and Sovereign Embers use stand-in item icons).
 - Terrain tiles and the last placeholder props (bonfire, sign, torch, pickups) and the digit font.
 - Desktop build (Steam).
 - Real audio (today every sound is procedural).

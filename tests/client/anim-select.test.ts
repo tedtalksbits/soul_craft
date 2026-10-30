@@ -45,6 +45,20 @@ describe('selectAnim', () => {
     expect(selectAnim(sim, sim.player, undefined, fourWay).key).toBe('walk_right');
   });
 
+  it("plays the Warden's raise, slam, recover and channel poses from its brain states", () => {
+    const sim = newSim();
+    const e = spawnNear(sim, 'ashen_warden', 0, -60);
+    const ai = sim.ecs.need(e, Ai);
+    const pose = () => selectAnim(sim, e, undefined, all).key.replace(/_[a-z_]+$/, '');
+    for (const state of ['raise', 'slam', 'recover', 'channel']) {
+      Object.assign(ai, { state, t: 6 });
+      expect(pose()).toBe(state);
+    }
+    // One-shot poses are timed from the brain's state timer.
+    Object.assign(ai, { state: 'raise', t: 12 });
+    expect(selectAnim(sim, e, undefined, all).elapsedMs).toBeCloseTo(200);
+  });
+
   it('shows a dying enemy as dead, timed from its death timer', () => {
     const sim = newSim();
     const e = spawnNear(sim, 'hollow', 60, 0);

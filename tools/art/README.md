@@ -14,6 +14,9 @@ pnpm art knight         # regenerate assets/sprites/knight.png + knight.json
 pnpm art slime          # regenerate assets/sprites/slime.png + slime.json
 pnpm art items          # regenerate assets/sprites/items.png + items.json (seconds)
 pnpm art stations       # regenerate assets/sprites/stations.png + stations.json (seconds)
+pnpm art warden         # regenerate assets/sprites/warden.png + warden.json (about 3 min)
+pnpm art village        # regenerate assets/sprites/village.png + village.json (seconds)
+pnpm art arena          # regenerate assets/sprites/arena.png + arena.json (seconds)
 pnpm art ui_kit         # re-cut the DOM UI pieces in assets/ui/ from assets/ui/source/kit.png (seconds)
 pnpm art icons          # regenerate assets/sprites/sigils.* + abilities.* from assets/sprites/source/ (seconds)
 ```
@@ -30,9 +33,12 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 | `hollow.py`    | `hollow.*`   | The Hollow: idle, walk, windup, attack, hurt, dead; 8 directions, 48×48 (sheet 384×624); `head` pivot                                                                                     |
 | `archer.py`    | `archer.*`   | The Archer: the same six animations; `head` plus per-direction `release` on `attack_<dir>`                                                                                                |
 | `knight.py`    | `knight.*`   | The Oathbound Knight: idle, walk, windup, attack (looping charge), stunned, dead; `head` pivot                                                                                            |
+| `warden.py`    | `warden.*`   | The Ashen Warden (boss): idle, walk, windup, attack (looping charge), raise, slam, recover, channel, stunned, dead; 8 directions, **64×64**, drawn for no tint; `head` pivot              |
 | `slime.py`     | `slime.*`    | The Fungal Slime: undirected idle, hop (lift drawn in, ground shadow), hurt, dead; `head` pivot                                                                                           |
-| `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels)                                                                                      |
+| `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels); includes `relic_oath` and `relic_sovereign`                                         |
 | `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 32×48 `frames`, voxel-rendered like the characters                                                                                            |
+| `village.py`   | `village.*`  | The five restoration sites as named 32×32 `frames`: ruins in row 1, rebuilt sites in row 2 (well, storehouse, palisade, lamps, smithy)                                                    |
+| `arena.py`     | `arena.*`    | The Warden arena's brazier, 16×24: `brazier` (cold, a still in `frames`) and `brazier_lit` (3 frames, 8 fps, loop)                                                                        |
 | `ui_kit.py`    | `assets/ui/` | 9-slice UI pieces and their states, cut from one PixelLab sheet (`assets/ui/source/kit.png`)                                                                                              |
 | `icons.py`     | `sigils.*`   | 16×16 tintable class sigils, plus `abilities.*` (ability icons), picked from PixelLab rolls in `assets/sprites/source/`                                                                   |
 

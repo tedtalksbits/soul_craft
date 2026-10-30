@@ -83,7 +83,7 @@ Every item id named anywhere is cross-checked on load.
 `restoration.json` maps a project id to `{ name, description, tier, cost { items, souls }, effects, sprite
 { ruin, restored }, restoredLines }`. A prefab places the site with `{ "kind": "project", "project": "well" }`;
 interacting with the ruin shows the rebuild screen, and once rebuilt the site says its `restoredLines`. The
-sprites are frames in the `village` sheet. Effects (ADR 0012):
+sprites are frames in the `village` sheet (`pnpm art village`). Effects (ADR 0012):
 
 | Effect                                      | Gives                                                  |
 | ------------------------------------------- | ------------------------------------------------------ |
@@ -223,5 +223,5 @@ script, not the PNG.
 `pnpm assets:placeholders` draws programmatic placeholder sheets (`scripts/placeholders/`). It **never
 overwrites existing files** unless you pass `--force` (optionally limited to names:
 `pnpm assets:placeholders --force props`). What is still placeholder: tiles, props (bonfire, sign,
-torch, souls, ember, brazier), the village restoration sites (`village`) and the font. Replace any PNG with real art whenever you like, keeping the
+torch, souls, ember) and the font. Replace any PNG with real art whenever you like, keeping the
 grid and JSON in step.

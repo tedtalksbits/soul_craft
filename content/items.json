@@ -215,7 +215,7 @@
     "kind": "relic",
     "name": "Oath Ember",
     "description": "A guardian's sworn flame. Taking it awakens your class ability.",
-    "icon": "glowspore",
+    "icon": "relic_oath",
     "stack": 1,
     "unlocks": "class",
     "source": "Defeat the guardian knight of a Forsaken Shrine."
@@ -224,7 +224,7 @@
     "kind": "relic",
     "name": "Sovereign Ember",
     "description": "A flame that answers to no one. Taking it awakens your super.",
-    "icon": "potion_ember",
+    "icon": "relic_sovereign",
     "stack": 1,
     "unlocks": "super",
     "source": "Defeat the Ashen Warden, in the keep north of the village."

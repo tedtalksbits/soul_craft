@@ -1,5 +1,5 @@
 /**
- * Boss fight visuals, drawn above the darkness so they read at night: the fog
+ * Boss fight visuals, mostly drawn above the darkness so they read at night: the fog
  * wall around the arena while the fight is on, the slam's danger circle growing
  * under a boss that is raising its weapon, the shield shimmering around a
  * shielded boss, and the bursts when a slam lands, a brazier lights or the
@@ -26,7 +26,12 @@ interface Ring {
 }
 
 export class BossFx {
-  /** The slam's warning circle. */
+  /**
+   * The slam's warning fill, on the floor under the entities (in the world layer), so it never
+   * covers the boss's raise: that pose is the tell.
+   */
+  readonly floor = new Graphics();
+  /** The slam's warning outline, above the darkness. */
   readonly ground = new Graphics();
   /** The fog wall, the shield and landed slams, over the warning circle. */
   readonly air = new Graphics();
@@ -84,12 +89,14 @@ export class BossFx {
 
   clear(): void {
     this.rings.length = 0;
+    this.floor.clear();
     this.ground.clear();
     this.air.clear();
   }
 
   update(sim: Simulation, dtMs: number): void {
     this.clockMs += dtMs;
+    const floor = this.floor.clear();
     const g = this.ground.clear();
     const air = this.air.clear();
 
@@ -111,7 +118,7 @@ export class BossFx {
         const t = Math.min(1, ai.t / brain.slamWindupTicks);
         const r = brain.slamRadius;
         g.ellipse(body.x, body.y, r, r * 0.7).stroke({ color: DANGER, alpha: 0.7, width: 1 });
-        g.ellipse(body.x, body.y, r * t, r * 0.7 * t).fill({ color: DANGER, alpha: 0.18 + 0.12 * t });
+        floor.ellipse(body.x, body.y, r * t, r * 0.7 * t).fill({ color: DANGER, alpha: 0.3 + 0.2 * t });
       }
       if (boss.shielded) {
         const shimmer = 0.35 + 0.15 * Math.sin(this.clockMs / 120);

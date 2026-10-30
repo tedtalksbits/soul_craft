@@ -385,6 +385,8 @@ const BrainSchema = z.discriminatedUnion('type', [
     slamWindupTicks: ticks,
     slamRadius: pos,
     slamDamage: pos,
+    /** Ticks it stays in the slam after the impact, before its recovery: the landing pose. */
+    slamTicks: ticks,
     chargeRange: pos,
     chargeWindupTicks: ticks,
     chargeSpeed: pos,

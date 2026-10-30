@@ -16,6 +16,7 @@ import { villageWardTiles } from './restored-effects';
 const PROPS_SHEET = 'props';
 const STATIONS_SHEET = 'stations';
 const VILLAGE_SHEET = 'village';
+const ARENA_SHEET = 'arena';
 /** Station footprints, matched to their art (forge 27 px wide, alchemy table 24 px). */
 const STATION_BODY: Readonly<Record<StationId, { w: number; h: number }>> = {
   forge: { w: 24, h: 10 },
@@ -115,7 +116,7 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
       ecs.add(e, Body, { x: sp.x, y: sp.y, w: 10, h: 6 });
       ecs.add(e, Brazier, { lit: false });
       ecs.add(e, Spawned, spawned);
-      ecs.add(e, Sprite, { sheet: PROPS_SHEET });
+      ecs.add(e, Sprite, { sheet: ARENA_SHEET });
       return;
     }
     case 'playerSpawn':
