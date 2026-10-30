@@ -18,6 +18,7 @@ import { PHASES, type SimCommand, type SimModule, type System } from './module';
 import { SIM_MODULES } from './modules';
 import { spawnPlayer } from './modules/player';
 import { updateStreaming } from './modules/streaming';
+import { kindleOrigin } from './modules/travel';
 import { initialState, type SimState } from './state';
 import { ChunkWorld } from './world/chunk-world';
 
@@ -80,6 +81,7 @@ export class Simulation {
     const spawn = sim.world.gen.originSpawn();
     spawnPlayer(sim, spawn.x, spawn.y, opts.playerClass);
     updateStreaming(sim);
+    kindleOrigin(sim);
     sim.ecs.flush();
     return sim;
   }

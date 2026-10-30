@@ -155,3 +155,18 @@ describe('v4 -> v5', () => {
     expect(sim.ecs.need(sim.player, Attributes)).toEqual({ vigor: 0, endurance: 0, might: 0, attunement: 0 });
   });
 });
+
+describe('v5 -> v6', () => {
+  it('gives an old save an empty bonfire registry that fills as lit bonfires load', () => {
+    const current = createSave(newSim(9), '1');
+    const v5State = Object.fromEntries(
+      Object.entries(current.snapshot.state).filter(([k]) => k !== 'bonfires'),
+    );
+    const v5 = { ...current, version: 5, snapshot: { ...current.snapshot, state: v5State } };
+    const migrated = parseSave(JSON.parse(JSON.stringify(v5)));
+    expect(migrated.snapshot.state.bonfires).toEqual({});
+    const sim = Simulation.restore(migrated.snapshot, content);
+    run(sim, 1);
+    expect(Object.keys(sim.state.bonfires).length).toBeGreaterThan(0);
+  });
+});

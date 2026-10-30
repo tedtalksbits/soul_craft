@@ -63,6 +63,8 @@ export type SimEvent =
   | { type: 'abilityUnlocked'; slot: 'class' | 'super'; ability: string }
   /** An ability key was pressed for a slot not yet awakened. */
   | { type: 'abilityLocked'; slot: AbilitySlot }
+  /** The player warped to a lit bonfire and is now resting there. */
+  | { type: 'traveled'; id: string; name: string }
   | { type: 'leveledUp'; attribute: AttributeId; level: number };
 
 export type SimEventType = SimEvent['type'];

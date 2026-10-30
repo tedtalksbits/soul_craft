@@ -39,7 +39,7 @@ const BUFFER_TICKS = 12;
 /** Grace period after respawning. */
 const RESPAWN_IFRAMES = 60;
 /** Respawn this far below the bonfire so the player is not standing in it. */
-const RESPAWN_OFFSET_Y = 16;
+export const RESPAWN_OFFSET_Y = 16;
 
 export function spawnPlayer(sim: Simulation, x: number, y: number, playerClass?: string): Entity {
   const { ecs } = sim;

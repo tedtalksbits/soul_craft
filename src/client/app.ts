@@ -9,8 +9,8 @@ import { IndexedDbStore } from '../save/indexeddb-store';
 import { SaveManager, type SaveSlot } from '../save/save-manager';
 import { SnapshotLibrary } from '../save/snapshot-library';
 import type { KeyValueStore } from '../save/store';
-import { Abilities, Player } from '../sim/components';
-import { TICK_RATE } from '../sim/constants';
+import { Body, Abilities, Player } from '../sim/components';
+import { TICK_RATE, TILE } from '../sim/constants';
 import type { SimEvent } from '../sim/events';
 import { findInteraction } from '../sim/modules/interaction';
 import { Simulation } from '../sim/simulation';
@@ -18,6 +18,7 @@ import type { Assets } from './assets';
 import { Audio } from './audio';
 import { InputCapture, isTyping } from './input';
 import { primaryKey } from './keybinds';
+import { compassDirection } from './ui/travel';
 import { SettingsStore } from './settings';
 import { Tutorial } from './tutorial';
 import { FixedLoop } from './loop';
@@ -225,6 +226,41 @@ export class App {
     });
   }
 
+  /** The bonfire travel screen: every lit bonfire, nearest first. */
+  private openTravel(): void {
+    const sim = this.sim;
+    const pb = sim?.ecs.get(sim.player, Body);
+    if (!sim || !pb) return;
+    const here = sim.state.checkpoint?.id;
+    const destinations = Object.entries(sim.state.bonfires)
+      .map(([id, b]) => {
+        const tx = Math.floor(b.x / TILE);
+        const ty = Math.floor(b.y / TILE);
+        const area =
+          sim.world.areaAt(b.x, b.y)?.name ?? sim.content.biomes[sim.world.gen.biomeAt(tx, ty)]?.name ?? '';
+        const dx = b.x - pb.x;
+        const dy = b.y - pb.y;
+        return {
+          id,
+          name: b.name,
+          area,
+          paces: Math.round(Math.hypot(dx, dy) / TILE),
+          direction: compassDirection(dx, dy),
+          here: id === here,
+        };
+      })
+      .sort((a, b) => Number(b.here) - Number(a.here) || a.paces - b.paces);
+    this.ui.showTravel({
+      destinations,
+      travel: (id) => {
+        this.ui.hideScreen();
+        this.ui.fade(true);
+        this.input.queueAction({ type: 'travel', bonfire: id });
+      },
+      cancel: () => this.ui.hideScreen(),
+    });
+  }
+
   /** The bonfire's class screen. The change goes to the sim as a `setClass` action. */
   private changeClass(): void {
     const sim = this.sim;
@@ -396,6 +432,10 @@ export class App {
         const name = `${e.attribute.charAt(0).toUpperCase()}${e.attribute.slice(1)}`;
         return this.ui.toast(`${name} raised. You are level ${e.level}.`);
       }
+      case 'traveled':
+        // The screen faded out when the trip was chosen; fade back in on arrival.
+        window.setTimeout(() => this.ui.fade(false), 250);
+        return;
       case 'classChanged': {
         const cls = this.content.playerClass(e.class);
         const article = /^[aeiou]/i.test(cls.name) ? 'an' : 'a';
@@ -452,6 +492,7 @@ export class App {
     } else this.ui.prompt(null);
     const resting = free && sim.ecs.get(sim.player, Player)?.state === 'sit';
     this.ui.restMenu(resting ? this.currentClassLabel() : null, {
+      travel: () => this.openTravel(),
       levelUp: () => this.level.open(),
       changeClass: () => this.changeClass(),
     });

@@ -34,6 +34,8 @@ export type PlayerAction =
   | { type: 'upgrade' }
   /** Change class. Only allowed while resting at a bonfire. */
   | { type: 'setClass'; class: string }
+  /** Warp to another lit bonfire. Only allowed while resting at one. */
+  | { type: 'travel'; bonfire: string }
   /** Spend souls on one level in an attribute. Only allowed while resting at a bonfire. */
   | { type: 'levelUp'; attribute: AttributeId };
 

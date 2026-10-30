@@ -46,6 +46,7 @@ Migrations so far:
 | 2    | 3   | Items: the player gains `inventory`, `equipment` (the Chipped Sword), `buffs` and `Player.using`; pickups gain `item` |
 | 3    | 4   | Classes: the player gains `abilities` (class Vanguard, abilities ready, no super energy)                              |
 | 4    | 5   | Leveling and unlocks: the player gains `attributes` (all 0) and `abilities.unlocked` (both true, so nothing is lost)  |
+| 5    | 6   | Bonfire travel: `SimState.bonfires`, the registry of lit bonfires (starts empty, fills as lit bonfires load)          |
 
 Adding a new optional component needs no migration: old saves simply don't have it. Content changes need
 none either: restore drops entities whose archetype no longer exists, and tile overrides referring to

@@ -11,6 +11,7 @@ import { playerModule } from './player';
 import { progressionModule } from './progression';
 import { projectilesModule } from './projectiles';
 import { streamingModule } from './streaming';
+import { travelModule } from './travel';
 
 /**
  * Every simulation feature, in registration order. Within a phase, systems
@@ -30,4 +31,5 @@ export const SIM_MODULES: readonly SimModule[] = [
   combatModule,
   pickupsModule,
   interactionModule,
+  travelModule,
 ];

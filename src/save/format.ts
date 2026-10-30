@@ -12,7 +12,7 @@ import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -157,6 +157,15 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
         },
       },
     };
+  },
+  /**
+   * v5 -> v6: bonfire travel. SimState gains `bonfires`, the registry of lit bonfires to travel to.
+   * It starts empty and fills itself as lit bonfires load, so nothing needs reconstructing here.
+   */
+  5: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const state = asRecord(snapshot['state']);
+    return { ...save, snapshot: { ...snapshot, state: { bonfires: {}, ...state } } };
   },
 };
 

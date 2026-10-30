@@ -970,3 +970,22 @@ kbd {
   font-style: italic;
   color: var(--ember);
 }
+
+/* ------------------------------------------------------------------ bonfire travel */
+
+.screen.travel {
+  justify-content: safe center;
+  overflow-y: auto;
+  padding: 16px 0;
+  gap: 0.8em;
+}
+.screen.travel h1 {
+  font-size: 2.2em;
+  margin: 0;
+}
+.slot.here {
+  border-image-source: url('/assets/ui/slot_on.png');
+}
+.slot.here .name {
+  color: var(--ember);
+}

@@ -72,9 +72,10 @@ These need an answer before the milestones that depend on them.
 **Why:** in playtesting the user lost the spawn village (and its forge and alchemy table) and couldn't find it again.
 The world is endless and procedural, and nothing told you where anything was. Built in this order:
 
-1. **Bonfire travel.** While resting at any lit bonfire, warp to any other lit bonfire. Ashen Village is the hub,
-   with the stations. There is **no recall or "return home" item**: rejected as too cheesy, so travel is only ever
-   between bonfires.
+1. **Bonfire travel** (done). While resting at any lit bonfire, warp to any other lit bonfire. Ashen Village is the
+   hub, with the stations, and its bonfire is lit from the start of every game, so home is always on the list.
+   The save keeps every lit bonfire's name and position (`SimState.bonfires`), so far ones can be reached. There
+   is **no recall or "return home" item**: rejected as too cheesy, so travel is only ever between bonfires.
 2. **World map** (M key):
    - Fog of war: only chunks the player has visited show. They're saved in sim state and drawn with the tiles'
      existing `map` colors.

@@ -5,6 +5,7 @@
 import type { SaveSlot, SlotInfo } from '../../save/save-manager';
 import { TICK_RATE } from '../../sim/constants';
 import { classScreen, type ClassScreenOptions } from './classes';
+import { travelScreen, type TravelScreenOptions } from './travel';
 import { SettingsScreen, type SettingsScreenOptions } from './settings';
 import { BINDING_GROUPS, DEFAULT_BINDINGS, keyLabel, primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
@@ -40,7 +41,7 @@ export interface PauseHandlers {
   saveAndQuit(): void;
 }
 
-type ScreenKind = 'title' | 'pause' | 'classes' | 'settings';
+type ScreenKind = 'title' | 'pause' | 'classes' | 'settings' | 'travel';
 
 export class Ui {
   private readonly promptEl = h('div', { class: 'prompt hidden' });
@@ -100,13 +101,21 @@ export class Ui {
     this.settingsScreen?.render();
   }
 
+  showTravel(o: TravelScreenOptions): void {
+    this.setScreen('travel', travelScreen(o));
+    this.screenCancel = () => o.cancel();
+  }
+
   showClasses(o: ClassScreenOptions): void {
     this.setScreen('classes', classScreen(o));
     this.screenCancel = () => o.cancel();
   }
 
   /** The bonfire's own menu, shown while resting. Rebuilt only when it appears or the class changes. */
-  restMenu(label: ClassLabel | null, handlers: { levelUp(): void; changeClass(): void }): void {
+  restMenu(
+    label: ClassLabel | null,
+    handlers: { travel(): void; levelUp(): void; changeClass(): void },
+  ): void {
     if (!label) {
       this.restEl?.remove();
       this.restEl = null;
@@ -120,6 +129,7 @@ export class Ui {
       { class: 'rest-menu' },
       h('div', { class: 'title' }, 'Bonfire'),
       classTag(label),
+      h('button', { onclick: () => handlers.travel() }, 'Travel'),
       h('button', { onclick: () => handlers.levelUp() }, 'Level up'),
       h('button', { onclick: () => handlers.changeClass() }, 'Change class'),
     );
@@ -335,7 +345,7 @@ export class Ui {
     this.fade(false);
     this.areaEl?.remove();
     this.bannerEl?.remove();
-    this.restMenu(null, { levelUp: () => undefined, changeClass: () => undefined });
+    this.restMenu(null, { travel: () => undefined, levelUp: () => undefined, changeClass: () => undefined });
     this.clearHint();
   }
 
