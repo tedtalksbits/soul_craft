@@ -117,6 +117,27 @@ The story spine made playable: bringing Ashen Village back to life is how the ga
 - **The Sovereign Ember** (the super's relic, which a second shrine knight drops for now) becomes the first boss's
   Kindling reward.
 
+#### Restoration projects: the wood and stone sink
+
+Restoration is built through **projects**: ruined spots in Ashen Village (a dry well, collapsed houses, a burned
+smithy, a fallen palisade, ash-choked fields). Interacting with one shows its cost and what it gives; rebuilding it
+swaps the ruin for its restored version, so the village visibly grows. This is what gives **wood (ashwood) and
+stone** a long-term use, and souls another one.
+
+| Tier      | Needs                            | Examples                                                                                                                                                                                 |
+| --------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Small** | Wood + stone (+ souls), any time | Repair the well (+1 flask charge); rebuild the storehouse (more inventory slots); raise the palisade (enemies stop spawning near the village); lamp posts (light)                        |
+| **Major** | A **Kindling** + wood + stone    | Rebuild the smithy (the smith returns: better forge upgrades); restore the fields (farming); clear the dock (the fisher returns: fishing); mend the pens (the beast-tamer returns: pets) |
+
+- **Small projects come first**, so wood and stone matter before any boss is beaten. Major projects are the
+  Kindlings' rewards.
+- **Data-driven:** projects live in `content/restoration.json` (cost, requirements, reward, the ruin they replace),
+  like recipes, so they can be tuned or added without code.
+- **Stone:** rocks break with the sword (several swings, like trees) and drop stone, through the existing
+  breakable-tile system. The hills and ruins get more rock to quarry. A crafted pickaxe and axe come later (see
+  Later).
+- Still authored steps, never free-form base building.
+
 ### Milestone 4: Bosses
 
 Destiny- and Tunic-style boss fights, each guarding a Kindling (the restoration thread):
@@ -127,6 +148,8 @@ Destiny- and Tunic-style boss fights, each guarding a Kindling (the restoration 
 - **A boss health bar**, phase transitions, and a reward (a material, an ability, a key item). The first boss
   takes over the **Sovereign Ember** (the super's relic), which a second shrine guardian drops until then.
 - **Boss art** from the art agent.
+- **Restoration projects** (the wood and stone sink above): the small projects, stone from rocks, and the first
+  major project, opened by the first boss's Kindling.
 
 Decisions 1 and 2, which it depended on, are made (ADR 0011).
 
@@ -141,6 +164,8 @@ teaches it.
 
 ### Later
 
+- **Gathering tools:** a crafted axe and pickaxe. Trees and rocks break with the sword for now; tools would make
+  gathering a progression step (faster, more yield, or required for harder nodes).
 - Relic icons (the Oath and Sovereign Embers use stand-in item icons).
 - Terrain tiles and the last placeholder props (bonfire, sign, torch, pickups) and the digit font.
 - Desktop build (Steam).
