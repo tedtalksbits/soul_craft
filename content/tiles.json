@@ -74,7 +74,14 @@
     "light": { "radius": 34, "intensity": 0.7 },
     "map": "#7a3f8a"
   },
-  { "id": "rock", "frames": ["rock"], "solid": true, "overlay": true, "map": "#6a6660" },
+  {
+    "id": "rock",
+    "frames": ["rock"],
+    "solid": true,
+    "overlay": true,
+    "map": "#6a6660",
+    "cut": { "hits": 4, "drops": [{ "kind": "item", "item": "stone", "chance": 1, "amount": [1, 2] }] }
+  },
   { "id": "grave", "frames": ["grave"], "solid": true, "overlay": true, "map": "#8a8884" },
   { "id": "roof", "frames": ["roof"], "solid": true, "map": "#5a4440" },
   { "id": "house_wall", "frames": ["house_wall"], "solid": true, "map": "#8a8070" },

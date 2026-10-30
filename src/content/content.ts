@@ -12,6 +12,7 @@ import {
   AbilitiesSchema,
   BiomesSchema,
   ClassesSchema,
+  RestorationsSchema,
   EnemiesSchema,
   ItemsSchema,
   PlayerSchema,
@@ -31,6 +32,7 @@ import {
   type PlayerDef,
   type PrefabDef,
   type RecipeDef,
+  type RestorationDef,
   type ScenarioDef,
   type TileDef,
   type WorldDef,
@@ -55,6 +57,7 @@ const SINGLE_FILES = {
   'recipes.json': RecipesSchema,
   'abilities.json': AbilitiesSchema,
   'classes.json': ClassesSchema,
+  'restoration.json': RestorationsSchema,
 } as const;
 
 const DIRECTORIES = {
@@ -78,6 +81,7 @@ export class Content {
     readonly recipes: Readonly<Record<string, RecipeDef>>,
     readonly abilities: Readonly<Record<string, AbilityDef>>,
     readonly classes: Readonly<Record<string, ClassDef>>,
+    readonly restoration: Readonly<Record<string, RestorationDef>>,
   ) {
     this.tileIndex = new Map(tiles.map((t, i) => [t.id, i]));
   }
@@ -165,15 +169,28 @@ export function buildContent(files: ContentFiles): Content {
   const recipes = parse('recipes.json', SINGLE_FILES['recipes.json']);
   const abilities = parse('abilities.json', SINGLE_FILES['abilities.json']);
   const classes = parse('classes.json', SINGLE_FILES['classes.json']);
+  const restoration = parse('restoration.json', SINGLE_FILES['restoration.json']);
   const prefabs = parseDir('prefabs', DIRECTORIES.prefabs);
   const scenarios = parseDir('scenarios', DIRECTORIES.scenarios);
 
-  if (!player || !enemies || !tiles || !biomes || !world || !items || !recipes || !abilities || !classes)
+  if (
+    !player ||
+    !enemies ||
+    !tiles ||
+    !biomes ||
+    !world ||
+    !items ||
+    !recipes ||
+    !abilities ||
+    !classes ||
+    !restoration
+  )
     throw new ContentError(problems);
 
   checkReferences({ enemies, tiles, biomes, world, prefabs }, problems);
   checkItems({ player, enemies, tiles, items, recipes }, problems);
   checkClasses({ player, abilities, classes }, problems);
+  checkRestoration({ items, prefabs, restoration }, problems);
   if (problems.length > 0) throw new ContentError(problems);
 
   return new Content(
@@ -189,7 +206,37 @@ export function buildContent(files: ContentFiles): Content {
     recipes,
     abilities,
     classes,
+    restoration,
   );
+}
+
+/** Project costs name real items, prefab sites name real projects, and upgrade steps name real projects. */
+function checkRestoration(
+  c: {
+    items: Record<string, ItemDef>;
+    prefabs: Record<string, PrefabDef>;
+    restoration: Record<string, RestorationDef>;
+  },
+  problems: string[],
+): void {
+  for (const [id, p] of Object.entries(c.restoration)) {
+    for (const cost of p.cost.items) {
+      if (!(cost.item in c.items)) problems.push(`restoration.json: ${id}.cost: unknown item "${cost.item}"`);
+    }
+  }
+  for (const [pid, prefab] of Object.entries(c.prefabs)) {
+    for (const [ch, entry] of Object.entries(prefab.legend)) {
+      if (entry.entity?.kind === 'project' && !(entry.entity.project in c.restoration))
+        problems.push(`prefabs/${pid}.json: legend "${ch}": unknown project "${entry.entity.project}"`);
+    }
+  }
+  for (const [id, item] of Object.entries(c.items)) {
+    if (item.kind !== 'weapon') continue;
+    for (const step of item.upgrades) {
+      if (step.requires !== undefined && !(step.requires in c.restoration))
+        problems.push(`items.json: ${id}.upgrades: requires unknown project "${step.requires}"`);
+    }
+  }
 }
 
 /** Every class names an existing ability of the right slot for each slot; the start class exists. */
@@ -256,6 +303,14 @@ function checkReferences(
   for (const [p] of w.regions.prefabs) {
     if (p !== null && !(p in c.prefabs)) problems.push(`world.json: regions.prefabs: unknown prefab "${p}"`);
   }
+  for (const f of w.fixed) {
+    if (!(f.prefab in c.prefabs)) problems.push(`world.json: fixed: unknown prefab "${f.prefab}"`);
+    if (f.region[0] === 0 && f.region[1] === 0)
+      problems.push('world.json: fixed: region 0, 0 holds the origin');
+  }
+  for (const [id, e] of Object.entries(c.enemies)) {
+    if (e.brain.type === 'warden') enemy(`enemies.json: ${id}.brain.adds`, e.brain.adds.archetype);
+  }
 
   for (const [id, p] of Object.entries(c.prefabs)) {
     for (const [ch, entry] of Object.entries(p.legend)) {
@@ -300,7 +355,13 @@ function checkItems(
   for (const t of c.tiles) if (t.cut) drops(`tiles.json: ${t.id}.cut.drops`, t.cut.drops);
   for (const [id, def] of Object.entries(c.items)) {
     if (def.kind === 'weapon') for (const u of def.upgrades) counts(`items.json: ${id}.upgrades`, u.items);
-    if (def.kind !== 'material' && def.kind !== 'consumable' && def.kind !== 'relic' && def.stack !== 1)
+    if (
+      def.kind !== 'material' &&
+      def.kind !== 'consumable' &&
+      def.kind !== 'relic' &&
+      def.kind !== 'key' &&
+      def.stack !== 1
+    )
       problems.push(`items.json: ${id}: equipment must have stack 1`);
   }
   for (const [id, r] of Object.entries(c.recipes)) {

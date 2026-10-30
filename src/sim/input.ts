@@ -38,6 +38,8 @@ export type PlayerAction =
   | { type: 'setPin'; at: { x: number; y: number } | null }
   /** Warp to another lit bonfire. Only allowed while resting at one. */
   | { type: 'travel'; bonfire: string }
+  /** Spend materials and souls to rebuild a village project. Only allowed standing at its site. */
+  | { type: 'rebuild'; project: string }
   /** Spend souls on one level in an attribute. Only allowed while resting at a bonfire. */
   | { type: 'levelUp'; attribute: AttributeId };
 

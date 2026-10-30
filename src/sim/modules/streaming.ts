@@ -4,16 +4,18 @@
  * unload. Also tracks which named area the player is in.
  */
 import type { StationId } from '../../content/schemas';
-import { Body, Bonfire, Enemy, Sign, Spawned, Sprite, Station, Torch } from '../components';
+import { Body, Bonfire, Brazier, Enemy, Project, Sign, Spawned, Sprite, Station, Torch } from '../components';
 import { CHUNK, LOAD_RADIUS, TILE, UNLOAD_RADIUS } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { chunkOf, type Chunk } from '../world/chunk-world';
 import type { SpawnPoint } from '../world/generator';
 import { spawnEnemy } from './enemies';
+import { villageWardTiles } from './restored-effects';
 
 const PROPS_SHEET = 'props';
 const STATIONS_SHEET = 'stations';
+const VILLAGE_SHEET = 'village';
 /** Station footprints, matched to their art (forge 27 px wide, alchemy table 24 px). */
 const STATION_BODY: Readonly<Record<StationId, { w: number; h: number }>> = {
   forge: { w: 24, h: 10 },
@@ -64,7 +66,9 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
   const ent = sp.entity;
   switch (ent.kind) {
     case 'enemy':
-      if (!sim.state.killed[sp.id]) spawnEnemy(sim, ent.archetype, sp.x, sp.y, spawned);
+      if (sim.state.killed[sp.id] || sim.state.bossesDefeated[ent.archetype] || inVillageWard(sim, sp))
+        return;
+      spawnEnemy(sim, ent.archetype, sp.x, sp.y, spawned);
       return;
     case 'bonfire': {
       const e = ecs.create();
@@ -98,9 +102,31 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
       ecs.add(e, Sprite, { sheet: STATIONS_SHEET });
       return;
     }
+    case 'project': {
+      const e = ecs.create();
+      ecs.add(e, Body, { x: sp.x, y: sp.y, w: 16, h: 10 });
+      ecs.add(e, Project, { project: ent.project });
+      ecs.add(e, Spawned, spawned);
+      ecs.add(e, Sprite, { sheet: VILLAGE_SHEET });
+      return;
+    }
+    case 'brazier': {
+      const e = ecs.create();
+      ecs.add(e, Body, { x: sp.x, y: sp.y, w: 10, h: 6 });
+      ecs.add(e, Brazier, { lit: false });
+      ecs.add(e, Spawned, spawned);
+      ecs.add(e, Sprite, { sheet: PROPS_SHEET });
+      return;
+    }
     case 'playerSpawn':
       return;
   }
+}
+
+/** Whether a rebuilt palisade keeps enemies from rising at this spawn point. */
+function inVillageWard(sim: Simulation, sp: SpawnPoint): boolean {
+  const radius = villageWardTiles(sim);
+  return radius > 0 && Math.hypot(sp.x, sp.y) < radius * TILE;
 }
 
 /** Souls-style reset: every enemy returns, including ones killed since the last rest. */

@@ -1,0 +1,19 @@
+{
+  "image": "village.png",
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "anchor": [0.5, 1],
+  "frames": {
+    "well_ruin": 0,
+    "well": 5,
+    "storehouse_ruin": 1,
+    "storehouse": 6,
+    "palisade_ruin": 2,
+    "palisade": 7,
+    "lamps_ruin": 3,
+    "lamps": 8,
+    "smithy_ruin": 4,
+    "smithy": 9
+  },
+  "animations": {}
+}

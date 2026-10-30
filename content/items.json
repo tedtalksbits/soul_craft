@@ -6,6 +6,13 @@
     "icon": "ashwood",
     "stack": 99
   },
+  "stone": {
+    "kind": "material",
+    "name": "Stone",
+    "description": "Rough-cut rock, broken from the boulders of the hills. Restoring the village takes a great deal of it.",
+    "icon": "stone",
+    "stack": 99
+  },
   "fungal_cap": {
     "kind": "material",
     "name": "Fungal Cap",
@@ -51,7 +58,25 @@
     "upgrades": [
       { "damage": 2, "souls": 40, "items": [{ "item": "iron_scrap", "count": 2 }] },
       { "damage": 2, "souls": 80, "items": [{ "item": "iron_scrap", "count": 4 }] },
-      { "damage": 3, "souls": 150, "items": [{ "item": "iron_scrap", "count": 6 }] }
+      { "damage": 3, "souls": 150, "items": [{ "item": "iron_scrap", "count": 6 }] },
+      {
+        "damage": 3,
+        "souls": 260,
+        "items": [
+          { "item": "iron_scrap", "count": 8 },
+          { "item": "stone", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 4,
+        "souls": 400,
+        "items": [
+          { "item": "iron_scrap", "count": 10 },
+          { "item": "bone_shard", "count": 4 }
+        ],
+        "requires": "smithy"
+      }
     ]
   },
   "iron_sword": {
@@ -71,6 +96,24 @@
           { "item": "iron_scrap", "count": 8 },
           { "item": "bone_shard", "count": 2 }
         ]
+      },
+      {
+        "damage": 4,
+        "souls": 460,
+        "items": [
+          { "item": "iron_scrap", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 5,
+        "souls": 640,
+        "items": [
+          { "item": "iron_scrap", "count": 12 },
+          { "item": "bone_shard", "count": 6 }
+        ],
+        "requires": "smithy"
       }
     ]
   },
@@ -83,7 +126,25 @@
     "weapon": { "damage": 22, "staminaCost": 24, "reach": 15, "width": 22, "knockback": 4.5 },
     "upgrades": [
       { "damage": 4, "souls": 200, "items": [{ "item": "bone_shard", "count": 4 }] },
-      { "damage": 4, "souls": 320, "items": [{ "item": "bone_shard", "count": 6 }] }
+      { "damage": 4, "souls": 320, "items": [{ "item": "bone_shard", "count": 6 }] },
+      {
+        "damage": 5,
+        "souls": 480,
+        "items": [
+          { "item": "bone_shard", "count": 8 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 6,
+        "souls": 660,
+        "items": [
+          { "item": "bone_shard", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
     ]
   },
   "padded_jacket": {
@@ -166,6 +227,13 @@
     "icon": "potion_ember",
     "stack": 1,
     "unlocks": "super",
-    "source": "Defeat a second Forsaken Shrine guardian."
+    "source": "Defeat the Ashen Warden, in the keep north of the village."
+  },
+  "kindling_warden": {
+    "kind": "key",
+    "name": "Warden's Kindling",
+    "description": "The flame the Ashen Warden guarded. Carried home, it can relight the village smithy.",
+    "icon": "kindling",
+    "stack": 1
   }
 }

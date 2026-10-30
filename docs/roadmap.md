@@ -35,21 +35,27 @@ Working principles:
 
 ## Done
 
-| Milestone                      | What it delivered                                                                                                                                                                                                                                                           |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1. Foundation**              | Deterministic headless sim and ECS, procedural chunk-streamed world with prefabs, combat (sword, roll, stamina, flasks, bonfires), slime / hollow / archer / shield knight, health bars and damage numbers, save slots with migrations, content pipeline, dev tools         |
-| **2. Items and crafting**      | Inventory with stack limits; weapon, armor and two ring slots; forge upgrades (+1 to +3); potions as timed buffs beside the flask; recipes at a forge, an alchemy table or anywhere; material drops; loot magnet; breakable trees and mushrooms                             |
-| **3. Classes and abilities**   | Three classes (Vanguard / Ward, Stalker / Shade, Ashcaller / Ember), nine data-driven abilities on F / C / V, super energy, class choice on new game and at bonfires, class color on effects, light, HUD and menus, cast poses, class sigils and ability icons (foundation) |
-| **Settings and accessibility** | Settings screen with key rebinding, fill-the-window scaling, full screen, volume; every on-screen key follows the bindings; ability hints, an Abilities tab; class shown by name and sigil, never color alone                                                               |
-| **Art pipeline**               | Every character, enemy, item icon and crafting station is real art made from source scripts (`tools/art`); a pixel-art UI kit                                                                                                                                               |
+| Milestone                      | What it delivered                                                                                                                                                                                                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Foundation**              | Deterministic headless sim and ECS, procedural chunk-streamed world with prefabs, combat (sword, roll, stamina, flasks, bonfires), slime / hollow / archer / shield knight, health bars and damage numbers, save slots with migrations, content pipeline, dev tools                   |
+| **2. Items and crafting**      | Inventory with stack limits; weapon, armor and two ring slots; forge upgrades (+1 to +3); potions as timed buffs beside the flask; recipes at a forge, an alchemy table or anywhere; material drops; loot magnet; breakable trees and mushrooms                                       |
+| **3. Classes and abilities**   | Three classes (Vanguard / Ward, Stalker / Shade, Ashcaller / Ember), nine data-driven abilities on F / C / V, super energy, class choice on new game and at bonfires, class color on effects, light, HUD and menus, cast poses, class sigils and ability icons (foundation)           |
+| **Settings and accessibility** | Settings screen with key rebinding, fill-the-window scaling, full screen, volume; every on-screen key follows the bindings; ability hints, an Abilities tab; class shown by name and sigil, never color alone                                                                         |
+| **Art pipeline**               | Every character, enemy, item icon and crafting station is real art made from source scripts (`tools/art`); a pixel-art UI kit                                                                                                                                                         |
+| **Navigation**                 | Bonfire travel, the world map (fog of war, landmarks, a pin), the compass strip, bonfire beacons, signposts that point home                                                                                                                                                           |
+| **4. Bosses and restoration**  | Five village restoration projects (well, storehouse, palisade, lamps, smithy) as the wood and stone sink; stone from rocks; the Ashen Warden in a fixed keep north of the village, with a fog gate, slam and charge, shield phases broken at braziers, adds and a boss bar (ADR 0012) |
 
-## Now: finishing Milestone 3
+## Now: Milestone 4 art and tuning
 
-- **Tune abilities from playtests:** cooldowns, damage, super charge rate, the class glow's strength.
-- **Done: progression and unlocks** (ADR 0011). Souls buy levels at bonfires (Vigor, Endurance, Might,
-  Attunement), and a new game knows only its AoE: relics from Forsaken Shrine guardians awaken the class ability
-  and then the super.
-- **Optional:** effect sprites for the abilities (PixelLab), to replace the drawn rings and particles.
+Milestone 4 is built and playable on placeholder art. What is left:
+
+- **Art from the art agent:** the Ashen Warden's sheet (it wears the knight's, drawn larger and ash-tinted), the
+  ruined and rebuilt version of each village project (a placeholder `village` sheet for now), the arena brazier,
+  and relic icons.
+- **Tune from playtests:** the Warden's health, slam and charge, its shield thresholds and adds; project costs;
+  how fast rocks give stone.
+- **Carried over from Milestone 3:** tune abilities (cooldowns, damage, super charge rate, the class glow), and
+  optional effect sprites (PixelLab) to replace the drawn rings and particles.
 
 ## Open decisions
 
@@ -114,8 +120,7 @@ The story spine made playable: bringing Ashen Village back to life is how the ga
   building. A step may cost materials or souls to rebuild, which gives crafting materials a long-term use.
 - **The world shows it.** Restored areas lose their ash tint, and the light over the village bonfire grows with
   each Kindling.
-- **The Sovereign Ember** (the super's relic, which a second shrine knight drops for now) becomes the first boss's
-  Kindling reward.
+- **The Sovereign Ember** (the super's relic) is the first boss's reward, beside its Kindling (done).
 
 #### Restoration projects: the wood and stone sink
 
@@ -138,9 +143,10 @@ stone** a long-term use, and souls another one.
   Later).
 - Still authored steps, never free-form base building.
 
-### Milestone 4: Bosses
+### Milestone 4: Bosses (built; art and tuning left, see Now)
 
-Destiny- and Tunic-style boss fights, each guarding a Kindling (the restoration thread):
+Destiny- and Tunic-style boss fights, each guarding a Kindling (the restoration thread). The first, the Ashen
+Warden, covers all of the list below except carried relics and pressure plates beyond its braziers (ADR 0012):
 
 - **Damage phases** with immune windows the player opens through mechanics.
 - **Arena mechanics:** pressure plates, carried relics, waves of adds.

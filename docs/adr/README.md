@@ -16,3 +16,4 @@ it with a new one and link both ways. Template: copy `0000-template.md`.
 | [0009](0009-player-actions-through-input.md)         | Menu actions (equip, craft...) travel through the InputFrame      |
 | [0010](0010-classes-and-data-driven-abilities.md)    | Classes, and abilities built from a few effect primitives         |
 | [0011](0011-bonfire-leveling-and-ability-unlocks.md) | Souls buy levels at bonfires; abilities are awakened by relics    |
+| [0012](0012-restoration-projects-and-bosses.md)      | Restoration projects sink wood and stone; bosses are content      |

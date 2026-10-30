@@ -170,13 +170,29 @@ export class WorldGenerator {
         h: ph,
       };
     }
+    const span = w.regions.sizeChunks * CHUNK;
+    const fixed = w.fixed.find((f) => f.region[0] === rx && f.region[1] === ry);
+    const fixedPrefab = fixed ? this.content.prefabs[fixed.prefab] : undefined;
+    if (fixed && fixedPrefab) {
+      const { pw, ph } = prefabSize(fixedPrefab);
+      const x0 = rx * span + 2;
+      const y0 = ry * span + Math.floor((span - ph) / 2);
+      return {
+        id: `${fixed.prefab}@${rx},${ry}`,
+        prefabId: fixed.prefab,
+        prefab: fixedPrefab,
+        x0,
+        y0,
+        w: pw,
+        h: ph,
+      };
+    }
     const rng = new Rng(hash32(this.seeds.region, rx, ry));
     const prefabId = rng.weighted(w.regions.prefabs);
     if (prefabId === null) return null;
     const prefab = this.content.prefabs[prefabId];
     if (!prefab) return null;
     const { pw, ph } = prefabSize(prefab);
-    const span = w.regions.sizeChunks * CHUNK;
     const margin = 2;
     if (pw + margin * 2 > span || ph + margin * 2 > span) return null;
     const x0 = rx * span + rng.int(margin, span - pw - margin);
@@ -185,6 +201,11 @@ export class WorldGenerator {
     if (Math.hypot(x0 + pw / 2, y0 + ph / 2) < w.origin.safeRadius + Math.max(pw, ph)) return null;
     if (prefab.biomes && !prefab.biomes.includes(this.biomeAt(x0 + (pw >> 1), y0 + (ph >> 1)))) return null;
     return { id: `${prefabId}@${rx},${ry}`, prefabId, prefab, x0, y0, w: pw, h: ph };
+  }
+
+  /** The placements of `world.fixed` set pieces, which every world has. */
+  fixedPlacements(): PrefabPlacement[] {
+    return this.content.world.fixed.flatMap((f) => this.placementFor(f.region[0], f.region[1]) ?? []);
   }
 
   /** Prefab placements whose bounds intersect a chunk. */

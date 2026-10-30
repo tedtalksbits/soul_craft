@@ -27,5 +27,6 @@
       ["hollow_camp", 2],
       [null, 2]
     ]
-  }
+  },
+  "fixed": [{ "prefab": "warden_arena", "region": [0, -1] }]
 }

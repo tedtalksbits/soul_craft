@@ -9,12 +9,13 @@ Everything a designer tunes lives in data, validated on load and hot-reloaded wh
 | `player.json`         | Player stats: health, stamina, attack timing, roll, flask, pack size, starting kit |
 | `items.json`          | Items: materials, weapons, armor, rings, consumables                               |
 | `recipes.json`        | Crafting recipes: output, inputs, soul cost, station                               |
+| `restoration.json`    | Village projects: cost, tier, effects, ruin and rebuilt sprites, villager lines    |
 | `classes.json`        | Classes: name, element, and their AoE, class and super abilities                   |
 | `abilities.json`      | Abilities: slot, cooldown, cast timing and a list of effects                       |
-| `enemies.json`        | Enemy archetypes: stats, drops and a `brain` with its own parameters               |
+| `enemies.json`        | Enemy archetypes: stats, drops, a `brain`, and a `boss` block for bosses           |
 | `tiles.json`          | Tile types: sprite frames, solidity, cutting, light, map color                     |
 | `biomes.json`         | Ground, scatter rules, darkness, ambient particles, spawn tables                   |
-| `world.json`          | Terrain noise, biome rules, origin and region prefab placement                     |
+| `world.json`          | Terrain noise, biome rules, origin, region and fixed prefab placement              |
 | `prefabs/<id>.json`   | Handmade set pieces as ASCII rows plus a legend                                    |
 | `scenarios/<id>.json` | Dev boot presets: a seed and console commands                                      |
 
@@ -58,13 +59,15 @@ no room for are not pulled. `radius: 0` turns it off.
 Every item has `kind`, `name`, `description`, `icon` (a frame name in `assets/sprites/items.json`) and
 `stack` (equipment must be 1). By kind:
 
-- `material`: nothing else; used by recipes and upgrades.
+- `material`: nothing else; used by recipes, upgrades and restoration projects.
+- `key`: nothing else; carried until something spends it (a boss's Kindling, for a major project).
 - `weapon`: `weapon { damage, staminaCost, reach, width, knockback }` and `upgrades`, the forge steps in order,
-  each `{ damage, souls, items }`. The player's swing uses the equipped weapon; unarmed is weak on purpose.
+  each `{ damage, souls, items }`, plus an optional `requires` (a restoration project that must be rebuilt
+  first: the last steps wait on the smithy). The player's swing uses the equipped weapon; unarmed is weak on purpose.
 - `armor`: `armor { defense }`, the fraction of incoming damage absorbed (capped at 0.9 with buffs).
 - `ring`: `ring { stat, amount }`. Two ring slots.
 - `relic`: `unlocks` (`class` or `super`) and `source` (where it is found, shown on locked abilities). Taken on
-  pickup, never carried; it only drops while its slot is the next to awaken.
+  pickup, never carried; it only drops while its slot is still locked.
 - `consumable`: `effect` is `{ type: "heal", amount }` or `{ type: "buff", stat, amount, seconds }`.
   Drinking one takes the flask's drink time. A second buff on the same stat refreshes the first.
 
@@ -74,6 +77,32 @@ A recipe is `{ output { item, count }, inputs [{ item, count }], souls, station 
 `"forge"`, `"alchemy"` or `null` (craftable anywhere). Stations are prefab entities; the player must stand
 within twice the interact range. Enemy and tile `drops` can be `{ "kind": "item", "item": "iron_scrap", ... }`.
 Every item id named anywhere is cross-checked on load.
+
+### Restoration projects
+
+`restoration.json` maps a project id to `{ name, description, tier, cost { items, souls }, effects, sprite
+{ ruin, restored }, restoredLines }`. A prefab places the site with `{ "kind": "project", "project": "well" }`;
+interacting with the ruin shows the rebuild screen, and once rebuilt the site says its `restoredLines`. The
+sprites are frames in the `village` sheet. Effects (ADR 0012):
+
+| Effect                                      | Gives                                                  |
+| ------------------------------------------- | ------------------------------------------------------ |
+| `{ "type": "maxFlasks", "amount": 1 }`      | Flask charges, added once when rebuilt                 |
+| `{ "type": "inventorySlots", "amount": 8 }` | Pack slots                                             |
+| `{ "type": "safeRadius", "tiles": 40 }`     | No enemies spawn within this many tiles of the village |
+| `{ "type": "light", "radius": 70 }`         | Warm light at the site                                 |
+| `{ "type": "forgeSteps" }`                  | Unlocks weapon upgrade steps that name this project    |
+
+Stone comes from rocks (`tiles.json → rock.cut`), wood from trees.
+
+### Bosses
+
+A boss is an enemy with `boss { title, arenaTiles }`. Its arena is the square `arenaTiles` from its spawn point to
+each side: walking in starts the fight, a bar shows its name and title, and the player is held inside until it
+ends. Once killed it never respawns. The `warden` brain adds `shieldAt` (health fractions where its shield goes
+up), `adds` (what it calls while shielded) and the slam and charge numbers; prefab `brazier` entities in the arena
+break the shield when the player stands on them all. Boss arenas are placed by `world.json → fixed`
+(`{ "prefab": "warden_arena", "region": [0, -1] }`), so every world has them in the same place.
 
 ### Leveling
 
@@ -131,12 +160,13 @@ Ability hits go through shields. Super energy is `player.json → energy`: `perD
 A sign's lines may include `{village}`, filled in when read with where the starting village lies from that sign
 ("Ashen Village lies 140 paces to the north-east."), so signposts always point home.
 
-A prefab's optional `marker` (`village`, `shrine`, `camp`, `wayshrine`) puts it on the world map once the player
+A prefab's optional `marker` (`village`, `shrine`, `camp`, `wayshrine`, `arena`) puts it on the world map once the player
 has seen it, labeled with its `name`. Crafting stations are marked on their own. How far the player sees for the
 map is `player.json → exploration.revealRadius` (tiles); the map draws each tile in its `map` color.
 
 A space keeps the generated terrain. Entity kinds: `bonfire`, `sign`, `enemy`, `torch`, `station`
-(`{ "kind": "station", "station": "forge" }`), `playerSpawn` (origin prefab only). To add a prefab to the world, add it to `world.json → regions.prefabs` with a weight.
+(`{ "kind": "station", "station": "forge" }`), `project` (a restoration site), `brazier` (a boss arena's),
+`playerSpawn` (origin prefab only). To add a prefab to the world, add it to `world.json → regions.prefabs` with a weight.
 
 ## Sprites (`/assets/sprites`)
 
@@ -193,5 +223,5 @@ script, not the PNG.
 `pnpm assets:placeholders` draws programmatic placeholder sheets (`scripts/placeholders/`). It **never
 overwrites existing files** unless you pass `--force` (optionally limited to names:
 `pnpm assets:placeholders --force props`). What is still placeholder: tiles, props (bonfire, sign,
-torch, souls, ember) and the font. Replace any PNG with real art whenever you like, keeping the
+torch, souls, ember, brazier), the village restoration sites (`village`) and the font. Replace any PNG with real art whenever you like, keeping the
 grid and JSON in step.

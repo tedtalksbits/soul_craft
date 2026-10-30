@@ -12,7 +12,7 @@ import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -176,6 +176,16 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     const state = asRecord(snapshot['state']);
     const map = { explored: {}, landmarks: {}, lastDeath: null, pin: null };
     return { ...save, snapshot: { ...snapshot, state: { ...map, ...state } } };
+  },
+  /**
+   * v7 -> v8: village restoration and bosses. SimState gained `restored`, `bossesDefeated` and
+   * `bossFight`.
+   */
+  7: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const state = asRecord(snapshot['state']);
+    const added = { restored: {}, bossesDefeated: {}, bossFight: null };
+    return { ...save, snapshot: { ...snapshot, state: { ...added, ...state } } };
   },
 };
 

@@ -1,6 +1,6 @@
 # 0011. Souls buy levels at bonfires; abilities are awakened by relics
 
-- Status: accepted
+- Status: accepted (relic order amended by [0012](0012-restoration-projects-and-bosses.md))
 - Date: 2026-10-29
 
 ## Context

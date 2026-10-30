@@ -9,9 +9,10 @@ import { IndexedDbStore } from '../save/indexeddb-store';
 import { SaveManager, type SaveSlot } from '../save/save-manager';
 import { SnapshotLibrary } from '../save/snapshot-library';
 import type { KeyValueStore } from '../save/store';
-import { Body, Abilities, Player } from '../sim/components';
+import { Body, Abilities, Boss, Enemy, Health, Player } from '../sim/components';
 import { TICK_RATE, TILE } from '../sim/constants';
 import type { SimEvent } from '../sim/events';
+import { bossEntity } from '../sim/modules/bosses';
 import { findInteraction } from '../sim/modules/interaction';
 import { Simulation } from '../sim/simulation';
 import type { Assets } from './assets';
@@ -27,6 +28,7 @@ import type { GameRenderer } from './render/renderer';
 import { iconElement, tintedIcon } from './ui/icons';
 import { InventoryScreen } from './ui/inventory';
 import { LevelScreen } from './ui/level';
+import { RebuildScreen } from './ui/rebuild';
 import { Ui, type ClassLabel } from './ui/ui';
 
 /** Autosave this often while playing, in addition to every bonfire rest. */
@@ -47,6 +49,7 @@ export class App {
   readonly ui: Ui;
   readonly inventory: InventoryScreen;
   readonly level: LevelScreen;
+  readonly rebuild: RebuildScreen;
   readonly audio = new Audio();
   /** Per-device settings: controls, display, audio, tutorial hints. */
   readonly settings = new SettingsStore();
@@ -84,6 +87,11 @@ export class App {
       sim: () => this.sim,
       act: (action) => this.input.queueAction(action),
     });
+    this.rebuild = new RebuildScreen(uiRoot, {
+      sim: () => this.sim,
+      act: (action) => this.input.queueAction(action),
+      icon: (item) => this.itemIcon(item),
+    });
     this.loop = new FixedLoop(
       () => this.tick(),
       (dt) => this.frame(dt),
@@ -100,7 +108,7 @@ export class App {
           this.ui.hideScreen();
           return;
         }
-        if (map && this.sim && !this.ui.blocking && !this.inventory.isOpen && !this.level.isOpen) {
+        if (map && this.sim && !this.ui.blocking && !this.panelOpen) {
           e.preventDefault();
           this.openMap();
           return;
@@ -108,6 +116,9 @@ export class App {
         if (this.level.isOpen && e.code === 'Escape') {
           e.preventDefault();
           this.level.close();
+        } else if (this.rebuild.isOpen && e.code === 'Escape') {
+          e.preventDefault();
+          this.rebuild.close();
         } else if (this.inventory.isOpen && (e.code === 'Escape' || pack)) {
           e.preventDefault();
           this.inventory.close();
@@ -362,6 +373,7 @@ export class App {
     this.input.reset();
     this.inventory.close();
     this.level.close();
+    this.rebuild.close();
     this.ui.hideScreen();
     this.ui.resetHud();
     this.renderer.attach(sim);
@@ -408,12 +420,31 @@ export class App {
     });
   }
 
+  /** What the boss bar shows: the fighting boss's name, title and health, or nothing. */
+  private bossBarInfo(sim: Simulation) {
+    const e = bossEntity(sim);
+    const def = e === undefined ? undefined : sim.content.enemies[sim.ecs.need(e, Enemy).archetype];
+    if (e === undefined || !def?.boss) return null;
+    const health = sim.ecs.need(e, Health);
+    return {
+      name: def.name,
+      title: def.boss.title,
+      frac: health.hp / health.max,
+      shielded: sim.ecs.get(e, Boss)?.shielded ?? false,
+    };
+  }
+
+  /** A non-blocking panel (pack, level-up, rebuild) is open: it takes game input, the world runs on. */
+  private get panelOpen(): boolean {
+    return this.inventory.isOpen || this.level.isOpen || this.rebuild.isOpen;
+  }
+
   // ------------------------------------------------------------------ per tick / frame
 
   private tick(): void {
     const sim = this.sim;
-    // The inventory and level screen hold game input but not the game: the world keeps moving.
-    if (this.inventory.isOpen || this.level.isOpen) this.inputHolds.add('menu');
+    // The inventory, level and rebuild screens hold game input but not the game: the world keeps moving.
+    if (this.panelOpen) this.inputHolds.add('menu');
     else this.inputHolds.delete('menu');
     this.input.enabled = !this.ui.blocking && this.inputHolds.size === 0;
     if (!sim || this.ui.blocking) return;
@@ -431,8 +462,9 @@ export class App {
     }
     this.inventory.refresh();
     this.level.refresh();
+    this.rebuild.refresh();
     // Hints wait while a menu is open; they would cover it.
-    if (!this.inventory.isOpen && !this.level.isOpen) this.tutorial.update(sim);
+    if (!this.panelOpen) this.tutorial.update(sim);
     if (this.slot && sim.tick - this.lastSaveTick >= AUTOSAVE_INTERVAL_TICKS) void this.save();
   }
 
@@ -476,6 +508,30 @@ export class App {
       }
       case 'stationOpened':
         return this.inventory.open('craft', e.station);
+      case 'projectOpened':
+        this.ui.clearHint();
+        return this.rebuild.open(e.project);
+      case 'restored': {
+        const def = this.content.restoration[e.project];
+        if (!def) return;
+        this.ui.banner(`${def.name.toUpperCase()} REBUILT`, 'good');
+        return this.ui.dialog(def.restoredLines);
+      }
+      case 'rebuildFailed':
+        return this.ui.toast(`Cannot rebuild: ${e.reason}`);
+      case 'bossFightStarted':
+        return this.ui.toast('The way back is sealed in ash.', 3000);
+      case 'bossShielded':
+        return this.ui.toast(
+          `${this.content.enemy(e.boss).name} draws in the flame. Stand on the ${e.braziers} braziers to break it.`,
+          4500,
+        );
+      case 'brazierLit':
+        return this.ui.toast(e.left > 0 ? `Brazier lit. ${e.left} to go.` : 'The braziers blaze.', 2000);
+      case 'bossShieldBroken':
+        return this.ui.toast(`${this.content.enemy(e.boss).name} reels!`, 2200);
+      case 'bossDefeated':
+        return this.ui.banner(`${this.content.enemy(e.boss).name.toUpperCase()} FELLED`, 'good');
       case 'crafted': {
         const name = this.content.item(e.item).name;
         return this.ui.toast(e.count > 1 ? `Crafted ${name} ×${e.count}` : `Crafted ${name}`);
@@ -491,6 +547,7 @@ export class App {
       case 'playerDied':
         this.inventory.close();
         this.level.close();
+        this.rebuild.close();
         this.ui.banner('YOU DIED', 'death');
         window.setTimeout(() => this.ui.fade(true), DEATH_FADE_MS);
         return;
@@ -514,11 +571,12 @@ export class App {
 
   private frame(dtMs: number): void {
     const sim = this.sim;
-    const free = sim !== null && !this.ui.blocking && !this.inventory.isOpen && !this.level.isOpen;
+    const free = sim !== null && !this.ui.blocking && !this.panelOpen;
     if (sim && free) {
       const target = findInteraction(sim);
       this.ui.prompt(target ? target.label : null, primaryKey(this.input.bindings, 'use'));
     } else this.ui.prompt(null);
+    this.ui.bossBar(sim ? this.bossBarInfo(sim) : null);
     const resting = free && sim.ecs.get(sim.player, Player)?.state === 'sit';
     this.ui.restMenu(resting ? this.currentClassLabel() : null, {
       travel: () => this.openTravel(),

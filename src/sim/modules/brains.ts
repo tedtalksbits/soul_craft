@@ -9,6 +9,7 @@ import type { Entity } from '../../core/ecs';
 import { dirFromVec } from '../../core/math';
 import type { Ai, Body, ContactDamage, Enemy, Facing, Motion } from '../components';
 import type { Simulation } from '../simulation';
+import { applyDamage } from './combat';
 import { spawnProjectile } from './projectiles';
 
 export interface BrainContext {
@@ -31,7 +32,7 @@ export interface BrainContext {
 type Brain<T extends BrainDef['type']> = (c: BrainContext, b: Extract<BrainDef, { type: T }>) => void;
 
 /** Enemy states during which the renderer flashes a warning. */
-export const TELEGRAPH_STATES: ReadonlySet<string> = new Set(['windup', 'draw']);
+export const TELEGRAPH_STATES: ReadonlySet<string> = new Set(['windup', 'draw', 'raise']);
 
 /** Distance from home before a wandering enemy turns back. */
 const LEASH = 50;
@@ -48,6 +49,8 @@ export function runBrain(c: BrainContext): void {
       return archer(c, brain);
     case 'shieldKnight':
       return shieldKnight(c, brain);
+    case 'warden':
+      return warden(c, brain);
   }
 }
 
@@ -242,6 +245,88 @@ const shieldKnight: Brain<'shieldKnight'> = (c, b) => {
         ai.state = 'idle';
         wander(c);
       } else if (ai.cooldown <= 0 && c.dist < b.chargeRange) setAi(ai, 'windup');
+      else {
+        ai.state = 'chase';
+        closeIn(c);
+      }
+  }
+};
+
+/**
+ * The Ashen Warden. Dormant until its fight starts, then it alternates a slam (raise its weapon,
+ * then a ring of damage around it) when close with a charge when far, each followed by a recovery
+ * window to punish. While shielded it walks back to the arena's center and channels; the bosses
+ * module calls its adds and breaks the shield.
+ */
+const warden: Brain<'warden'> = (c, b) => {
+  const { ai, sim, enemy } = c;
+  const fighting = sim.state.bossFight?.boss === enemy.archetype;
+  c.contact.amount = c.def.contactDamage;
+  if (!fighting) {
+    c.contact.amount = 0;
+    setAi(ai, 'dormant');
+    return;
+  }
+  switch (ai.state) {
+    case 'dormant':
+      setAi(ai, 'chase');
+      ai.cooldown = b.cooldown[1];
+      return;
+    case 'channel': {
+      const hx = enemy.homeX - c.body.x;
+      const hy = enemy.homeY - c.body.y;
+      const away = Math.hypot(hx, hy);
+      if (away > 2) {
+        c.motion.vx = (hx / away) * c.def.speed;
+        c.motion.vy = (hy / away) * c.def.speed;
+      } else facePlayer(c);
+      return;
+    }
+    case 'raise':
+      facePlayer(c);
+      if (ai.t >= b.slamWindupTicks) {
+        sim.events.emit({ type: 'bossSlam', x: c.body.x, y: c.body.y, radius: b.slamRadius });
+        if (c.dist <= b.slamRadius)
+          applyDamage(sim, sim.player, {
+            amount: b.slamDamage,
+            crit: false,
+            fromX: c.body.x,
+            fromY: c.body.y,
+            knockback: sim.content.player.hurt.knockback * 2,
+          });
+        setAi(ai, 'recover');
+      }
+      return;
+    case 'windup':
+      facePlayer(c);
+      if (ai.t >= b.chargeWindupTicks) {
+        ai.dirX = c.dx / c.dist;
+        ai.dirY = c.dy / c.dist;
+        setAi(ai, 'charge');
+        sim.events.emit({ type: 'enemyAttack', entity: c.e, kind: 'charge' });
+      }
+      return;
+    case 'charge': {
+      c.motion.vx = ai.dirX * b.chargeSpeed;
+      c.motion.vy = ai.dirY * b.chargeSpeed;
+      c.contact.amount = b.chargeDamage;
+      const slammed = c.motion.hitWall && ai.t > 1;
+      if (slammed || ai.t >= b.chargeTicks) {
+        setAi(ai, 'recover');
+        if (slammed) sim.events.emit({ type: 'wallSlam', x: c.body.x, y: c.body.y });
+      }
+      return;
+    }
+    case 'recover':
+      c.contact.amount = 0;
+      if (ai.t >= b.recoverTicks) {
+        setAi(ai, 'chase');
+        ai.cooldown = sim.rng.range(b.cooldown[0], b.cooldown[1]);
+      }
+      return;
+    default:
+      if (ai.cooldown <= 0 && c.dist < b.slamRange) setAi(ai, 'raise');
+      else if (ai.cooldown <= 0 && c.dist < b.chargeRange && c.dist > b.slamRange * 2) setAi(ai, 'windup');
       else {
         ai.state = 'chase';
         closeIn(c);

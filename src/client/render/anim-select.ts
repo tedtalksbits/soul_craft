@@ -8,12 +8,14 @@ import {
   Ai,
   Body,
   Bonfire,
+  Brazier,
   Dying,
   Enemy,
   Facing,
   Motion,
   Pickup,
   Player,
+  Project,
   Sign,
   Staggered,
   Station,
@@ -157,6 +159,12 @@ export function selectAnim(
   } else if (ecs.has(e, Torch)) pose = 'torch';
   else if (ecs.has(e, Sign)) pose = 'sign';
   else if (ecs.has(e, Station)) pose = ecs.need(e, Station).station;
+  else if (ecs.has(e, Brazier)) pose = ecs.need(e, Brazier).lit ? 'brazier_lit' : 'brazier';
+  else if (ecs.has(e, Project)) {
+    const id = ecs.need(e, Project).project;
+    const art = sim.content.restoration[id]?.sprite;
+    pose = (sim.state.restored[id] ? art?.restored : art?.ruin) ?? 'idle';
+  }
   // Item pickups draw their item's icon from the items sheet.
   else if (pickup)
     pose = pickup.item !== null ? (sim.content.items[pickup.item]?.icon ?? 'idle') : pickup.kind;

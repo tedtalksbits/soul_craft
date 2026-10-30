@@ -6,7 +6,7 @@
  * the dark.
  */
 import { Container, Graphics, RenderTexture, Sprite, Texture, type Renderer } from 'pixi.js';
-import { Abilities, Body, Bonfire, Empowered, Player, Torch } from '../../sim/components';
+import { Abilities, Body, Bonfire, Brazier, Empowered, Player, Project, Torch } from '../../sim/components';
 import { TILE } from '../../sim/constants';
 import type { Simulation } from '../../sim/simulation';
 import { classPalette } from './class-palette';
@@ -143,6 +143,17 @@ export class Lighting {
     const fire = (scale: number) => ({ color: FIRE, alpha: 0.22, scale });
     for (const [, , b] of ecs.query(Torch, Body))
       lights.push({ x: b.x, y: b.y - 12, radius: 60, intensity: 1, glow: fire(1.1) });
+    // Rebuilt sites that give light (the lamps): a steady warm pool, lantern-high.
+    for (const [, site, b] of ecs.query(Project, Body)) {
+      if (!sim.state.restored[site.project]) continue;
+      for (const fx of sim.content.restoration[site.project]?.effects ?? []) {
+        if (fx.type === 'light')
+          lights.push({ x: b.x, y: b.y - 16, radius: fx.radius, intensity: 1, glow: fire(0.8) });
+      }
+    }
+    for (const [, brazier, b] of ecs.query(Brazier, Body)) {
+      if (brazier.lit) lights.push({ x: b.x, y: b.y - 10, radius: 70, intensity: 1, glow: fire(1) });
+    }
     for (const [, bonfire, b] of ecs.query(Bonfire, Body)) {
       if (sim.state.litBonfires[bonfire.id])
         lights.push({ x: b.x, y: b.y - 8, radius: 90, intensity: 1, glow: fire(1.1) });

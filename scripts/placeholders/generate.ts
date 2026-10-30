@@ -13,6 +13,7 @@ import type { SpriteSheetFile } from '../../src/content/sprite-sheet';
 import { ROOT } from '../lib/load-content';
 import { buildFont, buildProps } from './misc';
 import { buildTiles } from './tiles';
+import { buildVillage } from './village';
 
 const OUT = join(ROOT, 'assets', 'sprites');
 
@@ -21,6 +22,7 @@ const SHEETS: Record<string, () => { png: Buffer; json: SpriteSheetFile }> = {
   tiles: buildTiles,
   props: buildProps,
   font: buildFont,
+  village: buildVillage,
 };
 
 const args = process.argv.slice(2);

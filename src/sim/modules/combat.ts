@@ -10,11 +10,14 @@ import type { Rng } from '../../core/rng';
 import {
   Ai,
   Body,
+  Boss,
+  Brazier,
   ContactDamage,
   Dying,
   Enemy,
   Health,
   Invulnerable,
+  Minion,
   Motion,
   Player,
   Spawned,
@@ -121,6 +124,12 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
   if (!enemy) return 'ignored';
   const def = sim.content.enemy(enemy.archetype);
 
+  // A boss's shield stops everything; only the arena's braziers bring it down.
+  const boss = ecs.get(e, Boss);
+  if (boss?.shielded) {
+    sim.events.emit({ type: 'blocked', x: body.x, y: body.y - 4 });
+    return 'blocked';
+  }
   // The shield stops everything but abilities, and is down while stunned, staggered or charging.
   const guarding = ai && ai.state !== 'stunned' && ai.state !== 'charge' && !ecs.has(e, Staggered);
   if (def.brain.type === 'shieldKnight' && guarding && !hit.unblockable) {
@@ -129,6 +138,12 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
   }
 
   health.hp = Math.max(0, health.hp - hit.amount);
+  // A blow that crosses a shield threshold stops there: the shield goes up instead.
+  const shieldAt = def.brain.type === 'warden' && boss ? def.brain.shieldAt[boss.phase] : undefined;
+  if (boss && shieldAt !== undefined && health.hp <= health.max * shieldAt) {
+    health.hp = Math.max(1, Math.ceil(health.max * shieldAt));
+    raiseShield(sim, e, boss);
+  }
   push(sim, e, body, hit, def.knockbackTaken);
   const energy = sim.content.player.energy;
   if (hit.charges) gainEnergy(sim, hit.amount * energy.perDamage + (health.hp <= 0 ? energy.perKill : 0));
@@ -146,13 +161,36 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
   });
 
   if (health.hp <= 0) killEnemy(sim, e);
-  else if (ai && ai.state !== 'stunned' && !ecs.has(e, Staggered)) {
+  else if (ai && !boss && ai.state !== 'stunned' && !ecs.has(e, Staggered)) {
     if (def.recoilTicks > 0) {
       ai.state = 'recoil';
       ai.t = 0;
     } else if (ai.state === 'idle') ai.state = 'chase';
   }
   return 'hit';
+}
+
+/** Puts a boss's shield up: it falls back to channel, and every brazier goes out to be lit again. */
+export function raiseShield(sim: Simulation, e: Entity, boss: Boss): void {
+  boss.phase++;
+  boss.shielded = true;
+  boss.addTimer = 0;
+  const ai = sim.ecs.get(e, Ai);
+  if (ai) Object.assign(ai, { state: 'channel', t: 0 });
+  sim.ecs.remove(e, Staggered);
+  for (const [, brazier] of sim.ecs.query(Brazier)) brazier.lit = false;
+  const archetype = sim.ecs.need(e, Enemy).archetype;
+  sim.events.emit({ type: 'bossShielded', boss: archetype, braziers: braziersInFight(sim) });
+}
+
+/** How many braziers the current fight's arena holds. */
+export function braziersInFight(sim: Simulation): number {
+  const fight = sim.state.bossFight;
+  if (!fight) return 0;
+  let n = 0;
+  for (const [, , b] of sim.ecs.query(Brazier, Body))
+    if (Math.abs(b.x - fight.x) <= fight.half && Math.abs(b.y - fight.y) <= fight.half) n++;
+  return n;
 }
 
 function push(sim: Simulation, e: Entity, body: Body, hit: Hit, scale: number): void {
@@ -176,6 +214,13 @@ export function killEnemy(sim: Simulation, e: Entity): void {
   const spawned = ecs.get(e, Spawned);
   if (spawned) sim.state.killed[spawned.spawnId] = true;
   rollDrops(sim, def.drops, body.x, body.y);
+  if (def.boss) {
+    // Felled for good: it never respawns, its fight ends and its callers go with it.
+    sim.state.bossesDefeated[enemy.archetype] = true;
+    sim.state.bossFight = null;
+    for (const [m] of ecs.query(Minion)) if (!ecs.has(m, Dying)) killEnemy(sim, m);
+    sim.events.emit({ type: 'bossDefeated', boss: enemy.archetype });
+  }
   sim.events.emit({
     type: 'killed',
     target: e,
@@ -188,7 +233,7 @@ export function killEnemy(sim: Simulation, e: Entity): void {
 
 export function rollDrops(sim: Simulation, drops: readonly DropDef[], x: number, y: number): void {
   for (const drop of drops) {
-    // Relics only drop while their slot is the next to awaken, so each one drops once, in order.
+    // Relics only drop while their slot is still locked, so each is found once.
     const relic = drop.item !== undefined ? sim.content.items[drop.item] : undefined;
     if (relic?.kind === 'relic' && !relicWanted(sim, relic.unlocks)) continue;
     if (sim.rng.chance(drop.chance))

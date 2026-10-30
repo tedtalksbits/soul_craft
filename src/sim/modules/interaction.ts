@@ -1,5 +1,5 @@
 /**
- * Things the player can use: bonfires and signs. The client asks
+ * Things the player can use: bonfires, signs, stations and village project sites. The client asks
  * {@link findInteraction} each frame to show a prompt; pressing "use" runs
  * {@link interact} from the player controller.
  */
@@ -7,7 +7,7 @@ import type { Entity } from '../../core/ecs';
 import { compassWord, DIR_VEC } from '../../core/math';
 import { CommandError } from '../../core/commands';
 import { STATIONS } from '../../content/schemas';
-import { Body, Bonfire, Facing, Health, Player, Sign, Stamina, Station } from '../components';
+import { Body, Bonfire, Facing, Health, Player, Project, Sign, Stamina, Station } from '../components';
 import { TILE } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
@@ -18,6 +18,7 @@ export type Interaction =
   | { kind: 'bonfire'; entity: Entity; label: string }
   | { kind: 'sign'; entity: Entity; label: string }
   | { kind: 'station'; entity: Entity; label: string }
+  | { kind: 'project'; entity: Entity; label: string }
   | { kind: 'leave'; label: string };
 
 /** How far in front of the player the interaction probe sits. */
@@ -54,6 +55,10 @@ export function findInteraction(sim: Simulation): Interaction | null {
       entity: te,
       label: `Use ${STATIONS[station.station].toLowerCase()}`,
     }));
+  for (const [pe, site, b] of ecs.query(Project, Body)) {
+    const label = sim.state.restored[site.project] ? 'Look' : 'Rebuild';
+    consider(b, () => ({ kind: 'project', entity: pe, label }));
+  }
   for (const [se, , b] of ecs.query(Sign, Body))
     consider(b, () => ({ kind: 'sign', entity: se, label: 'Read' }));
   return best;
@@ -65,7 +70,13 @@ export function interact(sim: Simulation): void {
   if (target.kind === 'bonfire') restAt(sim, target.entity);
   else if (target.kind === 'station')
     sim.events.emit({ type: 'stationOpened', station: sim.ecs.need(target.entity, Station).station });
-  else {
+  else if (target.kind === 'project') {
+    const id = sim.ecs.need(target.entity, Project).project;
+    const def = sim.content.restoration[id];
+    // A rebuilt site speaks (its returned villager); a ruin opens the rebuild screen.
+    if (sim.state.restored[id] && def) sim.events.emit({ type: 'read', lines: [...def.restoredLines] });
+    else sim.events.emit({ type: 'projectOpened', project: id });
+  } else {
     const at = sim.ecs.need(target.entity, Body);
     const lines = sim.ecs.need(target.entity, Sign).lines.map((line) => signText(sim, line, at));
     sim.events.emit({ type: 'read', lines });

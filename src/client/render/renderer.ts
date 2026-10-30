@@ -3,6 +3,7 @@
  *
  *   world (camera space): chunks -> entities -> effects -> debug
  *   lighting (screen space)
+ *   over the dark (camera space): boss telegraphs and the fog gate, which must read at night
  *   debug (screen space) -> hud
  *
  * The game renders at a fixed low resolution and is scaled up with nearest
@@ -19,6 +20,7 @@ import { Effects } from './effects';
 import { EntityLayer } from './entity-layer';
 import { AbilityFx } from './ability-fx';
 import { Beacons } from './beacons';
+import { BossFx } from './boss-fx';
 import { Hud } from './hud';
 import { VIEW_H, VIEW_W, viewFor } from './view-size';
 import { Lighting } from './lighting';
@@ -29,6 +31,8 @@ const CAMERA_LERP = 0.12;
 
 export class GameRenderer {
   readonly world = new Container();
+  /** Camera space like `world`, but drawn above the darkness. */
+  private readonly overDark = new Container();
   /** World-space container for debug overlays. */
   readonly debugWorld = new Container();
   /** Screen-space container for debug overlays. */
@@ -41,6 +45,7 @@ export class GameRenderer {
   readonly entities: EntityLayer;
   readonly effects: Effects;
   readonly abilityFx: AbilityFx;
+  private readonly bossFx: BossFx;
   readonly hud: Hud;
   private readonly lighting = new Lighting(VIEW_W, VIEW_H);
   private readonly beacons = new Beacons();
@@ -55,6 +60,7 @@ export class GameRenderer {
     this.entities = new EntityLayer(assets);
     this.effects = new Effects(assets);
     this.abilityFx = new AbilityFx(this.effects, assets);
+    this.bossFx = new BossFx(this.effects);
     this.hud = new Hud(assets, VIEW_W, VIEW_H);
     this.world.addChild(
       this.chunks.root,
@@ -64,7 +70,15 @@ export class GameRenderer {
       this.abilityFx.air,
       this.debugWorld,
     );
-    app.stage.addChild(this.world, this.lighting.root, this.beacons.root, this.debugScreen, this.hud.root);
+    this.overDark.addChild(this.bossFx.ground, this.bossFx.air);
+    app.stage.addChild(
+      this.world,
+      this.lighting.root,
+      this.overDark,
+      this.beacons.root,
+      this.debugScreen,
+      this.hud.root,
+    );
     addEventListener('resize', () => this.resize());
     this.resize();
   }
@@ -96,8 +110,10 @@ export class GameRenderer {
     this.entities.clear();
     this.effects.clear();
     this.abilityFx.clear();
+    this.bossFx.clear();
     this.hud.reset();
     this.world.visible = sim !== null;
+    this.overDark.visible = sim !== null;
     this.hud.root.visible = sim !== null;
     this.lighting.root.visible = sim !== null;
     this.beacons.root.visible = sim !== null;
@@ -109,6 +125,7 @@ export class GameRenderer {
       this.entities.handle(e);
       this.effects.handle(e, this.sim?.content);
       this.abilityFx.handle(e, this.sim?.content);
+      this.bossFx.handle(e, this.sim?.content);
       if (this.sim && (e.type === 'healed' || e.type === 'rested'))
         this.effects.aroundPlayer(this.sim, e.type === 'healed' ? 'heal' : 'rest');
       if (this.sim && (e.type === 'pickedUp' || e.type === 'itemGained'))
@@ -132,6 +149,7 @@ export class GameRenderer {
         y: Math.round(this.camera.y + (Math.random() - 0.5) * shake),
       };
       this.world.position.set(-cam.x, -cam.y);
+      this.overDark.position.set(-cam.x, -cam.y);
 
       this.chunks.sync(sim);
       this.entities.sync(sim, dtMs);
@@ -140,6 +158,7 @@ export class GameRenderer {
         : undefined;
       this.effects.update(sim, dtMs, { ...cam, w: this.view.w, h: this.view.h }, biome);
       this.abilityFx.update(sim, dtMs);
+      this.bossFx.update(sim, dtMs);
       const area = pb ? sim.world.areaAt(pb.x, pb.y) : undefined;
       this.lighting.update(
         this.app.renderer,

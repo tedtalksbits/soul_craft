@@ -40,6 +40,10 @@ ESLint enforces the "never" column for the pure layers. Do not disable those rul
   a system. Cross-file references are checked in `src/content/content.ts`.
 - **An enemy** → `content/enemies.json` (reuse a brain) or a new brain in `src/sim/modules/brains.ts`
   plus its schema variant.
+- **A boss** → an enemy with a `boss` block in `content/enemies.json`, and an arena prefab placed by
+  `world.json → fixed` (ADR 0012).
+- **A restoration project** → `content/restoration.json` plus a `project` entity in the village prefab, built from
+  the effect types in `RestorationEffectSchema`.
 - **An item or recipe** → `content/items.json` / `content/recipes.json` (see `docs/content-pipeline.md`), with an
   icon frame in the `items` sheet. Menu verbs are `PlayerAction`s on the `InputFrame` (ADR 0009), never direct calls.
 - **A class or ability** → `content/classes.json` / `content/abilities.json`, built from the effect types in

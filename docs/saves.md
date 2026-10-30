@@ -48,6 +48,7 @@ Migrations so far:
 | 4    | 5   | Leveling and unlocks: the player gains `attributes` (all 0) and `abilities.unlocked` (both true, so nothing is lost)  |
 | 5    | 6   | Bonfire travel: `SimState.bonfires`, the registry of lit bonfires (starts empty, fills as lit bonfires load)          |
 | 6    | 7   | World map: `SimState.explored` (fog of war), `landmarks`, `lastDeath` and `pin` (all start empty)                     |
+| 7    | 8   | Restoration and bosses: `SimState.restored`, `bossesDefeated` (both empty) and `bossFight` (none)                     |
 
 Adding a new optional component needs no migration: old saves simply don't have it. Content changes need
 none either: restore drops entities whose archetype no longer exists, and tile overrides referring to

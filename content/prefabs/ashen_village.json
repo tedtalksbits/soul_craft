@@ -9,7 +9,7 @@
         "kind": "sign",
         "lines": [
           "The roads lead out into lands that change with every waking flame.",
-          "Hollows wander the meadows. Archers keep the hills. Beware the knights who guard the old shrines."
+          "Hollows wander the meadows. Archers keep the hills. Beware the knights who guard the old shrines, and the Warden in his keep to the north."
         ]
       }
     },
@@ -37,23 +37,28 @@
       }
     },
     "F": { "tile": "flagstone", "entity": { "kind": "station", "station": "forge" } },
-    "A": { "tile": "flagstone", "entity": { "kind": "station", "station": "alchemy" } }
+    "A": { "tile": "flagstone", "entity": { "kind": "station", "station": "alchemy" } },
+    "w": { "tile": "flagstone", "entity": { "kind": "project", "project": "well" } },
+    "h": { "tile": "grass", "entity": { "kind": "project", "project": "storehouse" } },
+    "p": { "tile": "path", "entity": { "kind": "project", "project": "palisade" } },
+    "l": { "tile": "path", "entity": { "kind": "project", "project": "lamps" } },
+    "m": { "tile": "flagstone", "entity": { "kind": "project", "project": "smithy" } }
   },
   "rows": [
     "tt,,,,,,,,,,,,====,,,,,,,,,,,,tt",
-    ",,,,,,,,,,,,,,====,,,,,,,,,,,,,,",
+    ",,,,,,,,,,,,,,=p==,,,,,,,,,,,,,,",
     ",,RRRRRR,,,,,,====,,,,,,RRRRRR,,",
     ",,RRRRRR,,,,,,====,,,,,,RRRRRR,,",
     ",,HWHDWH,,,,,,====,,,,,,HWDHWH,,",
     ",,,,,=,,,,,,,,====,,,,,,,,=,,,,,",
     ",,,,,======================,,,,,",
-    ",,,,,,,,,,,,,,====,,,,,,,,,,,,,,",
+    ",,,,h,,,,,,,,,====,,,,,,,,,,,,,,",
     ",,,,,,,,T..............T,,,,,,,,",
     ",,,,,,,,.............F..,,,,,,,,",
     ",,,,,,,,....S...........,,,,,,,,",
-    "========.......B........========",
+    "========.......B........====l===",
     "========................========",
-    ",,,,,,,,................,,,,,,,,",
+    ",,,,,,,,....w.......m...,,,,,,,,",
     ",,,,,,,,..A.............,,,,,,,,",
     ",,,,,,,,T..............T,,,,,,,,",
     ",,,,,,,,,,,,,,====,,,,,,,,,,,,,,",

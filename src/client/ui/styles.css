@@ -1046,3 +1046,67 @@ kbd {
   color: var(--dim);
   font-variant-numeric: tabular-nums;
 }
+
+/* The rebuild screen for a ruined village project. */
+.rebuild-screen {
+  width: min(30em, calc(100% - 32px));
+}
+.rebuild-screen .head .title {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+}
+.rebuild-screen .description {
+  margin: 0 0 0.8em;
+  line-height: 1.4;
+}
+.rebuild-screen h3 {
+  margin: 0.6em 0 0.3em;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 0.85em;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+.rebuild-screen .gives {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--ember);
+}
+.rebuild-screen button.rebuild {
+  display: block;
+  margin: 1em auto 0;
+  min-width: 10em;
+}
+
+/* A boss's name and health, along the bottom while its fight is on. */
+.boss-bar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(6% + 58px);
+  transform: translateX(-50%);
+  width: min(36em, calc(100% - 32px));
+  pointer-events: none;
+}
+.boss-bar .name {
+  font-family: var(--display);
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  text-shadow: 0 1px 2px #000;
+  margin-bottom: 0.25em;
+}
+.boss-bar .track {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--edge);
+}
+.boss-bar .fill {
+  height: 100%;
+  background: var(--blood);
+  transition: width 0.35s ease-out;
+}
+.boss-bar.shielded .fill {
+  background: var(--ember);
+  box-shadow: 0 0 6px var(--ember);
+}

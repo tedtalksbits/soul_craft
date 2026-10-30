@@ -29,19 +29,35 @@ export interface SimState {
   lastDeath: { x: number; y: number } | null;
   /** The player's own map pin (world pixels), or none. */
   pin: { x: number; y: number } | null;
+  /** Village restoration projects the player has rebuilt, by project id. */
+  restored: Record<string, true>;
+  /** Bosses the player has defeated, by archetype. A defeated boss never returns. */
+  bossesDefeated: Record<string, true>;
+  /**
+   * The boss fight under way, or none: which boss, and its arena (center and half-size in world
+   * pixels), inside which the player is held until the fight ends.
+   */
+  bossFight: BossFight | null;
   /** Named areas and biomes the player has entered. */
   discovered: Record<string, true>;
   currentArea: string | null;
   cheats: { god: boolean; noclip: boolean };
 }
 
-export type LandmarkKind = 'village' | 'shrine' | 'camp' | 'wayshrine' | 'forge' | 'alchemy';
+export type LandmarkKind = 'village' | 'shrine' | 'camp' | 'wayshrine' | 'arena' | 'forge' | 'alchemy';
 
 export interface Landmark {
   kind: LandmarkKind;
   name: string;
   x: number;
   y: number;
+}
+
+export interface BossFight {
+  boss: string;
+  x: number;
+  y: number;
+  half: number;
 }
 
 export interface KnownBonfire {
@@ -63,6 +79,9 @@ export function initialState(seed: number): SimState {
     landmarks: {},
     lastDeath: null,
     pin: null,
+    restored: {},
+    bossesDefeated: {},
+    bossFight: null,
     discovered: {},
     currentArea: null,
     cheats: { god: false, noclip: false },

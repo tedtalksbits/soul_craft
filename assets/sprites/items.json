@@ -20,7 +20,9 @@
     "bandage": 13,
     "potion_ember": 14,
     "potion_stone": 15,
-    "potion_breath": 16
+    "potion_breath": 16,
+    "stone": 17,
+    "kindling": 18
   },
   "animations": {}
 }

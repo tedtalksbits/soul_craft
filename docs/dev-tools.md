@@ -33,6 +33,8 @@ Run `help` for the live list or `help <command>` for usage. Highlights:
 | `class [id]`, `charge`                                                   | Show or change class anywhere; ready every ability  |
 | `level <attribute> [n]`, `unlock <class / super / all>`                  | Free levels; awaken ability slots                   |
 | `bonfires`, `travel <id>`                                                | List lit bonfires; warp to one (rests there)        |
+| `projects`, `rebuild <id> [free]`                                        | List village projects; rebuild one from anywhere    |
+| `boss <id>`, `bosshp <fraction>`, `bossreset`                            | Go to a boss's gate; set its health; revive bosses  |
 | `craft <recipe>`, `upgrade`                                              | Craft or upgrade the weapon, ignoring station range |
 | `kill`                                                                   | Die (tests death and respawn)                       |
 | `tp <x> <y>`, `home`, `where`                                            | Teleport by tile, return to bonfire, print location |

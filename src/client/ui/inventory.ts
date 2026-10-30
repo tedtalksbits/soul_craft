@@ -21,6 +21,7 @@ import { unlockHint } from '../../sim/modules/unlocks';
 import type { PlayerAction } from '../../sim/input';
 import { canCraft, canUpgrade, nextUpgrade, stationNearby } from '../../sim/modules/crafting';
 import { countItem, EQUIP_SLOTS, playerStats } from '../../sim/modules/items';
+import { inventoryCapacity } from '../../sim/modules/restored-effects';
 import type { Simulation } from '../../sim/simulation';
 import { TICK_RATE } from '../../sim/constants';
 import { primaryKey, type Bindings } from '../keybinds';
@@ -163,7 +164,7 @@ export class InventoryScreen {
     const e = sim.player;
     const eq = sim.ecs.need(e, Equipment);
     const stacks = sim.ecs.need(e, Inventory).stacks;
-    const slots = sim.content.player.inventorySlots;
+    const slots = inventoryCapacity(sim);
 
     const equipped = EQUIP_SLOTS.map((slot) => {
       const stack = eq[slot];
@@ -449,6 +450,8 @@ export function itemName(def: ItemDef, level: number): string {
 /** One-line facts about an item, for the detail panel. */
 function facts(def: ItemDef, level: number): string[] {
   switch (def.kind) {
+    case 'key':
+      return ['Kept for restoring the village'];
     case 'relic':
       return [def.unlocks === 'class' ? 'Awakens your class ability' : 'Awakens your super'];
     case 'material':

@@ -5,7 +5,7 @@
  */
 import { Container, Graphics, Sprite as PixiSprite } from 'pixi.js';
 import type { Entity } from '../../core/ecs';
-import { Ai, Body, Dying, Health, Invulnerable, Pickup, Player, Sprite } from '../../sim/components';
+import { Ai, Body, Boss, Dying, Health, Invulnerable, Pickup, Player, Sprite } from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
 import { TELEGRAPH_STATES } from '../../sim/modules/brains';
 import { DEATH_TICKS } from '../../sim/modules/combat';
@@ -21,6 +21,12 @@ const CHIP_HOLD_MS = 450;
 const COMBO_WINDOW_MS = 1500;
 /** Pixels between the top of an enemy's head and its health bar. */
 const BAR_GAP = 4;
+/**
+ * Until a boss has art of its own it borrows a sheet (the Warden wears the knight's), drawn
+ * larger and ash-tinted so it does not read as the knight.
+ */
+const BOSS_SCALE = 1.4;
+const BOSS_TINT = 0xb89a88;
 
 interface EntityView {
   root: Container;
@@ -92,6 +98,9 @@ export class EntityLayer {
       const feetY = Math.round(body.y + body.h / 2);
       view.root.position.set(Math.round(body.x), feetY - Math.round(z));
       view.root.zIndex = feetY;
+      const boss = ecs.has(e, Boss);
+      view.root.scale.set(boss ? BOSS_SCALE : 1);
+      view.sprite.tint = boss ? BOSS_TINT : 0xffffff;
 
       const dying = ecs.get(e, Dying);
       let alpha = dying ? 1 - dying.t / DEATH_TICKS : 1;
@@ -115,7 +124,9 @@ export class EntityLayer {
         view.glow.alpha = 0.55;
       } else view.glow.alpha = 0;
 
-      if (view.bar) {
+      // A boss's health is the big bar at the bottom of the screen, not one over its head.
+      if (view.bar) view.bar.root.visible = !boss;
+      if (view.bar && !boss) {
         const health = ecs.get(e, Health);
         // Above the head pivot when the art provides one; the frame top is a poor guess for big frames.
         const head = sheet?.def.pivots['head'];

@@ -124,6 +124,30 @@ export class Audio {
       case 'wallSlam':
         this.burst(0.9, 120, 1.0, 'lowpass');
         return this.burst(0.3, 900, 0.3);
+      case 'bossSlam':
+        this.burst(1.1, 90, 1.1, 'lowpass');
+        return this.burst(0.4, 700, 0.35);
+      case 'bossFightStarted':
+        return this.tone(
+          [
+            [98, 1],
+            [92, 0.8],
+          ],
+          1.2,
+          0.08,
+          'sawtooth',
+        );
+      case 'bossShielded':
+        this.burst(0.4, 2400, 0.5, 'bandpass', [600, 2400]);
+        return this.arp([523, 392, 262], 120, 0.6, 0.05);
+      case 'brazierLit':
+        this.burst(0.2, 1800, 0.25, 'bandpass', [400, 1800]);
+        return this.arp([330, 494], 80, 0.4, 0.05);
+      case 'bossShieldBroken':
+        this.burst(0.8, 3000, 0.5, 'highpass');
+        return this.arp([262, 392, 523, 784], 70, 0.6, 0.06);
+      case 'bossDefeated':
+        return this.arp([196, 262, 330, 392, 523, 659, 784], 160, 1.2, 0.07);
       case 'bonfireLit':
         this.tone(
           [
@@ -160,12 +184,18 @@ export class Audio {
       case 'upgraded':
         this.burst(0.25, 3200, 0.3, 'highpass');
         return this.arp([392, 523, 784, 1047], 90, 0.7, 0.05);
+      case 'restored':
+        // Lower and slower than an upgrade: a place coming back, not a blade.
+        this.burst(0.3, 1800, 0.35, 'lowpass');
+        return this.arp([262, 330, 392, 523, 659], 140, 0.8, 0.06);
       case 'craftFailed':
+      case 'rebuildFailed':
       case 'inventoryFull':
         return this.tone([[150, 1]], 0.15, 0.06, 'square');
       case 'buffStarted':
         return this.arp([440, 554, 659], 60, 0.5, 0.05);
       case 'stationOpened':
+      case 'projectOpened':
         return this.burst(0.1, 900, 0.12, 'bandpass', [500, 1400]);
       case 'abilityUsed':
         if (e.slot === 'super') {

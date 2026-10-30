@@ -1,7 +1,7 @@
 /**
  * Which ability slots the player has awakened. Kept apart from the abilities module so
  * combat (relic drops) and pickups (taking a relic) can use it without import cycles.
- * The AoE is always known; the class ability and then the super are unlocked by relics.
+ * The AoE is always known; the class ability and the super are unlocked by relics.
  */
 import type { Content } from '../../content/content';
 import { Abilities } from '../components';
@@ -15,13 +15,12 @@ export function slotUnlocked(a: Abilities, slot: 'aoe' | LockableSlot): boolean 
 }
 
 /**
- * Whether a relic for `slot` may drop now: the slot is still locked, and it is next in line
- * (the super only after the class ability), so relics come in order.
+ * Whether a relic for `slot` may drop now: only while the slot is still locked. Each relic has
+ * its own source (a guardian knight, a boss), and a boss falls once, so there is no fixed order.
  */
 export function relicWanted(sim: Simulation, slot: LockableSlot): boolean {
   const a = sim.ecs.get(sim.player, Abilities);
-  if (!a || a.unlocked[slot]) return false;
-  return slot === 'class' || a.unlocked.class;
+  return a !== undefined && !a.unlocked[slot];
 }
 
 /** Awakens a slot. Returns false if it was already awake. */

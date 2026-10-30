@@ -108,13 +108,11 @@ describe('ability unlocks', () => {
     expect(sim.ecs.need(sim.player, Abilities).unlocked).toEqual({ class: true, super: false });
   });
 
-  it('the second drops the Sovereign Ember for the super, and after that no more relics', () => {
+  it('later knights drop no relic: the Sovereign Ember comes from the Ashen Warden', () => {
     const sim = newSim();
     killKnight(sim);
-    const second = killKnight(sim);
-    expect(second.dropped).toEqual(['relic_sovereign']);
-    expect(sim.ecs.need(sim.player, Abilities).unlocked).toEqual({ class: true, super: true });
     expect(killKnight(sim).dropped).toEqual([]);
+    expect(sim.ecs.need(sim.player, Abilities).unlocked).toEqual({ class: true, super: false });
   });
 
   it('relics are taken, never carried', () => {

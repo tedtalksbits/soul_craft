@@ -4,6 +4,7 @@ import { dirFromVec } from '../../core/math';
 import {
   Ai,
   Body,
+  Boss,
   ContactDamage,
   Dying,
   Enemy,
@@ -49,6 +50,7 @@ export function spawnEnemy(
   });
   ecs.add(e, ContactDamage, { amount: def.contactDamage });
   ecs.add(e, Sprite, { sheet: def.sprite });
+  if (def.boss) ecs.add(e, Boss, { phase: 0, shielded: false, addTimer: 0 });
   if (spawned) ecs.add(e, Spawned, spawned);
   return e;
 }

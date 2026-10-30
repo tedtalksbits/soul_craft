@@ -25,6 +25,7 @@ import { TICK_RATE } from '../constants';
 import type { PlayerAction } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
+import { inventoryCapacity } from './restored-effects';
 
 /** What the player's swing and body amount to once gear and buffs are applied. */
 export interface PlayerStats {
@@ -80,7 +81,7 @@ export function addItem(sim: Simulation, e: Entity, item: string, count: number,
     s.count += take;
     left -= take;
   }
-  while (left > 0 && inv.stacks.length < sim.content.player.inventorySlots) {
+  while (left > 0 && inv.stacks.length < inventoryCapacity(sim)) {
     const take = Math.min(max, left);
     inv.stacks.push({ item, count: take, level });
     left -= take;
@@ -95,7 +96,7 @@ export function roomFor(sim: Simulation, e: Entity, item: string, level = 0): nu
   const inStacks = inv.stacks
     .filter((s) => s.item === item && s.level === level)
     .reduce((n, s) => n + (max - s.count), 0);
-  return inStacks + (sim.content.player.inventorySlots - inv.stacks.length) * max;
+  return inStacks + (inventoryCapacity(sim) - inv.stacks.length) * max;
 }
 
 /** Removes `count` of an item (from the last stacks first). All or nothing. */
@@ -329,7 +330,7 @@ const commands: SimCommand[] = [
         ...EQUIP_SLOTS.map((slot) => `${slot.padEnd(7)} ${show(eq[slot])}`),
         `quick   ${eq.quick ?? '-'}`,
         `stats   dmg ${st.damage.toFixed(1)}  def ${(st.defense * 100).toFixed(0)}%  maxHp ${st.maxHp}  regen ${st.staminaRegen.toFixed(2)}`,
-        `items   ${inv.stacks.length}/${sim.content.player.inventorySlots} slots`,
+        `items   ${inv.stacks.length}/${inventoryCapacity(sim)} slots`,
         ...inv.stacks.map((s, i) => `  [${i}] ${s.item} x${s.count}${s.level ? ` +${s.level}` : ''}`),
       ].join('\n');
     },

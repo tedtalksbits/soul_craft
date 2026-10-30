@@ -136,9 +136,12 @@ export type StatId = z.infer<typeof StatSchema>;
 
 export const ItemSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('material'), ...itemBase }),
+  /** A story item (a boss's Kindling): kept in the pack, spent only by restoration projects. */
+  z.object({ kind: z.literal('key'), ...itemBase }),
   /**
    * Unlocks an ability slot the moment it is picked up (it never enters the pack). It only
-   * drops while its slot is still locked, in order: the class ability, then the super.
+   * drops while its slot is still locked (the Oath Ember from a guardian knight, the Sovereign Ember
+   * from the Ashen Warden).
    */
   z.object({
     kind: z.literal('relic'),
@@ -154,7 +157,13 @@ export const ItemSchema = z.discriminatedUnion('kind', [
     /** Forge upgrades, in order: each adds `damage` and costs souls plus items. */
     upgrades: z
       .array(
-        z.object({ damage: pos, souls: z.number().int().nonnegative(), items: z.array(ItemCountSchema) }),
+        z.object({
+          damage: pos,
+          souls: z.number().int().nonnegative(),
+          items: z.array(ItemCountSchema),
+          /** A restoration project that must be rebuilt first (the smithy's extra steps). */
+          requires: z.string().optional(),
+        }),
       )
       .default([]),
   }),
@@ -194,6 +203,42 @@ export const RecipeSchema = z.object({
 });
 export type RecipeDef = z.infer<typeof RecipeSchema>;
 export const RecipesSchema = z.record(z.string(), RecipeSchema);
+
+// ------------------------------------------------------------------ restoration
+
+/** What rebuilding a project does, applied once when it is rebuilt (and kept in the save). */
+export const RestorationEffectSchema = z.discriminatedUnion('type', [
+  /** More flask charges: the well. */
+  z.object({ type: z.literal('maxFlasks'), amount: z.number().int().min(1) }),
+  /** More pack slots: the storehouse. */
+  z.object({ type: z.literal('inventorySlots'), amount: z.number().int().min(1) }),
+  /** No enemies spawn within this many tiles of the village: the palisade. */
+  z.object({ type: z.literal('safeRadius'), tiles: pos }),
+  /** The site gives warm light at night: lamp posts. */
+  z.object({ type: z.literal('light'), radius: pos }),
+  /** Unlocks forge upgrade steps that name this project in `requires`: the smithy. */
+  z.object({ type: z.literal('forgeSteps') }),
+]);
+export type RestorationEffect = z.infer<typeof RestorationEffectSchema>;
+
+/**
+ * A ruined spot in the village that the player rebuilds with wood, stone and souls (and, for a
+ * major project, a boss's Kindling). The roadmap's restoration thread; see docs/content-pipeline.md.
+ */
+export const RestorationSchema = z.object({
+  name: z.string(),
+  /** What the player reads on the ruin before rebuilding: what it was, and what it will give. */
+  description: z.string(),
+  tier: z.enum(['small', 'major']),
+  cost: z.object({ items: z.array(ItemCountSchema).min(1), souls: z.number().int().nonnegative() }),
+  effects: z.array(RestorationEffectSchema).min(1),
+  /** Frames in the `village` sheet: the ruin, then the rebuilt site. */
+  sprite: z.object({ ruin: z.string(), restored: z.string() }),
+  /** What the site says once rebuilt (a returned villager's words). */
+  restoredLines: z.array(z.string()).min(1),
+});
+export type RestorationDef = z.infer<typeof RestorationSchema>;
+export const RestorationsSchema = z.record(z.string(), RestorationSchema);
 
 // ------------------------------------------------------------------ player
 
@@ -328,6 +373,30 @@ const BrainSchema = z.discriminatedUnion('type', [
     stunTicks: ticks,
     cooldown: ticks,
   }),
+  /**
+   * The Ashen Warden: a slam around itself and a charge across the arena. At each `shieldAt`
+   * fraction of its health it raises a shield (immune to everything), falls back to the arena's
+   * center and calls `adds`; the player breaks the shield by standing on every brazier in the
+   * arena, which staggers it for `staggerTicks`.
+   */
+  z.object({
+    type: z.literal('warden'),
+    slamRange: pos,
+    slamWindupTicks: ticks,
+    slamRadius: pos,
+    slamDamage: pos,
+    chargeRange: pos,
+    chargeWindupTicks: ticks,
+    chargeSpeed: pos,
+    chargeTicks: ticks,
+    chargeDamage: pos,
+    recoverTicks: ticks,
+    cooldown: range,
+    /** Health fractions, highest first, at which the shield goes up. */
+    shieldAt: z.array(fraction),
+    adds: z.object({ archetype: z.string(), every: ticks, max: z.number().int().min(0) }),
+    staggerTicks: ticks,
+  }),
 ]);
 export type BrainDef = z.infer<typeof BrainSchema>;
 export type BrainType = BrainDef['type'];
@@ -347,6 +416,12 @@ export const EnemySchema = z.object({
   recoilTicks: ticks,
   /** Multiplier on knockback received. 0 = immovable. */
   knockbackTaken: nonneg,
+  /**
+   * Makes this enemy a boss: a health bar with its name and `title` while the fight is on, and once
+   * killed it never returns. The arena is the square `arenaTiles` from its spawn point to each side;
+   * walking in starts the fight and the player cannot leave until it ends (the fog gate).
+   */
+  boss: z.object({ title: z.string(), arenaTiles: pos }).optional(),
   brain: BrainSchema,
 });
 export type EnemyDef = z.infer<typeof EnemySchema>;
@@ -421,6 +496,13 @@ export const WorldSchema = z.object({
    */
   origin: z.object({ prefab: z.string(), safeRadius: nonneg, biome: z.string().optional() }),
   regions: z.object({ sizeChunks: z.number().int().min(1), prefabs: weighted(z.string().nullable()) }),
+  /**
+   * Set pieces every world has, in the same place: each takes over its region (x, y in regions, the
+   * origin's being 0, 0), centered vertically against the region's west edge.
+   */
+  fixed: z
+    .array(z.object({ prefab: z.string(), region: z.tuple([z.number().int(), z.number().int()]) }))
+    .default([]),
 });
 export type WorldDef = z.infer<typeof WorldSchema>;
 
@@ -433,6 +515,10 @@ export const PrefabEntitySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('torch') }),
   z.object({ kind: z.literal('playerSpawn') }),
   z.object({ kind: z.literal('station'), station: StationSchema }),
+  /** A restoration project's site (a ruin until rebuilt). */
+  z.object({ kind: z.literal('project'), project: z.string() }),
+  /** A boss arena's brazier: stood on while the boss is shielded, it lights. */
+  z.object({ kind: z.literal('brazier') }),
 ]);
 export type PrefabEntityDef = z.infer<typeof PrefabEntitySchema>;
 
@@ -441,7 +527,7 @@ export const PrefabSchema = z
     /** Shown when the player walks in. Omit for unnamed set pieces. */
     name: z.string().optional(),
     /** How the world map marks this set piece once the player has seen it. Omit for no marker. */
-    marker: z.enum(['village', 'shrine', 'camp', 'wayshrine']).optional(),
+    marker: z.enum(['village', 'shrine', 'camp', 'wayshrine', 'arena']).optional(),
     darkness: fraction.optional(),
     /** Biomes this prefab may be placed in by region scattering. Omit for anywhere. */
     biomes: z.array(z.string()).optional(),

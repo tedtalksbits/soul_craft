@@ -80,8 +80,7 @@
       { "kind": "ember", "chance": 1, "amount": [30, 40] },
       { "kind": "souls", "chance": 0.5, "amount": [20, 40] },
       { "kind": "item", "item": "iron_scrap", "chance": 1, "amount": [2, 3] },
-      { "kind": "item", "item": "relic_oath", "chance": 1, "amount": [1, 1] },
-      { "kind": "item", "item": "relic_sovereign", "chance": 1, "amount": [1, 1] }
+      { "kind": "item", "item": "relic_oath", "chance": 1, "amount": [1, 1] }
     ],
     "recoilTicks": 0,
     "knockbackTaken": 0.4,
@@ -94,6 +93,42 @@
       "chargeDamage": 24,
       "stunTicks": 70,
       "cooldown": 40
+    }
+  },
+  "ashen_warden": {
+    "name": "Ashen Warden",
+    "sprite": "knight",
+    "body": { "w": 22, "h": 16 },
+    "hp": 600,
+    "speed": 0.8,
+    "aggroRange": 400,
+    "contactDamage": 12,
+    "souls": 1500,
+    "drops": [
+      { "kind": "item", "item": "kindling_warden", "chance": 1, "amount": [1, 1] },
+      { "kind": "item", "item": "relic_sovereign", "chance": 1, "amount": [1, 1] },
+      { "kind": "ember", "chance": 1, "amount": [60, 80] },
+      { "kind": "item", "item": "iron_scrap", "chance": 1, "amount": [4, 6] }
+    ],
+    "recoilTicks": 0,
+    "knockbackTaken": 0,
+    "boss": { "title": "Keeper of the Last Kindling", "arenaTiles": 11.5 },
+    "brain": {
+      "type": "warden",
+      "slamRange": 30,
+      "slamWindupTicks": 40,
+      "slamRadius": 38,
+      "slamDamage": 30,
+      "chargeRange": 170,
+      "chargeWindupTicks": 36,
+      "chargeSpeed": 3.6,
+      "chargeTicks": 50,
+      "chargeDamage": 26,
+      "recoverTicks": 45,
+      "cooldown": [30, 60],
+      "shieldAt": [0.66, 0.33],
+      "adds": { "archetype": "hollow", "every": 240, "max": 3 },
+      "staggerTicks": 240
     }
   }
 }

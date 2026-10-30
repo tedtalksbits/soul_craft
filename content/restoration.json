@@ -1,0 +1,82 @@
+{
+  "well": {
+    "name": "The Village Well",
+    "description": "Choked with ash and rubble. Cleared and walled anew, its water will let your flask hold one more draught.",
+    "tier": "small",
+    "cost": {
+      "items": [
+        { "item": "ashwood", "count": 12 },
+        { "item": "stone", "count": 16 }
+      ],
+      "souls": 100
+    },
+    "effects": [{ "type": "maxFlasks", "amount": 1 }],
+    "sprite": { "ruin": "well_ruin", "restored": "well" },
+    "restoredLines": ["The well runs clear again. Your flask can hold one more draught."]
+  },
+  "storehouse": {
+    "name": "The Storehouse",
+    "description": "A collapsed storehouse. Rebuilt, it will hold what you cannot carry: your pack grows by eight slots.",
+    "tier": "small",
+    "cost": {
+      "items": [
+        { "item": "ashwood", "count": 20 },
+        { "item": "stone", "count": 10 }
+      ],
+      "souls": 150
+    },
+    "effects": [{ "type": "inventorySlots", "amount": 8 }],
+    "sprite": { "ruin": "storehouse_ruin", "restored": "storehouse" },
+    "restoredLines": ["Shelves and sacks, stacked to the rafters. Your pack has room for eight more."]
+  },
+  "palisade": {
+    "name": "The Palisade",
+    "description": "The village wall lies in splinters. Raised again, it will keep the blight's creatures from rising near the village.",
+    "tier": "small",
+    "cost": {
+      "items": [
+        { "item": "ashwood", "count": 30 },
+        { "item": "stone", "count": 8 }
+      ],
+      "souls": 200
+    },
+    "effects": [{ "type": "safeRadius", "tiles": 40 }],
+    "sprite": { "ruin": "palisade_ruin", "restored": "palisade" },
+    "restoredLines": ["The palisade stands. Nothing of the blight stirs this close to the village now."]
+  },
+  "lamps": {
+    "name": "The Lamp Posts",
+    "description": "Toppled lamp posts along the east road. Set upright and lit, they will hold back the dark.",
+    "tier": "small",
+    "cost": {
+      "items": [
+        { "item": "ashwood", "count": 6 },
+        { "item": "stone", "count": 6 },
+        { "item": "iron_scrap", "count": 4 }
+      ],
+      "souls": 60
+    },
+    "effects": [{ "type": "light", "radius": 70 }],
+    "sprite": { "ruin": "lamps_ruin", "restored": "lamps" },
+    "restoredLines": ["The lamps burn steady. The road east is lit."]
+  },
+  "smithy": {
+    "name": "The Smithy",
+    "description": "The smith's forge lies cold and broken. With a Kindling to relight it, the smith will return and take your weapons further than the old forge could.",
+    "tier": "major",
+    "cost": {
+      "items": [
+        { "item": "kindling_warden", "count": 1 },
+        { "item": "ashwood", "count": 25 },
+        { "item": "stone", "count": 30 }
+      ],
+      "souls": 400
+    },
+    "effects": [{ "type": "forgeSteps" }],
+    "sprite": { "ruin": "smithy_ruin", "restored": "smithy" },
+    "restoredLines": [
+      "SMITH: The fire's back, and so am I. Bring your blade to the forge.",
+      "SMITH: I can take it past what that old anvil managed. Two more tempers, if you've the iron for it."
+    ]
+  }
+}

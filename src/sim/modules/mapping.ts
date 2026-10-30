@@ -21,6 +21,7 @@ const DEFAULT_NAMES: Readonly<Record<LandmarkKind, string>> = {
   shrine: 'Shrine',
   camp: 'Camp',
   wayshrine: 'Wayshrine',
+  arena: 'Arena',
   forge: 'Forge',
   alchemy: 'Alchemy table',
 };

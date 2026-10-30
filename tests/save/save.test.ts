@@ -189,3 +189,17 @@ describe('v6 -> v7', () => {
     expect(Object.keys(sim.state.explored).length).toBeGreaterThan(0);
   });
 });
+
+describe('v7 -> v8', () => {
+  it('gives an old save an unrestored village and no defeated bosses', () => {
+    const current = createSave(newSim(11), '1');
+    const added = new Set(['restored', 'bossesDefeated', 'bossFight']);
+    const v7State = Object.fromEntries(Object.entries(current.snapshot.state).filter(([k]) => !added.has(k)));
+    const v7 = { ...current, version: 7, snapshot: { ...current.snapshot, state: v7State } };
+    const migrated = parseSave(JSON.parse(JSON.stringify(v7)));
+    expect(migrated.snapshot.state).toMatchObject({ restored: {}, bossesDefeated: {}, bossFight: null });
+    const sim = Simulation.restore(migrated.snapshot, content);
+    run(sim, 1);
+    expect(sim.state.restored).toEqual({});
+  });
+});

@@ -350,9 +350,48 @@ ICONS['iron_sword'] = sword(tip_row=1, guard='i', chipped=False)
 ICONS['ring_vigor'] = ring('y', 'v')     # gold band, ruby
 ICONS['ring_breath'] = ring('i', 'u')    # iron band, azure stone
 
+ICONS['stone'] = [   # a rough quarried block, chipped on the upper left
+    "................",
+    "................",
+    "................",
+    "................",
+    ".....tttt.......",
+    "....tTTttt(.....",
+    "...tTttttt((....",
+    "..tTtttttt(((...",
+    "..tttttt(((((...",
+    "..ttttt((((((...",
+    "...ttt((((((....",
+    "....((((((......",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+ICONS['kindling'] = [   # a living ember held in a small brass cradle: a boss's restoring flame
+    "................",
+    "................",
+    ".......O........",
+    "......OoO.......",
+    ".....OooOo......",
+    ".....oOoo*......",
+    "....oOoooo*.....",
+    "....ooooo**.....",
+    ".....oo***......",
+    "...yY.***..y!...",
+    "...yYyyyyyyy!...",
+    "....yyyyyyy!....",
+    ".....!!!!!!.....",
+    "................",
+    "................",
+    "................",
+]
+
 ORDER = ['ashwood', 'fungal_cap', 'glowspore', 'iron_scrap', 'bone_shard', 'slime_gel',
          'chipped_sword', 'iron_sword', 'bone_cleaver', 'padded_jacket', 'iron_mail',
-         'ring_vigor', 'ring_breath', 'bandage', 'potion_ember', 'potion_stone', 'potion_breath']
+         'ring_vigor', 'ring_breath', 'bandage', 'potion_ember', 'potion_stone', 'potion_breath',
+         'stone', 'kindling']
 
 # ---------------------------------------------------------------- shading and outline
 def paint(rows):

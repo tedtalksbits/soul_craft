@@ -65,6 +65,19 @@ export type SimEvent =
   | { type: 'abilityLocked'; slot: AbilitySlot }
   /** The player warped to a lit bonfire and is now resting there. */
   | { type: 'traveled'; id: string; name: string }
-  | { type: 'leveledUp'; attribute: AttributeId; level: number };
+  | { type: 'leveledUp'; attribute: AttributeId; level: number }
+  /** The player opened a ruined project's site; the client shows what it needs. */
+  | { type: 'projectOpened'; project: string }
+  | { type: 'restored'; project: string }
+  | { type: 'rebuildFailed'; project: string; reason: string }
+  | { type: 'bossFightStarted'; boss: string }
+  /** The fight ended without a win (the player died); the boss will be back at full health. */
+  | { type: 'bossFightEnded'; boss: string }
+  | { type: 'bossShielded'; boss: string; braziers: number }
+  | { type: 'brazierLit'; x: number; y: number; left: number }
+  | { type: 'bossShieldBroken'; boss: string }
+  /** The boss's ground slam landing: a ring of `radius` around (x, y). */
+  | { type: 'bossSlam'; x: number; y: number; radius: number }
+  | { type: 'bossDefeated'; boss: string };
 
 export type SimEventType = SimEvent['type'];

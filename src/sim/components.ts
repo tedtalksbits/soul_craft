@@ -155,7 +155,7 @@ export interface ItemStack {
   level: number;
 }
 
-/** What the player carries. Order is the display order; capacity is `player.inventorySlots`. */
+/** What the player carries. Order is the display order; capacity is `inventoryCapacity()` (base slots plus a rebuilt storehouse). */
 export interface Inventory {
   stacks: ItemStack[];
 }
@@ -196,6 +196,28 @@ export interface Enemy {
   homeY: number;
 }
 export const Enemy = defineComponent<Enemy>('enemy');
+
+/**
+ * A boss's fight state. `phase` counts the shields raised so far (an index into the brain's
+ * `shieldAt`); while `shielded`, nothing hurts it until every brazier in its arena is lit.
+ */
+export interface Boss {
+  phase: number;
+  shielded: boolean;
+  /** Ticks until the next add is called while shielded. */
+  addTimer: number;
+}
+export const Boss = defineComponent<Boss>('boss');
+
+/** An enemy a boss called into its fight. Gone when the boss dies. */
+export type Minion = Record<string, never>;
+export const Minion = defineComponent<Minion>('minion');
+
+/** A boss arena's brazier, lit by standing on it while the boss is shielded. */
+export interface Brazier {
+  lit: boolean;
+}
+export const Brazier = defineComponent<Brazier>('brazier');
 
 /** Brain state shared by all enemy brains. Interpreted per brain type. */
 export interface Ai {
@@ -266,6 +288,12 @@ export interface Sign {
   lines: string[];
 }
 export const Sign = defineComponent<Sign>('sign');
+
+/** A village restoration site: a ruin until its project is rebuilt (see `SimState.restored`). */
+export interface Project {
+  project: string;
+}
+export const Project = defineComponent<Project>('project');
 
 export type Torch = Record<string, never>;
 export const Torch = defineComponent<Torch>('torch');

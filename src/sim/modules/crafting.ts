@@ -11,6 +11,7 @@ import type { PlayerAction } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { addItem, countItem, removeItem, roomFor } from './items';
+import { projectName } from './restoration';
 
 /** How far from a station the player may still use it, in multiples of the interact range. */
 const STATION_REACH = 2;
@@ -77,6 +78,9 @@ export function canUpgrade(sim: Simulation, opts: { ignoreStation?: boolean } = 
   const next = nextUpgrade(sim);
   if (!next) return fail('cannot be upgraded further');
   if (!opts.ignoreStation && !stationNearby(sim, 'forge')) return fail('needs a forge');
+  // The last steps need a master's hand: they wait on a rebuilt project (the smithy).
+  if (next.requires && !sim.state.restored[next.requires])
+    return fail(`needs ${projectName(sim, next.requires)} rebuilt`);
   const e = sim.player;
   if (sim.ecs.need(e, Player).souls < next.souls) return fail('not enough souls');
   const inv = sim.ecs.need(e, Inventory);

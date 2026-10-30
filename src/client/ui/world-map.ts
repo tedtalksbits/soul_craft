@@ -34,6 +34,7 @@ const LANDMARK_STYLE: Readonly<Record<LandmarkKind, { color: string; label: stri
   shrine: { color: '#9fb4d8', label: 'Shrine' },
   camp: { color: '#d0705a', label: 'Camp' },
   wayshrine: { color: '#c8c0a8', label: 'Wayshrine' },
+  arena: { color: '#e05a4a', label: 'Boss arena' },
   forge: { color: '#ff9a40', label: 'Forge' },
   alchemy: { color: '#7ad8d0', label: 'Alchemy table' },
 };
@@ -228,7 +229,7 @@ export class WorldMapScreen {
       const s = this.toScreen(l.x, l.y);
       const style = LANDMARK_STYLE[l.kind];
       diamond(ctx, s.x, s.y, l.kind === 'village' ? 6 : 4, style.color);
-      if (labels && (l.kind === 'village' || l.kind === 'shrine'))
+      if (labels && (l.kind === 'village' || l.kind === 'shrine' || l.kind === 'arena'))
         label(ctx, l.name, s.x, s.y - 9, style.color);
     }
     for (const b of Object.values(sim.state.bonfires)) {

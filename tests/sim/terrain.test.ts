@@ -82,8 +82,19 @@ describe('cuttable terrain', () => {
     expect(sim.world.tileAt(tx, ty)?.id).toBe('ash');
   });
 
-  it('leaves rocks, walls and graves untouched', () => {
-    for (const id of ['rock', 'wall', 'grave']) {
+  it('breaks a rock in four swings into stone, the restoration material', () => {
+    const sim = newSim();
+    const [tx, ty] = tileToTheRight(sim, 'rock');
+    const events = [...swing(sim), ...swing(sim), ...swing(sim)];
+    expect(ofType(events, 'tileCut')).toEqual([]);
+    expect(ofType(swing(sim), 'tileCut')).toHaveLength(1);
+    expect(sim.world.tileAt(tx, ty)?.id).not.toBe('rock');
+    const drops = [...sim.ecs.query(Pickup)].map(([, p]) => p.item);
+    expect(drops).toContain('stone');
+  });
+
+  it('leaves walls and graves untouched', () => {
+    for (const id of ['wall', 'grave']) {
       const sim = newSim();
       const [tx, ty] = tileToTheRight(sim, id);
       const events = [...swing(sim), ...swing(sim), ...swing(sim), ...swing(sim)];

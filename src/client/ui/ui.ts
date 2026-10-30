@@ -42,14 +42,28 @@ export interface PauseHandlers {
   saveAndQuit(): void;
 }
 
+/** How long a banner holds the screen before the next may replace it. */
+const BANNER_HOLD_MS = 2200;
+
 type ScreenKind = 'title' | 'pause' | 'classes' | 'settings' | 'travel' | 'map';
 
 export class Ui {
   private readonly promptEl = h('div', { class: 'prompt hidden' });
   private readonly toastEl = h('div', { class: 'toast hidden' });
   private readonly fadeEl = h('div', { class: 'fade' });
+  private readonly bossFill = h('div', { class: 'fill' });
+  private readonly bossName = h('div', { class: 'name' });
+  private readonly bossEl = h(
+    'div',
+    { class: 'boss-bar hidden' },
+    this.bossName,
+    h('div', { class: 'track' }, this.bossFill),
+  );
   private toastTimer = 0;
   private bannerEl: HTMLElement | null = null;
+  /** When (performance.now) the banner slot is next free, and banners waiting for it. */
+  private bannerFreeAt = 0;
+  private bannerTimers: number[] = [];
   private areaEl: HTMLElement | null = null;
   private dialogState: { el: HTMLElement; lines: string[]; index: number } | null = null;
   private screenEl: HTMLElement | null = null;
@@ -65,7 +79,7 @@ export class Ui {
   bindings: Bindings = DEFAULT_BINDINGS;
 
   constructor(private readonly root: HTMLElement) {
-    root.append(this.promptEl, this.toastEl, this.fadeEl);
+    root.append(this.promptEl, this.toastEl, this.bossEl, this.fadeEl);
     addEventListener('keydown', (e) => {
       if (!this.dialogState || e.repeat) return;
       if (this.bindings.use.includes(e.code) || this.bindings.attack.includes(e.code)) {
@@ -159,6 +173,16 @@ export class Ui {
     }
   }
 
+  /** The boss's name and health along the bottom of the screen while its fight is on, or none. */
+  bossBar(boss: { name: string; title: string; frac: number; shielded: boolean } | null): void {
+    this.bossEl.classList.toggle('hidden', boss === null);
+    if (!boss) return;
+    const label = `${boss.name}, ${boss.title}`;
+    if (this.bossName.textContent !== label) this.bossName.textContent = label;
+    this.bossFill.style.width = `${Math.max(0, Math.min(1, boss.frac)) * 100}%`;
+    this.bossEl.classList.toggle('shielded', boss.shielded);
+  }
+
   /** A short message; `color` (CSS) tints the text, e.g. a class change in the class's color. */
   toast(text: string, ms = 2600, color?: string): void {
     this.toastEl.textContent = text;
@@ -207,7 +231,26 @@ export class Ui {
     this.root.append(this.areaEl);
   }
 
+  /**
+   * A full-width banner. Two in quick succession (a boss felled, then the relic it dropped) would
+   * cut each other off, so a later one waits its turn; death never waits.
+   */
   banner(text: string, kind: 'death' | 'good'): void {
+    const now = performance.now();
+    if (kind === 'death') this.cancelBanners();
+    const wait = Math.max(0, this.bannerFreeAt - now);
+    this.bannerFreeAt = now + wait + BANNER_HOLD_MS;
+    if (wait === 0) this.showBanner(text, kind);
+    else this.bannerTimers.push(window.setTimeout(() => this.showBanner(text, kind), wait));
+  }
+
+  private cancelBanners(): void {
+    for (const t of this.bannerTimers) clearTimeout(t);
+    this.bannerTimers = [];
+    this.bannerFreeAt = 0;
+  }
+
+  private showBanner(text: string, kind: 'death' | 'good'): void {
     this.bannerEl?.remove();
     this.bannerEl = h(
       'div',
@@ -352,9 +395,11 @@ export class Ui {
   /** Clears transient in-game UI (used when leaving or switching worlds). */
   resetHud(): void {
     this.prompt(null);
+    this.bossBar(null);
     this.closeDialog();
     this.fade(false);
     this.areaEl?.remove();
+    this.cancelBanners();
     this.bannerEl?.remove();
     this.restMenu(null, { travel: () => undefined, levelUp: () => undefined, changeClass: () => undefined });
     this.clearHint();
