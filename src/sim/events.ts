@@ -1,5 +1,5 @@
 import type { Entity } from '../core/ecs';
-import type { AbilitySlot, StatId, StationId } from '../content/schemas';
+import type { AbilitySlot, AttributeId, StatId, StationId } from '../content/schemas';
 import type { EquipSlot, PickupKind } from './components';
 
 /**
@@ -58,6 +58,11 @@ export type SimEvent =
   | { type: 'blast'; ability: string; x: number; y: number; radius: number }
   | { type: 'empowered'; ability: string; seconds: number }
   | { type: 'empowerEnded'; ability: string }
-  | { type: 'classChanged'; class: string };
+  | { type: 'classChanged'; class: string }
+  /** A relic awakened an ability slot; `ability` is what that slot holds for the current class. */
+  | { type: 'abilityUnlocked'; slot: 'class' | 'super'; ability: string }
+  /** An ability key was pressed for a slot not yet awakened. */
+  | { type: 'abilityLocked'; slot: AbilitySlot }
+  | { type: 'leveledUp'; attribute: AttributeId; level: number };
 
 export type SimEventType = SimEvent['type'];

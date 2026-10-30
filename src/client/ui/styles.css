@@ -912,3 +912,61 @@ kbd {
 .hint-card .keys .icon {
   margin-bottom: 2px;
 }
+
+/* ------------------------------------------------------------------ leveling and locked abilities */
+
+.level-screen {
+  width: min(34em, calc(100% - 32px));
+}
+.level-screen .head .title {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--ember);
+}
+.level-screen .attribute {
+  display: grid;
+  grid-template-columns: 2.4em 1fr auto;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.45em 0;
+  border-bottom: 1px solid rgba(214, 190, 140, 0.15);
+}
+.level-screen .points {
+  font-family: var(--display);
+  font-size: 1.5em;
+  text-align: center;
+  color: var(--ember);
+  font-variant-numeric: tabular-nums;
+}
+.level-screen .name {
+  font-family: var(--display);
+  letter-spacing: 0.05em;
+}
+.level-screen .now {
+  font-size: 0.9em;
+}
+.level-screen .next {
+  font-size: 0.8em;
+  color: var(--dim);
+}
+.level-screen .attribute button {
+  min-width: 7em;
+}
+
+/* An ability not yet awakened: seen, dimmed, with what awakens it. */
+.class-card li.locked .keys,
+.class-card li.locked .ability,
+.class-card li.locked .what,
+.inventory .ability-row.locked .keys,
+.inventory .ability-row.locked .name,
+.inventory .ability-row.locked .desc {
+  opacity: 0.45;
+}
+.class-card .locked-note,
+.inventory .ability-row.locked .rule {
+  font-size: 0.8em;
+  font-style: italic;
+  color: var(--ember);
+}

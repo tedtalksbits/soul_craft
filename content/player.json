@@ -31,5 +31,14 @@
   "magnet": { "radius": 40, "speed": 0.4, "accel": 0.12, "maxSpeed": 5 },
   "inventorySlots": 24,
   "start": { "class": "vanguard", "weapon": "chipped_sword", "items": [] },
+  "leveling": {
+    "cost": { "base": 80, "growth": 1.15 },
+    "perLevel": {
+      "vigor": { "maxHp": 8 },
+      "endurance": { "maxStamina": 6 },
+      "might": { "damage": 0.05 },
+      "attunement": { "abilityDamage": 0.05, "energy": 0.05 }
+    }
+  },
   "energy": { "perDamage": 0.12, "perKill": 2, "perSecond": 0.25 }
 }

@@ -84,10 +84,21 @@ export interface Abilities {
   cooldowns: { aoe: number; class: number };
   /** Super energy, 0-100. The super needs a full bar. */
   energy: number;
+  /** Which slots the player has awakened (relics unlock them). The AoE is always known. */
+  unlocked: { class: boolean; super: boolean };
   /** The ability being cast in the `cast` state, and where it was aimed; null otherwise. */
   casting: { ability: string; slot: AbilitySlot; aimX: number; aimY: number } | null;
 }
 export const Abilities = defineComponent<Abilities>('abilities');
+
+/** Points spent in each attribute by leveling at bonfires. The player's level is their sum plus one. */
+export interface Attributes {
+  vigor: number;
+  endurance: number;
+  might: number;
+  attunement: number;
+}
+export const Attributes = defineComponent<Attributes>('attributes');
 
 /**
  * A super's timed mode on the player. The numbers are copied from the ability when it

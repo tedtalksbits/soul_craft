@@ -24,6 +24,7 @@ import { FixedLoop } from './loop';
 import type { GameRenderer } from './render/renderer';
 import { iconElement, tintedIcon } from './ui/icons';
 import { InventoryScreen } from './ui/inventory';
+import { LevelScreen } from './ui/level';
 import { Ui, type ClassLabel } from './ui/ui';
 
 /** Autosave this often while playing, in addition to every bonfire rest. */
@@ -43,6 +44,7 @@ export class App {
   readonly loop: FixedLoop;
   readonly ui: Ui;
   readonly inventory: InventoryScreen;
+  readonly level: LevelScreen;
   readonly audio = new Audio();
   /** Per-device settings: controls, display, audio, tutorial hints. */
   readonly settings = new SettingsStore();
@@ -74,6 +76,10 @@ export class App {
       sigil: (cls) => this.sigilIcon(cls, 2),
       abilityIcon: (ability) => this.abilityIcon(ability, 2),
     });
+    this.level = new LevelScreen(uiRoot, {
+      sim: () => this.sim,
+      act: (action) => this.input.queueAction(action),
+    });
     this.loop = new FixedLoop(
       () => this.tick(),
       (dt) => this.frame(dt),
@@ -84,7 +90,10 @@ export class App {
       (e) => {
         if (e.repeat || isTyping(e)) return;
         const pack = this.input.bindings.inventory.includes(e.code);
-        if (this.inventory.isOpen && (e.code === 'Escape' || pack)) {
+        if (this.level.isOpen && e.code === 'Escape') {
+          e.preventDefault();
+          this.level.close();
+        } else if (this.inventory.isOpen && (e.code === 'Escape' || pack)) {
           e.preventDefault();
           this.inventory.close();
         } else if (pack && this.sim && !this.ui.blocking && this.inputHolds.size === 0) {
@@ -207,6 +216,7 @@ export class App {
       content: this.content,
       current: null,
       mode: 'newGame',
+      unlocked: { ...this.content.player.start.unlocked },
       bindings: this.input.bindings,
       sigil: (cls) => this.sigilIcon(cls, 3),
       abilityIcon: (ability) => this.abilityIcon(ability, 2),
@@ -223,6 +233,7 @@ export class App {
       content: this.content,
       current: sim.ecs.get(sim.player, Abilities)?.class ?? null,
       mode: 'bonfire',
+      unlocked: { ...(sim.ecs.get(sim.player, Abilities)?.unlocked ?? this.content.player.start.unlocked) },
       bindings: this.input.bindings,
       sigil: (cls) => this.sigilIcon(cls, 3),
       abilityIcon: (ability) => this.abilityIcon(ability, 2),
@@ -285,6 +296,7 @@ export class App {
     this.lastSaveTick = sim?.tick ?? 0;
     this.input.reset();
     this.inventory.close();
+    this.level.close();
     this.ui.hideScreen();
     this.ui.resetHud();
     this.renderer.attach(sim);
@@ -335,8 +347,8 @@ export class App {
 
   private tick(): void {
     const sim = this.sim;
-    // The inventory holds game input but not the game: the world keeps moving around an open pack.
-    if (this.inventory.isOpen) this.inputHolds.add('menu');
+    // The inventory and level screen hold game input but not the game: the world keeps moving.
+    if (this.inventory.isOpen || this.level.isOpen) this.inputHolds.add('menu');
     else this.inputHolds.delete('menu');
     this.input.enabled = !this.ui.blocking && this.inputHolds.size === 0;
     if (!sim || this.ui.blocking) return;
@@ -344,16 +356,18 @@ export class App {
     const events = sim.events.drain();
     if (events.length > 0) {
       this.renderer.handle(events);
+      // Pickup toasts first, so a message about something bigger (a new power) in the same tick wins.
+      this.toastGains(events);
       for (const e of events) {
         this.audio.handle(e);
         this.react(e);
       }
-      this.toastGains(events);
       for (const fn of this.eventListeners) fn(events);
     }
     this.inventory.refresh();
-    // Hints wait while the pack is open; they would cover it.
-    if (!this.inventory.isOpen) this.tutorial.update(sim);
+    this.level.refresh();
+    // Hints wait while a menu is open; they would cover it.
+    if (!this.inventory.isOpen && !this.level.isOpen) this.tutorial.update(sim);
     if (this.slot && sim.tick - this.lastSaveTick >= AUTOSAVE_INTERVAL_TICKS) void this.save();
   }
 
@@ -368,6 +382,20 @@ export class App {
         return;
       case 'flaskEmpty':
         return this.ui.toast('The flask is empty. Rest at a bonfire.');
+      case 'abilityUnlocked': {
+        const name = this.content.ability(e.ability).name;
+        const binding = e.slot === 'class' ? 'classAbility' : 'super';
+        this.ui.banner('NEW POWER', 'good');
+        return this.ui.toast(`${name} awakened. Press ${primaryKey(this.input.bindings, binding)}.`, 4000);
+      }
+      case 'abilityLocked':
+        return this.ui.toast(
+          `Not yet awakened. Open the pack (${primaryKey(this.input.bindings, 'inventory')}), then Abilities.`,
+        );
+      case 'leveledUp': {
+        const name = `${e.attribute.charAt(0).toUpperCase()}${e.attribute.slice(1)}`;
+        return this.ui.toast(`${name} raised. You are level ${e.level}.`);
+      }
       case 'classChanged': {
         const cls = this.content.playerClass(e.class);
         const article = /^[aeiou]/i.test(cls.name) ? 'an' : 'a';
@@ -393,6 +421,7 @@ export class App {
         return this.ui.toast(`${this.content.item(e.item).name}: ${e.seconds}s`);
       case 'playerDied':
         this.inventory.close();
+        this.level.close();
         this.ui.banner('YOU DIED', 'death');
         window.setTimeout(() => this.ui.fade(true), DEATH_FADE_MS);
         return;
@@ -416,13 +445,16 @@ export class App {
 
   private frame(dtMs: number): void {
     const sim = this.sim;
-    const free = sim !== null && !this.ui.blocking && !this.inventory.isOpen;
+    const free = sim !== null && !this.ui.blocking && !this.inventory.isOpen && !this.level.isOpen;
     if (sim && free) {
       const target = findInteraction(sim);
       this.ui.prompt(target ? target.label : null, primaryKey(this.input.bindings, 'use'));
     } else this.ui.prompt(null);
     const resting = free && sim.ecs.get(sim.player, Player)?.state === 'sit';
-    this.ui.restMenu(resting ? this.currentClassLabel() : null, () => this.changeClass());
+    this.ui.restMenu(resting ? this.currentClassLabel() : null, {
+      levelUp: () => this.level.open(),
+      changeClass: () => this.changeClass(),
+    });
     this.renderer.render(dtMs, () => {
       for (const fn of this.frameListeners) fn(dtMs);
     });

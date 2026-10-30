@@ -24,6 +24,7 @@ import type { SimModule } from '../module';
 import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
 import { gainEnergy } from './energy';
+import { relicWanted } from './unlocks';
 import { playerStats } from './items';
 import { dropPickup } from './pickups';
 
@@ -186,6 +187,9 @@ export function killEnemy(sim: Simulation, e: Entity): void {
 
 export function rollDrops(sim: Simulation, drops: readonly DropDef[], x: number, y: number): void {
   for (const drop of drops) {
+    // Relics only drop while their slot is the next to awaken, so each one drops once, in order.
+    const relic = drop.item !== undefined ? sim.content.items[drop.item] : undefined;
+    if (relic?.kind === 'relic' && !relicWanted(sim, relic.unlocks)) continue;
     if (sim.rng.chance(drop.chance))
       dropPickup(sim, drop.kind, sim.rng.int(drop.amount[0], drop.amount[1]), x, y, drop.item ?? null);
   }

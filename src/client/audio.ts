@@ -194,6 +194,13 @@ export class Audio {
         );
       case 'empowerEnded':
         return this.arp([392, 330, 262], 80, 0.4, 0.04);
+      case 'abilityUnlocked':
+        this.burst(0.5, 600, 0.3, 'lowpass');
+        return this.arp([262, 330, 392, 523, 659], 90, 1.1, 0.06);
+      case 'abilityLocked':
+        return this.tone([[130, 1]], 0.12, 0.05, 'square');
+      case 'leveledUp':
+        return this.arp([392, 523, 659], 70, 0.6, 0.05);
       case 'classChanged':
         return this.arp([294, 392, 494], 90, 0.6, 0.05);
       case 'playerRespawned':

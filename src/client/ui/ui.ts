@@ -106,7 +106,7 @@ export class Ui {
   }
 
   /** The bonfire's own menu, shown while resting. Rebuilt only when it appears or the class changes. */
-  restMenu(label: ClassLabel | null, changeClass: () => void): void {
+  restMenu(label: ClassLabel | null, handlers: { levelUp(): void; changeClass(): void }): void {
     if (!label) {
       this.restEl?.remove();
       this.restEl = null;
@@ -120,7 +120,8 @@ export class Ui {
       { class: 'rest-menu' },
       h('div', { class: 'title' }, 'Bonfire'),
       classTag(label),
-      h('button', { onclick: changeClass }, 'Change class'),
+      h('button', { onclick: () => handlers.levelUp() }, 'Level up'),
+      h('button', { onclick: () => handlers.changeClass() }, 'Change class'),
     );
     this.restEl.dataset.shown = key;
     this.root.append(this.restEl);
@@ -250,7 +251,15 @@ export class Ui {
           h(
             'div',
             { class: 'meta' },
-            `${s.meta.location} · ${formatTicks(s.meta.playTicks)} · ${s.meta.souls} souls · ${when}`,
+            [
+              s.meta.location,
+              s.meta.level === undefined ? null : `level ${s.meta.level}`,
+              formatTicks(s.meta.playTicks),
+              `${s.meta.souls} souls`,
+              when,
+            ]
+              .filter((part) => part !== null)
+              .join(' · '),
           ),
         );
         buttons.push(h('button', { onclick: () => handlers.continueGame(s.slot) }, 'Continue'));
@@ -326,7 +335,7 @@ export class Ui {
     this.fade(false);
     this.areaEl?.remove();
     this.bannerEl?.remove();
-    this.restMenu(null, () => undefined);
+    this.restMenu(null, { levelUp: () => undefined, changeClass: () => undefined });
     this.clearHint();
   }
 

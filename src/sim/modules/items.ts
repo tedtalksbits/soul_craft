@@ -10,12 +10,14 @@ import { CommandError } from '../../core/commands';
 import type { Entity } from '../../core/ecs';
 import type { ItemDef, StatId } from '../../content/schemas';
 import {
+  Attributes,
   Buffs,
   Empowered,
   Equipment,
   Health,
   Inventory,
   Player,
+  Stamina,
   type EquipSlot,
   type ItemStack,
 } from '../components';
@@ -34,6 +36,7 @@ export interface PlayerStats {
   /** Fraction of incoming damage absorbed, 0..0.9. */
   defense: number;
   maxHp: number;
+  maxStamina: number;
   /** Stamina regained per tick. */
   staminaRegen: number;
   /** Chance a sword hit crits. */
@@ -137,24 +140,38 @@ export function playerStats(sim: Simulation, e: Entity): PlayerStats {
   const armorDef = eq?.armor ? sim.content.items[eq.armor.item] : undefined;
   const armor = armorDef?.kind === 'armor' ? armorDef.armor.defense : 0;
   const emp = sim.ecs.get(e, Empowered);
+  // Points spent leveling at bonfires.
+  const attrs = sim.ecs.get(e, Attributes);
+  const per = def.leveling.perLevel;
+  const might = (attrs?.might ?? 0) * per.might.damage;
   return {
-    damage: weapon.damage * (1 + bonus(sim, e, 'damage') + (emp?.damage ?? 0)),
+    damage: weapon.damage * (1 + bonus(sim, e, 'damage') + (emp?.damage ?? 0) + might),
     staminaCost: emp?.staminaFree ? 0 : weapon.staminaCost,
     reach: weapon.reach,
     width: weapon.width,
     knockback: weapon.knockback,
     defense: Math.min(MAX_DEFENSE, armor + bonus(sim, e, 'defense') + (emp?.defense ?? 0)),
-    maxHp: def.maxHp + bonus(sim, e, 'maxHp'),
+    maxHp: def.maxHp + bonus(sim, e, 'maxHp') + (attrs?.vigor ?? 0) * per.vigor.maxHp,
+    maxStamina: def.maxStamina + (attrs?.endurance ?? 0) * per.endurance.maxStamina,
     staminaRegen: def.staminaRegen * (1 + bonus(sim, e, 'staminaRegen')),
     critChance: Math.min(1, def.attack.critChance + (emp?.crit ?? 0)),
   };
 }
 
-/** Applies a changed max HP (rings, buffs), keeping current HP within it. */
-export function syncMaxHp(sim: Simulation, e: Entity): void {
+/**
+ * Applies changed max health and stamina (rings, buffs, leveling), keeping the current values
+ * within them.
+ */
+export function syncVitals(sim: Simulation, e: Entity): void {
+  const stats = playerStats(sim, e);
   const health = sim.ecs.need(e, Health);
-  health.max = playerStats(sim, e).maxHp;
+  health.max = stats.maxHp;
   health.hp = Math.min(health.hp, health.max);
+  const stamina = sim.ecs.get(e, Stamina);
+  if (stamina) {
+    stamina.max = stats.maxStamina;
+    stamina.value = Math.min(stamina.value, stamina.max);
+  }
 }
 
 function slotFor(def: ItemDef, eq: Equipment): EquipSlot | null {
@@ -183,7 +200,7 @@ export function equip(sim: Simulation, index: number): boolean {
   inv.stacks.splice(index, 1);
   eq[slot] = { item: stack.item, count: 1, level: stack.level };
   if (previous) inv.stacks.splice(index, 0, previous);
-  if (slot === 'ring0' || slot === 'ring1') syncMaxHp(sim, e);
+  if (slot === 'ring0' || slot === 'ring1') syncVitals(sim, e);
   sim.events.emit({ type: 'equipped', item: stack.item, slot });
   return true;
 }
@@ -198,7 +215,7 @@ export function unequip(sim: Simulation, slot: EquipSlot): boolean {
     return false;
   }
   eq[slot] = null;
-  if (slot === 'ring0' || slot === 'ring1') syncMaxHp(sim, e);
+  if (slot === 'ring0' || slot === 'ring1') syncVitals(sim, e);
   sim.events.emit({ type: 'unequipped', item: stack.item, slot });
   return true;
 }
@@ -237,7 +254,7 @@ export function finishUse(sim: Simulation, e: Entity, item: string): void {
     ticks: effect.seconds * TICK_RATE,
     source: item,
   });
-  if (effect.stat === 'maxHp') syncMaxHp(sim, e);
+  if (effect.stat === 'maxHp') syncVitals(sim, e);
   sim.events.emit({ type: 'buffStarted', stat: effect.stat, item, seconds: effect.seconds });
 }
 
@@ -277,7 +294,7 @@ function tickBuffs(sim: Simulation): void {
     if (ended.length === 0) continue;
     buffs.active = buffs.active.filter((b) => b.ticks > 0);
     for (const b of ended) sim.events.emit({ type: 'buffEnded', stat: b.stat });
-    if (ended.some((b) => b.stat === 'maxHp')) syncMaxHp(sim, e);
+    if (ended.some((b) => b.stat === 'maxHp')) syncVitals(sim, e);
   }
 }
 

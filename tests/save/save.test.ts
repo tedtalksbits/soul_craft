@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createSave, parseSave, SAVE_FORMAT, SAVE_VERSION, SaveError } from '../../src/save/format';
 import { SaveManager } from '../../src/save/save-manager';
 import { MemoryStore } from '../../src/save/store';
-import { Abilities, Equipment, Inventory, Player } from '../../src/sim/components';
+import { Abilities, Attributes, Equipment, Inventory, Player } from '../../src/sim/components';
 import { Simulation } from '../../src/sim/simulation';
 import { content, newSim, run } from '../helpers';
 
@@ -120,6 +120,7 @@ describe('v3 -> v4', () => {
       class: 'vanguard',
       cooldowns: { aoe: 0, class: 0 },
       energy: 0,
+      unlocked: { class: true, super: true },
       casting: null,
     });
   });
@@ -130,5 +131,27 @@ describe('slot metadata', () => {
     const sim = Simulation.create({ seed: 8, content, playerClass: 'stalker' });
     const save = parseSave(JSON.parse(JSON.stringify(createSave(sim, '2'))));
     expect(save.meta.playerClass).toBe('stalker');
+  });
+});
+
+describe('v4 -> v5', () => {
+  it('keeps every ability an old save had, and starts it at level 1', () => {
+    const current = createSave(newSim(9), '1');
+    const components = { ...current.snapshot.ecs.components };
+    Reflect.deleteProperty(components, 'attributes');
+    components['abilities'] = (components['abilities'] ?? []).map(([e, a]) => {
+      const rest: Record<string, unknown> = { ...(a as Record<string, unknown>) };
+      Reflect.deleteProperty(rest, 'unlocked');
+      return [e, rest];
+    });
+    const v4 = {
+      ...current,
+      version: 4,
+      snapshot: { ...current.snapshot, ecs: { ...current.snapshot.ecs, components } },
+    };
+    const migrated = parseSave(JSON.parse(JSON.stringify(v4)));
+    const sim = Simulation.restore(migrated.snapshot, content);
+    expect(sim.ecs.need(sim.player, Abilities).unlocked).toEqual({ class: true, super: true });
+    expect(sim.ecs.need(sim.player, Attributes)).toEqual({ vigor: 0, endurance: 0, might: 0, attunement: 0 });
   });
 });

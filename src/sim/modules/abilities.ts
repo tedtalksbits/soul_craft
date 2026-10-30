@@ -33,6 +33,8 @@ import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
 import { applyDamage, rollDamage } from './combat';
 import { FULL_ENERGY, gainEnergy } from './energy';
+import { abilityPower } from './progression';
+import { slotUnlocked } from './unlocks';
 
 /** Which input action fires which slot. */
 export const SLOT_ACTION: Readonly<Record<AbilitySlot, number>> = {
@@ -46,7 +48,7 @@ const BLAST_HITSTOP = 2;
 
 /**
  * Gives a freshly spawned player their class (chosen on the new-game screen, else the content's
- * start class), all abilities ready and an empty super.
+ * start class), all abilities ready, an empty super, and only the slots the content starts unlocked.
  */
 export function giveStartingClass(sim: Simulation, e: Entity, playerClass?: string): void {
   if (playerClass !== undefined) sim.content.playerClass(playerClass); // throws on an unknown class
@@ -54,6 +56,7 @@ export function giveStartingClass(sim: Simulation, e: Entity, playerClass?: stri
     class: playerClass ?? sim.content.player.start.class,
     cooldowns: { aoe: 0, class: 0 },
     energy: 0,
+    unlocked: { ...sim.content.player.start.unlocked },
     casting: null,
   });
 }
@@ -82,6 +85,10 @@ export function startCast(sim: Simulation, slot: AbilitySlot): boolean {
   const { ecs } = sim;
   const e = sim.player;
   const a = ecs.need(e, Abilities);
+  if (!slotUnlocked(a, slot)) {
+    sim.events.emit({ type: 'abilityLocked', slot });
+    return false;
+  }
   if (!slotReady(a, slot)) {
     sim.events.emit({ type: 'abilityNotReady', slot });
     return false;
@@ -267,7 +274,8 @@ function abilityDamage(sim: Simulation, target: Entity, fromX: number, fromY: nu
   const roll =
     hit.damage > 0
       ? rollDamage(sim.rng, {
-          damage: hit.damage,
+          // Attunement (leveling) strengthens every ability.
+          damage: hit.damage * abilityPower(sim),
           variance: attack.variance,
           critChance: 0,
           critMultiplier: 1,

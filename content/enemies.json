@@ -79,7 +79,9 @@
     "drops": [
       { "kind": "ember", "chance": 1, "amount": [30, 40] },
       { "kind": "souls", "chance": 0.5, "amount": [20, 40] },
-      { "kind": "item", "item": "iron_scrap", "chance": 1, "amount": [2, 3] }
+      { "kind": "item", "item": "iron_scrap", "chance": 1, "amount": [2, 3] },
+      { "kind": "item", "item": "relic_oath", "chance": 1, "amount": [1, 1] },
+      { "kind": "item", "item": "relic_sovereign", "chance": 1, "amount": [1, 1] }
     ],
     "recoilTicks": 0,
     "knockbackTaken": 0.4,

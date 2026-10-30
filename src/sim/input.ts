@@ -1,3 +1,4 @@
+import type { AttributeId } from '../content/schemas';
 import type { EquipSlot } from './components';
 
 /**
@@ -32,7 +33,9 @@ export type PlayerAction =
   | { type: 'craft'; recipe: string }
   | { type: 'upgrade' }
   /** Change class. Only allowed while resting at a bonfire. */
-  | { type: 'setClass'; class: string };
+  | { type: 'setClass'; class: string }
+  /** Spend souls on one level in an attribute. Only allowed while resting at a bonfire. */
+  | { type: 'levelUp'; attribute: AttributeId };
 
 export interface InputFrame {
   /** Movement intent, each axis in [-1, 1]. */

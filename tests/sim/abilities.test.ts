@@ -23,7 +23,10 @@ function asClass(cls: string): Simulation {
   const sim = newSim();
   sim.state.cheats.god = true;
   sim.state.cheats.noclip = true;
-  sim.ecs.need(sim.player, Abilities).class = cls;
+  const a = sim.ecs.need(sim.player, Abilities);
+  a.class = cls;
+  // These tests are about the abilities themselves; unlocking them is tested in progression.test.ts.
+  a.unlocked = { class: true, super: true };
   return sim;
 }
 
@@ -45,12 +48,13 @@ function pin(sim: Simulation, archetype: string, dx: number, dy = 0) {
 }
 
 describe('classes', () => {
-  it('a new game starts as the content start class, abilities ready, super empty', () => {
+  it('a new game starts as the content start class, with only the AoE awakened and the super empty', () => {
     const a = abilities(newSim());
     expect(a).toEqual({
       class: content.player.start.class,
       cooldowns: { aoe: 0, class: 0 },
       energy: 0,
+      unlocked: { class: false, super: false },
       casting: null,
     });
   });

@@ -7,6 +7,7 @@
 import { ABILITY_SLOTS, type AbilitySlot } from '../content/schemas';
 import { Abilities, Body, Dying, Enemy, Player } from '../sim/components';
 import { slotReady } from '../sim/modules/abilities';
+import { slotUnlocked } from '../sim/modules/unlocks';
 import type { Simulation } from '../sim/simulation';
 import { primaryKey, type Binding } from './keybinds';
 import type { SettingsStore } from './settings';
@@ -53,7 +54,7 @@ export class Tutorial {
     for (const slot of ABILITY_SLOTS) {
       const ability = cls.abilities[slot];
       const id = `ability:${ability}`;
-      if (seen.includes(id) || !slotReady(a, slot)) continue;
+      if (seen.includes(id) || !slotUnlocked(a, slot) || !slotReady(a, slot)) continue;
       // Cooldown abilities are taught in a fight; the super the moment it first charges.
       if (slot !== 'super' && !enemyNear) continue;
       const def = sim.content.ability(ability);

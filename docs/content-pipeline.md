@@ -63,6 +63,8 @@ Every item has `kind`, `name`, `description`, `icon` (a frame name in `assets/sp
   each `{ damage, souls, items }`. The player's swing uses the equipped weapon; unarmed is weak on purpose.
 - `armor`: `armor { defense }`, the fraction of incoming damage absorbed (capped at 0.9 with buffs).
 - `ring`: `ring { stat, amount }`. Two ring slots.
+- `relic`: `unlocks` (`class` or `super`) and `source` (where it is found, shown on locked abilities). Taken on
+  pickup, never carried; it only drops while its slot is the next to awaken.
 - `consumable`: `effect` is `{ type: "heal", amount }` or `{ type: "buff", stat, amount, seconds }`.
   Drinking one takes the flask's drink time. A second buff on the same stat refreshes the first.
 
@@ -72,6 +74,14 @@ A recipe is `{ output { item, count }, inputs [{ item, count }], souls, station 
 `"forge"`, `"alchemy"` or `null` (craftable anywhere). Stations are prefab entities; the player must stand
 within twice the interact range. Enemy and tile `drops` can be `{ "kind": "item", "item": "iron_scrap", ... }`.
 Every item id named anywhere is cross-checked on load.
+
+### Leveling
+
+`player.json → leveling`: `cost` (`base`, `growth`: a level costs `round(base * growth^(level - 1))` souls) and
+`perLevel`, what one point in each attribute gives: `vigor.maxHp`, `endurance.maxStamina`, `might.damage`
+(fraction of sword damage), `attunement.abilityDamage` and `attunement.energy` (fractions). Leveling happens
+while resting at a bonfire. `player.json → start.unlocked` says which ability slots a new game has awakened
+(default: neither; the AoE is always known).
 
 ### Classes and abilities
 

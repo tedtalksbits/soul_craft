@@ -17,6 +17,7 @@ import { countItem } from '../../sim/modules/items';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
 import { DEFAULT_BINDINGS, hudKeyLabel, type Binding, type Bindings } from '../keybinds';
+import { slotUnlocked } from '../../sim/modules/unlocks';
 import { classPalette } from './class-palette';
 import { PixelText } from './pixel-text';
 
@@ -51,6 +52,8 @@ export class Hud {
   private readonly abilityIcons = [new Sprite(), new Sprite(), new Sprite()];
   /** Drawn over the icons: cooldown fills and the super's glow. */
   private readonly over = new Graphics();
+  /** Which of the three ability slots are not yet awakened (no key label, no fill). */
+  private locked = [false, false, false];
 
   constructor(
     private readonly assets: Assets,
@@ -104,6 +107,7 @@ export class Hud {
       this.sigil.position.set(SIGIL_X, y);
     }
 
+    this.locked = ABILITY_SLOTS.map((slot) => !slotUnlocked(a, slot));
     ABILITY_SLOTS.forEach((slot, i) => {
       const x = slotX(i);
       const def = sim.content.abilities[cls.abilities[slot]];
@@ -113,7 +117,8 @@ export class Hud {
         const total = (def?.cooldown ?? 0) * TICK_RATE;
         fill = total > 0 ? 1 - a.cooldowns[slot] / total : 1;
       }
-      const ready = fill >= 1;
+      const locked = this.locked[i] === true;
+      const ready = fill >= 1 && !locked;
       g.rect(x - 1, y - 1, SLOT + 2, SLOT + 2).fill({ color: 0x000000, alpha: 0.65 });
       g.rect(x, y, SLOT, SLOT).fill({ color: pal.dark, alpha: 0.6 });
 
@@ -122,10 +127,12 @@ export class Hud {
       if (icon) {
         icon.visible = tex !== undefined;
         if (tex) icon.texture = tex;
-        icon.tint = ready ? pal.light : pal.base;
-        icon.alpha = ready ? 1 : 0.45;
+        // A locked slot shows its icon as a faint gray silhouette: there to see, not yet to use.
+        icon.tint = locked ? 0x6a6a70 : ready ? pal.light : pal.base;
+        icon.alpha = locked ? 0.3 : ready ? 1 : 0.45;
         icon.position.set(x, y);
       }
+      if (locked) return;
       if (!ready) {
         const h = Math.round(SLOT * Math.min(1, fill));
         over.rect(x, y + SLOT - h, SLOT, h).fill({ color: pal.base, alpha: 0.3 });
@@ -150,7 +157,7 @@ export class Hud {
       const t = this.keyLabels[i];
       if (!t) return;
       const code = this.bindings[binding][0];
-      t.visible = code !== undefined && (binding !== 'item' || quickShown);
+      t.visible = code !== undefined && (binding === 'item' ? quickShown : this.locked[i] !== true);
       t.set(code ? hudKeyLabel(code) : '', 0xffffff);
       if (binding === 'item') t.position.set(27, 17);
       else t.position.set(slotX(i) + 1, y + 1);

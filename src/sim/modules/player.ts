@@ -28,6 +28,7 @@ import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
 import { pressedSlot, refreshAbilities, giveStartingClass, startCast, updateCast } from './abilities';
 import { applyDamage, rollDamage } from './combat';
+import { giveStartingAttributes } from './progression';
 import { interact } from './interaction';
 import { beginUse, finishUse, giveStartingKit, playerStats } from './items';
 import { resetEnemies } from './streaming';
@@ -65,6 +66,7 @@ export function spawnPlayer(sim: Simulation, x: number, y: number, playerClass?:
   ecs.add(e, Sprite, { sheet: def.sprite });
   giveStartingKit(sim, e);
   giveStartingClass(sim, e, playerClass);
+  giveStartingAttributes(sim, e);
   return e;
 }
 

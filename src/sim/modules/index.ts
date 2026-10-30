@@ -8,6 +8,7 @@ import { itemsModule } from './items';
 import { movementModule } from './movement';
 import { pickupsModule } from './pickups';
 import { playerModule } from './player';
+import { progressionModule } from './progression';
 import { projectilesModule } from './projectiles';
 import { streamingModule } from './streaming';
 
@@ -21,6 +22,7 @@ export const SIM_MODULES: readonly SimModule[] = [
   itemsModule,
   craftingModule,
   abilitiesModule,
+  progressionModule,
   playerModule,
   enemiesModule,
   movementModule,

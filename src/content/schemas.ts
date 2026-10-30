@@ -136,6 +136,17 @@ export type StatId = z.infer<typeof StatSchema>;
 
 export const ItemSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('material'), ...itemBase }),
+  /**
+   * Unlocks an ability slot the moment it is picked up (it never enters the pack). It only
+   * drops while its slot is still locked, in order: the class ability, then the super.
+   */
+  z.object({
+    kind: z.literal('relic'),
+    ...itemBase,
+    unlocks: z.enum(['class', 'super']),
+    /** Where to find it, shown on a locked ability ("Dropped by a Forsaken Shrine's guardian"). */
+    source: z.string(),
+  }),
   z.object({
     kind: z.literal('weapon'),
     ...itemBase,
@@ -168,6 +179,10 @@ export const ItemSchema = z.discriminatedUnion('kind', [
 ]);
 export type ItemDef = z.infer<typeof ItemSchema>;
 export type ItemKind = ItemDef['kind'];
+
+/** What leveling raises, in the order the level-up screen lists them. */
+export const ATTRIBUTES = ['vigor', 'endurance', 'might', 'attunement'] as const;
+export type AttributeId = (typeof ATTRIBUTES)[number];
 export const ItemsSchema = z.record(z.string(), ItemSchema);
 
 export const RecipeSchema = z.object({
@@ -222,7 +237,33 @@ export const PlayerSchema = z.object({
   /** How many different stacks the player can carry. */
   inventorySlots: z.number().int().min(1),
   /** A new game starts as this class, with this weapon equipped and these items carried. */
-  start: z.object({ class: z.string(), weapon: z.string(), items: z.array(ItemCountSchema).default([]) }),
+  /**
+   * A new game starts as this class, with this weapon and these items. Only the AoE ability
+   * is known at first unless `unlocked` says otherwise; relics unlock the rest.
+   */
+  start: z.object({
+    class: z.string(),
+    weapon: z.string(),
+    items: z.array(ItemCountSchema).default([]),
+    unlocked: z.object({ class: z.boolean(), super: z.boolean() }).default({ class: false, super: false }),
+  }),
+  /**
+   * Leveling at a bonfire: each level raises one attribute and costs souls,
+   * `round(base * growth^(level - 1))` for the level you are leaving.
+   */
+  leveling: z.object({
+    cost: z.object({ base: pos, growth: z.number().min(1) }),
+    perLevel: z.object({
+      /** Max health per point. */
+      vigor: z.object({ maxHp: nonneg }),
+      /** Max stamina per point. */
+      endurance: z.object({ maxStamina: nonneg }),
+      /** Sword damage per point, as a fraction (0.05 = +5%). */
+      might: z.object({ damage: nonneg }),
+      /** Ability damage and super charge rate per point, as fractions. */
+      attunement: z.object({ abilityDamage: nonneg, energy: nonneg }),
+    }),
+  }),
   /** Super energy, 0-100. Full charges the super; sword and ability hits fill it, the super's own hits don't. */
   energy: z.object({ perDamage: nonneg, perKill: nonneg, perSecond: nonneg }),
 });

@@ -300,7 +300,7 @@ function checkItems(
   for (const t of c.tiles) if (t.cut) drops(`tiles.json: ${t.id}.cut.drops`, t.cut.drops);
   for (const [id, def] of Object.entries(c.items)) {
     if (def.kind === 'weapon') for (const u of def.upgrades) counts(`items.json: ${id}.upgrades`, u.items);
-    if (def.kind !== 'material' && def.kind !== 'consumable' && def.stack !== 1)
+    if (def.kind !== 'material' && def.kind !== 'consumable' && def.kind !== 'relic' && def.stack !== 1)
       problems.push(`items.json: ${id}: equipment must have stack 1`);
   }
   for (const [id, r] of Object.entries(c.recipes)) {

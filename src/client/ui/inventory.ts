@@ -7,6 +7,7 @@
 import { ABILITY_SLOTS, STATIONS, type ItemDef, type StationId } from '../../content/schemas';
 import {
   Abilities,
+  Attributes,
   Buffs,
   Equipment,
   Inventory,
@@ -15,6 +16,8 @@ import {
   type ItemStack,
 } from '../../sim/components';
 import { FULL_ENERGY } from '../../sim/modules/energy';
+import { playerLevel } from '../../sim/modules/progression';
+import { unlockHint } from '../../sim/modules/unlocks';
 import type { PlayerAction } from '../../sim/input';
 import { canCraft, canUpgrade, nextUpgrade, stationNearby } from '../../sim/modules/crafting';
 import { countItem, EQUIP_SLOTS, playerStats } from '../../sim/modules/items';
@@ -190,7 +193,9 @@ export class InventoryScreen {
     });
 
     const stats = playerStats(sim, e);
+    const attrs = sim.ecs.get(e, Attributes);
     const statRows: [string, string][] = [
+      ['Level', attrs ? String(playerLevel(attrs)) : '1'],
       ['Damage', String(Math.round(stats.damage))],
       ['Defense', `${Math.round(stats.defense * 100)}%`],
       ['Max HP', String(stats.maxHp)],
@@ -290,13 +295,15 @@ export class InventoryScreen {
     const status = abilityStatus(sim);
     const rows = ABILITY_SLOTS.map((slot) => {
       const def = sim.content.ability(cls.abilities[slot]);
-      const rule =
-        slot === 'super'
+      const locked = slot !== 'aoe' && !a.unlocked[slot];
+      const rule = locked
+        ? unlockHint(sim.content, slot)
+        : slot === 'super'
           ? 'Needs a full energy bar. Hits and kills fill it; so does time.'
           : `${def.cooldown} s cooldown.`;
       return h(
         'div',
-        { class: 'ability-row' },
+        { class: locked ? 'ability-row locked' : 'ability-row' },
         h(
           'div',
           { class: 'keys' },
@@ -311,7 +318,11 @@ export class InventoryScreen {
           h('div', { class: 'desc' }, def.description),
           h('div', { class: 'rule' }, rule),
         ),
-        h('div', { class: status[slot] === 'Ready' ? 'status ready' : 'status' }, status[slot]),
+        h(
+          'div',
+          { class: !locked && status[slot] === 'Ready' ? 'status ready' : 'status' },
+          locked ? 'Locked' : status[slot],
+        ),
       );
     });
     const body = h(
@@ -438,6 +449,8 @@ export function itemName(def: ItemDef, level: number): string {
 /** One-line facts about an item, for the detail panel. */
 function facts(def: ItemDef, level: number): string[] {
   switch (def.kind) {
+    case 'relic':
+      return [def.unlocks === 'class' ? 'Awakens your class ability' : 'Awakens your super'];
     case 'material':
       return ['Crafting material', `Stacks to ${def.stack}`];
     case 'weapon': {

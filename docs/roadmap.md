@@ -11,6 +11,10 @@ Last updated: 2026-10-29, after Milestone 3's foundation.
 **A top-down Soulslike action RPG where you fight with elemental class powers, forge your gear from what you
 gather, and explore a world that is different every time the flame wakes.**
 
+**Premise.** Ashen Village is dying: ash chokes the fields, the villagers have fled or hollowed, and the blight's
+guardians hold the land around it. You are the Ashen One, woken at its last bonfire. You restore the village and
+bring it back to life for its people (see the restoration thread under Planned).
+
 Pillars, in priority order:
 
 1. **Combat first.** Souls-style fundamentals (stamina, rolls with i-frames, flasks, bonfires, readable enemy
@@ -42,19 +46,20 @@ Working principles:
 ## Now: finishing Milestone 3
 
 - **Tune abilities from playtests:** cooldowns, damage, super charge rate, the class glow's strength.
-- **Decide how abilities are earned** (see open decisions). Today every class has all three from the start.
+- **Done: progression and unlocks** (ADR 0011). Souls buy levels at bonfires (Vigor, Endurance, Might,
+  Attunement), and a new game knows only its AoE: relics from Forsaken Shrine guardians awaken the class ability
+  and then the super.
 - **Optional:** effect sprites for the abilities (PixelLab), to replace the drawn rings and particles.
 
 ## Open decisions
 
 These need an answer before the milestones that depend on them.
 
-1. **What do souls buy?** Today only crafting and forge upgrades. Souls games level stats at the bonfire. Without
-   some lasting progression there is little long-term pull, and **boss difficulty depends on how strong players
-   can get**, so decide before Milestone 4.
-2. **How are abilities earned?** Options: all from the start (today), Destiny-style variants per slot picked at
-   a bonfire, or unlocked through play (bosses, shrines, items).
-3. **Life sim scope.** Kept in service of combat (pillar 4), or bigger? Recommendation: in service of combat.
+1. ~~**What do souls buy?**~~ **Decided:** levels at bonfires, in four attributes (ADR 0011).
+2. ~~**How are abilities earned?**~~ **Decided:** through play. Relics awaken the class ability and the super
+   (ADR 0011). Destiny-style variants per slot could still come later, as boss rewards.
+3. ~~**Life sim scope.**~~ **Decided:** farming, fishing and pets unlock through restoring the village, in service
+   of combat. No seasons, relationships or free-form building.
 4. **Terrain art.** PixelLab's top-down tilesets blend terrains at their edges, which needs neighbor-aware tile
    choice in the chunk renderer first. Alternatively, the art agent could make tiles from source like the rest.
 5. **Item quality and perks.** Deferred in Milestone 2 (ADR 0009) until there is loot worth rolling.
@@ -62,19 +67,67 @@ These need an answer before the milestones that depend on them.
 
 ## Planned
 
+### Navigation (next, before bosses)
+
+**Why:** in playtesting the user lost the spawn village (and its forge and alchemy table) and couldn't find it again.
+The world is endless and procedural, and nothing told you where anything was. Built in this order:
+
+1. **Bonfire travel.** While resting at any lit bonfire, warp to any other lit bonfire. Ashen Village is the hub,
+   with the stations. There is **no recall or "return home" item**: rejected as too cheesy, so travel is only ever
+   between bonfires.
+2. **World map** (M key):
+   - Fog of war: only chunks the player has visited show. They're saved in sim state and drawn with the tiles'
+     existing `map` colors.
+   - Markers: lit bonfires, stations, discovered shrines and camps, the player's position and facing, and the
+     death spot where lost souls lie.
+   - Player-placed pins.
+   - Coordinates only in the map footer and a dev overlay.
+3. **Compass strip** across the top of the HUD: N / E / S / W, plus markers for the nearest lit bonfire, the
+   village, the player's pin and lost souls.
+
+**Low-cost landmarks** alongside: a faint light pillar above lit bonfires, visible from a distance, and signposts on
+roads pointing to Ashen Village.
+
+**Considered and not chosen:** a minimap (the 384×216 view has no room to spare), raw coordinates on the HUD, and
+separate portals (bonfire travel covers them).
+
+**Never gated:** bonfire travel, the world map and the compass are available from the start. Returning villagers
+(the restoration thread) only add extras, such as a cartographer who marks unexplored shrines on your map.
+
+### The restoration thread (runs through Milestones 4 and 5)
+
+The story spine made playable: bringing Ashen Village back to life is how the game's systems open up.
+
+- **Each boss guards a Kindling**, a flame carried back to the village bonfire. Each Kindling restores one
+  authored thing:
+  - **The fields clear of ash:** farming opens, and crops give buff food.
+  - **A villager returns:** the smith (better forge upgrades), the alchemist (new recipes), the fisher (fishing),
+    or a beast-tamer (pets).
+  - **The blight pushes back:** enemies stop spawning within a growing radius of the village.
+- **Authored, not free-form.** Each restoration is a fixed step (this boss restores that), never free-form base
+  building. A step may cost materials or souls to rebuild, which gives crafting materials a long-term use.
+- **The world shows it.** Restored areas lose their ash tint, and the light over the village bonfire grows with
+  each Kindling.
+- **The Sovereign Ember** (the super's relic, which a second shrine knight drops for now) becomes the first boss's
+  Kindling reward.
+
 ### Milestone 4: Bosses
 
-Destiny- and Tunic-style boss fights:
+Destiny- and Tunic-style boss fights, each guarding a Kindling (the restoration thread):
 
 - **Damage phases** with immune windows the player opens through mechanics.
 - **Arena mechanics:** pressure plates, carried relics, waves of adds.
 - **Boss arenas** as prefabs placed in the world, with a fog gate and an entrance moment.
-- **A boss health bar**, phase transitions, and a reward (a material, an ability, a key item).
+- **A boss health bar**, phase transitions, and a reward (a material, an ability, a key item). The first boss
+  takes over the **Sovereign Ember** (the super's relic), which a second shrine guardian drops until then.
 - **Boss art** from the art agent.
 
-Depends on: open decisions 1 and 2.
+Decisions 1 and 2, which it depended on, are made (ADR 0011).
 
 ### Milestone 5: Life sim, in service of combat
+
+Each part opens through the restoration thread: a Kindling clears the fields or brings back the villager who
+teaches it.
 
 - **Fishing:** a skill-based minigame; fish are materials and buff food.
 - **Farming:** crops for buff food and alchemy.
@@ -82,6 +135,7 @@ Depends on: open decisions 1 and 2.
 
 ### Later
 
+- Relic icons (the Oath and Sovereign Embers use stand-in item icons).
 - Terrain tiles and the last placeholder props (bonfire, sign, torch, pickups) and the digit font.
 - Desktop build (Steam).
 - Real audio (today every sound is procedural).

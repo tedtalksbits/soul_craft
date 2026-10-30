@@ -7,11 +7,12 @@
  * and add a migration from the previous version. See docs/saves.md.
  */
 import { z } from 'zod';
-import { Abilities, Player } from '../sim/components';
+import { Abilities, Attributes, Player } from '../sim/components';
+import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -37,6 +38,8 @@ const MetaSchema = z.object({
   seed: z.number(),
   /** The class played, for the slot list. Optional: saves from before classes have none. */
   playerClass: z.string().optional(),
+  /** The player's level, for the slot list. Optional: saves from before leveling have none. */
+  level: z.number().int().positive().optional(),
 });
 export type SaveMeta = z.infer<typeof MetaSchema>;
 
@@ -126,11 +129,46 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
       },
     };
   },
+  /**
+   * v4 -> v5: leveling and ability unlocks. Older saves keep every ability they already had
+   * (both slots unlocked) and start leveling from level 1.
+   */
+  4: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const ecs = asRecord(snapshot['ecs']);
+    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
+    const playerRow = components['player']?.[0];
+    if (!playerRow) throw new SaveError('save has no player');
+    const abilities = (components['abilities'] ?? []).map(([e, a]) => [
+      e,
+      { ...asRecord(a), unlocked: { class: true, super: true } },
+    ]);
+    return {
+      ...save,
+      snapshot: {
+        ...snapshot,
+        ecs: {
+          ...ecs,
+          components: {
+            ...components,
+            abilities,
+            attributes: [[playerRow[0], { vigor: 0, endurance: 0, might: 0, attunement: 0 }]],
+          },
+        },
+      },
+    };
+  },
 };
 
 function asRecord(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null) throw new SaveError('save is missing its snapshot state');
   return value as Record<string, unknown>;
+}
+
+/** The level for the slot list, or undefined for a player without attributes. */
+function playerLevelOf(sim: Simulation): number | undefined {
+  const attrs = sim.ecs.get(sim.player, Attributes);
+  return attrs ? playerLevel(attrs) : undefined;
 }
 
 export function createSave(sim: Simulation, slot: string, now: Date = new Date()): SaveFile {
@@ -145,6 +183,7 @@ export function createSave(sim: Simulation, slot: string, now: Date = new Date()
       location: sim.state.currentArea ?? 'Unknown',
       souls: player.souls,
       playerClass: sim.ecs.get(sim.player, Abilities)?.class,
+      level: playerLevelOf(sim),
       seed: sim.state.seed,
     },
     snapshot: sim.snapshot(),

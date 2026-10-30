@@ -3,6 +3,7 @@ import { Body, Health, Magnetized, Pickup, Player, Sprite, type PickupKind } fro
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { addItem, roomFor } from './items';
+import { unlockSlot } from './unlocks';
 
 /** Ticks before a fresh drop can be collected, so it visibly pops out first. */
 const COLLECT_DELAY = 20;
@@ -44,7 +45,11 @@ function updatePickups(sim: Simulation): void {
     if (live) pull(sim, e, pickup, body, pb);
     const reachable = live && Math.hypot(body.x - pb.x, body.y - pb.y) < COLLECT_RADIUS;
     if (reachable) {
-      if (pickup.kind === 'item' && pickup.item !== null) {
+      const relic = pickup.item !== null ? sim.content.items[pickup.item] : undefined;
+      if (relic?.kind === 'relic') {
+        // A relic is taken, not carried: it awakens its ability slot on the spot.
+        unlockSlot(sim, relic.unlocks);
+      } else if (pickup.kind === 'item' && pickup.item !== null) {
         const left = addItem(sim, p, pickup.item, pickup.amount);
         const taken = pickup.amount - left;
         if (taken > 0) sim.events.emit({ type: 'itemGained', item: pickup.item, count: taken });

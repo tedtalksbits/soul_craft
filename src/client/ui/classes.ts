@@ -4,6 +4,7 @@
  */
 import type { Content } from '../../content/content';
 import { ABILITY_SLOTS, type AbilitySlot } from '../../content/schemas';
+import { unlockHint } from '../../sim/modules/unlocks';
 import { primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
 
@@ -13,6 +14,8 @@ export interface ClassScreenOptions {
   current: string | null;
   mode: 'newGame' | 'bonfire';
   bindings: Bindings;
+  /** Which slots are awakened: the player's at a bonfire, the start's on a new game. */
+  unlocked: { class: boolean; super: boolean };
   sigil(cls: string): HTMLElement;
   abilityIcon(ability: string): HTMLElement;
   pick(id: string): void;
@@ -29,16 +32,23 @@ export function classScreen(o: ClassScreenOptions): HTMLElement {
     const isCurrent = id === o.current;
     const abilities = ABILITY_SLOTS.map((slot) => {
       const def = o.content.ability(cls.abilities[slot]);
+      const locked = slot !== 'aoe' && !o.unlocked[slot];
       return h(
         'li',
-        {},
+        locked ? { class: 'locked' } : {},
         h(
           'div',
           { class: 'keys' },
           o.abilityIcon(cls.abilities[slot]),
           h('kbd', {}, primaryKey(o.bindings, SLOT_BINDING[slot])),
         ),
-        h('div', {}, h('div', { class: 'ability' }, def.name), h('div', { class: 'what' }, def.description)),
+        h(
+          'div',
+          {},
+          h('div', { class: 'ability' }, def.name),
+          h('div', { class: 'what' }, def.description),
+          locked ? h('div', { class: 'locked-note' }, unlockHint(o.content, slot)) : null,
+        ),
       );
     });
     const card = h(

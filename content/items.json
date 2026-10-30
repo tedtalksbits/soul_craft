@@ -149,5 +149,23 @@
     "icon": "potion_breath",
     "stack": 5,
     "effect": { "type": "buff", "stat": "staminaRegen", "amount": 0.5, "seconds": 60 }
+  },
+  "relic_oath": {
+    "kind": "relic",
+    "name": "Oath Ember",
+    "description": "A guardian's sworn flame. Taking it awakens your class ability.",
+    "icon": "glowspore",
+    "stack": 1,
+    "unlocks": "class",
+    "source": "Defeat the guardian knight of a Forsaken Shrine."
+  },
+  "relic_sovereign": {
+    "kind": "relic",
+    "name": "Sovereign Ember",
+    "description": "A flame that answers to no one. Taking it awakens your super.",
+    "icon": "potion_ember",
+    "stack": 1,
+    "unlocks": "super",
+    "source": "Defeat a second Forsaken Shrine guardian."
   }
 }

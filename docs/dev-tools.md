@@ -31,6 +31,7 @@ Run `help` for the live list or `help <command>` for usage. Highlights:
 | `heal`, `give souls 500`, `give flasks 2`, `give maxhp 300`              | Player resources                                    |
 | `item <id> [count]`, `inv`, `equip <id>`                                 | Give items, list the pack, equip from it            |
 | `class [id]`, `charge`                                                   | Show or change class anywhere; ready every ability  |
+| `level <attribute> [n]`, `unlock <class / super / all>`                  | Free levels; awaken ability slots                   |
 | `craft <recipe>`, `upgrade`                                              | Craft or upgrade the weapon, ignoring station range |
 | `kill`                                                                   | Die (tests death and respawn)                       |
 | `tp <x> <y>`, `home`, `where`                                            | Teleport by tile, return to bonfire, print location |
