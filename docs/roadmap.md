@@ -83,8 +83,10 @@ The world is endless and procedural, and nothing told you where anything was. Bu
      death spot where lost souls lie.
    - Player-placed pins.
    - Coordinates only in the map footer and a dev overlay.
-3. **Compass strip** across the top of the HUD: N / E / S / W, plus markers for the nearest lit bonfire, the
-   village, the player's pin and lost souls.
+3. **Compass strip** (done) across the top of the HUD: N / E / S / W, plus markers for the nearest lit bonfire,
+   the village, the player's pin and where you died. North is always up in this game, so it is a fixed 360° bearing
+   bar (N in the middle, S at both ends) rather than one that turns with the player. A marker hides once you are
+   standing at it, and the death marker clears when you walk back to the spot. It can be hidden in Settings.
 
 **Low-cost landmarks** alongside: a faint light pillar above lit bonfires, visible from a distance, and signposts on
 roads pointing to Ashen Village.

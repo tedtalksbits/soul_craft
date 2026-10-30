@@ -66,6 +66,12 @@ export class SettingsScreen {
         toggle('Fill the screen', s.fill, 'Show a little more of the world instead of black borders.', () =>
           this.set({ fill: !s.fill }),
         ),
+        toggle(
+          'Show compass',
+          s.compass,
+          'The bar across the top pointing to bonfires, home, your pin.',
+          () => this.set({ compass: !s.compass }),
+        ),
         h(
           'div',
           { class: 'row' },

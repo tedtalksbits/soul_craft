@@ -72,6 +72,21 @@ describe('world map', () => {
     const hp = sim.ecs.need(sim.player, Health).hp;
     applyDamage(sim, sim.player, { amount: hp, crit: false, fromX: pb.x + 1, fromY: pb.y, knockback: 0 });
     expect(sim.state.lastDeath).toEqual(where);
+    // Lying there until respawn must not count as walking back to it.
+    run(sim, 60);
+    expect(sim.state.lastDeath).toEqual(where);
+  });
+
+  it('clears the death marker once the player walks back to it', () => {
+    const sim = newSim();
+    sim.state.lastDeath = { x: 0, y: 0 };
+    const pb = sim.ecs.need(sim.player, Body);
+    Object.assign(pb, { x: 30 * TILE, y: 0 });
+    run(sim, 1);
+    expect(sim.state.lastDeath).not.toBeNull();
+    Object.assign(pb, { x: TILE, y: 0 });
+    run(sim, 1);
+    expect(sim.state.lastDeath).toBeNull();
   });
 
   it('places and clears the pin through the input channel', () => {

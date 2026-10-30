@@ -3,7 +3,7 @@
  * which places they have found (villages, shrines, camps, wayshrines, stations),
  * and their own pin. The sim records it; the client's map screen only draws it.
  */
-import { Body, Station } from '../components';
+import { Body, Player, Station } from '../components';
 import { CHUNK, TILE } from '../constants';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
@@ -13,6 +13,8 @@ import { chunkKey } from '../world/generator';
 /** Fog of war is kept in cells this many tiles square, 4×4 cells per chunk. */
 export const CELL_TILES = 8;
 export const CELLS_PER_CHUNK = CHUNK / CELL_TILES;
+/** How close (tiles) the player must come to their death spot for its marker to clear. */
+const DEATH_CLEAR_TILES = 3;
 
 const DEFAULT_NAMES: Readonly<Record<LandmarkKind, string>> = {
   village: 'Village',
@@ -57,6 +59,13 @@ function explore(sim: Simulation): void {
     }
   }
   recordStations(sim, pb);
+  // Walking back to where you died clears the marker, like recovering a bloodstain. Not while lying
+  // there dead, or it would clear the moment it was set.
+  const death = sim.state.lastDeath;
+  const alive = sim.ecs.get(sim.player, Player)?.state !== 'dead';
+  if (death && alive && Math.hypot(death.x - pb.x, death.y - pb.y) < DEATH_CLEAR_TILES * TILE) {
+    sim.state.lastDeath = null;
+  }
 }
 
 function revealCell(sim: Simulation, gx: number, gy: number): void {

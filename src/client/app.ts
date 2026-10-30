@@ -130,6 +130,7 @@ export class App {
       this.audio.setVolume(s.volume);
       this.audio.muted = s.muted;
       this.renderer.setFill(s.fill);
+      this.renderer.hud.showCompass = s.compass;
     });
     document.addEventListener('fullscreenchange', () => this.ui.refreshSettings());
     addEventListener('pointerdown', () => this.audio.unlock());

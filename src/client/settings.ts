@@ -14,6 +14,8 @@ export interface Settings {
   bindings: Bindings;
   /** Fill the window by showing a little more world, instead of black borders. */
   fill: boolean;
+  /** The compass bar across the top of the HUD. */
+  compass: boolean;
   /** 0-1. */
   volume: number;
   muted: boolean;
@@ -24,6 +26,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   bindings: DEFAULT_BINDINGS,
   fill: true,
+  compass: true,
   volume: 0.8,
   muted: false,
   seenHints: [],
@@ -32,6 +35,7 @@ export const DEFAULT_SETTINGS: Settings = {
 const StoredSchema = z.object({
   bindings: z.record(z.string(), z.array(z.string())).optional(),
   fill: z.boolean().optional(),
+  compass: z.boolean().optional(),
   volume: z.number().min(0).max(1).optional(),
   muted: z.boolean().optional(),
   seenHints: z.array(z.string()).optional(),
@@ -50,6 +54,7 @@ export function parseSettings(raw: unknown): Settings {
   return {
     bindings,
     fill: s.fill ?? DEFAULT_SETTINGS.fill,
+    compass: s.compass ?? DEFAULT_SETTINGS.compass,
     volume: s.volume ?? DEFAULT_SETTINGS.volume,
     muted: s.muted ?? DEFAULT_SETTINGS.muted,
     seenHints: s.seenHints ?? [],

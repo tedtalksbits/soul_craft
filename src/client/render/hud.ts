@@ -19,6 +19,7 @@ import type { Assets } from '../assets';
 import { DEFAULT_BINDINGS, hudKeyLabel, type Binding, type Bindings } from '../keybinds';
 import { slotUnlocked } from '../../sim/modules/unlocks';
 import { classPalette } from './class-palette';
+import { Compass } from './compass';
 import { PixelText } from './pixel-text';
 
 /** Buff pip colors, matching the potions that grant them. */
@@ -52,6 +53,9 @@ export class Hud {
   private readonly abilityIcons = [new Sprite(), new Sprite(), new Sprite()];
   /** Drawn over the icons: cooldown fills and the super's glow. */
   private readonly over = new Graphics();
+  private readonly compass: Compass;
+  /** From settings. */
+  showCompass = true;
   /** Which of the three ability slots are not yet awakened (no key label, no fill). */
   private locked = [false, false, false];
 
@@ -64,6 +68,7 @@ export class Hud {
     this.souls = new PixelText(assets);
     this.quickCount = new PixelText(assets);
     this.keyLabels = [0, 1, 2, 3].map(() => new PixelText(assets));
+    this.compass = new Compass(assets);
     this.root.addChild(
       this.g,
       this.sigil,
@@ -74,6 +79,7 @@ export class Hud {
       this.quickIcon,
       this.quickCount,
       ...this.keyLabels,
+      this.compass.root,
     );
   }
 
@@ -186,6 +192,8 @@ export class Hud {
     const g = this.g.clear();
     const hpW = Math.round(health.max * 0.8);
     bar(g, 6, 6, hpW, 4, frac, 0xa3261c, this.chip);
+    this.compass.root.visible = this.showCompass;
+    if (this.showCompass) this.compass.update(sim, this.viewW, 6 + hpW);
     const stW = Math.round(stamina.max * 0.6);
     const low = stamina.value < 20;
     bar(g, 6, 12, stW, 2, Math.max(0, stamina.value / stamina.max), low ? 0x9a7a30 : 0x5c9a44);
