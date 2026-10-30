@@ -20,6 +20,7 @@ import { InputCapture, isTyping } from './input';
 import { primaryKey } from './keybinds';
 import { compassDirection } from './ui/travel';
 import { SettingsStore } from './settings';
+import { MapTerrain } from './render/map-terrain';
 import { Tutorial } from './tutorial';
 import { FixedLoop } from './loop';
 import type { GameRenderer } from './render/renderer';
@@ -49,6 +50,8 @@ export class App {
   readonly audio = new Audio();
   /** Per-device settings: controls, display, audio, tutorial hints. */
   readonly settings = new SettingsStore();
+  /** The world map's cached chunk images, kept between openings. */
+  private readonly mapTerrain = new MapTerrain();
   private readonly tutorial: Tutorial;
   /** Extra reasons to hold input, e.g. the dev console having focus. */
   readonly inputHolds = new Set<string>();
@@ -91,6 +94,17 @@ export class App {
       (e) => {
         if (e.repeat || isTyping(e)) return;
         const pack = this.input.bindings.inventory.includes(e.code);
+        const map = this.input.bindings.map.includes(e.code);
+        if (map && this.ui.screen === 'map') {
+          e.preventDefault();
+          this.ui.hideScreen();
+          return;
+        }
+        if (map && this.sim && !this.ui.blocking && !this.inventory.isOpen && !this.level.isOpen) {
+          e.preventDefault();
+          this.openMap();
+          return;
+        }
         if (this.level.isOpen && e.code === 'Escape') {
           e.preventDefault();
           this.level.close();
@@ -223,6 +237,20 @@ export class App {
       abilityIcon: (ability) => this.abilityIcon(ability, 2),
       pick: (cls) => void this.newGame(slot, randomSeed(), cls).then(() => this.save()),
       cancel: () => void this.showTitle(),
+    });
+  }
+
+  /** The world map. The game pauses while it is open; a pin placed on it applies on resume. */
+  private openMap(): void {
+    const sim = this.sim;
+    if (!sim) return;
+    this.ui.clearHint();
+    this.ui.showMap({
+      sim,
+      terrain: this.mapTerrain,
+      mapKey: primaryKey(this.input.bindings, 'map'),
+      setPin: (at) => this.input.queueAction({ type: 'setPin', at }),
+      close: () => this.ui.hideScreen(),
     });
   }
 

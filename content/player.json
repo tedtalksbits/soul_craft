@@ -29,6 +29,7 @@
   "hurt": { "iframes": 50, "stun": 14, "knockback": 2.6 },
   "death": { "soulPenalty": 0.5, "respawnDelay": 210 },
   "magnet": { "radius": 40, "speed": 0.4, "accel": 0.12, "maxSpeed": 5 },
+  "exploration": { "revealRadius": 14 },
   "inventorySlots": 24,
   "start": { "class": "vanguard", "weapon": "chipped_sword", "items": [] },
   "leveling": {

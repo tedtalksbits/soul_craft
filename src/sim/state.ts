@@ -18,10 +18,30 @@ export interface SimState {
   tileOverrides: Record<string, Record<string, string>>;
   /** "tx,ty" -> swings taken by a cuttable tile that has not broken yet. */
   tileDamage: Record<string, number>;
+  /**
+   * The world map's fog of war: chunk key -> a 16-bit mask of the chunk's 4×4 cells (8×8 tiles each)
+   * the player has seen. Bit `cy * 4 + cx` is the cell at (cx, cy) within the chunk.
+   */
+  explored: Record<string, number>;
+  /** Places the map marks once seen (villages, shrines, camps, wayshrines, stations), by id. */
+  landmarks: Record<string, Landmark>;
+  /** Where the player last died, for the map. */
+  lastDeath: { x: number; y: number } | null;
+  /** The player's own map pin (world pixels), or none. */
+  pin: { x: number; y: number } | null;
   /** Named areas and biomes the player has entered. */
   discovered: Record<string, true>;
   currentArea: string | null;
   cheats: { god: boolean; noclip: boolean };
+}
+
+export type LandmarkKind = 'village' | 'shrine' | 'camp' | 'wayshrine' | 'forge' | 'alchemy';
+
+export interface Landmark {
+  kind: LandmarkKind;
+  name: string;
+  x: number;
+  y: number;
 }
 
 export interface KnownBonfire {
@@ -39,6 +59,10 @@ export function initialState(seed: number): SimState {
     checkpoint: null,
     tileOverrides: {},
     tileDamage: {},
+    explored: {},
+    landmarks: {},
+    lastDeath: null,
+    pin: null,
     discovered: {},
     currentArea: null,
     cheats: { god: false, noclip: false },

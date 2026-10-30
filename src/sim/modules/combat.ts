@@ -105,6 +105,7 @@ function damagePlayer(
     player.souls -= lost;
     player.state = 'dead';
     player.t = 0;
+    sim.state.lastDeath = { x: body.x, y: body.y };
     sim.events.emit({ type: 'playerDied', soulsLost: lost });
   } else {
     player.state = 'hurt';

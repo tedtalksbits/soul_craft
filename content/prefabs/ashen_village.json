@@ -1,5 +1,6 @@
 {
   "name": "Ashen Village",
+  "marker": "village",
   "darkness": 0.06,
   "legend": {
     "2": {

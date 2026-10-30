@@ -6,6 +6,7 @@ import type { SaveSlot, SlotInfo } from '../../save/save-manager';
 import { TICK_RATE } from '../../sim/constants';
 import { classScreen, type ClassScreenOptions } from './classes';
 import { travelScreen, type TravelScreenOptions } from './travel';
+import { WorldMapScreen, type WorldMapOptions } from './world-map';
 import { SettingsScreen, type SettingsScreenOptions } from './settings';
 import { BINDING_GROUPS, DEFAULT_BINDINGS, keyLabel, primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
@@ -41,7 +42,7 @@ export interface PauseHandlers {
   saveAndQuit(): void;
 }
 
-type ScreenKind = 'title' | 'pause' | 'classes' | 'settings' | 'travel';
+type ScreenKind = 'title' | 'pause' | 'classes' | 'settings' | 'travel' | 'map';
 
 export class Ui {
   private readonly promptEl = h('div', { class: 'prompt hidden' });
@@ -57,6 +58,7 @@ export class Ui {
   private screenCancel: (() => void) | null = null;
   private restEl: HTMLElement | null = null;
   private settingsScreen: SettingsScreen | null = null;
+  private mapScreen: WorldMapScreen | null = null;
   private hintEl: HTMLElement | null = null;
   private hintTimer = 0;
   /** The player's key bindings, for key hints and for advancing dialog. */
@@ -99,6 +101,13 @@ export class Ui {
   /** Redraws the settings screen if it is open (e.g. after leaving full screen with F11). */
   refreshSettings(): void {
     this.settingsScreen?.render();
+  }
+
+  showMap(o: WorldMapOptions): void {
+    const screen = new WorldMapScreen(o);
+    this.setScreen('map', screen.el);
+    this.mapScreen = screen;
+    this.screenCancel = () => o.close();
   }
 
   showTravel(o: TravelScreenOptions): void {
@@ -331,6 +340,8 @@ export class Ui {
 
   hideScreen(): void {
     this.settingsScreen?.dispose();
+    this.mapScreen?.dispose();
+    this.mapScreen = null;
     this.settingsScreen = null;
     this.screenEl?.remove();
     this.screenEl = null;
@@ -398,6 +409,7 @@ function controlsLine(b: Bindings): string {
     `${k('item')} quick item`,
     `${k('use')} use`,
     `${k('inventory')} pack`,
+    `${k('map')} map`,
     'Esc pause and settings',
   ].join(' · ');
 }

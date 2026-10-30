@@ -1,4 +1,5 @@
 {
+  "marker": "wayshrine",
   "legend": {
     "#": { "tile": "wall" },
     ".": { "tile": "flagstone" },

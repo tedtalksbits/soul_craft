@@ -76,7 +76,7 @@ The world is endless and procedural, and nothing told you where anything was. Bu
    hub, with the stations, and its bonfire is lit from the start of every game, so home is always on the list.
    The save keeps every lit bonfire's name and position (`SimState.bonfires`), so far ones can be reached. There
    is **no recall or "return home" item**: rejected as too cheesy, so travel is only ever between bonfires.
-2. **World map** (M key):
+2. **World map** (M key) (done):
    - Fog of war: only chunks the player has visited show. They're saved in sim state and drawn with the tiles'
      existing `map` colors.
    - Markers: lit bonfires, stations, discovered shrines and camps, the player's position and facing, and the

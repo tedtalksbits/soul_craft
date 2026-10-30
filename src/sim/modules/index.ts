@@ -5,6 +5,7 @@ import { craftingModule } from './crafting';
 import { enemiesModule } from './enemies';
 import { interactionModule } from './interaction';
 import { itemsModule } from './items';
+import { mappingModule } from './mapping';
 import { movementModule } from './movement';
 import { pickupsModule } from './pickups';
 import { playerModule } from './player';
@@ -32,4 +33,5 @@ export const SIM_MODULES: readonly SimModule[] = [
   pickupsModule,
   interactionModule,
   travelModule,
+  mappingModule,
 ];

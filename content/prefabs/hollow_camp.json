@@ -1,5 +1,6 @@
 {
   "name": "Hollow Camp",
+  "marker": "camp",
   "biomes": ["meadow", "ashen_hills", "sunken_ruins"],
   "legend": {
     "#": { "tile": "wall" },

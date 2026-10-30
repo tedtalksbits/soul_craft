@@ -234,6 +234,8 @@ export const PlayerSchema = z.object({
    * `speed` px/tick and gains `accel` each tick up to `maxSpeed`. Radius 0 turns it off.
    */
   magnet: z.object({ radius: nonneg, speed: pos, accel: nonneg, maxSpeed: pos }),
+  /** The world map: ground within `revealRadius` tiles of the player counts as explored. */
+  exploration: z.object({ revealRadius: pos }),
   /** How many different stacks the player can carry. */
   inventorySlots: z.number().int().min(1),
   /** A new game starts as this class, with this weapon equipped and these items carried. */
@@ -438,6 +440,8 @@ export const PrefabSchema = z
   .object({
     /** Shown when the player walks in. Omit for unnamed set pieces. */
     name: z.string().optional(),
+    /** How the world map marks this set piece once the player has seen it. Omit for no marker. */
+    marker: z.enum(['village', 'shrine', 'camp', 'wayshrine']).optional(),
     darkness: fraction.optional(),
     /** Biomes this prefab may be placed in by region scattering. Omit for anywhere. */
     biomes: z.array(z.string()).optional(),

@@ -35,6 +35,7 @@ screen lists your current keys.
 | Quick item (potion, bandage)   | Q                                       |
 | Use (bonfire, sign, forge)     | E / Enter                               |
 | Inventory, crafting, abilities | Tab / I                                 |
+| World map                      | M                                       |
 | Pause and settings             | Esc                                     |
 | Dev console (dev builds)       | ` (backquote)                           |
 

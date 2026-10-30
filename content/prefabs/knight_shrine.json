@@ -1,5 +1,6 @@
 {
   "name": "Forsaken Shrine",
+  "marker": "shrine",
   "darkness": 0.7,
   "biomes": ["pale_graveyard", "sunken_ruins", "ashen_hills"],
   "legend": {

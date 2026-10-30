@@ -170,3 +170,22 @@ describe('v5 -> v6', () => {
     expect(Object.keys(sim.state.bonfires).length).toBeGreaterThan(0);
   });
 });
+
+describe('v6 -> v7', () => {
+  it('gives an old save an unexplored map that fills in as the player moves', () => {
+    const current = createSave(newSim(10), '1');
+    const map = new Set(['explored', 'landmarks', 'lastDeath', 'pin']);
+    const v6State = Object.fromEntries(Object.entries(current.snapshot.state).filter(([k]) => !map.has(k)));
+    const v6 = { ...current, version: 6, snapshot: { ...current.snapshot, state: v6State } };
+    const migrated = parseSave(JSON.parse(JSON.stringify(v6)));
+    expect(migrated.snapshot.state).toMatchObject({
+      explored: {},
+      landmarks: {},
+      lastDeath: null,
+      pin: null,
+    });
+    const sim = Simulation.restore(migrated.snapshot, content);
+    run(sim, 1);
+    expect(Object.keys(sim.state.explored).length).toBeGreaterThan(0);
+  });
+});

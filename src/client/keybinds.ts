@@ -6,7 +6,7 @@
  */
 import type { ActionName } from '../sim/input';
 
-export type Binding = ActionName | 'up' | 'down' | 'left' | 'right' | 'inventory';
+export type Binding = ActionName | 'up' | 'down' | 'left' | 'right' | 'inventory' | 'map';
 export type Bindings = Readonly<Record<Binding, readonly string[]>>;
 
 export const ALL_BINDINGS: readonly Binding[] = [
@@ -23,6 +23,7 @@ export const ALL_BINDINGS: readonly Binding[] = [
   'classAbility',
   'super',
   'inventory',
+  'map',
 ];
 
 /** How many keys one action can have. */
@@ -42,6 +43,7 @@ export const DEFAULT_BINDINGS: Bindings = {
   classAbility: ['KeyC'],
   super: ['KeyV'],
   inventory: ['Tab', 'KeyI'],
+  map: ['KeyM'],
 };
 
 /** The controls list, in the order and groups players read it. */
@@ -75,6 +77,7 @@ export const BINDING_GROUPS: readonly {
       { binding: 'item', label: 'Quick item' },
       { binding: 'use', label: 'Interact' },
       { binding: 'inventory', label: 'Inventory' },
+      { binding: 'map', label: 'World map' },
     ],
   },
 ];
