@@ -33,7 +33,7 @@ screen lists your current keys.
 | Super (when its bar is full)                                | V                                       |
 | Drink flask                                                 | R / H                                   |
 | Quick item (potion, bandage)                                | Q                                       |
-| Use (bonfire, sign, forge)                                  | E / Enter                               |
+| Use (bonfire, sign, forge, talk)                            | E / Enter                               |
 | Inventory, crafting, abilities                              | Tab / I                                 |
 | World map                                                   | M                                       |
 | Pause and settings                                          | Esc                                     |

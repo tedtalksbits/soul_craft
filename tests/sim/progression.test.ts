@@ -99,26 +99,22 @@ describe('ability unlocks', () => {
     expect(a.energy).toBe(0);
   });
 
-  it('the first guardian knight drops the Oath Ember, which awakens the class ability', () => {
+  it('the first guardian knight drops the Oath Ember, which the player carries to Maren', () => {
     const sim = newSim();
     const { dropped, events } = killKnight(sim);
     expect(dropped).toEqual(['relic_oath']);
-    const ability = content.playerClass(content.player.start.class).abilities.class;
-    expect(ofType(events, 'abilityUnlocked')).toEqual([{ type: 'abilityUnlocked', slot: 'class', ability }]);
-    expect(sim.ecs.need(sim.player, Abilities).unlocked).toEqual({ class: true, super: false });
+    // Beating a knight awakens nothing by itself: Maren takes the oath (see objectives.test.ts).
+    expect(ofType(events, 'abilityUnlocked')).toEqual([]);
+    expect(sim.ecs.need(sim.player, Abilities).unlocked).toEqual({ class: false, super: false });
+    expect(countItem(sim.ecs.need(sim.player, Inventory), 'relic_oath')).toBe(1);
   });
 
-  it('later knights drop no relic: the Sovereign Ember comes from the Ashen Warden', () => {
+  it('no knight drops a second oath while one is carried, or once the class ability is awake', () => {
     const sim = newSim();
     killKnight(sim);
     expect(killKnight(sim).dropped).toEqual([]);
-    expect(sim.ecs.need(sim.player, Abilities).unlocked).toEqual({ class: true, super: false });
-  });
-
-  it('relics are taken, never carried', () => {
-    const sim = newSim();
-    killKnight(sim);
-    expect(sim.ecs.need(sim.player, Abilities).unlocked.class).toBe(true);
-    expect(countItem(sim.ecs.need(sim.player, Inventory), 'relic_oath')).toBe(0);
+    sim.ecs.need(sim.player, Inventory).stacks = [];
+    sim.ecs.need(sim.player, Abilities).unlocked.class = true;
+    expect(killKnight(sim).dropped).toEqual([]);
   });
 });

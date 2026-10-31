@@ -453,7 +453,7 @@ function facts(def: ItemDef, level: number): string[] {
     case 'key':
       return ['Kept for restoring the village'];
     case 'relic':
-      return [def.unlocks === 'class' ? 'Awakens your class ability' : 'Awakens your super'];
+      return [`Bring it to Maren to awaken your ${def.unlocks === 'class' ? 'class ability' : 'super'}`];
     case 'material':
       return ['Crafting material', `Stacks to ${def.stack}`];
     case 'weapon': {

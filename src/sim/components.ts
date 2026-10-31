@@ -295,6 +295,12 @@ export interface Project {
 }
 export const Project = defineComponent<Project>('project');
 
+/** Someone the player can talk to, by id in npcs.json (Maren). */
+export interface Npc {
+  npc: string;
+}
+export const Npc = defineComponent<Npc>('npc');
+
 export type Torch = Record<string, never>;
 export const Torch = defineComponent<Torch>('torch');
 

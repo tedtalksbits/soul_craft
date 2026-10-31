@@ -203,3 +203,21 @@ describe('v7 -> v8', () => {
     expect(sim.state.restored).toEqual({});
   });
 });
+
+describe('v8 -> v9', () => {
+  it('counts what an old save already has as done objectives', () => {
+    const sim = newSim(9);
+    sim.ecs.need(sim.player, Abilities).unlocked.class = true;
+    sim.state.restored['smithy'] = true;
+    const current = createSave(sim, '1');
+    const state = Object.fromEntries(
+      Object.entries(current.snapshot.state).filter(([k]) => k !== 'objectives'),
+    );
+    const v8 = { ...current, version: 8, snapshot: { ...current.snapshot, state } };
+    const migrated = parseSave(JSON.parse(JSON.stringify(v8)));
+    expect(migrated.snapshot.state.objectives).toEqual({ active: null, done: { oath: true, forge: true } });
+    // The keep is still to do, and Maren offers it next.
+    const restored = Simulation.restore(migrated.snapshot, content);
+    expect(restored.state.objectives.done['keep']).toBeUndefined();
+  });
+});

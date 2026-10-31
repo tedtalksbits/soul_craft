@@ -8,6 +8,7 @@ import { interactionModule } from './interaction';
 import { itemsModule } from './items';
 import { mappingModule } from './mapping';
 import { movementModule } from './movement';
+import { objectivesModule } from './objectives';
 import { pickupsModule } from './pickups';
 import { playerModule } from './player';
 import { progressionModule } from './progression';
@@ -37,6 +38,7 @@ export const SIM_MODULES: readonly SimModule[] = [
   combatModule,
   pickupsModule,
   interactionModule,
+  objectivesModule,
   travelModule,
   mappingModule,
 ];

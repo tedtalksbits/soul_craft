@@ -59,6 +59,8 @@ export class Ui {
     this.bossName,
     h('div', { class: 'track' }, this.bossFill),
   );
+  /** The objective under way, top right: told by Maren, never marked on the map. */
+  private readonly objectiveEl = h('div', { class: 'objective hidden' });
   private toastTimer = 0;
   private bannerEl: HTMLElement | null = null;
   /** When (performance.now) the banner slot is next free, and banners waiting for it. */
@@ -79,7 +81,7 @@ export class Ui {
   bindings: Bindings = DEFAULT_BINDINGS;
 
   constructor(private readonly root: HTMLElement) {
-    root.append(this.promptEl, this.toastEl, this.bossEl, this.fadeEl);
+    root.append(this.promptEl, this.toastEl, this.bossEl, this.objectiveEl, this.fadeEl);
     addEventListener('keydown', (e) => {
       if (!this.dialogState || e.repeat) return;
       if (this.bindings.use.includes(e.code) || this.bindings.attack.includes(e.code)) {
@@ -183,6 +185,12 @@ export class Ui {
     this.bossEl.classList.toggle('shielded', boss.shielded);
   }
 
+  /** The HUD's objective line, or none (on the title screen, or with nothing left to do). */
+  objective(text: string | null): void {
+    this.objectiveEl.classList.toggle('hidden', text === null);
+    if (text !== null && this.objectiveEl.textContent !== text) this.objectiveEl.textContent = text;
+  }
+
   /** A short message; `color` (CSS) tints the text, e.g. a class change in the class's color. */
   toast(text: string, ms = 2600, color?: string): void {
     this.toastEl.textContent = text;
@@ -265,12 +273,14 @@ export class Ui {
     this.fadeEl.classList.toggle('on', on);
   }
 
-  dialog(lines: string[]): void {
+  /** Text the player pages through; `speaker` names who is talking (a sign has no speaker). */
+  dialog(lines: string[], speaker?: string): void {
     if (lines.length === 0) return;
     this.closeDialog();
     const el = h(
       'div',
       { class: 'dialog', onclick: () => this.advanceDialog() },
+      ...(speaker !== undefined ? [h('div', { class: 'speaker' }, speaker)] : []),
       h('div', { class: 'text' }),
       h('div', { class: 'more' }, h('kbd', {}, primaryKey(this.bindings, 'use')), ' ▸'),
     );
@@ -396,6 +406,7 @@ export class Ui {
   resetHud(): void {
     this.prompt(null);
     this.bossBar(null);
+    this.objective(null);
     this.closeDialog();
     this.fade(false);
     this.areaEl?.remove();

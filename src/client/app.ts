@@ -14,6 +14,7 @@ import { TICK_RATE, TILE } from '../sim/constants';
 import type { SimEvent } from '../sim/events';
 import { bossEntity } from '../sim/modules/bosses';
 import { findInteraction } from '../sim/modules/interaction';
+import { objectiveText } from '../sim/modules/objectives';
 import { Simulation } from '../sim/simulation';
 import type { Assets } from './assets';
 import { Audio } from './audio';
@@ -472,6 +473,12 @@ export class App {
     switch (e.type) {
       case 'read':
         return this.ui.dialog(e.lines);
+      case 'spoke':
+        return this.ui.dialog(e.lines, e.name);
+      case 'objectiveStarted':
+        return this.ui.toast('New objective', 2600, '#ecc87a');
+      case 'objectiveCompleted':
+        return this.ui.banner('OBJECTIVE COMPLETE', 'good');
       case 'bonfireLit':
         return this.ui.banner('BONFIRE LIT', 'good');
       case 'rested':
@@ -577,6 +584,7 @@ export class App {
       this.ui.prompt(target ? target.label : null, primaryKey(this.input.bindings, 'use'));
     } else this.ui.prompt(null);
     this.ui.bossBar(sim ? this.bossBarInfo(sim) : null);
+    this.ui.objective(sim ? objectiveText(sim) : null);
     const resting = free && sim.ecs.get(sim.player, Player)?.state === 'sit';
     this.ui.restMenu(resting ? this.currentClassLabel() : null, {
       travel: () => this.openTravel(),

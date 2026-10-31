@@ -139,9 +139,9 @@ export const ItemSchema = z.discriminatedUnion('kind', [
   /** A story item (a boss's Kindling): kept in the pack, spent only by restoration projects. */
   z.object({ kind: z.literal('key'), ...itemBase }),
   /**
-   * Unlocks an ability slot the moment it is picked up (it never enters the pack). It only
-   * drops while its slot is still locked (the Oath Ember from a guardian knight, the Sovereign Ember
-   * from the Ashen Warden).
+   * Carried to Maren, who takes it and awakens its ability slot (the objectives module). It only
+   * drops while its slot is still locked and none is already carried (the Oath Ember from a
+   * guardian knight, the Sovereign Ember from the Ashen Warden).
    */
   z.object({
     kind: z.literal('relic'),
@@ -239,6 +239,48 @@ export const RestorationSchema = z.object({
 });
 export type RestorationDef = z.infer<typeof RestorationSchema>;
 export const RestorationsSchema = z.record(z.string(), RestorationSchema);
+
+// ------------------------------------------------------------------ people and objectives
+
+/** Someone the player can talk to (Maren). Placed in a prefab as an `npc` entity. */
+export const NpcSchema = z.object({
+  name: z.string(),
+  /** Frame in the `npcs` sheet. */
+  sprite: z.string(),
+  /** What they say when they have nothing new for the player. */
+  idleLines: z.array(z.string()).min(1),
+});
+export type NpcDef = z.infer<typeof NpcSchema>;
+export const NpcsSchema = z.record(z.string(), NpcSchema);
+
+/** What finishes an objective. Checked against the world, so it can be met before it is asked. */
+export const ObjectiveGoalSchema = z.discriminatedUnion('type', [
+  /** An ability slot awakened (a relic brought to the giver). */
+  z.object({ type: z.literal('unlock'), slot: z.enum(['class', 'super']) }),
+  z.object({ type: z.literal('defeat'), boss: z.string() }),
+  z.object({ type: z.literal('restore'), project: z.string() }),
+]);
+export type ObjectiveGoal = z.infer<typeof ObjectiveGoalSchema>;
+
+/**
+ * Something an NPC asks of the player. Objectives are told, tracked on the HUD and never marked
+ * on the map (docs/story.md). They run in file order: each is offered once the one before is done.
+ */
+export const ObjectiveSchema = z.object({
+  /** The NPC who gives it and hears it is done. */
+  giver: z.string(),
+  /** The HUD line while it is under way. */
+  track: z.string(),
+  /** What the giver says when asking. */
+  lines: z.array(z.string()).min(1),
+  /** What the giver says if asked again before it is done. */
+  reminder: z.array(z.string()).min(1),
+  /** What the giver says when told it is done. */
+  doneLines: z.array(z.string()).min(1),
+  goal: ObjectiveGoalSchema,
+});
+export type ObjectiveDef = z.infer<typeof ObjectiveSchema>;
+export const ObjectivesSchema = z.record(z.string(), ObjectiveSchema);
 
 // ------------------------------------------------------------------ player
 
@@ -533,6 +575,8 @@ export const PrefabEntitySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('project'), project: z.string() }),
   /** A boss arena's brazier: stood on while the boss is shielded, it lights. */
   z.object({ kind: z.literal('brazier') }),
+  /** Someone to talk to, by id in npcs.json. */
+  z.object({ kind: z.literal('npc'), npc: z.string() }),
 ]);
 export type PrefabEntityDef = z.infer<typeof PrefabEntitySchema>;
 

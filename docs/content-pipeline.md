@@ -10,6 +10,8 @@ Everything a designer tunes lives in data, validated on load and hot-reloaded wh
 | `items.json`          | Items: materials, weapons, armor, rings, consumables                               |
 | `recipes.json`        | Crafting recipes: output, inputs, soul cost, station                               |
 | `restoration.json`    | Village projects: cost, tier, effects, ruin and rebuilt sprites, villager lines    |
+| `npcs.json`           | People to talk to (Maren): name, sprite frame, small talk                          |
+| `objectives.json`     | The story's objectives, in order: giver, HUD line, what is said, the goal          |
 | `classes.json`        | Classes: name, element, and their AoE, class and super abilities                   |
 | `abilities.json`      | Abilities: slot, cooldown, cast timing and a list of effects                       |
 | `enemies.json`        | Enemy archetypes: stats, drops, a `brain`, and a `boss` block for bosses           |
@@ -103,6 +105,15 @@ ends. Once killed it never respawns. The `warden` brain adds `shieldAt` (health 
 up), `adds` (what it calls while shielded) and the slam and charge numbers; prefab `brazier` entities in the arena
 break the shield when the player stands on them all. Boss arenas are placed by `world.json → fixed`
 (`{ "prefab": "warden_arena", "region": [0, -1] }`), so every world has them in the same place.
+
+### People and objectives
+
+`npcs.json` names the people the player can talk to; a prefab places one with `{ "kind": "npc", "npc": "maren" }`,
+drawn from the `npcs` sheet by its `sprite` frame. `objectives.json` is the story's to-do list, offered in file
+order: each has a `giver`, the HUD's `track` line, `lines` (asking), `reminder` (asked again) and `doneLines`
+(reported), and a `goal`: `unlock` (an ability slot awakened), `defeat` (a boss) or `restore` (a project). Goals are
+read from the world, so one met early completes the moment it is reported. Objectives are never marked on the map.
+Relics are carried to the giver: talking to Maren with one in the pack hands it over and awakens its slot.
 
 ### Leveling
 

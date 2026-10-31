@@ -4,7 +4,19 @@
  * unload. Also tracks which named area the player is in.
  */
 import type { StationId } from '../../content/schemas';
-import { Body, Bonfire, Brazier, Enemy, Project, Sign, Spawned, Sprite, Station, Torch } from '../components';
+import {
+  Body,
+  Bonfire,
+  Brazier,
+  Enemy,
+  Npc,
+  Project,
+  Sign,
+  Spawned,
+  Sprite,
+  Station,
+  Torch,
+} from '../components';
 import { CHUNK, LOAD_RADIUS, TILE, UNLOAD_RADIUS } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
@@ -17,6 +29,7 @@ const PROPS_SHEET = 'props';
 const STATIONS_SHEET = 'stations';
 const VILLAGE_SHEET = 'village';
 const ARENA_SHEET = 'arena';
+const NPCS_SHEET = 'npcs';
 /** Station footprints, matched to their art (forge 27 px wide, alchemy table 24 px). */
 const STATION_BODY: Readonly<Record<StationId, { w: number; h: number }>> = {
   forge: { w: 24, h: 10 },
@@ -117,6 +130,14 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
       ecs.add(e, Brazier, { lit: false });
       ecs.add(e, Spawned, spawned);
       ecs.add(e, Sprite, { sheet: ARENA_SHEET });
+      return;
+    }
+    case 'npc': {
+      const e = ecs.create();
+      ecs.add(e, Body, { x: sp.x, y: sp.y, w: 8, h: 6 });
+      ecs.add(e, Npc, { npc: ent.npc });
+      ecs.add(e, Spawned, spawned);
+      ecs.add(e, Sprite, { sheet: NPCS_SHEET });
       return;
     }
     case 'playerSpawn':

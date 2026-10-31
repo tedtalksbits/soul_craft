@@ -13,6 +13,7 @@ import {
   Enemy,
   Facing,
   Motion,
+  Npc,
   Pickup,
   Player,
   Project,
@@ -184,6 +185,7 @@ export function selectAnim(
   } else if (ecs.has(e, Torch)) pose = 'torch';
   else if (ecs.has(e, Sign)) pose = 'sign';
   else if (ecs.has(e, Station)) pose = ecs.need(e, Station).station;
+  else if (ecs.has(e, Npc)) pose = sim.content.npcs[ecs.need(e, Npc).npc]?.sprite ?? 'idle';
   else if (ecs.has(e, Brazier)) pose = ecs.need(e, Brazier).lit ? 'brazier_lit' : 'brazier';
   else if (ecs.has(e, Project)) {
     const id = ecs.need(e, Project).project;

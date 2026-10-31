@@ -1,11 +1,12 @@
 /**
  * Which ability slots the player has awakened. Kept apart from the abilities module so
- * combat (relic drops) and pickups (taking a relic) can use it without import cycles.
+ * combat (relic drops) and objectives (handing a relic to Maren) can use it without import cycles.
  * The AoE is always known; the class ability and the super are unlocked by relics.
  */
 import type { Content } from '../../content/content';
-import { Abilities } from '../components';
+import { Abilities, Inventory, Pickup } from '../components';
 import type { Simulation } from '../simulation';
+import { countItem } from './items';
 
 export type LockableSlot = 'class' | 'super';
 
@@ -15,12 +16,17 @@ export function slotUnlocked(a: Abilities, slot: 'aoe' | LockableSlot): boolean 
 }
 
 /**
- * Whether a relic for `slot` may drop now: only while the slot is still locked. Each relic has
- * its own source (a guardian knight, a boss), and a boss falls once, so there is no fixed order.
+ * Whether a relic may drop now: only while its slot is still locked and no copy is carried or
+ * lying on the ground. Each relic has its own source (a guardian knight, a boss), and a boss falls
+ * once, so there is no fixed order.
  */
-export function relicWanted(sim: Simulation, slot: LockableSlot): boolean {
+export function relicWanted(sim: Simulation, relic: string, slot: LockableSlot): boolean {
   const a = sim.ecs.get(sim.player, Abilities);
-  return a !== undefined && !a.unlocked[slot];
+  if (a === undefined || a.unlocked[slot]) return false;
+  const inv = sim.ecs.get(sim.player, Inventory);
+  if (inv && countItem(inv, relic) > 0) return false;
+  for (const [, p] of sim.ecs.query(Pickup)) if (p.item === relic) return false;
+  return true;
 }
 
 /** Awakens a slot. Returns false if it was already awake. */

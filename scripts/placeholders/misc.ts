@@ -129,3 +129,34 @@ export function buildFont(): { png: Buffer; json: SpriteSheetFile } {
     json: { image: 'font.png', frameWidth: 4, frameHeight: 6, anchor: [0, 0], frames, animations: {} },
   };
 }
+
+// ------------------------------------------------------------------ npcs (16x24)
+
+/** Maren: an old woman in a gray shawl, leaning on a stick. Two frames of a slow breath. */
+export function buildNpcs(): { png: Buffer; json: SpriteSheetFile } {
+  const sheet = new Sheet(32, 24);
+  [0, 1].forEach((i) => {
+    const s = sheet.frame(i, 16, 24);
+    const lift = i;
+    s.ellipse(8, 23, 5, 1.5, hex('#000000', 90));
+    s.rect(4, 12 - lift, 8, 11 + lift, hex('#5a4a3e'));
+    s.rect(3, 10 - lift, 10, 5, hex('#7a7570'));
+    s.rect(5, 5 - lift, 6, 6, hex('#8a8580'));
+    s.rect(6, 7 - lift, 4, 4, hex('#c8a888'));
+    s.rect(6, 8 - lift, 1, 1, hex('#2a2018'));
+    s.rect(9, 8 - lift, 1, 1, hex('#2a2018'));
+    s.rect(13, 9, 1, 14, hex('#6a4a2a'));
+    s.rect(12, 14 - lift, 2, 2, hex('#c8a888'));
+  });
+  return {
+    png: sheet.toPNG(),
+    json: {
+      image: 'npcs.png',
+      frameWidth: 16,
+      frameHeight: 24,
+      anchor: [0.5, 1],
+      frames: {},
+      animations: { maren: { frames: [0, 1], fps: 1, loop: true } },
+    },
+  };
+}

@@ -233,9 +233,10 @@ export function killEnemy(sim: Simulation, e: Entity): void {
 
 export function rollDrops(sim: Simulation, drops: readonly DropDef[], x: number, y: number): void {
   for (const drop of drops) {
-    // Relics only drop while their slot is still locked, so each is found once.
+    // Relics only drop while their slot is still locked and none is carried, so each is found once.
     const relic = drop.item !== undefined ? sim.content.items[drop.item] : undefined;
-    if (relic?.kind === 'relic' && !relicWanted(sim, relic.unlocks)) continue;
+    if (relic?.kind === 'relic' && drop.item !== undefined && !relicWanted(sim, drop.item, relic.unlocks))
+      continue;
     if (sim.rng.chance(drop.chance))
       dropPickup(sim, drop.kind, sim.rng.int(drop.amount[0], drop.amount[1]), x, y, drop.item ?? null);
   }

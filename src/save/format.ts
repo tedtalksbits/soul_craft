@@ -12,7 +12,7 @@ import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -186,6 +186,25 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     const state = asRecord(snapshot['state']);
     const added = { restored: {}, bossesDefeated: {}, bossFight: null };
     return { ...save, snapshot: { ...snapshot, state: { ...added, ...state } } };
+  },
+  /**
+   * v8 -> v9: objectives. SimState gains `objectives`. Older saves took relics on pickup, so what
+   * they already have counts as done: the class ability is the oath, the super the keep, and a
+   * rebuilt smithy the forge. Anything left is offered by Maren as usual.
+   */
+  8: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const state = asRecord(snapshot['state']);
+    const ecs = asRecord(snapshot['ecs']);
+    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
+    const abilities = components['abilities']?.[0]?.[1];
+    const unlocked = abilities ? asRecord(asRecord(abilities)['unlocked']) : {};
+    const restored = state['restored'] ? asRecord(state['restored']) : {};
+    const done: Record<string, true> = {};
+    if (unlocked['class'] === true) done['oath'] = true;
+    if (unlocked['super'] === true) done['keep'] = true;
+    if (restored['smithy'] === true) done['forge'] = true;
+    return { ...save, snapshot: { ...snapshot, state: { ...state, objectives: { active: null, done } } } };
   },
 };
 

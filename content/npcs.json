@@ -1,0 +1,10 @@
+{
+  "maren": {
+    "name": "Maren",
+    "sprite": "maren",
+    "idleLines": [
+      "Go on. I'll be here. I'm always here.",
+      "Rest when you need to. The fire holds as long as someone remembers it."
+    ]
+  }
+}

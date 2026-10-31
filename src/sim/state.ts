@@ -38,6 +38,8 @@ export interface SimState {
    * pixels), inside which the player is held until the fight ends.
    */
   bossFight: BossFight | null;
+  /** The story's objectives (see the objectives module). */
+  objectives: ObjectiveState;
   /** Named areas and biomes the player has entered. */
   discovered: Record<string, true>;
   currentArea: string | null;
@@ -51,6 +53,13 @@ export interface Landmark {
   name: string;
   x: number;
   y: number;
+}
+
+export interface ObjectiveState {
+  /** The objective the player has been given and not yet reported done, or none. */
+  active: string | null;
+  /** Objectives reported done to their giver, by id. */
+  done: Record<string, true>;
 }
 
 export interface BossFight {
@@ -82,6 +91,7 @@ export function initialState(seed: number): SimState {
     restored: {},
     bossesDefeated: {},
     bossFight: null,
+    objectives: { active: null, done: {} },
     discovered: {},
     currentArea: null,
     cheats: { god: false, noclip: false },

@@ -1,0 +1,40 @@
+{
+  "oath": {
+    "giver": "maren",
+    "track": "Take an oath from a shrine knight and bring it to Maren.",
+    "lines": [
+      "You're awake. Good. I wasn't sure I remembered you well enough.",
+      "There are knights at the old shrines. They swore to guard our dead, and they still do, though they've forgotten why.",
+      "Beat one and bring me what it carries. An oath is a memory with a purpose. It will help you remember yours."
+    ],
+    "reminder": ["The knights keep to the old shrines, out past the fields. Bring me what one carries."],
+    "doneLines": [
+      "That's an oath, all right. Hold still.",
+      "There. That's yours now. You fought like that once, I think."
+    ],
+    "goal": { "type": "unlock", "slot": "class" }
+  },
+  "keep": {
+    "giver": "maren",
+    "track": "Defeat the Warden in the keep north of the village, and bring Maren what he held onto.",
+    "lines": [
+      "The smithy's cold because no one here remembers how to work it.",
+      "Bram's apprentice took the forge up to the old keep to keep it safe. He's been up there so long he's forgotten everything else.",
+      "He won't give it back. Bring me what he held onto, and the forge with it."
+    ],
+    "reminder": ["The keep is north, up in the hills. He won't come quietly."],
+    "doneLines": ["He held onto this so hard it's still warm.", "There. That's yours too. Use it carefully."],
+    "goal": { "type": "unlock", "slot": "super" }
+  },
+  "forge": {
+    "giver": "maren",
+    "track": "Rebuild the smithy with what the Warden kept.",
+    "lines": [
+      "You brought the forge back, too. The smithy needs wood and stone before it can take it.",
+      "Rebuild it, and someone may remember the way home."
+    ],
+    "reminder": ["The smithy is just past the fire. Wood, stone, and what you took from the keep."],
+    "doneLines": ["Listen. Someone's working the anvil.", "Bram came back. I'd almost forgotten his face."],
+    "goal": { "type": "restore", "project": "smithy" }
+  }
+}

@@ -214,20 +214,20 @@
   "relic_oath": {
     "kind": "relic",
     "name": "Oath Ember",
-    "description": "A guardian's sworn flame. Taking it awakens your class ability.",
+    "description": "A guardian's sworn flame. Maren, at the village bonfire, will know what to do with it.",
     "icon": "relic_oath",
     "stack": 1,
     "unlocks": "class",
-    "source": "Defeat the guardian knight of a Forsaken Shrine."
+    "source": "Defeat the guardian knight of a Forsaken Shrine and bring what it carries to Maren."
   },
   "relic_sovereign": {
     "kind": "relic",
     "name": "Sovereign Ember",
-    "description": "A flame that answers to no one. Taking it awakens your super.",
+    "description": "A flame that answers to no one. Bring it to Maren, at the village bonfire.",
     "icon": "relic_sovereign",
     "stack": 1,
     "unlocks": "super",
-    "source": "Defeat the Ashen Warden, in the keep north of the village."
+    "source": "Defeat the Ashen Warden, in the keep north of the village, and bring what it kept to Maren."
   },
   "kindling_warden": {
     "kind": "key",

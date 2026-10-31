@@ -53,6 +53,9 @@ Working principles:
 Milestone 4 is built, with its art: the Ashen Warden, the ruined and rebuilt village sites, the arena brazier and
 the relic icons are all generated from source (`tools/art`). What is left:
 
+- **Objectives (built):** Maren, by the village bonfire, gives the story's objectives in order: take an oath from a
+  shrine knight and bring it to her (the class ability), beat the Warden and bring her what he kept (the super),
+  rebuild the smithy. The HUD tracks the current one; the map never marks it. Content in `objectives.json`.
 - **Tune from playtests:** the Warden's health, slam and charge, its shield thresholds and adds; project costs;
   how fast rocks give stone.
 - **Carried over from Milestone 3:** tune abilities (cooldowns, damage, super charge rate, the class glow), and
@@ -63,8 +66,9 @@ the relic icons are all generated from source (`tools/art`). What is left:
 These need an answer before the milestones that depend on them.
 
 1. ~~**What do souls buy?**~~ **Decided:** levels at bonfires, in four attributes (ADR 0011).
-2. ~~**How are abilities earned?**~~ **Decided:** through play. Relics awaken the class ability and the super
-   (ADR 0011). Destiny-style variants per slot could still come later, as boss rewards.
+2. ~~**How are abilities earned?**~~ **Decided:** through play and the story. Relics awaken the class ability and
+   the super (ADR 0011), carried to Maren as objectives. Variants and modifiers per ability come next (ability
+   trees, under Planned).
 3. ~~**Life sim scope.**~~ **Decided:** farming, fishing and pets unlock through restoring the village, in service
    of combat. No seasons, relationships or free-form building.
 4. **Terrain art.** PixelLab's top-down tilesets blend terrains at their edges, which needs neighbor-aware tile

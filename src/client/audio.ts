@@ -162,6 +162,7 @@ export class Audio {
       case 'rested':
         return this.arp([392, 494, 587], 110, 0.6, 0.05);
       case 'read':
+      case 'spoke':
         return this.tone([[460, 1]], 0.04, 0.03, 'square');
       case 'playerDied':
         return this.tone(

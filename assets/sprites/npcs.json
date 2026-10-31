@@ -1,0 +1,8 @@
+{
+  "image": "npcs.png",
+  "frameWidth": 16,
+  "frameHeight": 24,
+  "anchor": [0.5, 1],
+  "frames": {},
+  "animations": { "maren": { "frames": [0, 1], "fps": 1, "loop": true } }
+}

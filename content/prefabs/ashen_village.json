@@ -42,7 +42,8 @@
     "h": { "tile": "grass", "entity": { "kind": "project", "project": "storehouse" } },
     "p": { "tile": "path", "entity": { "kind": "project", "project": "palisade" } },
     "l": { "tile": "path", "entity": { "kind": "project", "project": "lamps" } },
-    "m": { "tile": "flagstone", "entity": { "kind": "project", "project": "smithy" } }
+    "m": { "tile": "flagstone", "entity": { "kind": "project", "project": "smithy" } },
+    "n": { "tile": "flagstone", "entity": { "kind": "npc", "npc": "maren" } }
   },
   "rows": [
     "tt,,,,,,,,,,,,====,,,,,,,,,,,,tt",
@@ -55,7 +56,7 @@
     ",,,,h,,,,,,,,,====,,,,,,,,,,,,,,",
     ",,,,,,,,T..............T,,,,,,,,",
     ",,,,,,,,.............F..,,,,,,,,",
-    ",,,,,,,,....S...........,,,,,,,,",
+    ",,,,,,,,....S....n......,,,,,,,,",
     "========.......B........====l===",
     "========................========",
     ",,,,,,,,....w.......m...,,,,,,,,",

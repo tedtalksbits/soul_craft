@@ -14,6 +14,8 @@ import {
   ClassesSchema,
   RestorationsSchema,
   EnemiesSchema,
+  NpcsSchema,
+  ObjectivesSchema,
   ItemsSchema,
   PlayerSchema,
   PrefabSchema,
@@ -29,6 +31,8 @@ import {
   type ItemCount,
   type ItemDef,
   type ItemKind,
+  type NpcDef,
+  type ObjectiveDef,
   type PlayerDef,
   type PrefabDef,
   type RecipeDef,
@@ -58,6 +62,8 @@ const SINGLE_FILES = {
   'abilities.json': AbilitiesSchema,
   'classes.json': ClassesSchema,
   'restoration.json': RestorationsSchema,
+  'npcs.json': NpcsSchema,
+  'objectives.json': ObjectivesSchema,
 } as const;
 
 const DIRECTORIES = {
@@ -82,6 +88,9 @@ export class Content {
     readonly abilities: Readonly<Record<string, AbilityDef>>,
     readonly classes: Readonly<Record<string, ClassDef>>,
     readonly restoration: Readonly<Record<string, RestorationDef>>,
+    readonly npcs: Readonly<Record<string, NpcDef>>,
+    /** In the order they are offered. */
+    readonly objectives: Readonly<Record<string, ObjectiveDef>>,
   ) {
     this.tileIndex = new Map(tiles.map((t, i) => [t.id, i]));
   }
@@ -170,6 +179,8 @@ export function buildContent(files: ContentFiles): Content {
   const abilities = parse('abilities.json', SINGLE_FILES['abilities.json']);
   const classes = parse('classes.json', SINGLE_FILES['classes.json']);
   const restoration = parse('restoration.json', SINGLE_FILES['restoration.json']);
+  const npcs = parse('npcs.json', SINGLE_FILES['npcs.json']);
+  const objectives = parse('objectives.json', SINGLE_FILES['objectives.json']);
   const prefabs = parseDir('prefabs', DIRECTORIES.prefabs);
   const scenarios = parseDir('scenarios', DIRECTORIES.scenarios);
 
@@ -183,7 +194,9 @@ export function buildContent(files: ContentFiles): Content {
     !recipes ||
     !abilities ||
     !classes ||
-    !restoration
+    !restoration ||
+    !npcs ||
+    !objectives
   )
     throw new ContentError(problems);
 
@@ -191,6 +204,7 @@ export function buildContent(files: ContentFiles): Content {
   checkItems({ player, enemies, tiles, items, recipes }, problems);
   checkClasses({ player, abilities, classes }, problems);
   checkRestoration({ items, prefabs, restoration }, problems);
+  checkObjectives({ enemies, prefabs, restoration, npcs, objectives }, problems);
   if (problems.length > 0) throw new ContentError(problems);
 
   return new Content(
@@ -207,7 +221,37 @@ export function buildContent(files: ContentFiles): Content {
     abilities,
     classes,
     restoration,
+    npcs,
+    objectives,
   );
+}
+
+/** Objectives name real givers, bosses and projects; prefab NPCs name real people. */
+function checkObjectives(
+  c: {
+    enemies: Record<string, EnemyDef>;
+    prefabs: Record<string, PrefabDef>;
+    restoration: Record<string, RestorationDef>;
+    npcs: Record<string, NpcDef>;
+    objectives: Record<string, ObjectiveDef>;
+  },
+  problems: string[],
+): void {
+  for (const [id, o] of Object.entries(c.objectives)) {
+    const at = `objectives.json: ${id}`;
+    if (!(o.giver in c.npcs)) problems.push(`${at}.giver: unknown npc "${o.giver}"`);
+    const goal = o.goal;
+    if (goal.type === 'defeat' && !c.enemies[goal.boss]?.boss)
+      problems.push(`${at}.goal.boss: "${goal.boss}" is not a boss`);
+    if (goal.type === 'restore' && !(goal.project in c.restoration))
+      problems.push(`${at}.goal.project: unknown project "${goal.project}"`);
+  }
+  for (const [pid, prefab] of Object.entries(c.prefabs)) {
+    for (const [ch, entry] of Object.entries(prefab.legend)) {
+      if (entry.entity?.kind === 'npc' && !(entry.entity.npc in c.npcs))
+        problems.push(`prefabs/${pid}.json: legend "${ch}": unknown npc "${entry.entity.npc}"`);
+    }
+  }
 }
 
 /** Project costs name real items, prefab sites name real projects, and upgrade steps name real projects. */

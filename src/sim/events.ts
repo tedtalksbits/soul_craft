@@ -37,6 +37,12 @@ export type SimEvent =
   | { type: 'bonfireLit'; id: string; name: string }
   | { type: 'rested'; id: string; name: string }
   | { type: 'read'; lines: string[] }
+  /** Someone spoke to the player: `name` says `lines`, in order. */
+  | { type: 'spoke'; npc: string; name: string; lines: string[] }
+  /** An objective was given; the HUD tracks it from now on. */
+  | { type: 'objectiveStarted'; objective: string }
+  /** An objective was reported done to its giver. */
+  | { type: 'objectiveCompleted'; objective: string }
   | { type: 'playerDied'; soulsLost: number }
   | { type: 'playerRespawned' }
   | { type: 'areaEntered'; name: string; firstVisit: boolean }

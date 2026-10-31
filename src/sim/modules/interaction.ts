@@ -7,11 +7,12 @@ import type { Entity } from '../../core/ecs';
 import { compassWord, DIR_VEC } from '../../core/math';
 import { CommandError } from '../../core/commands';
 import { STATIONS } from '../../content/schemas';
-import { Body, Bonfire, Facing, Health, Player, Project, Sign, Stamina, Station } from '../components';
+import { Body, Bonfire, Facing, Health, Npc, Player, Project, Sign, Stamina, Station } from '../components';
 import { TILE } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { refreshAbilities } from './abilities';
+import { talkTo } from './objectives';
 import { resetEnemies } from './streaming';
 
 export type Interaction =
@@ -19,6 +20,7 @@ export type Interaction =
   | { kind: 'sign'; entity: Entity; label: string }
   | { kind: 'station'; entity: Entity; label: string }
   | { kind: 'project'; entity: Entity; label: string }
+  | { kind: 'npc'; entity: Entity; label: string }
   | { kind: 'leave'; label: string };
 
 /** How far in front of the player the interaction probe sits. */
@@ -59,6 +61,10 @@ export function findInteraction(sim: Simulation): Interaction | null {
     const label = sim.state.restored[site.project] ? 'Look' : 'Rebuild';
     consider(b, () => ({ kind: 'project', entity: pe, label }));
   }
+  for (const [ne, npc, b] of ecs.query(Npc, Body)) {
+    const name = sim.content.npcs[npc.npc]?.name ?? npc.npc;
+    consider(b, () => ({ kind: 'npc', entity: ne, label: `Talk to ${name}` }));
+  }
   for (const [se, , b] of ecs.query(Sign, Body))
     consider(b, () => ({ kind: 'sign', entity: se, label: 'Read' }));
   return best;
@@ -70,6 +76,7 @@ export function interact(sim: Simulation): void {
   if (target.kind === 'bonfire') restAt(sim, target.entity);
   else if (target.kind === 'station')
     sim.events.emit({ type: 'stationOpened', station: sim.ecs.need(target.entity, Station).station });
+  else if (target.kind === 'npc') talkTo(sim, target.entity);
   else if (target.kind === 'project') {
     const id = sim.ecs.need(target.entity, Project).project;
     const def = sim.content.restoration[id];
