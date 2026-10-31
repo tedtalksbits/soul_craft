@@ -9,6 +9,7 @@ import { CommandError } from '../../core/commands';
 import {
   Body,
   Dying,
+  Empowered,
   Enemy,
   Equipment,
   Facing,
@@ -120,8 +121,10 @@ function updatePlayer(sim: Simulation): void {
   switch (p.state) {
     case 'free': {
       if (mx || my) facing.dir = dirFromVec(mx, my, facing.dir);
-      motion.vx = mx * def.moveSpeed;
-      motion.vy = my * def.moveSpeed;
+      // A super can quicken the walk (Ghost Run).
+      const speed = def.moveSpeed * (1 + (ecs.get(e, Empowered)?.speed ?? 0));
+      motion.vx = mx * speed;
+      motion.vy = my * speed;
       let act = input.pressed;
       if (p.buffered) {
         act |= p.buffered.action;

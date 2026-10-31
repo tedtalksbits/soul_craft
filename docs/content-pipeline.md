@@ -14,6 +14,7 @@ Everything a designer tunes lives in data, validated on load and hot-reloaded wh
 | `objectives.json`     | The story's objectives, in order: giver, HUD line, what is said, the goal          |
 | `classes.json`        | Classes: name, element, and their AoE, class and super abilities                   |
 | `abilities.json`      | Abilities: slot, cooldown, cast timing and a list of effects                       |
+| `modifiers.json`      | Class modifiers: passive bonuses worn in slots, and how many slots there are       |
 | `enemies.json`        | Enemy archetypes: stats, drops, a `brain`, and a `boss` block for bosses           |
 | `tiles.json`          | Tile types: sprite frames, solidity, cutting, light, map color                     |
 | `biomes.json`         | Ground, scatter rules, darkness, ambient particles, spawn tables                   |
@@ -146,17 +147,20 @@ animation it plays, e.g. `cast_slam`; default `attack`), and `effects`, applied 
   of where it lands and rides along until it bursts. `damage`, `knockback`, and `stagger` (ticks the enemy is stopped, guard down).
 - `zone`: ground at `self` or the cursor that pulses every `interval` ticks for `duration` ticks, after
   `delay`: `damage` to enemies in it, `heal` to the player standing in it, and `shield` (`amount` per pulse
-  up to `max`, lasting `seconds`) as overshield. It needs at least one of the three.
+  up to `max`, lasting `seconds`) as overshield. It needs at least one of the three. With `follow` (only at
+  `self`) it moves with the player: an aura (Pyre).
 - `decoy`: a false image where the player stood when the effect lands (before a dash moves them). Enemies
   that can see it chase it instead of the player for `seconds`. Bosses are not fooled.
 - `vanish`: the player is unseen for `seconds` (enemies notice them only up close). Taking a hit ends it;
   attacking ends it too, and that first hit deals `bonus` more (1 = double) and gets past a raised shield.
 - `overshield`: `amount` extra health on the player at once, for `seconds`. Overshield soaks blows before
   health; a blow it soaks completely doesn't make the player flinch. Resting clears it.
+- `volley`: `count` knives thrown at once, fanned across `spread` degrees around the cursor. Each flies
+  `range` px at `speed` px per tick and hits the first enemy it meets for `damage` and `stagger`.
 - `dash`: carries the player `distance` px over `ticks`, optionally with i-frames, hitting what it passes
   (`width`, `damage`, `knockback`, `stagger`).
 - `empower`: a super mode for `seconds`: `damage` and `crit` bonuses, `defense` (0.5 = half damage taken),
-  `staminaFree` swings.
+  `staminaFree` swings, and `speed` (0.5 = walk half again as fast).
 
 Ability hits go through shields. Super energy is `player.json → energy`: `perDamage` dealt, `perKill` and
 `perSecond`. The super's own hits don't charge it. Every class must name an existing ability of the right slot.
@@ -165,6 +169,20 @@ Ability hits go through shields. Super energy is `player.json → energy`: `perD
 learns it for `souls` at a bonfire (Abilities, from the bonfire menu or the pack) and uses it in place of the base,
 switching back and forth for free once learned. Classes always name the base. A variant draws its base's icon
 until it has its own frame in the `abilities` sheet.
+
+**Modifiers.** `modifiers.json` holds `slots` (`base` slots every class has, plus `perWarden` for each boss
+defeated) and the `modifiers`, each for one `class`. A modifier costs `souls` to learn, or names a `boss`: then it
+is free once that boss has fallen. The player puts them on and takes them off while resting (Abilities tab), and
+each class keeps its own. Effects:
+
+- `kill`: when the player kills an enemy (`where: "any"`, or `"zone"`: standing in one of the player's zones),
+  take `cooldown.seconds` off a slot's cooldown, add `energy` and `heal`.
+- `hurt`: `energy` per point of damage the player takes, even damage an overshield soaks.
+- `cooldown`: a slot's cooldown times `factor` (0.75 = ready a quarter sooner).
+- `castShield`: using the ability in `slot` gives `amount` overshield for `seconds`.
+- `ambush`: adds `bonus` to the damage of the first blow out of hiding (Vanish, Ghost Run).
+
+Modifier ids must not match an ability id (learned variants and modifiers share one record).
 
 ### Prefabs
 

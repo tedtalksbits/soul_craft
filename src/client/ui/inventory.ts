@@ -18,6 +18,7 @@ import {
 import { abilityIn } from '../../sim/modules/abilities';
 import { FULL_ENERGY } from '../../sim/modules/energy';
 import { canChoose, versionsOf } from '../../sim/modules/variants';
+import { canWear, modifierSlots, modifiersOf, wornModifiers } from '../../sim/modules/modifiers';
 import { playerLevel } from '../../sim/modules/progression';
 import { unlockHint } from '../../sim/modules/unlocks';
 import type { PlayerAction } from '../../sim/input';
@@ -339,6 +340,71 @@ export class InventoryScreen {
     );
   }
 
+  /**
+   * The class's modifiers: which are worn, in how many slots, and a button to put each on or take
+   * it off. Like versions, changes happen at a bonfire.
+   */
+  private modifiers(sim: Simulation, cls: string): HTMLElement {
+    const ids = modifiersOf(sim, cls);
+    const a = sim.ecs.need(sim.player, Abilities);
+    const worn = wornModifiers(sim);
+    const slots = modifierSlots(sim);
+    const rows = ids.map((id) => {
+      const def = sim.content.modifier(id);
+      const on = worn.includes(id);
+      const check = canWear(sim, id, !on);
+      const label = on
+        ? 'Take off'
+        : a.learned[id] || def.boss !== undefined
+          ? 'Wear'
+          : `Learn · ${def.souls ?? 0} souls`;
+      const source =
+        def.boss !== undefined && !sim.state.bossesDefeated[def.boss]
+          ? h('span', { class: 'vsource' }, `From the ${sim.content.enemy(def.boss).name}.`)
+          : null;
+      return h(
+        'div',
+        { class: on ? 'version worn' : 'version' },
+        h(
+          'div',
+          {},
+          h('span', { class: 'vname' }, def.name),
+          ' ',
+          h('span', { class: 'vdesc' }, def.description),
+          ...(source ? [' ', source] : []),
+        ),
+        h(
+          'button',
+          {
+            disabled: !check.ok,
+            title: check.ok ? '' : check.reason,
+            onclick: () => this.host.act({ type: 'wearModifier', modifier: id, on: !on }),
+          },
+          label,
+        ),
+      );
+    });
+    const p = sim.ecs.get(sim.player, Player);
+    const note =
+      p?.state === 'sit' ? null : h('div', { class: 'rule' }, 'Rest at a bonfire to change modifiers.');
+    return h(
+      'div',
+      { class: 'ability-row modifiers' },
+      h(
+        'div',
+        { class: 'what' },
+        h('div', { class: 'kind' }, 'Modifiers'),
+        h('div', { class: 'name' }, `${worn.length} of ${slots} worn`),
+        h(
+          'div',
+          { class: 'rule' },
+          'Passive bonuses for your class. Each Warden you defeat opens another slot.',
+        ),
+        h('div', { class: 'versions' }, ...rows, ...(note ? [note] : [])),
+      ),
+    );
+  }
+
   /** The class's three abilities: their keys, what they do, and whether they are ready. */
   private abilitiesTab(sim: Simulation): HTMLElement {
     const a = sim.ecs.get(sim.player, Abilities);
@@ -392,6 +458,7 @@ export class InventoryScreen {
       ),
       h('p', { class: 'about' }, cls.description),
       ...rows,
+      ...(modifiersOf(sim, a.class).length > 0 ? [this.modifiers(sim, a.class)] : []),
       h(
         'p',
         { class: 'hint' },

@@ -8,6 +8,7 @@ import { Ambush, Body, Decoy, Facing, Player, Sprite, Veiled } from '../componen
 import { TICK_RATE } from '../constants';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
+import { ambushBonus } from './modifiers';
 
 /** How close an enemy must be to notice a veiled player anyway: close enough to touch. */
 const VEIL_REVEAL = 18;
@@ -25,7 +26,7 @@ export function spawnDecoy(sim: Simulation, x: number, y: number, seconds: numbe
 export function veil(sim: Simulation, seconds: number, bonus: number): void {
   const ticks = Math.round(seconds * TICK_RATE);
   sim.ecs.remove(sim.player, Ambush);
-  sim.ecs.add(sim.player, Veiled, { ticks, bonus, armed: false });
+  sim.ecs.add(sim.player, Veiled, { ticks, bonus: bonus + ambushBonus(sim), armed: false });
   sim.events.emit({ type: 'veiled', seconds });
 }
 

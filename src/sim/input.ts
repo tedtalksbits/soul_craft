@@ -46,7 +46,9 @@ export type PlayerAction =
    * Use another version of a base ability (or the base again). Learning a new variant costs
    * souls. Only allowed while resting at a bonfire.
    */
-  | { type: 'chooseVariant'; base: string; ability: string };
+  | { type: 'chooseVariant'; base: string; ability: string }
+  /** Puts on (or takes off) a class modifier, learning it first if needed. Only at a bonfire. */
+  | { type: 'wearModifier'; modifier: string; on: boolean };
 
 export interface InputFrame {
   /** Movement intent, each axis in [-1, 1]. */

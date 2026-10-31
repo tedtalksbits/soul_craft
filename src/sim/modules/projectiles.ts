@@ -21,6 +21,11 @@ export function spawnProjectile(
     dirY: number;
     speed: number;
     damage: number;
+    /** Ticks it flies before it falls. */
+    life?: number;
+    /** For the player's knives: the ability that threw it and how long its hit staggers. */
+    ability?: string;
+    stagger?: number;
   },
 ): void {
   const e = sim.ecs.create();
@@ -31,8 +36,10 @@ export function spawnProjectile(
     damage: p.damage,
     vx: p.dirX * p.speed,
     vy: p.dirY * p.speed,
-    life: LIFETIME,
+    life: p.life ?? LIFETIME,
     blockable: true,
+    ability: p.ability ?? null,
+    stagger: p.stagger ?? 0,
   });
 }
 

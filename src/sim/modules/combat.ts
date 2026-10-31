@@ -30,6 +30,7 @@ import { gainEnergy } from './energy';
 import { relicWanted } from './unlocks';
 import { playerStats } from './items';
 import { dropPickup } from './pickups';
+import { onHurt, onKill } from './modifiers';
 import { absorb } from './overshield';
 import { takeAmbush, unveil } from './stealth';
 
@@ -92,6 +93,7 @@ function damagePlayer(
   ecs.add(e, Invulnerable, { ticks: def.hurt.iframes });
   push(sim, e, body, hit, 1);
   unveil(sim);
+  onHurt(sim, dealt);
   // An overshield takes the blow first. One that soaks all of it spares the player the flinch.
   const amount = absorb(sim, e, dealt);
   if (amount === 0) return 'hit';
@@ -170,8 +172,10 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
     ability: hit.ability ?? null,
   });
 
-  if (health.hp <= 0) killEnemy(sim, e);
-  else if (ai && !boss && ai.state !== 'stunned' && !ecs.has(e, Staggered)) {
+  if (health.hp <= 0) {
+    onKill(sim, body);
+    killEnemy(sim, e);
+  } else if (ai && !boss && ai.state !== 'stunned' && !ecs.has(e, Staggered)) {
     if (def.recoilTicks > 0) {
       ai.state = 'recoil';
       ai.t = 0;

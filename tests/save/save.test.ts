@@ -123,6 +123,7 @@ describe('v3 -> v4', () => {
       unlocked: { class: true, super: true },
       learned: {},
       chosen: {},
+      modifiers: {},
       casting: null,
     });
   });

@@ -18,6 +18,7 @@ import { restorationModule } from './restoration';
 import { stealthModule } from './stealth';
 import { streamingModule } from './streaming';
 import { travelModule } from './travel';
+import { modifiersModule } from './modifiers';
 import { variantsModule } from './variants';
 
 /**
@@ -34,6 +35,7 @@ export const SIM_MODULES: readonly SimModule[] = [
   overshieldModule,
   progressionModule,
   variantsModule,
+  modifiersModule,
   playerModule,
   stealthModule,
   enemiesModule,

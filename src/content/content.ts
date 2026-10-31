@@ -14,6 +14,7 @@ import {
   ClassesSchema,
   RestorationsSchema,
   EnemiesSchema,
+  ModifiersSchema,
   NpcsSchema,
   ObjectivesSchema,
   ItemsSchema,
@@ -31,6 +32,8 @@ import {
   type ItemCount,
   type ItemDef,
   type ItemKind,
+  type ModifierDef,
+  type ModifiersDef,
   type NpcDef,
   type ObjectiveDef,
   type PlayerDef,
@@ -63,6 +66,7 @@ const SINGLE_FILES = {
   'classes.json': ClassesSchema,
   'restoration.json': RestorationsSchema,
   'npcs.json': NpcsSchema,
+  'modifiers.json': ModifiersSchema,
   'objectives.json': ObjectivesSchema,
 } as const;
 
@@ -89,6 +93,7 @@ export class Content {
     readonly classes: Readonly<Record<string, ClassDef>>,
     readonly restoration: Readonly<Record<string, RestorationDef>>,
     readonly npcs: Readonly<Record<string, NpcDef>>,
+    readonly modifiers: ModifiersDef,
     /** In the order they are offered. */
     readonly objectives: Readonly<Record<string, ObjectiveDef>>,
   ) {
@@ -123,6 +128,12 @@ export class Content {
   /** A variant's base ability, else the ability itself: what icons and class colors are keyed by. */
   baseAbility(id: string): string {
     return this.abilities[id]?.variantOf ?? id;
+  }
+
+  modifier(id: string): ModifierDef {
+    const def = this.modifiers.modifiers[id];
+    if (!def) throw new Error(`Unknown modifier "${id}"`);
+    return def;
   }
 
   playerClass(id: string): ClassDef {
@@ -185,6 +196,7 @@ export function buildContent(files: ContentFiles): Content {
   const classes = parse('classes.json', SINGLE_FILES['classes.json']);
   const restoration = parse('restoration.json', SINGLE_FILES['restoration.json']);
   const npcs = parse('npcs.json', SINGLE_FILES['npcs.json']);
+  const modifiers = parse('modifiers.json', SINGLE_FILES['modifiers.json']);
   const objectives = parse('objectives.json', SINGLE_FILES['objectives.json']);
   const prefabs = parseDir('prefabs', DIRECTORIES.prefabs);
   const scenarios = parseDir('scenarios', DIRECTORIES.scenarios);
@@ -201,6 +213,7 @@ export function buildContent(files: ContentFiles): Content {
     !classes ||
     !restoration ||
     !npcs ||
+    !modifiers ||
     !objectives
   )
     throw new ContentError(problems);
@@ -208,6 +221,7 @@ export function buildContent(files: ContentFiles): Content {
   checkReferences({ enemies, tiles, biomes, world, prefabs }, problems);
   checkItems({ player, enemies, tiles, items, recipes }, problems);
   checkClasses({ player, abilities, classes }, problems);
+  checkModifiers({ enemies, abilities, classes, modifiers }, problems);
   checkRestoration({ items, prefabs, restoration }, problems);
   checkObjectives({ enemies, prefabs, restoration, npcs, objectives }, problems);
   if (problems.length > 0) throw new ContentError(problems);
@@ -227,8 +241,31 @@ export function buildContent(files: ContentFiles): Content {
     classes,
     restoration,
     npcs,
+    modifiers,
     objectives,
   );
+}
+
+/**
+ * Modifiers belong to a real class, a Warden's to a real boss, and their ids never clash with an
+ * ability's: learned variants and modifiers share one record on the player.
+ */
+function checkModifiers(
+  c: {
+    enemies: Record<string, EnemyDef>;
+    abilities: Record<string, AbilityDef>;
+    classes: Record<string, ClassDef>;
+    modifiers: ModifiersDef;
+  },
+  problems: string[],
+): void {
+  for (const [id, def] of Object.entries(c.modifiers.modifiers)) {
+    const at = `modifiers.json: modifiers.${id}`;
+    if (!(def.class in c.classes)) problems.push(`${at}.class: unknown class "${def.class}"`);
+    if (def.boss !== undefined && !c.enemies[def.boss]?.boss)
+      problems.push(`${at}.boss: "${def.boss}" is not a boss`);
+    if (id in c.abilities) problems.push(`${at}: an ability is already called "${id}"`);
+  }
 }
 
 /** Objectives name real givers, bosses and projects; prefab NPCs name real people. */

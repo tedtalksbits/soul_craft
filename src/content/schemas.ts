@@ -63,6 +63,8 @@ export const AbilityEffectSchema = z.discriminatedUnion('type', [
     heal: nonneg.default(0),
     /** Each pulse adds `amount` overshield, up to `max`, lasting `seconds` after the last pulse. */
     shield: z.object({ amount: pos, max: pos, seconds: pos }).optional(),
+    /** The zone moves with the player instead of staying where it landed (an aura). Needs `at: self`. */
+    follow: z.boolean().default(false),
   }),
   /** Overshield on the player at once: `amount` extra health that soaks blows first, for `seconds`. */
   z.object({ type: z.literal('overshield'), amount: pos, seconds: pos }),
@@ -77,6 +79,19 @@ export const AbilityEffectSchema = z.discriminatedUnion('type', [
    * (1 = double damage).
    */
   z.object({ type: z.literal('vanish'), seconds: pos, bonus: nonneg }),
+  /**
+   * `count` knives thrown at once, fanned evenly across `spread` degrees around the aim. Each flies
+   * `range` px at `speed` px per tick and hits the first enemy it meets. Ignores shields.
+   */
+  z.object({
+    type: z.literal('volley'),
+    count: z.number().int().positive(),
+    spread: z.number().min(0).max(360),
+    speed: pos,
+    range: pos,
+    damage: nonneg,
+    stagger: ticks.default(0),
+  }),
   /** A lunge along the aim. Hits (once each) what the player passes through. */
   z.object({
     type: z.literal('dash'),
@@ -96,6 +111,8 @@ export const AbilityEffectSchema = z.discriminatedUnion('type', [
     defense: fraction,
     crit: fraction,
     staminaFree: z.boolean(),
+    /** Extra walking speed: 0.5 = half again as fast. */
+    speed: nonneg.default(0),
   }),
 ]);
 export type AbilityEffect = z.infer<typeof AbilityEffectSchema>;
@@ -129,6 +146,10 @@ export const AbilitySchema = z
     (a) => a.effects.every((fx) => fx.type !== 'zone' || fx.damage > 0 || fx.heal > 0 || fx.shield),
     'a zone needs damage, heal or shield',
   )
+  .refine(
+    (a) => a.effects.every((fx) => fx.type !== 'zone' || !fx.follow || fx.at === 'self'),
+    'only a zone at self can follow the player',
+  )
   .refine((a) => a.slot === 'super' || a.cooldown > 0, 'AoE and class abilities need a cooldown');
 export type AbilityDef = z.infer<typeof AbilitySchema>;
 export const AbilitiesSchema = z.record(z.string(), AbilitySchema);
@@ -146,6 +167,59 @@ export const ClassSchema = z.object({
 });
 export type ClassDef = z.infer<typeof ClassSchema>;
 export const ClassesSchema = z.record(z.string(), ClassSchema);
+
+/**
+ * What a class modifier does. Modifiers are passive: each kind hooks one moment (a kill, a blow
+ * taken, a cast, an ambush), so new modifiers built from these need no code.
+ */
+export const ModifierEffectSchema = z.discriminatedUnion('type', [
+  /**
+   * A kill by the player: anywhere, or only of an enemy standing in one of the player's zones.
+   * Takes `seconds` off a slot's cooldown, adds super energy and heals.
+   */
+  z.object({
+    type: z.literal('kill'),
+    where: z.enum(['any', 'zone']),
+    cooldown: z.object({ slot: z.enum(['aoe', 'class']), seconds: pos }).optional(),
+    energy: nonneg.default(0),
+    heal: nonneg.default(0),
+  }),
+  /** A blow taken (even one an overshield soaks): `energy` super energy per point of damage. */
+  z.object({ type: z.literal('hurt'), energy: pos }),
+  /** A slot's cooldown, scaled: 0.75 = ready a quarter sooner. */
+  z.object({ type: z.literal('cooldown'), slot: z.enum(['aoe', 'class']), factor: pos.max(1) }),
+  /** Using the ability in a slot gives `amount` overshield for `seconds`. */
+  z.object({ type: z.literal('castShield'), slot: AbilitySlotSchema, amount: pos, seconds: pos }),
+  /** The first blow out of hiding (Vanish) deals `bonus` more on top of the ability's own. */
+  z.object({ type: z.literal('ambush'), bonus: pos }),
+]);
+export type ModifierEffect = z.infer<typeof ModifierEffectSchema>;
+
+/**
+ * A class modifier, worn in one of a few slots and changed at a bonfire. Most are learned with
+ * `souls`; the best are a Warden's: free, but only once that `boss` has fallen.
+ */
+export const ModifierSchema = z
+  .object({
+    name: z.string(),
+    description: z.string(),
+    class: z.string(),
+    souls: z.number().int().nonnegative().optional(),
+    boss: z.string().optional(),
+    effects: z.array(ModifierEffectSchema).min(1),
+  })
+  .refine(
+    (m) => (m.souls === undefined) !== (m.boss === undefined),
+    'a modifier costs souls or a boss, not both',
+  );
+export type ModifierDef = z.infer<typeof ModifierSchema>;
+
+export const ModifiersSchema = z.object({
+  /** Slots every class has, and the slots each defeated Warden adds. */
+  slots: z.object({ base: z.number().int().nonnegative(), perWarden: z.number().int().nonnegative() }),
+  modifiers: z.record(z.string(), ModifierSchema),
+});
+export type ModifiersDef = z.infer<typeof ModifiersSchema>;
 
 // ------------------------------------------------------------------ items & crafting
 

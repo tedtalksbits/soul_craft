@@ -89,6 +89,10 @@ export type SimEvent =
   | { type: 'variantLearned'; ability: string }
   /** The player now uses `ability` in place of `base` (the base itself to switch back). */
   | { type: 'variantChosen'; base: string; ability: string }
+  /** A class modifier was learned at a bonfire (and its souls spent). */
+  | { type: 'modifierLearned'; modifier: string }
+  /** A modifier was put on or taken off. */
+  | { type: 'modifierWorn'; modifier: string; on: boolean }
   /** The player opened a ruined project's site; the client shows what it needs. */
   | { type: 'projectOpened'; project: string }
   | { type: 'restored'; project: string }

@@ -86,8 +86,10 @@ export interface Abilities {
   energy: number;
   /** Which slots the player has awakened (relics unlock them). The AoE is always known. */
   unlocked: { class: boolean; super: boolean };
-  /** Ability variants learned at bonfires, by id. Bases are always known. */
+  /** Ability variants and class modifiers learned at bonfires, by id. Bases are always known. */
   learned: Record<string, true>;
+  /** The modifiers worn, by class id, in slot order. Kept per class, like `chosen`. */
+  modifiers: Record<string, string[]>;
   /**
    * The variant in use for a base ability, by base id. Keyed by base rather than slot, so a class
    * changed and changed back keeps its choices. A base with no entry is used as is.
@@ -118,6 +120,8 @@ export interface Empowered {
   defense: number;
   crit: number;
   staminaFree: boolean;
+  /** Extra walking speed, as a fraction. */
+  speed: number;
 }
 export const Empowered = defineComponent<Empowered>('empowered');
 
@@ -158,6 +162,8 @@ export interface Zone extends AbilityHit {
   delay: number;
   duration: number;
   interval: number;
+  /** Moves with the player (an aura) instead of staying where it landed. */
+  follow: boolean;
 }
 export const Zone = defineComponent<Zone>('zone');
 
@@ -292,7 +298,7 @@ export interface Dying {
 }
 export const Dying = defineComponent<Dying>('dying');
 
-export type ProjectileKind = 'arrow';
+export type ProjectileKind = 'arrow' | 'knife';
 export interface Projectile {
   kind: ProjectileKind;
   team: TeamId;
@@ -302,6 +308,9 @@ export interface Projectile {
   life: number;
   /** Whether a raised shield can deflect it. */
   blockable: boolean;
+  /** For the player's thrown knives: the ability that threw it, and how long a hit staggers. */
+  ability: string | null;
+  stagger: number;
 }
 export const Projectile = defineComponent<Projectile>('projectile');
 

@@ -27,7 +27,7 @@ const MAX_PARTICLES = 700;
 const FRAME_MS = 1000 / 60;
 const SLASH_MS = 170;
 /** Which sprite sheet each projectile kind is fired from (its release pivots set the flight height). */
-const PROJECTILE_SHEET: Readonly<Record<ProjectileKind, string>> = { arrow: 'archer' };
+const PROJECTILE_SHEET: Readonly<Record<ProjectileKind, string>> = { arrow: 'archer', knife: 'player' };
 /** Shimmer color behind loot flying to the player. */
 const TRAIL_COLOR: Readonly<Record<PickupKind, number>> = {
   souls: 0xb8ccff,
@@ -371,6 +371,16 @@ export class Effects {
     for (const [, proj, body] of sim.ecs.query(Projectile, Body)) {
       const x = body.x;
       const y = body.y + this.flightHeight(proj);
+      if (proj.kind === 'knife') {
+        // A bright blade with a short smear behind it: thrown fast, it reads as a streak.
+        g.moveTo(x, y)
+          .lineTo(x - proj.vx * 2, y - proj.vy * 2)
+          .stroke({ width: 3, color: 0xa98ce8, alpha: 0.35 });
+        g.moveTo(x, y)
+          .lineTo(x - proj.vx * 0.8, y - proj.vy * 0.8)
+          .stroke({ width: 1.5, color: 0xf0f2f8 });
+        continue;
+      }
       g.moveTo(x, y)
         .lineTo(x - proj.vx * 3, y - proj.vy * 3)
         .stroke({ width: 1, color: 0xc8b898 });

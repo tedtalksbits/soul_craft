@@ -1,0 +1,94 @@
+{
+  "slots": { "base": 2, "perWarden": 1 },
+  "modifiers": {
+    "iron_will": {
+      "name": "Iron Will",
+      "description": "Every blow you take feeds the super, even one a shield soaks.",
+      "class": "vanguard",
+      "souls": 600,
+      "effects": [{ "type": "hurt", "energy": 0.4 }]
+    },
+    "braced_charge": {
+      "name": "Braced Charge",
+      "description": "Shield Charge ends with you behind a shield of your own.",
+      "class": "vanguard",
+      "souls": 600,
+      "effects": [{ "type": "castShield", "slot": "class", "amount": 20, "seconds": 4 }]
+    },
+    "heavy_rhythm": {
+      "name": "Heavy Rhythm",
+      "description": "Ground Slam is ready a quarter sooner.",
+      "class": "vanguard",
+      "souls": 500,
+      "effects": [{ "type": "cooldown", "slot": "aoe", "factor": 0.75 }]
+    },
+    "wardens_resolve": {
+      "name": "Warden's Resolve",
+      "description": "Each kill closes your wounds and fills the super.",
+      "class": "vanguard",
+      "boss": "ashen_warden",
+      "effects": [{ "type": "kill", "where": "any", "heal": 6, "energy": 6 }]
+    },
+    "opportunist": {
+      "name": "Opportunist",
+      "description": "Blows out of hiding land harder still.",
+      "class": "stalker",
+      "souls": 600,
+      "effects": [{ "type": "ambush", "bonus": 0.75 }]
+    },
+    "light_feet": {
+      "name": "Light Feet",
+      "description": "Shadowstep is ready a quarter sooner.",
+      "class": "stalker",
+      "souls": 500,
+      "effects": [{ "type": "cooldown", "slot": "class", "factor": 0.75 }]
+    },
+    "bloodtrail": {
+      "name": "Bloodtrail",
+      "description": "Every kill brings your step back two seconds sooner.",
+      "class": "stalker",
+      "souls": 600,
+      "effects": [{ "type": "kill", "where": "any", "cooldown": { "slot": "class", "seconds": 2 } }]
+    },
+    "wardens_shade": {
+      "name": "Warden's Shade",
+      "description": "Each kill readies your bomb sooner and fills the super.",
+      "class": "stalker",
+      "boss": "ashen_warden",
+      "effects": [
+        { "type": "kill", "where": "any", "cooldown": { "slot": "aoe", "seconds": 3 }, "energy": 6 }
+      ]
+    },
+    "kindling": {
+      "name": "Kindling",
+      "description": "Whatever dies in your fire gives its last ember to the next pot: three seconds off its cooldown.",
+      "class": "ashcaller",
+      "souls": 600,
+      "effects": [{ "type": "kill", "where": "zone", "cooldown": { "slot": "aoe", "seconds": 3 } }]
+    },
+    "quick_flame": {
+      "name": "Quick Flame",
+      "description": "Repel is ready a quarter sooner.",
+      "class": "ashcaller",
+      "souls": 500,
+      "effects": [{ "type": "cooldown", "slot": "class", "factor": 0.75 }]
+    },
+    "ember_heart": {
+      "name": "Ember Heart",
+      "description": "Kills feed the super.",
+      "class": "ashcaller",
+      "souls": 600,
+      "effects": [{ "type": "kill", "where": "any", "energy": 6 }]
+    },
+    "wardens_pyre": {
+      "name": "Warden's Pyre",
+      "description": "Whatever dies in your fire warms you, and every pot you throw wraps you in heat.",
+      "class": "ashcaller",
+      "boss": "ashen_warden",
+      "effects": [
+        { "type": "kill", "where": "zone", "heal": 8 },
+        { "type": "castShield", "slot": "aoe", "amount": 20, "seconds": 5 }
+      ]
+    }
+  }
+}

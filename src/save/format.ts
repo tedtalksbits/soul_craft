@@ -12,7 +12,7 @@ import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -240,6 +240,30 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     return {
       ...save,
       snapshot: { ...snapshot, ecs: { ...ecs, components: { ...components, blast } } },
+    };
+  },
+  // Class modifiers, moving auras, a super's speed bonus and the player's thrown knives.
+  12: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const ecs = asRecord(snapshot['ecs']);
+    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
+    const fill = (name: string, defaults: Record<string, unknown>) =>
+      (components[name] ?? []).map(([e, c]) => [e, { ...defaults, ...asRecord(c) }]);
+    return {
+      ...save,
+      snapshot: {
+        ...snapshot,
+        ecs: {
+          ...ecs,
+          components: {
+            ...components,
+            abilities: fill('abilities', { modifiers: {} }),
+            empowered: fill('empowered', { speed: 0 }),
+            zone: fill('zone', { follow: false }),
+            projectile: fill('projectile', { ability: null, stagger: 0 }),
+          },
+        },
+      },
     };
   },
 };

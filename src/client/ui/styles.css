@@ -893,6 +893,17 @@ kbd {
 .inventory .version button {
   white-space: nowrap;
 }
+.inventory .version.worn .vname::before {
+  content: '◆ ';
+}
+.inventory .version .vsource {
+  font-size: 0.85em;
+  color: var(--class-light, var(--ink));
+  font-style: italic;
+}
+.inventory .ability-row.modifiers {
+  grid-template-columns: 1fr;
+}
 .inventory .ability-row .status {
   min-width: 7em;
   text-align: right;

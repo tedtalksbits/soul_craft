@@ -88,6 +88,49 @@
       { "type": "empower", "seconds": 10, "damage": 0, "defense": 0.5, "crit": 0, "staminaFree": false }
     ]
   },
+  "bastion": {
+    "name": "Bastion",
+    "description": "Slam a ring of stone up around you. Inside it you are shielded again and again, and what comes too close is thrown back out.",
+    "slot": "super",
+    "cast": { "ticks": 30, "release": 16 },
+    "pose": "cast_slam",
+    "effects": [
+      { "type": "blast", "at": "self", "radius": 48, "damage": 30, "knockback": 7, "stagger": 60 },
+      {
+        "type": "zone",
+        "at": "self",
+        "radius": 56,
+        "duration": 480,
+        "interval": 20,
+        "damage": 4,
+        "shield": { "amount": 10, "max": 100, "seconds": 3 }
+      }
+    ],
+    "variantOf": "earthshatter",
+    "souls": 1200
+  },
+  "avalanche": {
+    "name": "Avalanche",
+    "description": "Lower your shield and go. A long, unstoppable charge that flattens everything in its path, then leaves you hard to hurt for a while.",
+    "slot": "super",
+    "cast": { "ticks": 36, "release": 10 },
+    "pose": "cast_charge",
+    "effects": [
+      {
+        "type": "dash",
+        "distance": 160,
+        "ticks": 22,
+        "iframes": true,
+        "width": 32,
+        "damage": 80,
+        "knockback": 7,
+        "stagger": 120
+      },
+      { "type": "empower", "seconds": 6, "damage": 0.3, "defense": 0.3, "crit": 0, "staminaFree": false }
+    ],
+    "variantOf": "earthshatter",
+    "souls": 1200
+  },
   "ash_bomb": {
     "name": "Ash Bomb",
     "description": "Lob a packed charge of ash at the cursor. It bursts a moment later.",
@@ -260,6 +303,39 @@
     "effects": [
       { "type": "empower", "seconds": 10, "damage": 0.6, "defense": 0, "crit": 0.3, "staminaFree": true }
     ]
+  },
+  "ghost_run": {
+    "name": "Ghost Run",
+    "description": "Vanish and run. For a long while no one sees you, you move faster and tire never, and the first blow out of hiding lands two and a half times as hard.",
+    "slot": "super",
+    "cast": { "ticks": 14, "release": 6 },
+    "pose": "cast_raise",
+    "effects": [
+      { "type": "vanish", "seconds": 8, "bonus": 1.5 },
+      {
+        "type": "empower",
+        "seconds": 8,
+        "damage": 0,
+        "defense": 0,
+        "crit": 0,
+        "staminaFree": true,
+        "speed": 0.6
+      }
+    ],
+    "variantOf": "bladestorm",
+    "souls": 1200
+  },
+  "knife_fan": {
+    "name": "Knife Fan",
+    "description": "Every knife you carry, thrown at once in a wide fan toward the cursor. Each finds its own mark.",
+    "slot": "super",
+    "cast": { "ticks": 18, "release": 8 },
+    "pose": "cast_throw",
+    "effects": [
+      { "type": "volley", "count": 9, "spread": 60, "speed": 5, "range": 160, "damage": 38, "stagger": 20 }
+    ],
+    "variantOf": "bladestorm",
+    "souls": 1200
   },
   "fire_pot": {
     "name": "Fire Pot",
@@ -436,5 +512,47 @@
         "damage": 14
       }
     ]
+  },
+  "meteor": {
+    "name": "Meteor",
+    "description": "Pull one great ember out of the sky onto the cursor. It takes a moment to fall, and nothing under it stands up again.",
+    "slot": "super",
+    "cast": { "ticks": 30, "release": 16 },
+    "pose": "cast_raise",
+    "effects": [
+      {
+        "type": "blast",
+        "at": "aim",
+        "range": 120,
+        "radius": 56,
+        "damage": 180,
+        "knockback": 6,
+        "stagger": 150,
+        "fuse": 40
+      }
+    ],
+    "variantOf": "cinder_storm",
+    "souls": 1200
+  },
+  "pyre": {
+    "name": "Pyre",
+    "description": "Set yourself alight. The fire goes where you go, burning everything close for ten long seconds.",
+    "slot": "super",
+    "cast": { "ticks": 22, "release": 12 },
+    "pose": "cast_raise",
+    "effects": [
+      { "type": "blast", "at": "self", "radius": 40, "damage": 20, "knockback": 4, "stagger": 20 },
+      {
+        "type": "zone",
+        "at": "self",
+        "radius": 44,
+        "duration": 600,
+        "interval": 20,
+        "damage": 10,
+        "follow": true
+      }
+    ],
+    "variantOf": "cinder_storm",
+    "souls": 1200
   }
 }

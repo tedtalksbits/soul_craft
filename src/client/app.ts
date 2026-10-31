@@ -503,6 +503,8 @@ export class App {
       case 'variantChosen':
         if (e.ability === e.base) return this.ui.toast(`Back to ${this.content.ability(e.ability).name}.`);
         return;
+      case 'modifierLearned':
+        return this.ui.toast(`${this.content.modifier(e.modifier).name} learned.`);
       case 'leveledUp': {
         const name = `${e.attribute.charAt(0).toUpperCase()}${e.attribute.slice(1)}`;
         return this.ui.toast(`${name} raised. You are level ${e.level}.`);
@@ -545,7 +547,13 @@ export class App {
       case 'bossShieldBroken':
         return this.ui.toast(`${this.content.enemy(e.boss).name} reels!`, 2200);
       case 'bossDefeated':
-        return this.ui.banner(`${this.content.enemy(e.boss).name.toUpperCase()} FELLED`, 'good');
+        this.ui.banner(`${this.content.enemy(e.boss).name.toUpperCase()} FELLED`, 'good');
+        if (this.content.modifiers.slots.perWarden > 0)
+          this.ui.toast(
+            'A modifier slot opens, and the Warden leaves something to wear. Rest at a bonfire.',
+            5000,
+          );
+        return;
       case 'crafted': {
         const name = this.content.item(e.item).name;
         return this.ui.toast(e.count > 1 ? `Crafted ${name} ×${e.count}` : `Crafted ${name}`);

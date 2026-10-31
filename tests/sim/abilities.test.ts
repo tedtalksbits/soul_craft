@@ -57,6 +57,7 @@ describe('classes', () => {
       unlocked: { class: false, super: false },
       learned: {},
       chosen: {},
+      modifiers: {},
       casting: null,
     });
   });

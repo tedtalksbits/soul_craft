@@ -23,6 +23,7 @@ import {
   Motion,
   Overshield,
   Player,
+  Projectile,
   Staggered,
   Zone,
   type AbilityHit,
@@ -34,7 +35,9 @@ import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
 import { applyDamage, rollDamage } from './combat';
 import { FULL_ENERGY, gainEnergy } from './energy';
+import { modifiedCooldown, onCast } from './modifiers';
 import { grantOvershield } from './overshield';
+import { spawnProjectile } from './projectiles';
 import { clearStealth, spawnDecoy, veil } from './stealth';
 import { abilityPower } from './progression';
 import { slotUnlocked } from './unlocks';
@@ -62,6 +65,7 @@ export function giveStartingClass(sim: Simulation, e: Entity, playerClass?: stri
     unlocked: { ...sim.content.player.start.unlocked },
     learned: {},
     chosen: {},
+    modifiers: {},
     casting: null,
   });
 }
@@ -160,7 +164,7 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
   const def = sim.content.ability(ability);
   const body = sim.ecs.need(e, Body);
   if (slot === 'super') a.energy = 0;
-  else a.cooldowns[slot] = Math.round(def.cooldown * TICK_RATE);
+  else a.cooldowns[slot] = modifiedCooldown(sim, slot, def.cooldown);
   const charges = slot !== 'super';
   const casting = a.casting;
   const aim = casting ? { x: casting.aimX, y: casting.aimY } : { x: body.x, y: body.y };
@@ -193,9 +197,13 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
           delay: fx.delay,
           duration: fx.duration,
           interval: fx.interval,
+          follow: fx.follow,
         });
         break;
       }
+      case 'volley':
+        throwKnives(sim, body, aim, ability, fx);
+        break;
       case 'dash':
         if (fx.iframes) {
           const inv = sim.ecs.get(e, Invulnerable);
@@ -222,12 +230,42 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
           defense: fx.defense,
           crit: fx.crit,
           staminaFree: fx.staminaFree,
+          speed: fx.speed,
         });
         sim.events.emit({ type: 'empowered', ability, seconds: fx.seconds });
         break;
     }
   }
+  onCast(sim, slot);
   sim.events.emit({ type: 'abilityUsed', ability, slot, x: body.x, y: body.y, tx, ty });
+}
+
+/** A fan of knives from the player toward the aim, spread evenly across `spread` degrees. */
+function throwKnives(
+  sim: Simulation,
+  body: Body,
+  aim: { x: number; y: number },
+  ability: string,
+  fx: Extract<AbilityEffect, { type: 'volley' }>,
+): void {
+  const facing = Math.atan2(aim.y - body.y, aim.x - body.x);
+  const step = fx.count > 1 ? (fx.spread * Math.PI) / 180 / (fx.count - 1) : 0;
+  for (let i = 0; i < fx.count; i++) {
+    const angle = facing + (i - (fx.count - 1) / 2) * step;
+    spawnProjectile(sim, {
+      kind: 'knife',
+      team: 'player',
+      x: body.x,
+      y: body.y,
+      dirX: Math.cos(angle),
+      dirY: Math.sin(angle),
+      speed: fx.speed,
+      damage: fx.damage,
+      life: Math.ceil(fx.range / fx.speed),
+      ability,
+      stagger: fx.stagger,
+    });
+  }
 }
 
 /** Where an effect lands: on the caster, or toward the aim point but no further than `range`. */
@@ -355,9 +393,10 @@ function tickAbilities(sim: Simulation): void {
   }
 }
 
-/** Fuses burning down, and ground that burns, heals or shields. */
+/** Fuses burning down, ground that burns, heals or shields, and thrown knives finding their mark. */
 function tickAreas(sim: Simulation): void {
   const { ecs } = sim;
+  const pb = ecs.get(sim.player, Body);
   for (const [e, blast, body] of ecs.query(Blast, Body)) {
     // A latched charge rides on its enemy; if that enemy dies first, it drops where it was.
     const host = blast.stuck !== null && ecs.isAlive(blast.stuck) ? ecs.get(blast.stuck, Body) : undefined;
@@ -368,6 +407,7 @@ function tickAreas(sim: Simulation): void {
     ecs.destroy(e);
   }
   for (const [e, zone, body] of ecs.query(Zone, Body)) {
+    if (zone.follow && pb) Object.assign(body, { x: pb.x, y: pb.y });
     zone.t++;
     const since = zone.t - zone.delay;
     if (since >= 0 && since % zone.interval === 0) {
@@ -381,6 +421,23 @@ function tickAreas(sim: Simulation): void {
       if (zone.heal > 0 || zone.shield) supportPulse(sim, zone, inside);
     }
     if (since >= zone.duration) ecs.destroy(e);
+  }
+  for (const [e, proj, body] of ecs.query(Projectile, Body)) {
+    if (proj.team !== 'player') continue;
+    const point = { x: body.x - 1, y: body.y - 1, w: 2, h: 2 };
+    for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
+      if (ecs.has(target, Dying) || !overlaps(point, bodyBox(tb))) continue;
+      const hit = {
+        ability: proj.ability ?? '',
+        damage: proj.damage,
+        knockback: 1,
+        stagger: proj.stagger,
+        charges: false,
+      };
+      abilityDamage(sim, target, body.x - proj.vx, body.y - proj.vy, hit);
+      ecs.destroy(e);
+      break;
+    }
   }
 }
 

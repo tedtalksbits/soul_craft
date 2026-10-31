@@ -164,7 +164,7 @@ Warden, covers all of the list below except carried relics and pressure plates b
 
 Decisions 1 and 2, which it depended on, are made (ADR 0011).
 
-### Ability trees (phases 1 to 3 built)
+### Ability trees (phases 1 to 4 built)
 
 Owner's playtest ask: abilities and supers need far more depth. Decided shape: **variants and modifiers**. Each
 ability gets 2-3 versions picked at a bonfire; each class gets modifier slots that tie its abilities together.
@@ -179,7 +179,11 @@ Base versions are free, variants cost souls, the best come from Wardens.
 3. **Built: Stalker tricks.** Latch (Ash Bomb: a charge that sticks to an enemy), False Step (Shadowstep: leaves
    a decoy enemies chase; bosses are not fooled), Vanish (Shadowstep: unseen for a while, and the first blow out
    of hiding deals double and gets past shields). Enemies now pick a target instead of always the player.
-4. **Supers and modifiers:** two versions per super; class modifiers in two slots (a third from a Warden).
+4. **Built: supers and modifiers.** Two versions per super: Bastion (a shielding dome) and Avalanche (a long
+   charge) for Earthshatter, Ghost Run (unseen and fast) and Knife Fan (a volley) for Bladestorm, Meteor (one
+   huge fused strike) and Pyre (a burning aura that follows you) for Cinder Storm. Class modifiers in
+   `modifiers.json`, four per class: three bought with souls, one a Warden's. Two slots, plus one per defeated
+   Warden.
 5. **Art and tuning:** variant icons, then balance from a playtest.
 
 ### Milestone 5: Life sim, in service of combat
