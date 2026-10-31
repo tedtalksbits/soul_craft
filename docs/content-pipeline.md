@@ -142,10 +142,15 @@ bar instead), a `cast` (`ticks` the player is locked, effects land on tick `rele
 animation it plays, e.g. `cast_slam`; default `attack`), and `effects`, applied in order:
 
 - `blast`: hits everything within `radius`, at `self` or the cursor (`at: "aim"`, capped at `range`), after
-  an optional `fuse` in ticks. `damage`, `knockback`, and `stagger` (ticks the enemy is stopped, guard down).
+  an optional `fuse` in ticks, and `latch`: a fused blast sticks to the nearest enemy within that many px
+  of where it lands and rides along until it bursts. `damage`, `knockback`, and `stagger` (ticks the enemy is stopped, guard down).
 - `zone`: ground at `self` or the cursor that pulses every `interval` ticks for `duration` ticks, after
   `delay`: `damage` to enemies in it, `heal` to the player standing in it, and `shield` (`amount` per pulse
   up to `max`, lasting `seconds`) as overshield. It needs at least one of the three.
+- `decoy`: a false image where the player stood when the effect lands (before a dash moves them). Enemies
+  that can see it chase it instead of the player for `seconds`. Bosses are not fooled.
+- `vanish`: the player is unseen for `seconds` (enemies notice them only up close). Taking a hit ends it;
+  attacking ends it too, and that first hit deals `bonus` more (1 = double) and gets past a raised shield.
 - `overshield`: `amount` extra health on the player at once, for `seconds`. Overshield soaks blows before
   health; a blow it soaks completely doesn't make the player flinch. Resting clears it.
 - `dash`: carries the player `distance` px over `ticks`, optionally with i-frames, hitting what it passes

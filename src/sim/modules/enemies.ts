@@ -11,7 +11,6 @@ import {
   Facing,
   Health,
   Motion,
-  Player,
   Spawned,
   Sprite,
   Staggered,
@@ -21,6 +20,7 @@ import type { SimCommand, SimModule } from '../module';
 import { blockedAt } from '../physics';
 import type { Simulation } from '../simulation';
 import { runBrain, setAi } from './brains';
+import { enemyTarget } from './stealth';
 
 export function spawnEnemy(
   sim: Simulation,
@@ -57,10 +57,6 @@ export function spawnEnemy(
 
 function updateEnemies(sim: Simulation): void {
   const { ecs } = sim;
-  const p = sim.player;
-  const pb = ecs.need(p, Body);
-  const playerDead = ecs.need(p, Player).state === 'dead';
-
   for (const [e, enemy, ai, body, motion, facing, contact] of ecs.query(
     Enemy,
     Ai,
@@ -76,10 +72,12 @@ function updateEnemies(sim: Simulation): void {
     ai.cooldown--;
     motion.vx = motion.vy = 0;
 
-    const dx = pb.x - body.x;
-    const dy = pb.y - body.y;
+    // The player, or a decoy in their place; a veiled player goes unseen.
+    const target = enemyTarget(sim, def, body);
+    const dx = target.x - body.x;
+    const dy = target.y - body.y;
     const dist = Math.hypot(dx, dy) || 1;
-    const sees = !playerDead && dist < def.aggroRange;
+    const sees = target.sees;
 
     const staggered = ecs.get(e, Staggered);
     if (staggered) {

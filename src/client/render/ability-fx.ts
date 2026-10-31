@@ -36,6 +36,20 @@ const RING_MS = 320;
 const LOB_HEIGHT = 18;
 /** Where a lob starts when the caster's pose has no hand pivot: about chest height. */
 const DEFAULT_THROW_HEIGHT = 13;
+/** How long a latching charge is in the air before it catches on. */
+const LATCH_FLIGHT_TICKS = 14;
+/** A puff of shadow: the player vanishing, a decoy fading. */
+const SMOKE = {
+  count: 16,
+  color: 0x3a3440,
+  speed: 0.7,
+  size: 3,
+  life: 40,
+  z: 6,
+  vz: 0.4,
+  grav: 0,
+  drag: 0.95,
+};
 
 interface Ring {
   x: number;
@@ -73,6 +87,8 @@ export class AbilityFx {
   aimPreview: { x: number; y: number } | null | undefined = undefined;
   /** A class change to celebrate on the next update, when the player's position is known. */
   private attuned: string | null = null;
+  /** Where the player was last frame, for effects on events that carry no position. */
+  private lastPlayer: { x: number; y: number } | null = null;
 
   constructor(
     private readonly effects: Effects,
@@ -128,7 +144,8 @@ export class AbilityFx {
               toY: e.ty,
               color,
               ageMs: 0,
-              flightMs: (fx.fuse * 1000) / 60,
+              // A latching charge lands quickly, then rides its enemy for the rest of the fuse.
+              flightMs: ((fx.latch > 0 ? Math.min(fx.fuse, LATCH_FLIGHT_TICKS) : fx.fuse) * 1000) / 60,
             });
           }
         }
@@ -138,6 +155,17 @@ export class AbilityFx {
       }
       case 'empowered':
         this.effects.shake = Math.min(8, this.effects.shake + 3);
+        return;
+      // Shadow tricks: smoke when the player vanishes or a decoy fades, a flash on an ambush.
+      case 'veiled':
+      case 'decoyFaded': {
+        const at = e.type === 'decoyFaded' ? e : this.lastPlayer;
+        if (at) this.effects.burst(at.x, at.y, SMOKE);
+        return;
+      }
+      case 'ambushed':
+        this.effects.burst(e.x, e.y, { count: 14, color: 0xf0f0ff, speed: 1.6, life: 18, add: true, z: 8 });
+        this.effects.shake = Math.min(8, this.effects.shake + 2);
         return;
       case 'classChanged':
         this.attuned = e.class;
@@ -153,6 +181,16 @@ export class AbilityFx {
     const { ecs, content } = sim;
     const g = this.ground.clear();
     const air = this.airG.clear();
+
+    const playerBody = ecs.get(sim.player, Body);
+    this.lastPlayer = playerBody ? { x: playerBody.x, y: playerBody.y } : null;
+    // A latched charge blinks on the enemy it rides, faster as its fuse runs out.
+    for (const [, blast, body] of ecs.query(Blast, Body)) {
+      if (blast.stuck === null) continue;
+      const rate = 60 + blast.fuse * 4;
+      if (Math.floor(this.clockMs / rate) % 2) continue;
+      air.circle(body.x, body.y - 10, 2).fill(abilityPalette(content, blast.ability).light);
+    }
 
     // Burning ground: a flickering rim, embers rising from inside.
     for (const [, zone, body] of ecs.query(Zone, Body)) {

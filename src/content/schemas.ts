@@ -41,6 +41,11 @@ export const AbilityEffectSchema = z.discriminatedUnion('type', [
     /** Ticks the enemies hit are staggered (stopped, guard broken). */
     stagger: ticks,
     fuse: ticks.default(0),
+    /**
+     * A fused blast sticks to the nearest enemy within this many px of where it lands and rides
+     * along until it bursts (Latch). 0 = it stays on the ground.
+     */
+    latch: nonneg.default(0),
   }),
   /**
    * Ground that pulses every `interval` ticks for `duration` ticks: `damage` to enemies standing
@@ -61,6 +66,17 @@ export const AbilityEffectSchema = z.discriminatedUnion('type', [
   }),
   /** Overshield on the player at once: `amount` extra health that soaks blows first, for `seconds`. */
   z.object({ type: z.literal('overshield'), amount: pos, seconds: pos }),
+  /**
+   * A false image where the player stands as the effect lands (before any dash). Enemies that can
+   * see it chase it instead of the player for `seconds`. Bosses are not fooled.
+   */
+  z.object({ type: z.literal('decoy'), seconds: pos }),
+  /**
+   * The player turns unseen for `seconds`: enemies lose them unless close enough to touch. It
+   * breaks on taking a hit or on attacking, and the first hit after attacking deals `bonus` more
+   * (1 = double damage).
+   */
+  z.object({ type: z.literal('vanish'), seconds: pos, bonus: nonneg }),
   /** A lunge along the aim. Hits (once each) what the player passes through. */
   z.object({
     type: z.literal('dash'),

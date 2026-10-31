@@ -70,6 +70,13 @@ export type SimEvent =
   | { type: 'overshieldHit'; absorbed: number; hp: number }
   /** The overshield ran out of time. */
   | { type: 'overshieldFaded' }
+  /** The player turned unseen for `seconds`. */
+  | { type: 'veiled'; seconds: number }
+  /** The veil ended: by attacking (an ambush follows), a hit, or time. */
+  | { type: 'unveiled' }
+  /** A hit out of hiding dealt `bonus` more. */
+  | { type: 'ambushed'; x: number; y: number; bonus: number }
+  | { type: 'decoyFaded'; x: number; y: number }
   | { type: 'classChanged'; class: string }
   /** A relic awakened an ability slot; `ability` is what that slot holds for the current class. */
   | { type: 'abilityUnlocked'; slot: 'class' | 'super'; ability: string }

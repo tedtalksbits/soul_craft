@@ -141,6 +141,8 @@ export interface AbilityHit {
 export interface Blast extends AbilityHit {
   radius: number;
   fuse: number;
+  /** The enemy it is stuck to and rides along with (Latch), or null on the ground. */
+  stuck: Entity | null;
 }
 export const Blast = defineComponent<Blast>('blast');
 
@@ -158,6 +160,30 @@ export interface Zone extends AbilityHit {
   interval: number;
 }
 export const Zone = defineComponent<Zone>('zone');
+
+/** A false image of the player that enemies chase instead (False Step), for `ticks`. */
+export interface Decoy {
+  ticks: number;
+}
+export const Decoy = defineComponent<Decoy>('decoy');
+
+/**
+ * The player, unseen (Vanish), for `ticks`. `armed` turns on once the cast that made it is over;
+ * attacking after that breaks it into an {@link Ambush}.
+ */
+export interface Veiled {
+  ticks: number;
+  bonus: number;
+  armed: boolean;
+}
+export const Veiled = defineComponent<Veiled>('veiled');
+
+/** The first hit out of hiding: the next damage the player deals within `ticks` is `bonus` more. */
+export interface Ambush {
+  ticks: number;
+  bonus: number;
+}
+export const Ambush = defineComponent<Ambush>('ambush');
 
 /**
  * Extra health over the player's own that soaks blows first (Destiny's overshield), from

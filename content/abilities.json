@@ -140,6 +140,29 @@
     "variantOf": "ash_bomb",
     "souls": 300
   },
+  "latch": {
+    "name": "Latch",
+    "description": "A barbed charge that catches on whatever it lands near and rides along until it bursts. They can run; it goes with them.",
+    "slot": "aoe",
+    "cooldown": 12,
+    "cast": { "ticks": 14, "release": 6 },
+    "pose": "cast_throw",
+    "effects": [
+      {
+        "type": "blast",
+        "at": "aim",
+        "range": 96,
+        "radius": 26,
+        "damage": 40,
+        "knockback": 2.5,
+        "stagger": 30,
+        "fuse": 40,
+        "latch": 20
+      }
+    ],
+    "variantOf": "ash_bomb",
+    "souls": 500
+  },
   "shadowstep": {
     "name": "Shadowstep",
     "description": "Slip through the air in a blink, untouchable. Further and faster than a roll, and free of stamina.",
@@ -181,6 +204,52 @@
     ],
     "variantOf": "shadowstep",
     "souls": 300
+  },
+  "false_step": {
+    "name": "False Step",
+    "description": "Step away and leave your shadow standing. Anything watching goes after the shadow for a few breaths.",
+    "slot": "class",
+    "cooldown": 10,
+    "cast": { "ticks": 12, "release": 1 },
+    "pose": "roll",
+    "effects": [
+      { "type": "decoy", "seconds": 4 },
+      {
+        "type": "dash",
+        "distance": 64,
+        "ticks": 9,
+        "iframes": true,
+        "width": 12,
+        "damage": 0,
+        "knockback": 0,
+        "stagger": 0
+      }
+    ],
+    "variantOf": "shadowstep",
+    "souls": 500
+  },
+  "vanish": {
+    "name": "Vanish",
+    "description": "Step into nothing. For a while no one sees you unless you brush past them. Your first blow out of hiding lands twice as hard, shields or no.",
+    "slot": "class",
+    "cooldown": 14,
+    "cast": { "ticks": 12, "release": 1 },
+    "pose": "roll",
+    "effects": [
+      {
+        "type": "dash",
+        "distance": 40,
+        "ticks": 8,
+        "iframes": true,
+        "width": 12,
+        "damage": 0,
+        "knockback": 0,
+        "stagger": 0
+      },
+      { "type": "vanish", "seconds": 5, "bonus": 1 }
+    ],
+    "variantOf": "shadowstep",
+    "souls": 600
   },
   "bladestorm": {
     "name": "Bladestorm",

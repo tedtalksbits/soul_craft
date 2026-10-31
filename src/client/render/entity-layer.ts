@@ -5,7 +5,19 @@
  */
 import { Container, Graphics, Sprite as PixiSprite } from 'pixi.js';
 import type { Entity } from '../../core/ecs';
-import { Ai, Body, Boss, Dying, Health, Invulnerable, Pickup, Player, Sprite } from '../../sim/components';
+import {
+  Ai,
+  Body,
+  Boss,
+  Decoy,
+  Dying,
+  Health,
+  Invulnerable,
+  Pickup,
+  Player,
+  Sprite,
+  Veiled,
+} from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
 import { TELEGRAPH_STATES } from '../../sim/modules/brains';
 import { DEATH_TICKS } from '../../sim/modules/combat';
@@ -99,7 +111,11 @@ export class EntityLayer {
       const player = ecs.get(e, Player);
       if (player && player.state !== 'roll' && ecs.has(e, Invulnerable) && Math.floor(this.clockMs / 70) % 2)
         alpha *= 0.35;
+      // Unseen (Vanish): a faint outline the player can still steer. A decoy: a wavering shadow.
+      if (player && ecs.has(e, Veiled)) alpha *= 0.3;
+      if (ecs.has(e, Decoy)) alpha *= 0.45 + 0.15 * Math.sin(this.clockMs / 90);
       view.sprite.alpha = alpha;
+      view.sprite.tint = ecs.has(e, Decoy) ? 0x8a80a0 : 0xffffff;
 
       view.flashMs = Math.max(0, view.flashMs - dtMs);
       const ai = ecs.get(e, Ai);

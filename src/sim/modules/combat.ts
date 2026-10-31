@@ -31,6 +31,7 @@ import { relicWanted } from './unlocks';
 import { playerStats } from './items';
 import { dropPickup } from './pickups';
 import { absorb } from './overshield';
+import { takeAmbush, unveil } from './stealth';
 
 export interface Hit {
   amount: number;
@@ -90,6 +91,7 @@ function damagePlayer(
   const dealt = Math.max(1, Math.round(hit.amount * (1 - playerStats(sim, e).defense)));
   ecs.add(e, Invulnerable, { ticks: def.hurt.iframes });
   push(sim, e, body, hit, 1);
+  unveil(sim);
   // An overshield takes the blow first. One that soaks all of it spares the player the flinch.
   const amount = absorb(sim, e, dealt);
   if (amount === 0) return 'hit';
@@ -135,13 +137,17 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
     return 'blocked';
   }
   // The shield stops everything but abilities, and is down while stunned, staggered or charging.
+  // A hit out of hiding (Vanish) strikes harder and finds its way past a raised shield.
+  const ambush = takeAmbush(sim);
   const guarding = ai && ai.state !== 'stunned' && ai.state !== 'charge' && !ecs.has(e, Staggered);
-  if (def.brain.type === 'shieldKnight' && guarding && !hit.unblockable) {
+  if (def.brain.type === 'shieldKnight' && guarding && !hit.unblockable && ambush === 0) {
     sim.events.emit({ type: 'blocked', x: body.x, y: body.y - 4 });
     return 'blocked';
   }
+  const amount = Math.round(hit.amount * (1 + ambush));
+  if (ambush > 0) sim.events.emit({ type: 'ambushed', x: body.x, y: body.y, bonus: ambush });
 
-  health.hp = Math.max(0, health.hp - hit.amount);
+  health.hp = Math.max(0, health.hp - amount);
   // A blow that crosses a shield threshold stops there: the shield goes up instead.
   const shieldAt = def.brain.type === 'warden' && boss ? def.brain.shieldAt[boss.phase] : undefined;
   if (boss && shieldAt !== undefined && health.hp <= health.max * shieldAt) {
@@ -150,12 +156,12 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
   }
   push(sim, e, body, hit, def.knockbackTaken);
   const energy = sim.content.player.energy;
-  if (hit.charges) gainEnergy(sim, hit.amount * energy.perDamage + (health.hp <= 0 ? energy.perKill : 0));
+  if (hit.charges) gainEnergy(sim, amount * energy.perDamage + (health.hp <= 0 ? energy.perKill : 0));
   sim.events.emit({
     type: 'damaged',
     target: e,
     isPlayer: false,
-    amount: hit.amount,
+    amount,
     crit: hit.crit,
     x: body.x,
     y: body.y,

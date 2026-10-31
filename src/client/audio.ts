@@ -103,6 +103,10 @@ export class Audio {
       }
       case 'healed':
         return this.arp([523, 659, 784], 70, 0.5, 0.06);
+      case 'veiled':
+        return this.burst(0.5, 500, 0.2, 'lowpass');
+      case 'ambushed':
+        return this.burst(0.18, 2200, 0.35, 'bandpass', [1200, 4000]);
       case 'overshieldGained':
         return this.tone([[784, 1]], 0.1, 0.025);
       case 'overshieldHit':

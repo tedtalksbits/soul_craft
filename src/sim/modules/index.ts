@@ -15,6 +15,7 @@ import { playerModule } from './player';
 import { progressionModule } from './progression';
 import { projectilesModule } from './projectiles';
 import { restorationModule } from './restoration';
+import { stealthModule } from './stealth';
 import { streamingModule } from './streaming';
 import { travelModule } from './travel';
 import { variantsModule } from './variants';
@@ -34,6 +35,7 @@ export const SIM_MODULES: readonly SimModule[] = [
   progressionModule,
   variantsModule,
   playerModule,
+  stealthModule,
   enemiesModule,
   movementModule,
   // After movement, so the fog gate holds the player where they ended up.

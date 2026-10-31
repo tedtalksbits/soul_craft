@@ -12,7 +12,7 @@ import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -229,6 +229,17 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     return {
       ...save,
       snapshot: { ...snapshot, ecs: { ...ecs, components: { ...components, zone } } },
+    };
+  },
+  /** v11 -> v12: charges can latch onto enemies. Charges in flight in an old save are on the ground. */
+  11: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const ecs = asRecord(snapshot['ecs']);
+    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
+    const blast = (components['blast'] ?? []).map(([e, b]) => [e, { stuck: null, ...asRecord(b) }]);
+    return {
+      ...save,
+      snapshot: { ...snapshot, ecs: { ...ecs, components: { ...components, blast } } },
     };
   },
 };

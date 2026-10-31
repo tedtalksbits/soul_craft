@@ -35,6 +35,7 @@ import type { Simulation } from '../simulation';
 import { applyDamage, rollDamage } from './combat';
 import { FULL_ENERGY, gainEnergy } from './energy';
 import { grantOvershield } from './overshield';
+import { clearStealth, spawnDecoy, veil } from './stealth';
 import { abilityPower } from './progression';
 import { slotUnlocked } from './unlocks';
 
@@ -171,7 +172,8 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
       case 'blast': {
         [tx, ty] = targetOf(body, aim, fx.at, fx.range);
         const blast = { ...hit, damage: fx.damage, knockback: fx.knockback, stagger: fx.stagger };
-        if (fx.fuse > 0) spawnBlast(sim, tx, ty, { ...blast, radius: fx.radius, fuse: fx.fuse });
+        const stuck = fx.fuse > 0 && fx.latch > 0 ? nearestEnemy(sim, tx, ty, fx.latch) : null;
+        if (fx.fuse > 0) spawnBlast(sim, tx, ty, { ...blast, radius: fx.radius, fuse: fx.fuse, stuck });
         else detonate(sim, tx, ty, fx.radius, blast);
         break;
       }
@@ -202,6 +204,12 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
         }
         tx = body.x + sim.ecs.need(e, Player).dirX * fx.distance;
         ty = body.y + sim.ecs.need(e, Player).dirY * fx.distance;
+        break;
+      case 'decoy':
+        spawnDecoy(sim, body.x, body.y, fx.seconds);
+        break;
+      case 'vanish':
+        veil(sim, fx.seconds, fx.bonus);
         break;
       case 'overshield':
         grantOvershield(sim, fx.amount, fx.amount, fx.seconds);
@@ -235,6 +243,18 @@ function targetOf(
   const dist = Math.hypot(dx, dy);
   if (dist <= range) return [aim.x, aim.y];
   return [body.x + (dx / dist) * range, body.y + (dy / dist) * range];
+}
+
+/** The living enemy nearest (x, y) within `reach` px of its edge, or null. */
+function nearestEnemy(sim: Simulation, x: number, y: number, reach: number): Entity | null {
+  let best: Entity | null = null;
+  let bestDist = Infinity;
+  for (const [e, , b] of sim.ecs.query(Enemy, Body)) {
+    if (sim.ecs.has(e, Dying)) continue;
+    const d = Math.hypot(b.x - x, b.y - y) - Math.max(b.w, b.h) / 2;
+    if (d <= reach && d < bestDist) [best, bestDist] = [e, d];
+  }
+  return best;
 }
 
 function spawnBlast(sim: Simulation, x: number, y: number, blast: Blast): void {
@@ -339,6 +359,10 @@ function tickAbilities(sim: Simulation): void {
 function tickAreas(sim: Simulation): void {
   const { ecs } = sim;
   for (const [e, blast, body] of ecs.query(Blast, Body)) {
+    // A latched charge rides on its enemy; if that enemy dies first, it drops where it was.
+    const host = blast.stuck !== null && ecs.isAlive(blast.stuck) ? ecs.get(blast.stuck, Body) : undefined;
+    if (host) Object.assign(body, { x: host.x, y: host.y });
+    else blast.stuck = null;
     if (--blast.fuse > 0) continue;
     detonate(sim, body.x, body.y, blast.radius, blast);
     ecs.destroy(e);
@@ -407,6 +431,7 @@ export function refreshAbilities(sim: Simulation): void {
   }
   ecs.remove(sim.player, Empowered);
   ecs.remove(sim.player, Overshield);
+  clearStealth(sim);
   for (const [e] of ecs.query(Blast)) ecs.destroy(e);
   for (const [e] of ecs.query(Zone)) ecs.destroy(e);
 }
