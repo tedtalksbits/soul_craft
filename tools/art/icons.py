@@ -13,6 +13,10 @@ create_1_direction_object review pack (64 candidates at 16 px, 5-color gray pale
 item icons as the style reference), packed losslessly into an 8-column grid in frame order.
   icons_roll1.png  object 27de482f-a8fc-417e-93ee-3e03d034f801: 5 variants of each of the 12 icons
   icons_roll2.png  object 05c7de13-8b7a-49ad-83ec-e4512db8a257: rerolls for shield_charge, shadowstep
+  icons_roll3.png  object d0c6bb9b-aa55-4668-99f9-8cd1af9e12fc: 3 variants of each of the 18 ability
+                   variants, in the order of docs/ICON_ART.md (icon n at 3n..3n+2)
+  icons_roll4.png  object 760cdb2a-7ce3-4dc0-ad43-5b20b6cb1811: rerolls for rally, knife_fan, pyre,
+                   vanish, ghost_run
 PICKS names the chosen candidate for each icon. To change an icon, pick another candidate or add
 a new roll; to change how light the glyphs are, change LIFT.
 """
@@ -54,6 +58,25 @@ PICKS = {
         ('fire_pot', 'icons_roll1', 45),
         ('repel', 'icons_roll1', 50),
         ('cinder_storm', 'icons_roll1', 55),
+        # Variants, each a sibling of its base's icon.
+        ('shockwave', 'icons_roll3', 2),  # a ring rippling low across the ground
+        ('rally', 'icons_roll4', 44),  # a shield shining
+        ('bulwark_rush', 'icons_roll3', 6),  # a tall tower shield
+        ('bastion', 'icons_roll3', 10),  # a stone dome over a figure
+        ('avalanche', 'icons_roll3', 12),  # a shield driving through rocks
+        ('twin_charge', 'icons_roll3', 17),  # two bombs
+        ('latch', 'icons_roll3', 20),  # a barbed bomb
+        ('cutting_step', 'icons_roll3', 22),  # a dagger with a slash
+        ('false_step', 'icons_roll3', 25),  # a figure and its copy
+        ('vanish', 'icons_roll4', 51),  # a hood fading into dots
+        ('ghost_run', 'icons_roll4', 56),  # a running figure
+        ('knife_fan', 'icons_roll4', 29),  # blades fanned out
+        ('wildfire', 'icons_roll3', 36),  # flames spread along the ground
+        ('hearth', 'icons_roll3', 41),  # a flame over a heart
+        ('cinder_ward', 'icons_roll3', 42),  # a shield of flame
+        ('backdraft', 'icons_roll3', 46),  # a ring around a flame
+        ('meteor', 'icons_roll3', 48),  # a falling burning rock
+        ('pyre', 'icons_roll4', 9),  # a figure in a ring of fire
     ],
 }
 

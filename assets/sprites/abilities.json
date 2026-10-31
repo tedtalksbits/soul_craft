@@ -12,7 +12,25 @@
     "bladestorm": 5,
     "fire_pot": 6,
     "repel": 7,
-    "cinder_storm": 8
+    "cinder_storm": 8,
+    "shockwave": 9,
+    "rally": 10,
+    "bulwark_rush": 11,
+    "bastion": 12,
+    "avalanche": 13,
+    "twin_charge": 14,
+    "latch": 15,
+    "cutting_step": 16,
+    "false_step": 17,
+    "vanish": 18,
+    "ghost_run": 19,
+    "knife_fan": 20,
+    "wildfire": 21,
+    "hearth": 22,
+    "cinder_ward": 23,
+    "backdraft": 24,
+    "meteor": 25,
+    "pyre": 26
   },
   "animations": {}
 }

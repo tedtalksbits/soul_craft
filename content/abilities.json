@@ -103,7 +103,7 @@
         "duration": 480,
         "interval": 20,
         "damage": 4,
-        "shield": { "amount": 10, "max": 100, "seconds": 3 }
+        "shield": { "amount": 6, "max": 80, "seconds": 3 }
       }
     ],
     "variantOf": "earthshatter",
@@ -525,7 +525,7 @@
         "at": "aim",
         "range": 120,
         "radius": 56,
-        "damage": 180,
+        "damage": 240,
         "knockback": 6,
         "stagger": 150,
         "fuse": 40
@@ -548,7 +548,7 @@
         "radius": 44,
         "duration": 600,
         "interval": 20,
-        "damage": 10,
+        "damage": 8,
         "follow": true
       }
     ],

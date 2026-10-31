@@ -184,7 +184,8 @@ Base versions are free, variants cost souls, the best come from Wardens.
    huge fused strike) and Pyre (a burning aura that follows you) for Cinder Storm. Class modifiers in
    `modifiers.json`, four per class: three bought with souls, one a Warden's. Two slots, plus one per defeated
    Warden.
-5. **Art and tuning:** variant icons, then balance from a playtest.
+5. **Art and tuning (under way):** every variant has its own icon (PixelLab, `docs/ICON_ART.md`). A first
+   number pass toned down Pyre, Bastion's shield and Iron Will and raised Meteor; the rest waits on a playtest.
 
 ### Milestone 5: Life sim, in service of combat
 

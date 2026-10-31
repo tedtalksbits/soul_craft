@@ -6,7 +6,7 @@
       "description": "Every blow you take feeds the super, even one a shield soaks.",
       "class": "vanguard",
       "souls": 600,
-      "effects": [{ "type": "hurt", "energy": 0.4 }]
+      "effects": [{ "type": "hurt", "energy": 0.25 }]
     },
     "braced_charge": {
       "name": "Braced Charge",
