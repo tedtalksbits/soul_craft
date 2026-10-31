@@ -20,6 +20,7 @@ import {
   Zone,
 } from '../../sim/components';
 import { FULL_ENERGY } from '../../sim/modules/energy';
+import { abilityIn } from '../../sim/modules/abilities';
 import type { SimEvent } from '../../sim/events';
 import type { Simulation } from '../../sim/simulation';
 import { abilityPalette, classPalette } from './class-palette';
@@ -323,10 +324,11 @@ export class AbilityFx {
     const p = ecs.get(sim.player, Player);
     const cls = a ? content.classes[a.class] : undefined;
     if (!a || !pb || !p || !cls || p.state === 'dead') return;
-    const def = content.abilities[cls.abilities.aoe];
+    const aoe = abilityIn(sim, 'aoe');
+    const def = content.abilities[aoe];
     const area = def?.effects.find((fx) => fx.type === 'blast' || fx.type === 'zone');
     if (!def || !area) return;
-    const pal = abilityPalette(content, cls.abilities.aoe);
+    const pal = abilityPalette(content, aoe);
     const alpha = a.cooldowns.aoe > 0 ? 0.3 : 0.85;
     const feetY = pb.y + pb.h / 2;
 

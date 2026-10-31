@@ -12,6 +12,7 @@ import {
   Player,
   Stamina,
 } from '../../sim/components';
+import { abilityIn } from '../../sim/modules/abilities';
 import { FULL_ENERGY } from '../../sim/modules/energy';
 import { countItem } from '../../sim/modules/items';
 import type { Simulation } from '../../sim/simulation';
@@ -116,7 +117,8 @@ export class Hud {
     this.locked = ABILITY_SLOTS.map((slot) => !slotUnlocked(a, slot));
     ABILITY_SLOTS.forEach((slot, i) => {
       const x = slotX(i);
-      const def = sim.content.abilities[cls.abilities[slot]];
+      const id = abilityIn(sim, slot);
+      const def = sim.content.abilities[id];
       let fill: number;
       if (slot === 'super') fill = a.energy / FULL_ENERGY;
       else {
@@ -129,7 +131,8 @@ export class Hud {
       g.rect(x, y, SLOT, SLOT).fill({ color: pal.dark, alpha: 0.6 });
 
       const icon = this.abilityIcons[i];
-      const tex = this.assets.sheet('abilities')?.named.get(cls.abilities[slot]);
+      const sheet = this.assets.sheet('abilities');
+      const tex = sheet?.named.get(id) ?? sheet?.named.get(cls.abilities[slot]);
       if (icon) {
         icon.visible = tex !== undefined;
         if (tex) icon.texture = tex;
@@ -148,7 +151,7 @@ export class Hud {
       }
     });
     const emp = sim.ecs.get(sim.player, Empowered);
-    const seconds = sim.content.abilities[cls.abilities.super]?.effects.find(
+    const seconds = sim.content.abilities[abilityIn(sim, 'super')]?.effects.find(
       (fx) => fx.type === 'empower',
     )?.seconds;
     if (emp && seconds) {

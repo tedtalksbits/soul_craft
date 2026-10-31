@@ -12,7 +12,7 @@ import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -205,6 +205,20 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     if (unlocked['super'] === true) done['keep'] = true;
     if (restored['smithy'] === true) done['forge'] = true;
     return { ...save, snapshot: { ...snapshot, state: { ...state, objectives: { active: null, done } } } };
+  },
+  /** v9 -> v10: ability variants. Abilities gain `learned` and `chosen`; old saves use the bases. */
+  9: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const ecs = asRecord(snapshot['ecs']);
+    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
+    const abilities = (components['abilities'] ?? []).map(([e, a]) => [
+      e,
+      { learned: {}, chosen: {}, ...asRecord(a) },
+    ]);
+    return {
+      ...save,
+      snapshot: { ...snapshot, ecs: { ...ecs, components: { ...components, abilities } } },
+    };
   },
 };
 

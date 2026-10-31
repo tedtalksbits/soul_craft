@@ -15,7 +15,9 @@ import {
   type EquipSlot,
   type ItemStack,
 } from '../../sim/components';
+import { abilityIn } from '../../sim/modules/abilities';
 import { FULL_ENERGY } from '../../sim/modules/energy';
+import { canChoose, versionsOf } from '../../sim/modules/variants';
 import { playerLevel } from '../../sim/modules/progression';
 import { unlockHint } from '../../sim/modules/unlocks';
 import type { PlayerAction } from '../../sim/input';
@@ -125,6 +127,7 @@ export class InventoryScreen {
       stationNearby(sim, 'forge'),
       stationNearby(sim, 'alchemy'),
       this.tab === 'abilities' ? abilityStatus(sim) : null,
+      this.tab === 'abilities' ? variantSignature(sim) : null,
       this.host.bindings(),
     ]);
   }
@@ -288,6 +291,54 @@ export class InventoryScreen {
 
   // ------------------------------------------------------------------ abilities tab
 
+  /**
+   * The other versions of an ability: what each does, and a button to learn or use it. Changes
+   * happen at a bonfire, so away from one the buttons say so.
+   */
+  private versions(sim: Simulation, base: string, current: string): HTMLElement {
+    const all = versionsOf(sim.content, base);
+    if (all.length < 2) return h('div', { class: 'versions empty' });
+    const a = sim.ecs.need(sim.player, Abilities);
+    const rows = all
+      .filter(([id]) => id !== current)
+      .map(([id, def]) => {
+        const check = canChoose(sim, base, id);
+        const learned = id === base || a.learned[id] === true;
+        const label = learned ? 'Use' : `Learn · ${def.souls ?? 0} souls`;
+        const button = h(
+          'button',
+          {
+            disabled: !check.ok,
+            title: check.ok ? '' : check.reason,
+            onclick: () => this.host.act({ type: 'chooseVariant', base, ability: id }),
+          },
+          label,
+        );
+        return h(
+          'div',
+          { class: 'version' },
+          h(
+            'div',
+            {},
+            h('span', { class: 'vname' }, def.name),
+            ' ',
+            h('span', { class: 'vdesc' }, def.description),
+          ),
+          button,
+        );
+      });
+    const p = sim.ecs.get(sim.player, Player);
+    const note =
+      p?.state === 'sit' ? null : h('div', { class: 'rule' }, 'Rest at a bonfire to change versions.');
+    return h(
+      'div',
+      { class: 'versions' },
+      h('div', { class: 'kind' }, 'Other versions'),
+      ...rows,
+      ...(note ? [note] : []),
+    );
+  }
+
   /** The class's three abilities: their keys, what they do, and whether they are ready. */
   private abilitiesTab(sim: Simulation): HTMLElement {
     const a = sim.ecs.get(sim.player, Abilities);
@@ -295,7 +346,9 @@ export class InventoryScreen {
     if (!a || !cls) return h('div', { class: 'body abilities' }, h('p', { class: 'hint' }, 'No class.'));
     const status = abilityStatus(sim);
     const rows = ABILITY_SLOTS.map((slot) => {
-      const def = sim.content.ability(cls.abilities[slot]);
+      const base = cls.abilities[slot];
+      const current = abilityIn(sim, slot);
+      const def = sim.content.ability(current);
       const locked = slot !== 'aoe' && !a.unlocked[slot];
       const rule = locked
         ? unlockHint(sim.content, slot)
@@ -308,7 +361,7 @@ export class InventoryScreen {
         h(
           'div',
           { class: 'keys' },
-          this.host.abilityIcon(cls.abilities[slot]),
+          this.host.abilityIcon(current),
           h('kbd', {}, primaryKey(this.host.bindings(), SLOT_BINDING[slot])),
         ),
         h(
@@ -318,6 +371,7 @@ export class InventoryScreen {
           h('div', { class: 'name' }, def.name),
           h('div', { class: 'desc' }, def.description),
           h('div', { class: 'rule' }, rule),
+          ...(locked ? [] : [this.versions(sim, base, current)]),
         ),
         h(
           'div',
@@ -486,6 +540,12 @@ function statLine(stat: keyof typeof STAT_LABELS, amount: number): string {
 }
 
 /** "Ready", "Ready in 7 s" or "Energy 43%" per slot. Whole seconds, so the screen redraws once a second. */
+/** What the versions lists depend on: choices, learned variants and whether the player rests. */
+function variantSignature(sim: Simulation): unknown {
+  const a = sim.ecs.get(sim.player, Abilities);
+  return [a?.class, a?.chosen, a?.learned, a?.unlocked, sim.ecs.get(sim.player, Player)?.state === 'sit'];
+}
+
 function abilityStatus(sim: Simulation): Record<'aoe' | 'class' | 'super', string> {
   const a = sim.ecs.get(sim.player, Abilities);
   if (!a) return { aoe: '', class: '', super: '' };

@@ -41,7 +41,12 @@ export type PlayerAction =
   /** Spend materials and souls to rebuild a village project. Only allowed standing at its site. */
   | { type: 'rebuild'; project: string }
   /** Spend souls on one level in an attribute. Only allowed while resting at a bonfire. */
-  | { type: 'levelUp'; attribute: AttributeId };
+  | { type: 'levelUp'; attribute: AttributeId }
+  /**
+   * Use another version of a base ability (or the base again). Learning a new variant costs
+   * souls. Only allowed while resting at a bonfire.
+   */
+  | { type: 'chooseVariant'; base: string; ability: string };
 
 export interface InputFrame {
   /** Movement intent, each axis in [-1, 1]. */

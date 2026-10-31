@@ -57,14 +57,18 @@ export function giveStartingClass(sim: Simulation, e: Entity, playerClass?: stri
     cooldowns: { aoe: 0, class: 0 },
     energy: 0,
     unlocked: { ...sim.content.player.start.unlocked },
+    learned: {},
+    chosen: {},
     casting: null,
   });
 }
 
-/** The ability id the player's class has in a slot. */
+/** The ability id the player has in a slot: the class's base, or the variant chosen for it. */
 export function abilityIn(sim: Simulation, slot: AbilitySlot): string {
   const a = sim.ecs.need(sim.player, Abilities);
-  return sim.content.playerClass(a.class).abilities[slot];
+  const base = sim.content.playerClass(a.class).abilities[slot];
+  const chosen = a.chosen[base];
+  return chosen !== undefined && sim.content.abilities[chosen] ? chosen : base;
 }
 
 /** Whether a slot can fire now: off cooldown, or for the super, a full bar. */

@@ -91,8 +91,16 @@ export const AbilitySchema = z
      */
     pose: z.string().default('attack'),
     effects: z.array(AbilityEffectSchema).min(1),
+    /**
+     * Makes this a variant of another ability (its base): a version the player learns and picks
+     * at a bonfire in place of the base, for whichever class has the base in a slot.
+     */
+    variantOf: z.string().optional(),
+    /** Souls to learn a variant at a bonfire. Bases are always known. */
+    souls: z.number().int().nonnegative().optional(),
   })
   .refine((a) => a.cast.release < a.cast.ticks, 'cast.release must come before the cast ends')
+  .refine((a) => a.variantOf !== undefined || a.souls === undefined, 'only a variant has a souls cost')
   .refine((a) => a.slot === 'super' || a.cooldown > 0, 'AoE and class abilities need a cooldown');
 export type AbilityDef = z.infer<typeof AbilitySchema>;
 export const AbilitiesSchema = z.record(z.string(), AbilitySchema);

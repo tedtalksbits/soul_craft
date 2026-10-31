@@ -164,6 +164,22 @@ Warden, covers all of the list below except carried relics and pressure plates b
 
 Decisions 1 and 2, which it depended on, are made (ADR 0011).
 
+### Ability trees (phase 1 built)
+
+Owner's playtest ask: abilities and supers need far more depth. Decided shape: **variants and modifiers**. Each
+ability gets 2-3 versions picked at a bonfire; each class gets modifier slots that tie its abilities together.
+Base versions are free, variants cost souls, the best come from Wardens.
+
+1. **Built: the framework.** Variants are whole abilities with `variantOf` (content only), learned with souls and
+   swapped at a bonfire. One variant per AoE and class ability from existing effects: Shockwave, Bulwark Rush,
+   Twin Charge, Cutting Step, Wildfire, Backdraft.
+2. **Healing and overshield:** zones that heal or shield, an overshield bar. Hearth and Cinder Ward (Fire Pot),
+   Rally (Ground Slam).
+3. **Stalker tricks:** Latch (sticky grenade), Decoy (needs enemies that can target something other than the
+   player), Smoke (invisibility with a bonus first hit).
+4. **Supers and modifiers:** two versions per super; class modifiers in two slots (a third from a Warden).
+5. **Art and tuning:** variant icons, then balance from a playtest.
+
 ### Milestone 5: Life sim, in service of combat
 
 Each part opens through the restoration thread: a Kindling clears the fields or brings back the villager who

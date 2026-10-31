@@ -181,11 +181,13 @@ export class App {
     return tintedIcon(this.assets.sheet('sigils')?.frameRect(cls), def?.element.base ?? '#ffffff', scale);
   }
 
-  /** An ability's icon, tinted with its class's element. */
+  /** An ability's icon, tinted with its class's element. A variant without its own icon shows its base's. */
   abilityIcon(ability: string, scale = 2): HTMLElement {
-    const cls = Object.values(this.content.classes).find((c) => Object.values(c.abilities).includes(ability));
+    const base = this.content.baseAbility(ability);
+    const cls = Object.values(this.content.classes).find((c) => Object.values(c.abilities).includes(base));
+    const sheet = this.assets.sheet('abilities');
     return tintedIcon(
-      this.assets.sheet('abilities')?.frameRect(ability),
+      sheet?.frameRect(ability) ?? sheet?.frameRect(base),
       cls?.element.base ?? '#ffffff',
       scale,
     );
@@ -496,6 +498,11 @@ export class App {
         return this.ui.toast(
           `Not yet awakened. Open the pack (${primaryKey(this.input.bindings, 'inventory')}), then Abilities.`,
         );
+      case 'variantLearned':
+        return this.ui.toast(`${this.content.ability(e.ability).name} learned.`);
+      case 'variantChosen':
+        if (e.ability === e.base) return this.ui.toast(`Back to ${this.content.ability(e.ability).name}.`);
+        return;
       case 'leveledUp': {
         const name = `${e.attribute.charAt(0).toUpperCase()}${e.attribute.slice(1)}`;
         return this.ui.toast(`${name} raised. You are level ${e.level}.`);
@@ -589,6 +596,7 @@ export class App {
     this.ui.restMenu(resting ? this.currentClassLabel() : null, {
       travel: () => this.openTravel(),
       levelUp: () => this.level.open(),
+      abilities: () => this.inventory.open('abilities'),
       changeClass: () => this.changeClass(),
     });
     // The held AoE's landing preview (hold to aim, release to throw).

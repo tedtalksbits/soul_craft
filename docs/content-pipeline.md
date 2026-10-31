@@ -153,6 +153,11 @@ animation it plays, e.g. `cast_slam`; default `attack`), and `effects`, applied 
 Ability hits go through shields. Super energy is `player.json → energy`: `perDamage` dealt, `perKill` and
 `perSecond`. The super's own hits don't charge it. Every class must name an existing ability of the right slot.
 
+**Variants.** An ability with `variantOf` is another version of that base ability, in the same slot: the player
+learns it for `souls` at a bonfire (Abilities, from the bonfire menu or the pack) and uses it in place of the base,
+switching back and forth for free once learned. Classes always name the base. A variant draws its base's icon
+until it has its own frame in the `abilities` sheet.
+
 ### Prefabs
 
 ```json

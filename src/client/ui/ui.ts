@@ -139,7 +139,7 @@ export class Ui {
   /** The bonfire's own menu, shown while resting. Rebuilt only when it appears or the class changes. */
   restMenu(
     label: ClassLabel | null,
-    handlers: { travel(): void; levelUp(): void; changeClass(): void },
+    handlers: { travel(): void; levelUp(): void; abilities(): void; changeClass(): void },
   ): void {
     if (!label) {
       this.restEl?.remove();
@@ -156,6 +156,7 @@ export class Ui {
       classTag(label),
       h('button', { onclick: () => handlers.travel() }, 'Travel'),
       h('button', { onclick: () => handlers.levelUp() }, 'Level up'),
+      h('button', { onclick: () => handlers.abilities() }, 'Abilities'),
       h('button', { onclick: () => handlers.changeClass() }, 'Change class'),
     );
     this.restEl.dataset.shown = key;
@@ -412,7 +413,12 @@ export class Ui {
     this.areaEl?.remove();
     this.cancelBanners();
     this.bannerEl?.remove();
-    this.restMenu(null, { travel: () => undefined, levelUp: () => undefined, changeClass: () => undefined });
+    this.restMenu(null, {
+      travel: () => undefined,
+      levelUp: () => undefined,
+      abilities: () => undefined,
+      changeClass: () => undefined,
+    });
     this.clearHint();
   }
 

@@ -10,6 +10,17 @@
       { "type": "blast", "at": "self", "radius": 36, "damage": 26, "knockback": 4.5, "stagger": 40 }
     ]
   },
+  "shockwave": {
+    "name": "Shockwave",
+    "description": "Strike lighter and wider. The ring reaches further and leaves everything in it reeling longer.",
+    "slot": "aoe",
+    "cooldown": 12,
+    "cast": { "ticks": 20, "release": 10 },
+    "pose": "cast_slam",
+    "effects": [{ "type": "blast", "at": "self", "radius": 52, "damage": 14, "knockback": 6, "stagger": 70 }],
+    "variantOf": "ground_slam",
+    "souls": 300
+  },
   "shield_charge": {
     "name": "Shield Charge",
     "description": "Rush behind your shield. Whatever you meet is knocked down and left open, shields included.",
@@ -29,6 +40,28 @@
         "stagger": 60
       }
     ]
+  },
+  "bulwark_rush": {
+    "name": "Bulwark Rush",
+    "description": "A shorter, heavier rush behind a wide shield. What it meets stays down longer.",
+    "slot": "class",
+    "cooldown": 9,
+    "cast": { "ticks": 14, "release": 2 },
+    "pose": "cast_charge",
+    "effects": [
+      {
+        "type": "dash",
+        "distance": 40,
+        "ticks": 10,
+        "iframes": true,
+        "width": 26,
+        "damage": 20,
+        "knockback": 4,
+        "stagger": 90
+      }
+    ],
+    "variantOf": "shield_charge",
+    "souls": 300
   },
   "earthshatter": {
     "name": "Earthshatter",
@@ -61,6 +94,38 @@
       }
     ]
   },
+  "twin_charge": {
+    "name": "Twin Charge",
+    "description": "Two charges in one throw: a quick small burst, then a bigger one where the dust settles.",
+    "slot": "aoe",
+    "cooldown": 12,
+    "cast": { "ticks": 14, "release": 6 },
+    "pose": "cast_throw",
+    "effects": [
+      {
+        "type": "blast",
+        "at": "aim",
+        "range": 96,
+        "radius": 22,
+        "damage": 18,
+        "knockback": 2,
+        "stagger": 20,
+        "fuse": 16
+      },
+      {
+        "type": "blast",
+        "at": "aim",
+        "range": 96,
+        "radius": 32,
+        "damage": 24,
+        "knockback": 3.5,
+        "stagger": 30,
+        "fuse": 44
+      }
+    ],
+    "variantOf": "ash_bomb",
+    "souls": 300
+  },
   "shadowstep": {
     "name": "Shadowstep",
     "description": "Slip through the air in a blink, untouchable. Further and faster than a roll, and free of stamina.",
@@ -80,6 +145,28 @@
         "stagger": 0
       }
     ]
+  },
+  "cutting_step": {
+    "name": "Cutting Step",
+    "description": "A shorter step with a blade out. It cuts whatever you pass through.",
+    "slot": "class",
+    "cooldown": 7,
+    "cast": { "ticks": 12, "release": 1 },
+    "pose": "roll",
+    "effects": [
+      {
+        "type": "dash",
+        "distance": 60,
+        "ticks": 9,
+        "iframes": true,
+        "width": 16,
+        "damage": 16,
+        "knockback": 1,
+        "stagger": 20
+      }
+    ],
+    "variantOf": "shadowstep",
+    "souls": 300
   },
   "bladestorm": {
     "name": "Bladestorm",
@@ -121,6 +208,38 @@
       }
     ]
   },
+  "wildfire": {
+    "name": "Wildfire",
+    "description": "Thinner oil, spread wide. A weaker burst, but the fire covers more ground and burns longer.",
+    "slot": "aoe",
+    "cooldown": 14,
+    "cast": { "ticks": 14, "release": 6 },
+    "pose": "cast_throw",
+    "effects": [
+      {
+        "type": "blast",
+        "at": "aim",
+        "range": 96,
+        "radius": 34,
+        "damage": 10,
+        "knockback": 1,
+        "stagger": 0,
+        "fuse": 18
+      },
+      {
+        "type": "zone",
+        "at": "aim",
+        "range": 96,
+        "radius": 42,
+        "delay": 18,
+        "duration": 360,
+        "interval": 30,
+        "damage": 5
+      }
+    ],
+    "variantOf": "fire_pot",
+    "souls": 300
+  },
   "repel": {
     "name": "Repel",
     "description": "A pulse of heat that throws everything near you back and breaks their wind-ups.",
@@ -129,6 +248,17 @@
     "cast": { "ticks": 12, "release": 4 },
     "pose": "cast_push",
     "effects": [{ "type": "blast", "at": "self", "radius": 44, "damage": 4, "knockback": 7, "stagger": 45 }]
+  },
+  "backdraft": {
+    "name": "Backdraft",
+    "description": "A tighter, hotter pulse. It throws less but burns more.",
+    "slot": "class",
+    "cooldown": 7,
+    "cast": { "ticks": 12, "release": 4 },
+    "pose": "cast_push",
+    "effects": [{ "type": "blast", "at": "self", "radius": 34, "damage": 18, "knockback": 4, "stagger": 30 }],
+    "variantOf": "repel",
+    "souls": 300
   },
   "cinder_storm": {
     "name": "Cinder Storm",

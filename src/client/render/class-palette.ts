@@ -24,8 +24,9 @@ export function classPalette(content: Content, cls: string): Palette {
 
 /** The palette of the class an ability belongs to, or white for an ability no class uses. */
 export function abilityPalette(content: Content, ability: string): Palette {
+  const base = content.baseAbility(ability);
   for (const [id, cls] of Object.entries(content.classes)) {
-    if (Object.values(cls.abilities).includes(ability)) return classPalette(content, id);
+    if (Object.values(cls.abilities).includes(base)) return classPalette(content, id);
   }
   return WHITE;
 }

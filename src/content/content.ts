@@ -120,6 +120,11 @@ export class Content {
     return def;
   }
 
+  /** A variant's base ability, else the ability itself: what icons and class colors are keyed by. */
+  baseAbility(id: string): string {
+    return this.abilities[id]?.variantOf ?? id;
+  }
+
   playerClass(id: string): ClassDef {
     const def = this.classes[id];
     if (!def) throw new Error(`Unknown class "${id}"`);
@@ -297,7 +302,17 @@ function checkClasses(
       if (!def) problems.push(`classes.json: ${id}.abilities.${slot}: unknown ability "${ability}"`);
       else if (def.slot !== slot)
         problems.push(`classes.json: ${id}.abilities.${slot}: "${ability}" is a ${def.slot} ability`);
+      else if (def.variantOf !== undefined)
+        problems.push(`classes.json: ${id}.abilities.${slot}: "${ability}" is a variant; name its base`);
     }
+  }
+  for (const [id, def] of Object.entries(c.abilities)) {
+    if (def.variantOf === undefined) continue;
+    const base = c.abilities[def.variantOf];
+    const at = `abilities.json: ${id}.variantOf`;
+    if (!base) problems.push(`${at}: unknown ability "${def.variantOf}"`);
+    else if (base.variantOf !== undefined) problems.push(`${at}: "${def.variantOf}" is itself a variant`);
+    else if (base.slot !== def.slot) problems.push(`${at}: "${def.variantOf}" is a ${base.slot} ability`);
   }
 }
 

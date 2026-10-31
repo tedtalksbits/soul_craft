@@ -121,6 +121,8 @@ describe('v3 -> v4', () => {
       cooldowns: { aoe: 0, class: 0 },
       energy: 0,
       unlocked: { class: true, super: true },
+      learned: {},
+      chosen: {},
       casting: null,
     });
   });

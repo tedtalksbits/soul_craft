@@ -86,6 +86,13 @@ export interface Abilities {
   energy: number;
   /** Which slots the player has awakened (relics unlock them). The AoE is always known. */
   unlocked: { class: boolean; super: boolean };
+  /** Ability variants learned at bonfires, by id. Bases are always known. */
+  learned: Record<string, true>;
+  /**
+   * The variant in use for a base ability, by base id. Keyed by base rather than slot, so a class
+   * changed and changed back keeps its choices. A base with no entry is used as is.
+   */
+  chosen: Record<string, string>;
   /** The ability being cast in the `cast` state, and where it was aimed; null otherwise. */
   casting: { ability: string; slot: AbilitySlot; aimX: number; aimY: number } | null;
 }

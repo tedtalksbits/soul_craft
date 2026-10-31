@@ -55,6 +55,8 @@ describe('classes', () => {
       cooldowns: { aoe: 0, class: 0 },
       energy: 0,
       unlocked: { class: false, super: false },
+      learned: {},
+      chosen: {},
       casting: null,
     });
   });

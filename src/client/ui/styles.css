@@ -867,6 +867,32 @@ kbd {
   font-size: 0.85em;
   color: var(--dim);
 }
+.inventory .versions {
+  margin-top: 0.5em;
+  padding-left: 0.6em;
+  border-left: 2px solid rgba(214, 190, 140, 0.25);
+}
+.inventory .versions.empty {
+  display: none;
+}
+.inventory .version {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8em;
+  padding: 0.25em 0;
+}
+.inventory .version .vname {
+  font-family: var(--display);
+  color: var(--class-color, var(--ink));
+}
+.inventory .version .vdesc {
+  font-size: 0.85em;
+  color: var(--dim);
+}
+.inventory .version button {
+  white-space: nowrap;
+}
 .inventory .ability-row .status {
   min-width: 7em;
   text-align: right;
