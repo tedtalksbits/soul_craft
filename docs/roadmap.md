@@ -11,9 +11,12 @@ Last updated: 2026-10-29, after Milestone 3's foundation.
 **A top-down Soulslike action RPG where you fight with elemental class powers, forge your gear from what you
 gather, and explore a world that is different every time the flame wakes.**
 
-**Premise.** Ashen Village is dying: ash chokes the fields, the villagers have fled or hollowed, and the blight's
-guardians hold the land around it. You are the Ashen One, woken at its last bonfire. You restore the village and
-bring it back to life for its people (see the restoration thread under Planned).
+**Premise.** The land is forgetting itself, and Ashen Village is nearly gone. Maren, the last person who remembers
+it, remembered you back. You were forgotten long ago, so the forgetting has nothing to take from you: you can carry
+what others lose. Win back what the village forgot, and it comes back to life. **Memory** is the one power every
+class draws on, the way Destiny's classes all draw on the Light. The world, cast, arc and the game text still to
+be renamed (Kindlings become remnants, and so on) are in the story bible, [`docs/story.md`](story.md) (draft 2,
+awaiting the owner's tweaks).
 
 Pillars, in priority order:
 
@@ -35,15 +38,15 @@ Working principles:
 
 ## Done
 
-| Milestone                      | What it delivered                                                                                                                                                                                                                                                                     |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1. Foundation**              | Deterministic headless sim and ECS, procedural chunk-streamed world with prefabs, combat (sword, roll, stamina, flasks, bonfires), slime / hollow / archer / shield knight, health bars and damage numbers, save slots with migrations, content pipeline, dev tools                   |
-| **2. Items and crafting**      | Inventory with stack limits; weapon, armor and two ring slots; forge upgrades (+1 to +3); potions as timed buffs beside the flask; recipes at a forge, an alchemy table or anywhere; material drops; loot magnet; breakable trees and mushrooms                                       |
-| **3. Classes and abilities**   | Three classes (Vanguard / Ward, Stalker / Shade, Ashcaller / Ember), nine data-driven abilities on F / C / V, super energy, class choice on new game and at bonfires, class color on effects, light, HUD and menus, cast poses, class sigils and ability icons (foundation)           |
-| **Settings and accessibility** | Settings screen with key rebinding, fill-the-window scaling, full screen, volume; every on-screen key follows the bindings; ability hints, an Abilities tab; class shown by name and sigil, never color alone                                                                         |
-| **Art pipeline**               | Every character, enemy, item icon and crafting station is real art made from source scripts (`tools/art`); a pixel-art UI kit                                                                                                                                                         |
-| **Navigation**                 | Bonfire travel, the world map (fog of war, landmarks, a pin), the compass strip, bonfire beacons, signposts that point home                                                                                                                                                           |
-| **4. Bosses and restoration**  | Five village restoration projects (well, storehouse, palisade, lamps, smithy) as the wood and stone sink; stone from rocks; the Ashen Warden in a fixed keep north of the village, with a fog gate, slam and charge, shield phases broken at braziers, adds and a boss bar (ADR 0012) |
+| Milestone                      | What it delivered                                                                                                                                                                                                                                                                                    |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Foundation**              | Deterministic headless sim and ECS, procedural chunk-streamed world with prefabs, combat (sword, roll, stamina, flasks, bonfires), slime / hollow / archer / shield knight, health bars and damage numbers, save slots with migrations, content pipeline, dev tools                                  |
+| **2. Items and crafting**      | Inventory with stack limits; weapon, armor and two ring slots; forge upgrades (+1 to +3); potions as timed buffs beside the flask; recipes at a forge, an alchemy table or anywhere; material drops; loot magnet; breakable trees and mushrooms                                                      |
+| **3. Classes and abilities**   | Three classes (Vanguard / Ward, Stalker / Shade, Ashcaller / Ember), nine data-driven abilities on G / C / V (the AoE is hold to aim), super energy, class choice on new game and at bonfires, class color on effects, light, HUD and menus, cast poses, class sigils and ability icons (foundation) |
+| **Settings and accessibility** | Settings screen with key rebinding, fill-the-window scaling, full screen, volume; every on-screen key follows the bindings; ability hints, an Abilities tab; class shown by name and sigil, never color alone                                                                                        |
+| **Art pipeline**               | Every character, enemy, item icon and crafting station is real art made from source scripts (`tools/art`); a pixel-art UI kit                                                                                                                                                                        |
+| **Navigation**                 | Bonfire travel, the world map (fog of war, landmarks, a pin), the compass strip, bonfire beacons, signposts that point home                                                                                                                                                                          |
+| **4. Bosses and restoration**  | Five village restoration projects (well, storehouse, palisade, lamps, smithy) as the wood and stone sink; stone from rocks; the Ashen Warden in a fixed keep north of the village, with a fog gate, slam and charge, shield phases broken at braziers, adds and a boss bar (ADR 0012)                |
 
 ## Now: tuning Milestone 4
 

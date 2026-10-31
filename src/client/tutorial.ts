@@ -63,7 +63,7 @@ export class Tutorial {
       this.ui.hint({
         key,
         title: `${lead} ${def.name}`,
-        text: def.description,
+        text: slot === 'aoe' ? `${def.description} Hold the key to aim, release to throw.` : def.description,
         footer: `All your abilities: ${primaryKey(this.settings.current.bindings, 'inventory')}, then Abilities.`,
         color: cls.element.light,
         icon: this.abilityIcon(ability),

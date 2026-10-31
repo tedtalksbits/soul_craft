@@ -24,20 +24,20 @@ Pick a class on the new-game screen; you can change it while resting at a bonfir
 Every key except Esc and the dev console can be rebound in Settings (Esc, then Settings), and the pause
 screen lists your current keys.
 
-| Action                         | Keys                                    |
-| ------------------------------ | --------------------------------------- |
-| Move                           | WASD / arrows                           |
-| Attack                         | J / Space / left-click (aims at cursor) |
-| Roll (i-frames)                | Shift / K                               |
-| AoE ability / class ability    | F / C (aim at the cursor)               |
-| Super (when its bar is full)   | V                                       |
-| Drink flask                    | R / H                                   |
-| Quick item (potion, bandage)   | Q                                       |
-| Use (bonfire, sign, forge)     | E / Enter                               |
-| Inventory, crafting, abilities | Tab / I                                 |
-| World map                      | M                                       |
-| Pause and settings             | Esc                                     |
-| Dev console (dev builds)       | ` (backquote)                           |
+| Action                                                      | Keys                                    |
+| ----------------------------------------------------------- | --------------------------------------- |
+| Move                                                        | WASD / arrows                           |
+| Attack                                                      | J / Space / left-click (aims at cursor) |
+| Roll (i-frames)                                             | Shift / K                               |
+| AoE ability (hold to aim, release to throw) / class ability | G / C (aim at the cursor)               |
+| Super (when its bar is full)                                | V                                       |
+| Drink flask                                                 | R / H                                   |
+| Quick item (potion, bandage)                                | Q                                       |
+| Use (bonfire, sign, forge)                                  | E / Enter                               |
+| Inventory, crafting, abilities                              | Tab / I                                 |
+| World map                                                   | M                                       |
+| Pause and settings                                          | Esc                                     |
+| Dev console (dev builds)                                    | ` (backquote)                           |
 
 Standing still while facing an arrow blocks it with your shield. Shield knights block every sword blow
 until they charge: dodge the charge into a wall and punish, or break their guard with an ability.
@@ -45,6 +45,7 @@ until they charge: dodge the charge into a wall and punish, or break their guard
 ## Working on it
 
 - [`docs/roadmap.md`](docs/roadmap.md): vision, milestones, open decisions, who makes what
+- [`docs/story.md`](docs/story.md): the story bible: world, cast, arc, ending, how the story is told
 - [`CLAUDE.md`](CLAUDE.md): rules and conventions (for humans and agents alike)
 - [`docs/architecture.md`](docs/architecture.md): how the pieces fit together
 - [`docs/content-pipeline.md`](docs/content-pipeline.md): editing content and art

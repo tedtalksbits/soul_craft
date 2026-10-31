@@ -93,10 +93,21 @@ describe('the Ashen Warden', () => {
     const sim = newSim();
     const { warden } = enterKeep(sim);
     hit(sim, warden, sim.ecs.need(warden, Health).max);
-    run(sim, brain.adds.every * (brain.adds.max + 2));
+    const spec = brain.adds.shielded;
+    run(sim, spec.every * (spec.max + 2));
     const adds = [...sim.ecs.query(Minion)].length;
     expect(adds).toBeGreaterThan(0);
-    expect(adds).toBeLessThanOrEqual(brain.adds.max);
+    expect(adds).toBeLessThanOrEqual(spec.max);
+  });
+
+  it('calls a few adds in the damage phase too, so it cannot be waited out behind cover', () => {
+    const sim = newSim();
+    enterKeep(sim);
+    const spec = brain.adds.open;
+    run(sim, spec.every * (spec.max + 2));
+    const adds = [...sim.ecs.query(Minion)].length;
+    expect(adds).toBeGreaterThan(0);
+    expect(adds).toBeLessThanOrEqual(spec.max);
   });
 
   it('slams the ground around itself after raising its weapon', () => {
@@ -122,7 +133,7 @@ describe('the Ashen Warden', () => {
     const { warden } = enterKeep(sim);
     const health = sim.ecs.need(warden, Health);
     hit(sim, warden, health.max);
-    run(sim, brain.adds.every + 1);
+    run(sim, brain.adds.shielded.every + 1);
     lightBraziers(sim);
     hit(sim, warden, health.max);
     lightBraziers(sim);

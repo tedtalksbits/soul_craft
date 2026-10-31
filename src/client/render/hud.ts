@@ -90,7 +90,7 @@ export class Hud {
   }
 
   /**
-   * The class sigil, then F / C / V: each ability's icon in the class's color. A ready ability
+   * The class sigil, then the AoE, class ability and super (G / C / V by default): each ability's icon in the class's color. A ready ability
    * is bright; one cooling down is dim, with the slot filling back up from the bottom. The
    * super fills with energy, glows when full, and shows the time left while it runs.
    */

@@ -583,6 +583,8 @@ export class App {
       levelUp: () => this.level.open(),
       changeClass: () => this.changeClass(),
     });
+    // The held AoE's landing preview (hold to aim, release to throw).
+    this.renderer.abilityFx.aimPreview = free ? this.input.aimPreview : undefined;
     this.renderer.render(dtMs, () => {
       for (const fn of this.frameListeners) fn(dtMs);
     });

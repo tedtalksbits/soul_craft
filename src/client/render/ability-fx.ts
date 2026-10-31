@@ -7,7 +7,18 @@
  */
 import { Container, Graphics } from 'pixi.js';
 import type { Content } from '../../content/content';
-import { Abilities, Blast, Body, Empowered, Enemy, Player, Staggered, Zone } from '../../sim/components';
+import { DIR_VEC } from '../../core/math';
+import {
+  Abilities,
+  Blast,
+  Body,
+  Empowered,
+  Enemy,
+  Facing,
+  Player,
+  Staggered,
+  Zone,
+} from '../../sim/components';
 import { FULL_ENERGY } from '../../sim/modules/energy';
 import type { SimEvent } from '../../sim/events';
 import type { Simulation } from '../../sim/simulation';
@@ -53,6 +64,11 @@ export class AbilityFx {
   private readonly rings: Ring[] = [];
   private readonly lobs: Lob[] = [];
   private clockMs = 0;
+  /**
+   * While the AoE key is held: the cursor in world pixels (null when the mouse is off the game,
+   * so the throw goes the way the player faces); undefined when not aiming. Set by the app.
+   */
+  aimPreview: { x: number; y: number } | null | undefined = undefined;
   /** A class change to celebrate on the next update, when the player's position is known. */
   private attuned: string | null = null;
 
@@ -268,6 +284,7 @@ export class AbilityFx {
       }
     }
     this.staggerSparks(sim, k);
+    this.drawAim(sim, g, air);
   }
 
   /** Staggered enemies spark in the class color (only the player staggers things). */
@@ -293,6 +310,54 @@ export class AbilityFx {
    * The throwing hand's position relative to the feet, from the cast pose's per-direction
    * `release` pivot, so a lobbed charge leaves from the hand rather than the chest.
    */
+  /**
+   * The held AoE's preview: for a thrown one, a dotted arc from the hand to where it lands
+   * (capped at its range) and the ring it will cover; for one centered on the player, its ring.
+   * Dim while it is not ready, so a release will only say so.
+   */
+  private drawAim(sim: Simulation, g: Graphics, air: Graphics): void {
+    if (this.aimPreview === undefined) return;
+    const { ecs, content } = sim;
+    const a = ecs.get(sim.player, Abilities);
+    const pb = ecs.get(sim.player, Body);
+    const p = ecs.get(sim.player, Player);
+    const cls = a ? content.classes[a.class] : undefined;
+    if (!a || !pb || !p || !cls || p.state === 'dead') return;
+    const def = content.abilities[cls.abilities.aoe];
+    const area = def?.effects.find((fx) => fx.type === 'blast' || fx.type === 'zone');
+    if (!def || !area) return;
+    const pal = abilityPalette(content, cls.abilities.aoe);
+    const alpha = a.cooldowns.aoe > 0 ? 0.3 : 0.85;
+    const feetY = pb.y + pb.h / 2;
+
+    if (area.at === 'self') {
+      g.ellipse(pb.x, pb.y, area.radius, area.radius * 0.7).stroke({ color: pal.base, alpha, width: 1 });
+      return;
+    }
+    // Where it lands: the cursor, or straight ahead, no further than the ability's range.
+    const facing = DIR_VEC[ecs.get(sim.player, Facing)?.dir ?? 'down'];
+    const want = this.aimPreview ?? { x: pb.x + facing[0] * area.range, y: pb.y + facing[1] * area.range };
+    const dx = want.x - pb.x;
+    const dy = want.y - pb.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const reach = Math.min(dist, area.range);
+    const tx = pb.x + (dx / dist) * reach;
+    const ty = pb.y + (dy / dist) * reach;
+    const hand = this.throwingHand(content, def.pose, dx, dy);
+    const fromX = pb.x + (hand?.[0] ?? 0);
+    const fromH = hand ? -hand[1] : DEFAULT_THROW_HEIGHT;
+    // The same path the thrown charge will fly (see the lob in update), as a row of dots.
+    const DOTS = 14;
+    for (let i = 1; i < DOTS; i++) {
+      const t = i / DOTS;
+      const x = fromX + (tx - fromX) * t;
+      const y = feetY + (ty - feetY) * t - (fromH * (1 - t) + Math.sin(t * Math.PI) * LOB_HEIGHT);
+      air.rect(Math.round(x), Math.round(y), 1, 1).fill({ color: pal.base, alpha });
+    }
+    g.ellipse(tx, ty, area.radius, area.radius * 0.7).fill({ color: pal.dark, alpha: alpha * 0.25 });
+    g.ellipse(tx, ty, area.radius, area.radius * 0.7).stroke({ color: pal.base, alpha, width: 1 });
+  }
+
   private throwingHand(
     content: Content,
     pose: string,

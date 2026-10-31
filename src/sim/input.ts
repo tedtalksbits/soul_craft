@@ -14,7 +14,7 @@ export const Action = {
   use: 1 << 3,
   /** Use the quick-slot consumable. */
   item: 1 << 4,
-  /** The class's three abilities (F, C, V). */
+  /** The class's three abilities (G, C and V by default; the client sends the AoE on release). */
   aoe: 1 << 5,
   classAbility: 1 << 6,
   super: 1 << 7,

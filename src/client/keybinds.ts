@@ -39,7 +39,7 @@ export const DEFAULT_BINDINGS: Bindings = {
   heal: ['KeyR', 'KeyH'],
   use: ['KeyE', 'Enter'],
   item: ['KeyQ'],
-  aoe: ['KeyF'],
+  aoe: ['KeyG'],
   classAbility: ['KeyC'],
   super: ['KeyV'],
   inventory: ['Tab', 'KeyI'],

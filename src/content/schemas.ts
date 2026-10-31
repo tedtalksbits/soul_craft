@@ -17,7 +17,7 @@ const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'expected a #rrggbb color');
 
 // ------------------------------------------------------------------ classes & abilities
 
-/** The three ability slots, on F / C / V. Supers spend energy; the others have cooldowns. */
+/** The three ability slots, on G / C / V by default. Supers spend energy; the others have cooldowns. */
 export const AbilitySlotSchema = z.enum(['aoe', 'class', 'super']);
 export type AbilitySlot = z.infer<typeof AbilitySlotSchema>;
 export const ABILITY_SLOTS: readonly AbilitySlot[] = AbilitySlotSchema.options;
@@ -335,6 +335,13 @@ export type DropDef = z.infer<typeof DropSchema>;
 
 // ------------------------------------------------------------------ enemies
 
+/** A boss's adds in one phase: called every `every` ticks while fewer than `max` are alive. */
+const AddsSchema = z.object({
+  archetypes: z.array(z.string()).min(1),
+  every: ticks.refine((n) => n > 0, 'every must be at least 1 tick'),
+  max: z.number().int().min(0),
+});
+
 const BrainSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('hopper'),
@@ -376,7 +383,7 @@ const BrainSchema = z.discriminatedUnion('type', [
   /**
    * The Ashen Warden: a slam around itself and a charge across the arena. At each `shieldAt`
    * fraction of its health it raises a shield (immune to everything), falls back to the arena's
-   * center and calls `adds`; the player breaks the shield by standing on every brazier in the
+   * center and calls `adds.shielded`; the player breaks the shield by standing on every brazier in the
    * arena, which staggers it for `staggerTicks`.
    */
   z.object({
@@ -396,7 +403,12 @@ const BrainSchema = z.discriminatedUnion('type', [
     cooldown: range,
     /** Health fractions, highest first, at which the shield goes up. */
     shieldAt: z.array(fraction),
-    adds: z.object({ archetype: z.string(), every: ticks, max: z.number().int().min(0) }),
+    /**
+     * Adds it calls: `shielded` while its shield is up (the brazier puzzle), `open` while it can be
+     * hurt, fewer, so the player cannot wait out the damage phase behind cover. Each call picks one
+     * of `archetypes` at random.
+     */
+    adds: z.object({ shielded: AddsSchema, open: AddsSchema }),
     staggerTicks: ticks,
   }),
 ]);

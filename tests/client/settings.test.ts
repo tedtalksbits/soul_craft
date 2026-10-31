@@ -21,4 +21,10 @@ describe('stored settings', () => {
     const s = parseSettings({ bindings: { attack: ['KeyJ'] } });
     expect(s.bindings.super).toEqual(DEFAULT_BINDINGS.super);
   });
+
+  it('move players still on the old AoE default (F) to G, but keep anyone who chose a key', () => {
+    expect(parseSettings({ bindings: { aoe: ['KeyF'] } }).bindings.aoe).toEqual(DEFAULT_BINDINGS.aoe);
+    expect(parseSettings({ version: 2, bindings: { aoe: ['KeyF'] } }).bindings.aoe).toEqual(['KeyF']);
+    expect(parseSettings({ bindings: { aoe: ['KeyT'] } }).bindings.aoe).toEqual(['KeyT']);
+  });
 });

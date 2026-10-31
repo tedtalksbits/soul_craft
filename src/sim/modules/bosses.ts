@@ -117,20 +117,36 @@ function updateShield(sim: Simulation): void {
     sim.events.emit({ type: 'bossShieldBroken', boss: enemy.archetype });
     return;
   }
+}
 
-  const adds = def.brain.adds;
+/**
+ * Adds, in both phases: many while the shield is up (the brazier puzzle), a few while the boss
+ * can be hurt, so the damage phase can't be waited out behind cover.
+ */
+function updateAdds(sim: Simulation): void {
+  const fight = sim.state.bossFight;
+  const e = bossEntity(sim);
+  if (!fight || e === undefined) return;
+  const { ecs } = sim;
+  const boss = ecs.need(e, Boss);
+  const def = sim.content.enemy(ecs.need(e, Enemy).archetype);
+  if (def.brain.type !== 'warden' || ecs.has(e, Dying)) return;
+  const adds = boss.shielded ? def.brain.adds.shielded : def.brain.adds.open;
   if (--boss.addTimer > 0) return;
   boss.addTimer = adds.every;
   const alive = [...ecs.query(Minion)].filter(([m]) => !ecs.has(m, Dying)).length;
   if (alive >= adds.max) return;
-  const add = sim.content.enemy(adds.archetype);
+  const archetype = adds.archetypes[sim.rng.int(0, adds.archetypes.length - 1)];
+  if (archetype === undefined) return;
+  const add = sim.content.enemy(archetype);
+  const pb = ecs.need(sim.player, Body);
   // Somewhere in the arena, away from the player, on open ground.
   for (let attempt = 0; attempt < 8; attempt++) {
     const x = fight.x + sim.rng.range(-0.8, 0.8) * fight.half;
     const y = fight.y + sim.rng.range(-0.8, 0.8) * fight.half;
     if (Math.hypot(x - pb.x, y - pb.y) < ADD_MIN_DISTANCE) continue;
     if (blockedAt(sim.world, { x, y, w: add.body.w, h: add.body.h }, x, y)) continue;
-    const m = spawnEnemy(sim, adds.archetype, x, y);
+    const m = spawnEnemy(sim, archetype, x, y);
     ecs.add(m, Minion, {});
     // Called to fight: it comes straight for the player.
     setAi(ecs.need(m, Ai), 'chase');
@@ -190,6 +206,7 @@ export const bossesModule: SimModule = {
   systems: [
     { phase: 'control', run: updateFight },
     { phase: 'ai', run: updateShield },
+    { phase: 'ai', run: updateAdds },
     { phase: 'physics', run: confine },
   ],
   commands,

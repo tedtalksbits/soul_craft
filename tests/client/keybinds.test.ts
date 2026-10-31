@@ -33,13 +33,13 @@ describe('key labels', () => {
 
 describe('rebinding', () => {
   it('replaces a key in its slot', () => {
-    const { bindings, tookFrom } = rebind(DEFAULT_BINDINGS, 'aoe', 0, 'KeyG');
-    expect(bindings.aoe).toEqual(['KeyG']);
+    const { bindings, tookFrom } = rebind(DEFAULT_BINDINGS, 'aoe', 0, 'KeyT');
+    expect(bindings.aoe).toEqual(['KeyT']);
     expect(tookFrom).toBeNull();
   });
 
   it('adds an alternative key in the second slot', () => {
-    expect(rebind(DEFAULT_BINDINGS, 'aoe', 1, 'KeyG').bindings.aoe).toEqual(['KeyF', 'KeyG']);
+    expect(rebind(DEFAULT_BINDINGS, 'aoe', 1, 'KeyT').bindings.aoe).toEqual(['KeyG', 'KeyT']);
   });
 
   it('takes a key off the action that had it, so one key never does two things', () => {

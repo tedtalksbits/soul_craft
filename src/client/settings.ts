@@ -9,6 +9,11 @@ import { z } from 'zod';
 import { ALL_BINDINGS, DEFAULT_BINDINGS, type Binding, type Bindings } from './keybinds';
 
 const STORAGE_KEY = 'soul-craft-settings';
+/**
+ * Stored settings carry a version so a changed default can be applied to players who never chose
+ * otherwise. 2: the AoE moved from F to G (hold to aim).
+ */
+const SETTINGS_VERSION = 2;
 
 export interface Settings {
   bindings: Bindings;
@@ -33,6 +38,7 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 const StoredSchema = z.object({
+  version: z.number().int().optional(),
   bindings: z.record(z.string(), z.array(z.string())).optional(),
   fill: z.boolean().optional(),
   compass: z.boolean().optional(),
@@ -51,6 +57,10 @@ export function parseSettings(raw: unknown): Settings {
     const keys = s.bindings?.[b];
     if (keys) bindings[b] = keys;
   }
+  // Before version 2 the AoE default was F; keep anyone who rebound it, move the rest to G.
+  const before2 = (s.version ?? 1) < 2;
+  const oldAoe = s.bindings?.['aoe'];
+  if (before2 && oldAoe?.length === 1 && oldAoe[0] === 'KeyF') bindings.aoe = DEFAULT_BINDINGS.aoe;
   return {
     bindings,
     fill: s.fill ?? DEFAULT_SETTINGS.fill,
@@ -82,7 +92,7 @@ export class SettingsStore {
   update(change: Partial<Settings>): void {
     this.value = { ...this.value, ...change };
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.value));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...this.value, version: SETTINGS_VERSION }));
     } catch {
       // Not saved; the change still applies for this session.
     }

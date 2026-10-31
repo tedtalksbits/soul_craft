@@ -309,7 +309,11 @@ function checkReferences(
       problems.push('world.json: fixed: region 0, 0 holds the origin');
   }
   for (const [id, e] of Object.entries(c.enemies)) {
-    if (e.brain.type === 'warden') enemy(`enemies.json: ${id}.brain.adds`, e.brain.adds.archetype);
+    if (e.brain.type === 'warden') {
+      for (const phase of ['shielded', 'open'] as const) {
+        for (const a of e.brain.adds[phase].archetypes) enemy(`enemies.json: ${id}.brain.adds.${phase}`, a);
+      }
+    }
   }
 
   for (const [id, p] of Object.entries(c.prefabs)) {
