@@ -12,7 +12,7 @@ import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -218,6 +218,17 @@ export const MIGRATIONS: Readonly<Record<number, Migration>> = {
     return {
       ...save,
       snapshot: { ...snapshot, ecs: { ...ecs, components: { ...components, abilities } } },
+    };
+  },
+  /** v10 -> v11: zones can heal and shield. Zones already burning in an old save do neither. */
+  10: (save) => {
+    const snapshot = asRecord(save['snapshot']);
+    const ecs = asRecord(snapshot['ecs']);
+    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
+    const zone = (components['zone'] ?? []).map(([e, z]) => [e, { heal: 0, shield: null, ...asRecord(z) }]);
+    return {
+      ...save,
+      snapshot: { ...snapshot, ecs: { ...ecs, components: { ...components, zone } } },
     };
   },
 };

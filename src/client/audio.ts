@@ -103,6 +103,10 @@ export class Audio {
       }
       case 'healed':
         return this.arp([523, 659, 784], 70, 0.5, 0.06);
+      case 'overshieldGained':
+        return this.tone([[784, 1]], 0.1, 0.025);
+      case 'overshieldHit':
+        return e.hp > 0 ? this.tone([[1320, 1]], 0.06, 0.03) : this.burst(0.25, 2400, 0.12, 'highpass');
       case 'flaskEmpty':
         return this.tone([[150, 1]], 0.15, 0.06, 'square');
       case 'enemyAttack':

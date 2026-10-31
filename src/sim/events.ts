@@ -64,6 +64,12 @@ export type SimEvent =
   | { type: 'blast'; ability: string; x: number; y: number; radius: number }
   | { type: 'empowered'; ability: string; seconds: number }
   | { type: 'empowerEnded'; ability: string }
+  /** The player's overshield grew to `hp`. */
+  | { type: 'overshieldGained'; hp: number }
+  /** A blow landed on the overshield: `absorbed` of it, leaving `hp` (0 = broken). */
+  | { type: 'overshieldHit'; absorbed: number; hp: number }
+  /** The overshield ran out of time. */
+  | { type: 'overshieldFaded' }
   | { type: 'classChanged'; class: string }
   /** A relic awakened an ability slot; `ability` is what that slot holds for the current class. */
   | { type: 'abilityUnlocked'; slot: 'class' | 'super'; ability: string }

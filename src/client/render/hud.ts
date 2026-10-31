@@ -9,6 +9,7 @@ import {
   Equipment,
   Health,
   Inventory,
+  Overshield,
   Player,
   Stamina,
 } from '../../sim/components';
@@ -195,6 +196,9 @@ export class Hud {
     const g = this.g.clear();
     const hpW = Math.round(health.max * 0.8);
     bar(g, 6, 6, hpW, 4, frac, 0xa3261c, this.chip);
+    // Overshield: a pale band over the top of the health bar, on the same scale as health.
+    const os = sim.ecs.get(e, Overshield);
+    if (os) g.rect(6, 6, Math.min(hpW, Math.round(os.hp * 0.8)), 2).fill({ color: 0xdfe8ff, alpha: 0.9 });
     this.compass.root.visible = this.showCompass;
     if (this.showCompass) this.compass.update(sim, this.viewW, 6 + hpW);
     const stW = Math.round(stamina.max * 0.6);

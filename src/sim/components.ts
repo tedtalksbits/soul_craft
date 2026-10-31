@@ -147,6 +147,10 @@ export const Blast = defineComponent<Blast>('blast');
 /** Burning ground (Fire Pot, Cinder Storm) at its Body's position. */
 export interface Zone extends AbilityHit {
   radius: number;
+  /** Health given to the player standing in it, each pulse. */
+  heal: number;
+  /** Overshield given to the player standing in it, each pulse, or none. */
+  shield: { amount: number; max: number; seconds: number } | null;
   /** Ticks since the zone was made. It starts hurting after `delay`, then every `interval`. */
   t: number;
   delay: number;
@@ -154,6 +158,16 @@ export interface Zone extends AbilityHit {
   interval: number;
 }
 export const Zone = defineComponent<Zone>('zone');
+
+/**
+ * Extra health over the player's own that soaks blows first (Destiny's overshield), from
+ * abilities. It lasts `ticks`, then fades.
+ */
+export interface Overshield {
+  hp: number;
+  ticks: number;
+}
+export const Overshield = defineComponent<Overshield>('overshield');
 
 /** One inventory slot: an item, how many, and (for weapons) its forge upgrade level. */
 export interface ItemStack {

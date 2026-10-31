@@ -21,6 +21,7 @@ import {
   Health,
   Invulnerable,
   Motion,
+  Overshield,
   Player,
   Staggered,
   Zone,
@@ -33,6 +34,7 @@ import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
 import { applyDamage, rollDamage } from './combat';
 import { FULL_ENERGY, gainEnergy } from './energy';
+import { grantOvershield } from './overshield';
 import { abilityPower } from './progression';
 import { slotUnlocked } from './unlocks';
 
@@ -183,6 +185,8 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
           knockback: 0,
           stagger: 0,
           radius: fx.radius,
+          heal: fx.heal,
+          shield: fx.shield ?? null,
           t: 0,
           delay: fx.delay,
           duration: fx.duration,
@@ -198,6 +202,9 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
         }
         tx = body.x + sim.ecs.need(e, Player).dirX * fx.distance;
         ty = body.y + sim.ecs.need(e, Player).dirY * fx.distance;
+        break;
+      case 'overshield':
+        grantOvershield(sim, fx.amount, fx.amount, fx.seconds);
         break;
       case 'empower':
         sim.ecs.add(e, Empowered, {
@@ -328,7 +335,7 @@ function tickAbilities(sim: Simulation): void {
   }
 }
 
-/** Fuses burning down, and burning ground. */
+/** Fuses burning down, and ground that burns, heals or shields. */
 function tickAreas(sim: Simulation): void {
   const { ecs } = sim;
   for (const [e, blast, body] of ecs.query(Blast, Body)) {
@@ -340,14 +347,31 @@ function tickAreas(sim: Simulation): void {
     zone.t++;
     const since = zone.t - zone.delay;
     if (since >= 0 && since % zone.interval === 0) {
-      for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
-        if (ecs.has(target, Dying)) continue;
-        if (Math.hypot(tb.x - body.x, tb.y - body.y) <= zone.radius + Math.max(tb.w, tb.h) / 2)
-          abilityDamage(sim, target, body.x, body.y, zone);
+      const inside = (tb: Body) =>
+        Math.hypot(tb.x - body.x, tb.y - body.y) <= zone.radius + Math.max(tb.w, tb.h) / 2;
+      if (zone.damage > 0) {
+        for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
+          if (!ecs.has(target, Dying) && inside(tb)) abilityDamage(sim, target, body.x, body.y, zone);
+        }
       }
+      if (zone.heal > 0 || zone.shield) supportPulse(sim, zone, inside);
     }
     if (since >= zone.duration) ecs.destroy(e);
   }
+}
+
+/** A zone's heal and overshield for the player, if they stand in it and are alive. */
+function supportPulse(sim: Simulation, zone: Zone, inside: (b: Body) => boolean): void {
+  const e = sim.player;
+  const pb = sim.ecs.get(e, Body);
+  const health = sim.ecs.get(e, Health);
+  if (!pb || !health || sim.ecs.get(e, Player)?.state === 'dead' || !inside(pb)) return;
+  if (zone.heal > 0 && health.hp < health.max) {
+    const amount = Math.min(zone.heal, health.max - health.hp);
+    health.hp += amount;
+    sim.events.emit({ type: 'healed', amount });
+  }
+  if (zone.shield) grantOvershield(sim, zone.shield.amount, zone.shield.max, zone.shield.seconds);
 }
 
 /** Class changes, from the bonfire menu. */
@@ -382,6 +406,7 @@ export function refreshAbilities(sim: Simulation): void {
     a.casting = null;
   }
   ecs.remove(sim.player, Empowered);
+  ecs.remove(sim.player, Overshield);
   for (const [e] of ecs.query(Blast)) ecs.destroy(e);
   for (const [e] of ecs.query(Zone)) ecs.destroy(e);
 }

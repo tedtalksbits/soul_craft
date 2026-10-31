@@ -9,6 +9,7 @@ import { itemsModule } from './items';
 import { mappingModule } from './mapping';
 import { movementModule } from './movement';
 import { objectivesModule } from './objectives';
+import { overshieldModule } from './overshield';
 import { pickupsModule } from './pickups';
 import { playerModule } from './player';
 import { progressionModule } from './progression';
@@ -29,6 +30,7 @@ export const SIM_MODULES: readonly SimModule[] = [
   craftingModule,
   restorationModule,
   abilitiesModule,
+  overshieldModule,
   progressionModule,
   variantsModule,
   playerModule,

@@ -30,6 +30,7 @@ import { gainEnergy } from './energy';
 import { relicWanted } from './unlocks';
 import { playerStats } from './items';
 import { dropPickup } from './pickups';
+import { absorb } from './overshield';
 
 export interface Hit {
   amount: number;
@@ -86,10 +87,13 @@ function damagePlayer(
     return 'ignored';
 
   // Armor and buffs absorb a fraction of every blow; something always gets through.
-  const amount = Math.max(1, Math.round(hit.amount * (1 - playerStats(sim, e).defense)));
-  health.hp = Math.max(0, health.hp - amount);
+  const dealt = Math.max(1, Math.round(hit.amount * (1 - playerStats(sim, e).defense)));
   ecs.add(e, Invulnerable, { ticks: def.hurt.iframes });
   push(sim, e, body, hit, 1);
+  // An overshield takes the blow first. One that soaks all of it spares the player the flinch.
+  const amount = absorb(sim, e, dealt);
+  if (amount === 0) return 'hit';
+  health.hp = Math.max(0, health.hp - amount);
   sim.events.emit({
     type: 'damaged',
     target: e,

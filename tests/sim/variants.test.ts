@@ -24,7 +24,11 @@ function resting(amount = 10_000): Simulation {
 
 describe('ability variants', () => {
   it('every class ability with variants lists its base first', () => {
-    expect(versionsOf(content, 'ground_slam').map(([id]) => id)).toEqual(['ground_slam', 'shockwave']);
+    expect(versionsOf(content, 'ground_slam').map(([id]) => id)).toEqual([
+      'ground_slam',
+      'shockwave',
+      'rally',
+    ]);
   });
 
   it('learning a variant at a bonfire costs souls once and puts it in the slot', () => {

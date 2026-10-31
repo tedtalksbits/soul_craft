@@ -42,7 +42,10 @@ export const AbilityEffectSchema = z.discriminatedUnion('type', [
     stagger: ticks,
     fuse: ticks.default(0),
   }),
-  /** Ground that hurts whatever stands in it, every `interval` ticks for `duration` ticks. */
+  /**
+   * Ground that pulses every `interval` ticks for `duration` ticks: `damage` to enemies standing
+   * in it, and `heal` and `shield` (overshield) to the player standing in it. At least one is set.
+   */
   z.object({
     type: z.literal('zone'),
     at: AbilityTargetSchema,
@@ -51,8 +54,13 @@ export const AbilityEffectSchema = z.discriminatedUnion('type', [
     delay: ticks.default(0),
     duration: ticks,
     interval: ticks.refine((n) => n > 0, 'interval must be at least 1 tick'),
-    damage: pos,
+    damage: nonneg.default(0),
+    heal: nonneg.default(0),
+    /** Each pulse adds `amount` overshield, up to `max`, lasting `seconds` after the last pulse. */
+    shield: z.object({ amount: pos, max: pos, seconds: pos }).optional(),
   }),
+  /** Overshield on the player at once: `amount` extra health that soaks blows first, for `seconds`. */
+  z.object({ type: z.literal('overshield'), amount: pos, seconds: pos }),
   /** A lunge along the aim. Hits (once each) what the player passes through. */
   z.object({
     type: z.literal('dash'),
@@ -101,6 +109,10 @@ export const AbilitySchema = z
   })
   .refine((a) => a.cast.release < a.cast.ticks, 'cast.release must come before the cast ends')
   .refine((a) => a.variantOf !== undefined || a.souls === undefined, 'only a variant has a souls cost')
+  .refine(
+    (a) => a.effects.every((fx) => fx.type !== 'zone' || fx.damage > 0 || fx.heal > 0 || fx.shield),
+    'a zone needs damage, heal or shield',
+  )
   .refine((a) => a.slot === 'super' || a.cooldown > 0, 'AoE and class abilities need a cooldown');
 export type AbilityDef = z.infer<typeof AbilitySchema>;
 export const AbilitiesSchema = z.record(z.string(), AbilitySchema);

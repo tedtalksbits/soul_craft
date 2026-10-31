@@ -21,6 +21,20 @@
     "variantOf": "ground_slam",
     "souls": 300
   },
+  "rally": {
+    "name": "Rally",
+    "description": "A lighter slam that steadies you: the shock throws them back and leaves you shielded.",
+    "slot": "aoe",
+    "cooldown": 14,
+    "cast": { "ticks": 20, "release": 10 },
+    "pose": "cast_slam",
+    "effects": [
+      { "type": "blast", "at": "self", "radius": 36, "damage": 16, "knockback": 4.5, "stagger": 30 },
+      { "type": "overshield", "amount": 35, "seconds": 8 }
+    ],
+    "variantOf": "ground_slam",
+    "souls": 500
+  },
   "shield_charge": {
     "name": "Shield Charge",
     "description": "Rush behind your shield. Whatever you meet is knocked down and left open, shields included.",
@@ -239,6 +253,72 @@
     ],
     "variantOf": "fire_pot",
     "souls": 300
+  },
+  "hearth": {
+    "name": "Hearth",
+    "description": "A gentler pot. It lands as a warm patch: stand in it and your wounds close.",
+    "slot": "aoe",
+    "cooldown": 16,
+    "cast": { "ticks": 14, "release": 6 },
+    "pose": "cast_throw",
+    "effects": [
+      {
+        "type": "blast",
+        "at": "aim",
+        "range": 96,
+        "radius": 24,
+        "damage": 8,
+        "knockback": 1,
+        "stagger": 0,
+        "fuse": 18
+      },
+      {
+        "type": "zone",
+        "at": "aim",
+        "range": 96,
+        "radius": 30,
+        "delay": 18,
+        "duration": 300,
+        "interval": 30,
+        "damage": 4,
+        "heal": 5
+      }
+    ],
+    "variantOf": "fire_pot",
+    "souls": 500
+  },
+  "cinder_ward": {
+    "name": "Cinder Ward",
+    "description": "Embers that cling to you, not to them. Standing in the fire wraps you in a shield of heat.",
+    "slot": "aoe",
+    "cooldown": 16,
+    "cast": { "ticks": 14, "release": 6 },
+    "pose": "cast_throw",
+    "effects": [
+      {
+        "type": "blast",
+        "at": "aim",
+        "range": 96,
+        "radius": 24,
+        "damage": 10,
+        "knockback": 1,
+        "stagger": 0,
+        "fuse": 18
+      },
+      {
+        "type": "zone",
+        "at": "aim",
+        "range": 96,
+        "radius": 30,
+        "delay": 18,
+        "duration": 300,
+        "interval": 30,
+        "damage": 5,
+        "shield": { "amount": 8, "max": 40, "seconds": 4 }
+      }
+    ],
+    "variantOf": "fire_pot",
+    "souls": 500
   },
   "repel": {
     "name": "Repel",

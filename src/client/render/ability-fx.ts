@@ -13,6 +13,7 @@ import {
   Blast,
   Body,
   Empowered,
+  Overshield,
   Enemy,
   Facing,
   Player,
@@ -166,6 +167,16 @@ export class AbilityFx {
         alpha: 0.55 * fade * flicker,
         width: 1,
       });
+      // Ground that heals or shields breathes with a slow inner ring: stand here.
+      if (zone.heal > 0 || zone.shield) {
+        const breath = 0.6 + 0.4 * Math.sin(this.clockMs / 400);
+        const r = zone.radius * (0.55 + 0.1 * breath);
+        g.ellipse(body.x, body.y, r, r * 0.7).stroke({
+          color: pal.light,
+          alpha: 0.5 * fade * breath,
+          width: 1,
+        });
+      }
       const density = (zone.radius * zone.radius) / 900;
       if (Math.random() < density * 0.35 * k) {
         const a = Math.random() * Math.PI * 2;
@@ -269,6 +280,14 @@ export class AbilityFx {
           z: 8,
           spread: 0.6,
         });
+      // An overshield: a pale shell around the player, brighter the more it holds.
+      const os = ecs.get(sim.player, Overshield);
+      if (os) {
+        const strength = Math.min(1, os.hp / 30);
+        air
+          .ellipse(pb.x, pb.y - 8, 11, 13)
+          .stroke({ color: pal.light, alpha: 0.25 + 0.4 * strength, width: 1 });
+      }
       if (ecs.has(sim.player, Empowered) && Math.random() < 0.6 * k) {
         const ang = Math.random() * Math.PI * 2;
         this.effects.burst(pb.x + Math.cos(ang) * 8, pb.y + Math.sin(ang) * 4, {
