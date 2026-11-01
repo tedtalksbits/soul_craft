@@ -19,6 +19,7 @@ import { Simulation } from '../sim/simulation';
 import type { Assets } from './assets';
 import { Audio } from './audio';
 import { InputCapture, isTyping } from './input';
+import { characterPreview } from './ui/character-preview';
 import { primaryKey } from './keybinds';
 import { compassDirection } from './ui/travel';
 import { SettingsStore } from './settings';
@@ -78,6 +79,7 @@ export class App {
     this.input = new InputCapture(renderer.canvas, (x, y) => renderer.toWorld(x, y));
     this.inventory = new InventoryScreen(uiRoot, {
       sim: () => this.sim,
+      characterPreview: (direction) => characterPreview(this.assets, this.sim, direction),
       icon: (item) => this.itemIcon(item),
       act: (action) => this.input.queueAction(action),
       bindings: () => this.input.bindings,

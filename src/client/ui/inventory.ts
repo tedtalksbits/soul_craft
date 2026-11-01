@@ -47,8 +47,12 @@ import { TICK_RATE } from '../../sim/constants';
 import { primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
 import { gearWork } from './smithy-panel';
+import { DEFAULT_APPEARANCE, type AppearanceDef } from '../../content/appearance';
+import { Appearance } from '../../sim/components';
+import type { Dir8 } from '../render/facing';
 
 export interface InventoryHost {
+  characterPreview(direction?: Dir8): HTMLElement;
   sim(): Simulation | null;
   /** An element showing the item's icon. */
   icon(item: string): HTMLElement;
@@ -60,7 +64,7 @@ export interface InventoryHost {
   abilityIcon(ability: string): HTMLElement;
 }
 
-type Tab = 'items' | 'craft' | 'abilities';
+type Tab = 'items' | 'craft' | 'abilities' | 'appearance';
 
 const SLOT_BINDING = { aoe: 'aoe', class: 'classAbility', super: 'super' } as const;
 const SLOT_NAMES = { aoe: 'AoE ability', class: 'Class ability', super: 'Super' } as const;
@@ -136,7 +140,9 @@ export class InventoryScreen {
         ? this.itemsTab(sim)
         : this.tab === 'craft'
           ? this.craftTab(sim)
-          : this.abilitiesTab(sim);
+          : this.tab === 'appearance'
+            ? this.appearanceTab(sim)
+            : this.abilitiesTab(sim);
     this.el.replaceChildren(this.header(sim), body);
     const shown = this.el.querySelector('.body');
     if (shown) shown.scrollTop = scroll;
@@ -150,6 +156,7 @@ export class InventoryScreen {
       this.selected,
       sim.ecs.get(e, Inventory)?.stacks,
       sim.ecs.get(e, Equipment),
+      sim.ecs.get(e, Appearance),
       sim.ecs.get(e, Player)?.souls,
       sim.ecs.get(e, Buffs)?.active.map((b) => b.stat),
       stationNearby(sim, 'forge'),
@@ -184,6 +191,7 @@ export class InventoryScreen {
       tab('items', 'Inventory'),
       tab('craft', this.station ? STATIONS[this.station] : 'Crafting'),
       tab('abilities', 'Abilities'),
+      tab('appearance', 'Appearance'),
       h('div', { class: 'souls' }, `${souls} souls`),
       h(
         'button',
@@ -278,6 +286,7 @@ export class InventoryScreen {
           h(
             'div',
             { class: 'power' },
+            this.host.characterPreview(),
             h('div', { class: 'label' }, 'Power'),
             h('div', { class: 'value' }, String(playerPower(sim))),
             quick,
@@ -674,7 +683,75 @@ export class InventoryScreen {
     );
   }
 
-  /** The class's three abilities: their keys, what they do, and whether they are ready. */
+  /** Cosmetics on the shared body rig, independent of equipped gear. */
+  private appearanceTab(sim: Simulation): HTMLElement {
+    let value = sim.ecs.get(sim.player, Appearance) ?? DEFAULT_APPEARANCE;
+    const update = (change: Partial<AppearanceDef>) => {
+      value = { ...value, ...change };
+      this.host.act({ type: 'appearance', appearance: value });
+    };
+    const choices = <K extends 'skin' | 'hair' | 'hairColor'>(
+      key: K,
+      label: string,
+      options: readonly AppearanceDef[K][],
+    ) => {
+      const select = h(
+        'select',
+        { ariaLabel: label, onchange: () => update({ [key]: select.value }) },
+        ...options.map((option) => h('option', { value: option, selected: value[key] === option }, option)),
+      );
+      return h('label', {}, h('span', {}, label), select);
+    };
+    const toggle = (key: 'beard' | 'hideHelmet' | 'prototype', label: string) => {
+      const input = h('input', {
+        type: 'checkbox',
+        checked: value[key],
+        onchange: () => update({ [key]: input.checked }),
+      });
+      return h('label', { class: 'appearance-toggle' }, input, label);
+    };
+    let preview = this.host.characterPreview();
+    const direction = h(
+      'select',
+      {
+        ariaLabel: 'Preview direction',
+        onchange: () => {
+          const next = this.host.characterPreview(direction.value as Dir8);
+          preview.replaceWith(next);
+          preview = next;
+        },
+      },
+      ...(['down', 'down_right', 'right', 'up_right', 'up', 'up_left', 'left', 'down_left'] as const).map(
+        (dir) => h('option', { value: dir }, dir.replace('_', ' ')),
+      ),
+    );
+    return h(
+      'div',
+      { class: 'body appearance-editor' },
+      h('div', {}, h('h2', {}, 'The Ashen One'), preview, direction),
+      h(
+        'div',
+        { class: 'appearance-options' },
+        choices('skin', 'Skin tone', ['fair', 'warm', 'brown', 'deep']),
+        choices('hair', 'Hairstyle', ['bald', 'short', 'swept']),
+        choices('hairColor', 'Hair color', ['black', 'brown', 'auburn', 'blond', 'silver']),
+        toggle('beard', 'Facial hair'),
+        toggle('hideHelmet', 'Hide helmet'),
+        toggle('prototype', 'Use Pixel Fantasy character'),
+        h(
+          'p',
+          { class: 'hint' },
+          'Cosmetic choices are saved with this character. Equipment controls your clothing and headwear.',
+        ),
+        h(
+          'p',
+          { class: 'hint' },
+          'Body 1: eight-direction movement. Combat poses are adapted from the supplied art. Disable Pixel Fantasy to compare with our previous character.',
+        ),
+      ),
+    );
+  }
+
   private abilitiesTab(sim: Simulation): HTMLElement {
     const a = sim.ecs.get(sim.player, Abilities);
     const cls = a ? sim.content.classes[a.class] : undefined;

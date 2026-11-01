@@ -28,6 +28,12 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 
 ## Tools
 
+`pnpm art adventurer` generates the layered player prototype (`adventurer_*.png/json`)
+and a directional review sheet/GIF under `output/character-preview/`. It reuses
+`ashen_one.py` for rig math and lighting; it does not overwrite `player.*`.
+`python tools/art/adventurer.py --preview-only` rebuilds the review files without rendering.
+The current coverage and save behavior are documented in ADR 0013.
+
 The pixel-grid Maren and sign redesigns are generated with
 `pnpm exec tsx scripts/village-people-art.ts`. This writes `npcs.png/json`
 (48×48 frames, two-frame breathing loop) and `signs.png/json` (32×32).
@@ -83,3 +89,23 @@ lit from the upper left, quantized to 4-step material ramps (`RAMPS`), then give
 - Keep generators deterministic: seed any randomness (`np.random.default_rng(seed)`).
 - When a sheet graduates from placeholder to real art, remove it from `scripts/placeholders/generate.ts`
   so `--force` can never overwrite it.
+
+### Pixel Fantasy Body 1 import
+
+`pnpm art pixel_fantasy` imports the locally owned Pixel Fantasy Character Generator V0.05
+sheets from its default Downloads location. For another location, run Python directly:
+
+```powershell
+python tools/art/pixel_fantasy.py --source "PATH/TO/img/pictures/Sprite/SpritePage1"
+```
+
+Only Body 1 and its selected parts are used. The importer does not run or bundle the generator.
+`pixel_fantasy_sources.json` records source hashes; the original source pack remains external.
+Generated `pf_*.png/json` are the runtime assets. Format generated sidecars and `tools/art/pixel_fantasy_sources.json` with Prettier.
+Native 48x96 cells are placed on synchronized 96x96 canvases so a sideways roll/death fits.
+The client draws these at half scale. Walk diagonals come from columns 3-5 of rows 0-3;
+raised-arm equivalents are in rows 4-7. Extra actions are adaptations, not supplied bespoke attacks.
+The existing `adventurer_*` sheets remain the comparison option. See ADR 0014.
+
+The Pixel Fantasy importer locates the fist in each source frame for weapon grips;
+attachments follow the walk cycle instead of using one coordinate per direction.

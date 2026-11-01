@@ -226,7 +226,11 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    Gambler.
 5. **Wardens:** chests, signature items, Rekindle, pity and Marks, Heat, alternate kills.
 6. **Onboarding:** the Road Camp objective, with `kill` and `gather` goals.
-7. **Art:** weapon and armor layers on the character, item icons, beams and chimes.
+7. **Art (Pixel Fantasy Body 1 slice):** imported layered Body 1 art with native eight-direction
+   walking, skin/hair customization, gear-driven clothing/headwear and a directional sword.
+   Combat, rolling, healing, resting and death use explicitly adapted poses; bespoke combat
+   animation and full weapon/item artwork remain. The previous voxel character remains available
+   for comparison in Appearance (ADR 0014). Item icons, beams and chimes remain.
 
 ### Milestone 5: Life sim, in service of combat
 

@@ -4,8 +4,11 @@
  * Each const shares its name with its interface: `ecs.get(e, Health)` is a `Health`.
  */
 import { defineComponent, type Entity } from '../core/ecs';
+import type { AppearanceDef } from '../content/appearance';
 import type { Dir } from '../core/math';
 import type { AbilitySlot, StatId, StationId, TierId } from '../content/schemas';
+
+export const Appearance = defineComponent<AppearanceDef>('appearance');
 
 /** Collision box, centered on (x, y), in world pixels. */
 export interface Body {

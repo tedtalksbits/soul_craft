@@ -7,12 +7,13 @@
  * and add a migration from the previous version. See docs/saves.md.
  */
 import { z } from 'zod';
+import { DEFAULT_APPEARANCE } from '../content/appearance';
 import { Abilities, Attributes, Player } from '../sim/components';
 import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -80,7 +81,25 @@ export type Migration = (save: Record<string, unknown>) => Record<string, unknow
  * `MIGRATIONS[n]` upgrades a version-n file to n+1, for n from OLDEST_SAVE_VERSION up. Never edit a shipped
  * migration; add a new one.
  */
-export const MIGRATIONS: Readonly<Record<number, Migration>> = {};
+export const MIGRATIONS: Readonly<Record<number, Migration>> = {
+  15: (save) => {
+    const snapshot = SnapshotSchema.parse(save['snapshot']);
+    const components = snapshot.ecs.components;
+    return {
+      ...save,
+      snapshot: {
+        ...snapshot,
+        ecs: {
+          ...snapshot.ecs,
+          components: {
+            ...components,
+            appearance: (components['player'] ?? []).map(([entity]) => [entity, { ...DEFAULT_APPEARANCE }]),
+          },
+        },
+      },
+    };
+  },
+};
 
 /** The level for the slot list, or undefined for a player without attributes. */
 function playerLevelOf(sim: Simulation): number | undefined {

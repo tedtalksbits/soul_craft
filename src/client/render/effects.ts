@@ -8,6 +8,7 @@ import type { Content } from '../../content/content';
 import type { BiomeDef } from '../../content/schemas';
 import {
   Body,
+  Appearance,
   Magnetized,
   Pickup,
   Pinned,
@@ -92,6 +93,8 @@ interface BurstOptions {
 
 export class Effects {
   readonly root = new Container();
+  /** Swings aimed away from the camera must be occluded by the player's body. */
+  readonly behind = new Graphics();
   /** Screen shake magnitude in pixels, decays each frame. Read by the camera. */
   shake = 0;
   /** 0..1 red vignette pulse after the player is hurt. */
@@ -291,6 +294,8 @@ export class Effects {
     for (const n of this.numbers) n.text.destroy({ children: true });
     this.numbers.length = 0;
     this.slash = null;
+    this.slashG.clear();
+    this.behind.clear();
     this.shake = 0;
     this.hurtFlash = 0;
   }
@@ -378,12 +383,17 @@ export class Effects {
    * as it fills.
    */
   private drawSlash(sim: Simulation, dtMs: number): void {
-    const g = this.slashG;
+    let g = this.slashG;
     g.clear();
+    this.behind.clear();
     const p = sim.ecs.get(sim.player, Player);
     const b = sim.ecs.get(sim.player, Body);
     if (!p || !b) return;
-    const sheet = this.assets.sheet(sim.ecs.get(sim.player, SpriteDef)?.sheet ?? '');
+    const pixelFantasy = sim.ecs.get(sim.player, Appearance)?.prototype !== false;
+    const sheet = this.assets.sheet(
+      pixelFantasy ? 'pf_cloth' : (sim.ecs.get(sim.player, SpriteDef)?.sheet ?? ''),
+    );
+
     const [px, py] = sheet?.def.pivots['swing'] ?? DEFAULT_SWING_PIVOT;
     const cx = Math.round(b.x + px);
     const cy = Math.round(b.y + b.h / 2 + py);
@@ -410,6 +420,7 @@ export class Effects {
       this.slash = null;
       return;
     }
+    if (p.dirY < 0) g = this.behind;
     this.slash.ageMs += dtMs;
     const move = currentMove(sim);
     // A bow shot draws its arrow, not a swing.

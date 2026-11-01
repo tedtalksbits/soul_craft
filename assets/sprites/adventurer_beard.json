@@ -1,0 +1,668 @@
+{
+  "image": "adventurer_beard.png",
+  "frameWidth": 48,
+  "frameHeight": 48,
+  "anchor": [0.5, 1],
+  "pivots": {
+    "swing": [0, -13]
+  },
+  "frames": {},
+  "animations": {
+    "idle_down": {
+      "frames": [0, 8],
+      "fps": 2,
+      "loop": true,
+      "offset": [0, 3]
+    },
+    "idle_down_right": {
+      "frames": [1, 9],
+      "fps": 2,
+      "loop": true,
+      "offset": [0, 6]
+    },
+    "idle_right": {
+      "frames": [2, 10],
+      "fps": 2,
+      "loop": true,
+      "offset": [0, 5]
+    },
+    "idle_up_right": {
+      "frames": [3, 11],
+      "fps": 2,
+      "loop": true,
+      "offset": [0, 1]
+    },
+    "idle_up": {
+      "frames": [4, 12],
+      "fps": 2,
+      "loop": true,
+      "offset": [0, 0]
+    },
+    "idle_up_left": {
+      "frames": [5, 13],
+      "fps": 2,
+      "loop": true,
+      "offset": [0, 1]
+    },
+    "idle_left": {
+      "frames": [6, 14],
+      "fps": 2,
+      "loop": true,
+      "offset": [0, 1]
+    },
+    "idle_down_left": {
+      "frames": [7, 15],
+      "fps": 2,
+      "loop": true,
+      "offset": [0, 1]
+    },
+    "walk_down": {
+      "frames": [16, 24, 32, 40],
+      "fps": 10,
+      "loop": true,
+      "offset": [0, 5]
+    },
+    "walk_down_right": {
+      "frames": [17, 25, 33, 41],
+      "fps": 10,
+      "loop": true,
+      "offset": [0, 7]
+    },
+    "walk_right": {
+      "frames": [18, 26, 34, 42],
+      "fps": 10,
+      "loop": true,
+      "offset": [0, 6]
+    },
+    "walk_up_right": {
+      "frames": [19, 27, 35, 43],
+      "fps": 10,
+      "loop": true,
+      "offset": [0, 3]
+    },
+    "walk_up": {
+      "frames": [20, 28, 36, 44],
+      "fps": 10,
+      "loop": true,
+      "offset": [0, 3]
+    },
+    "walk_up_left": {
+      "frames": [21, 29, 37, 45],
+      "fps": 10,
+      "loop": true,
+      "offset": [0, 3]
+    },
+    "walk_left": {
+      "frames": [22, 30, 38, 46],
+      "fps": 10,
+      "loop": true,
+      "offset": [0, 1]
+    },
+    "walk_down_left": {
+      "frames": [23, 31, 39, 47],
+      "fps": 10,
+      "loop": true,
+      "offset": [0, 4]
+    },
+    "attack_down": {
+      "frames": [48, 56, 64, 72, 80],
+      "fps": 18,
+      "loop": false
+    },
+    "attack_down_right": {
+      "frames": [49, 57, 65, 73, 81],
+      "fps": 18,
+      "loop": false
+    },
+    "attack_right": {
+      "frames": [50, 58, 66, 74, 82],
+      "fps": 18,
+      "loop": false
+    },
+    "attack_up_right": {
+      "frames": [51, 59, 67, 75, 83],
+      "fps": 18,
+      "loop": false
+    },
+    "attack_up": {
+      "frames": [52, 60, 68, 76, 84],
+      "fps": 18,
+      "loop": false
+    },
+    "attack_up_left": {
+      "frames": [53, 61, 69, 77, 85],
+      "fps": 18,
+      "loop": false
+    },
+    "attack_left": {
+      "frames": [54, 62, 70, 78, 86],
+      "fps": 18,
+      "loop": false
+    },
+    "attack_down_left": {
+      "frames": [55, 63, 71, 79, 87],
+      "fps": 18,
+      "loop": false
+    },
+    "roll_down": {
+      "frames": [88, 96, 104, 112],
+      "fps": 14,
+      "loop": false,
+      "offset": [0, 4]
+    },
+    "roll_down_right": {
+      "frames": [89, 97, 105, 113],
+      "fps": 14,
+      "loop": false,
+      "offset": [0, 4]
+    },
+    "roll_right": {
+      "frames": [90, 98, 106, 114],
+      "fps": 14,
+      "loop": false,
+      "offset": [0, 4]
+    },
+    "roll_up_right": {
+      "frames": [91, 99, 107, 115],
+      "fps": 14,
+      "loop": false,
+      "offset": [0, 5]
+    },
+    "roll_up": {
+      "frames": [92, 100, 108, 116],
+      "fps": 14,
+      "loop": false,
+      "offset": [0, 2]
+    },
+    "roll_up_left": {
+      "frames": [93, 101, 109, 117],
+      "fps": 14,
+      "loop": false,
+      "offset": [0, 1]
+    },
+    "roll_left": {
+      "frames": [94, 102, 110, 118],
+      "fps": 14,
+      "loop": false,
+      "offset": [0, 1]
+    },
+    "roll_down_left": {
+      "frames": [95, 103, 111, 119],
+      "fps": 14,
+      "loop": false,
+      "offset": [0, 2]
+    },
+    "drink_down": {
+      "frames": [120, 128],
+      "fps": 3,
+      "loop": false,
+      "offset": [0, 1]
+    },
+    "drink_down_right": {
+      "frames": [121, 129],
+      "fps": 3,
+      "loop": false,
+      "offset": [0, 2]
+    },
+    "drink_right": {
+      "frames": [122, 130],
+      "fps": 3,
+      "loop": false,
+      "offset": [0, 1]
+    },
+    "drink_up_right": {
+      "frames": [123, 131],
+      "fps": 3,
+      "loop": false,
+      "offset": [0, 1]
+    },
+    "drink_up": {
+      "frames": [124, 132],
+      "fps": 3,
+      "loop": false,
+      "offset": [0, 0]
+    },
+    "drink_up_left": {
+      "frames": [125, 133],
+      "fps": 3,
+      "loop": false,
+      "offset": [0, 1]
+    },
+    "drink_left": {
+      "frames": [126, 134],
+      "fps": 3,
+      "loop": false,
+      "offset": [0, 1]
+    },
+    "drink_down_left": {
+      "frames": [127, 135],
+      "fps": 3,
+      "loop": false,
+      "offset": [0, 1]
+    },
+    "sit_down": {
+      "frames": [136],
+      "fps": 1,
+      "loop": true,
+      "offset": [0, 3]
+    },
+    "sit_down_right": {
+      "frames": [137],
+      "fps": 1,
+      "loop": true,
+      "offset": [0, 4]
+    },
+    "sit_right": {
+      "frames": [138],
+      "fps": 1,
+      "loop": true,
+      "offset": [0, 6]
+    },
+    "sit_up_right": {
+      "frames": [139],
+      "fps": 1,
+      "loop": true,
+      "offset": [0, 6]
+    },
+    "sit_up": {
+      "frames": [140],
+      "fps": 1,
+      "loop": true,
+      "offset": [0, 4]
+    },
+    "sit_up_left": {
+      "frames": [141],
+      "fps": 1,
+      "loop": true,
+      "offset": [0, 6]
+    },
+    "sit_left": {
+      "frames": [142],
+      "fps": 1,
+      "loop": true,
+      "offset": [0, 6]
+    },
+    "sit_down_left": {
+      "frames": [143],
+      "fps": 1,
+      "loop": true,
+      "offset": [0, 4]
+    },
+    "dead_down": {
+      "frames": [144],
+      "fps": 1,
+      "loop": false,
+      "offset": [0, 9]
+    },
+    "dead_down_right": {
+      "frames": [145],
+      "fps": 1,
+      "loop": false,
+      "offset": [0, 12]
+    },
+    "dead_right": {
+      "frames": [146],
+      "fps": 1,
+      "loop": false,
+      "offset": [0, 7]
+    },
+    "dead_up_right": {
+      "frames": [147],
+      "fps": 1,
+      "loop": false,
+      "offset": [3, 4]
+    },
+    "dead_up": {
+      "frames": [148],
+      "fps": 1,
+      "loop": false,
+      "offset": [0, 7]
+    },
+    "dead_up_left": {
+      "frames": [149],
+      "fps": 1,
+      "loop": false,
+      "offset": [0, 6]
+    },
+    "dead_left": {
+      "frames": [150],
+      "fps": 1,
+      "loop": false,
+      "offset": [0, 3]
+    },
+    "dead_down_left": {
+      "frames": [151],
+      "fps": 1,
+      "loop": false,
+      "offset": [-3, 4]
+    },
+    "hurt_down": {
+      "frames": [152],
+      "fps": 4.29,
+      "loop": false,
+      "offset": [0, 2]
+    },
+    "hurt_down_right": {
+      "frames": [153],
+      "fps": 4.29,
+      "loop": false,
+      "offset": [0, 0]
+    },
+    "hurt_right": {
+      "frames": [154],
+      "fps": 4.29,
+      "loop": false,
+      "offset": [0, 2]
+    },
+    "hurt_up_right": {
+      "frames": [155],
+      "fps": 4.29,
+      "loop": false,
+      "offset": [0, 2]
+    },
+    "hurt_up": {
+      "frames": [156],
+      "fps": 4.29,
+      "loop": false,
+      "offset": [0, 2]
+    },
+    "hurt_up_left": {
+      "frames": [157],
+      "fps": 4.29,
+      "loop": false,
+      "offset": [0, 0]
+    },
+    "hurt_left": {
+      "frames": [158],
+      "fps": 4.29,
+      "loop": false,
+      "offset": [0, 1]
+    },
+    "hurt_down_left": {
+      "frames": [159],
+      "fps": 4.29,
+      "loop": false,
+      "offset": [0, 2]
+    },
+    "cast_slam_down": {
+      "frames": [160, 168, 176, 184, 192],
+      "fps": 15,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 6]
+    },
+    "cast_slam_down_right": {
+      "frames": [161, 169, 177, 185, 193],
+      "fps": 15,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 6]
+    },
+    "cast_slam_right": {
+      "frames": [162, 170, 178, 186, 194],
+      "fps": 15,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 2]
+    },
+    "cast_slam_up_right": {
+      "frames": [163, 171, 179, 187, 195],
+      "fps": 15,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 5]
+    },
+    "cast_slam_up": {
+      "frames": [164, 172, 180, 188, 196],
+      "fps": 15,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 5]
+    },
+    "cast_slam_up_left": {
+      "frames": [165, 173, 181, 189, 197],
+      "fps": 15,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 3]
+    },
+    "cast_slam_left": {
+      "frames": [166, 174, 182, 190, 198],
+      "fps": 15,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 1]
+    },
+    "cast_slam_down_left": {
+      "frames": [167, 175, 183, 191, 199],
+      "fps": 15,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 4]
+    },
+    "cast_throw_down": {
+      "frames": [200, 208, 216, 224],
+      "fps": 17,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 5]
+    },
+    "cast_throw_down_right": {
+      "frames": [201, 209, 217, 225],
+      "fps": 17,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 6]
+    },
+    "cast_throw_right": {
+      "frames": [202, 210, 218, 226],
+      "fps": 17,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 7]
+    },
+    "cast_throw_up_right": {
+      "frames": [203, 211, 219, 227],
+      "fps": 17,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 6]
+    },
+    "cast_throw_up": {
+      "frames": [204, 212, 220, 228],
+      "fps": 17,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 3]
+    },
+    "cast_throw_up_left": {
+      "frames": [205, 213, 221, 229],
+      "fps": 17,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 2]
+    },
+    "cast_throw_left": {
+      "frames": [206, 214, 222, 230],
+      "fps": 17,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 1]
+    },
+    "cast_throw_down_left": {
+      "frames": [207, 215, 223, 231],
+      "fps": 17,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 1]
+    },
+    "cast_charge_down": {
+      "frames": [232, 240, 248],
+      "fps": 12,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 4]
+    },
+    "cast_charge_down_right": {
+      "frames": [233, 241, 249],
+      "fps": 12,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 4]
+    },
+    "cast_charge_right": {
+      "frames": [234, 242, 250],
+      "fps": 12,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 1]
+    },
+    "cast_charge_up_right": {
+      "frames": [235, 243, 251],
+      "fps": 12,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 3]
+    },
+    "cast_charge_up": {
+      "frames": [236, 244, 252],
+      "fps": 12,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 3]
+    },
+    "cast_charge_up_left": {
+      "frames": [237, 245, 253],
+      "fps": 12,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 2]
+    },
+    "cast_charge_left": {
+      "frames": [238, 246, 254],
+      "fps": 12,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 1]
+    },
+    "cast_charge_down_left": {
+      "frames": [239, 247, 255],
+      "fps": 12,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 4]
+    },
+    "cast_push_down": {
+      "frames": [256, 264, 272],
+      "fps": 15,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 2]
+    },
+    "cast_push_down_right": {
+      "frames": [257, 265, 273],
+      "fps": 15,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 4]
+    },
+    "cast_push_right": {
+      "frames": [258, 266, 274],
+      "fps": 15,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 3]
+    },
+    "cast_push_up_right": {
+      "frames": [259, 267, 275],
+      "fps": 15,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 2]
+    },
+    "cast_push_up": {
+      "frames": [260, 268, 276],
+      "fps": 15,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 1]
+    },
+    "cast_push_up_left": {
+      "frames": [261, 269, 277],
+      "fps": 15,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 1]
+    },
+    "cast_push_left": {
+      "frames": [262, 270, 278],
+      "fps": 15,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 1]
+    },
+    "cast_push_down_left": {
+      "frames": [263, 271, 279],
+      "fps": 15,
+      "loop": false,
+      "release": 1,
+      "offset": [0, 2]
+    },
+    "cast_raise_down": {
+      "frames": [280, 288, 296, 304],
+      "fps": 10,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 1]
+    },
+    "cast_raise_down_right": {
+      "frames": [281, 289, 297, 305],
+      "fps": 10,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 2]
+    },
+    "cast_raise_right": {
+      "frames": [282, 290, 298, 306],
+      "fps": 10,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 1]
+    },
+    "cast_raise_up_right": {
+      "frames": [283, 291, 299, 307],
+      "fps": 10,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 1]
+    },
+    "cast_raise_up": {
+      "frames": [284, 292, 300, 308],
+      "fps": 10,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 0]
+    },
+    "cast_raise_up_left": {
+      "frames": [285, 293, 301, 309],
+      "fps": 10,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 1]
+    },
+    "cast_raise_left": {
+      "frames": [286, 294, 302, 310],
+      "fps": 10,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 1]
+    },
+    "cast_raise_down_left": {
+      "frames": [287, 295, 303, 311],
+      "fps": 10,
+      "loop": false,
+      "release": 2,
+      "offset": [0, 1]
+    }
+  }
+}

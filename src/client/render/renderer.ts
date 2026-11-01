@@ -69,6 +69,7 @@ export class GameRenderer {
       this.chunks.root,
       this.abilityFx.ground,
       this.bossFx.floor,
+      this.effects.behind,
       this.entities.root,
       this.effects.root,
       this.abilityFx.air,

@@ -86,6 +86,14 @@ export class SpriteSheet {
   }
 
   /** An animation, or a named still frame wrapped as a one-frame animation. */
+  animFrameRect(key: string, index = 0): FrameRect | undefined {
+    const texture = this.anim(key)?.textures[index];
+    if (!texture) return undefined;
+    const { x, y, width: w, height: h } = texture.frame;
+    return { url: this.url, x, y, w, h, sheetW: this.source.width, sheetH: this.source.height };
+  }
+
+  /** An animation, or a named still frame wrapped as a one-frame animation. */
   anim(key: string): Anim | undefined {
     const anim = this.anims.get(key);
     if (anim) return anim;

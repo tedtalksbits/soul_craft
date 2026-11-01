@@ -1450,3 +1450,42 @@ kbd {
   background: var(--ember);
   box-shadow: 0 0 6px var(--ember);
 }
+
+.character-preview {
+  position: relative;
+  width: 144px;
+  height: 144px;
+  margin: 0 auto;
+  flex: none;
+}
+.character-preview > .icon {
+  position: absolute;
+  inset: 0;
+}
+.inventory .appearance-editor {
+  display: flex;
+  gap: 2em;
+  align-items: start;
+}
+.appearance-options {
+  display: grid;
+  gap: 0.7em;
+  max-width: 26em;
+}
+.appearance-options label {
+  display: flex;
+  gap: 0.8em;
+  align-items: center;
+  justify-content: space-between;
+}
+.appearance-options .appearance-toggle {
+  justify-content: start;
+}
+.appearance-editor select {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--edge);
+  padding: 0.25em 0.5em;
+  font: inherit;
+  text-transform: capitalize;
+}

@@ -1,0 +1,22 @@
+{
+  "pack": "Pixel Fantasy Character Generator V0.05",
+  "body": 1,
+  "files": {
+    "Body/PF_1.png": "1ac11d3cdf061b195a1a8f61d29e9b8752cc1f61e910b180c16caee3c6e5268b",
+    "Bottom/Body1/PF_3.png": "aba3af604ba784ffe28cd0c565f7980f2f5bcecebfddb687e3079ef969712ed2",
+    "Shoes/Body1/PF_2.png": "afbbdbc8bc005c87645dd173e2e5c9d470d600fd5c08e1f0993029bb4a3c5c75",
+    "Top1/Body1/PF_4.png": "c86cce7129350e7f6c24adb230d4f68cb828f425e7f6511a27aa7b398d51e508",
+    "Top1/Body1/PF_3.png": "19595f73a70aedd061be0c422b56dfb12c7871c76f32bccf0bbad15ad0db881b",
+    "Top1/Body1/PF_6.png": "831775aa766a7c38a35be77a3743a7fa14d8335f668d9df21582044696ff0c08",
+    "Top1/Body1/PF_1.png": "c4d86e9d17be381ad48f6349a7cbdb8a188ed8b57ead5e8847dce45bf382ca57",
+    "Accessory/Body1/PF_5.png": "43a13fa2768236e3f2cad3e76f2acee08f462df1ae3bd753219aa101e61ee52c",
+    "FrontHair/Body1/PF_1.png": "2ddb53b0daf04799ba0bc2a581ca7999e05af5a16748172fd93302543381f813",
+    "RearHair/Body1/PF_1_1.png": "c456ecad3d86c826696544dab417bd45b03d8dc432170dc7e2e4789f620c21ff",
+    "RearHair/Body1/PF_1_2.png": "5124435bf8dadbef17207211e4d4a9ce2afa056f86b536ef91aaa27e2090bf53",
+    "FrontHair/Body1/PF_3.png": "68e9d98901cabe91a37c1e39557c7642683ccc5aa2aea0b6302340ead5d72571",
+    "RearHair/Body1/PF_3_1.png": "b7f2f290aee06cc01a58b355a4d64680e379e3ed67addf79cd09864bbd4634e1",
+    "RearHair/Body1/PF_3_2.png": "d078bb30011d16e3241742df8cfba33c083045ea904a85dfdc83787e6efe362b",
+    "FacialHair/Body1/PF_1.png": "b8f0995628d12bbdc31c45cdb77f3f610adc78192f052d7e7c0d33dc609d2c2e",
+    "Eyes/Body1/PF_1_1.png": "66832f50ea6f21940feb88b9ebd2203dbf393683e94f1be49da47f0f65bc7a57"
+  }
+}

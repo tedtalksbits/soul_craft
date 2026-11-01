@@ -1,4 +1,5 @@
 import type { AttributeId, TierId } from '../content/schemas';
+import type { AppearanceDef } from '../content/appearance';
 import type { EquipSlot } from './components';
 
 /**
@@ -29,6 +30,7 @@ export type ActionName = keyof typeof Action;
 export type GearTarget = { pack: number } | { slot: EquipSlot };
 
 export type PlayerAction =
+  | { type: 'appearance'; appearance: AppearanceDef }
   | { type: 'equip'; index: number }
   | { type: 'unequip'; slot: EquipSlot }
   | { type: 'use'; item: string }

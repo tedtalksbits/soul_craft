@@ -4,10 +4,12 @@
  * so a press slightly before recovery ends still comes out.
  */
 import type { Entity } from '../../core/ecs';
+import { DEFAULT_APPEARANCE } from '../../content/appearance';
 import { DIR_VEC, dirFromVec, lerp, normalize, type Box } from '../../core/math';
 import { CommandError } from '../../core/commands';
 import {
   Body,
+  Appearance,
   Empowered,
   Equipment,
   Facing,
@@ -65,6 +67,7 @@ export function spawnPlayer(sim: Simulation, x: number, y: number, playerClass?:
   const { ecs } = sim;
   const def = sim.content.player;
   const e = ecs.create();
+  ecs.add(e, Appearance, { ...DEFAULT_APPEARANCE });
   ecs.add(e, Player, {
     state: 'free',
     t: 0,

@@ -44,7 +44,8 @@ from versions 1 to 13 were deleted. A save older than that is refused with "This
 the game and can't be loaded. Start a new game." (`OldSaveError`), and its slot on the title screen offers
 New game. Raise it again only for a change old games can't survive; otherwise write a migration.
 
-No migrations are live yet.
+Version 16 adds per-character appearance. The 15→16 migration initializes the default
+cosmetics without changing equipment or other game state. Version 15 remains loadable.
 
 Adding a new optional component needs no migration: old saves simply don't have it. Content changes need
 none either: restore drops entities whose archetype no longer exists, and tile overrides referring to

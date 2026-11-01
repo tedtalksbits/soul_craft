@@ -28,6 +28,7 @@ import type { Assets } from '../assets';
 import { castFrame, selectAnim } from './anim-select';
 import type { Dir8 } from './facing';
 import { PixelText } from './pixel-text';
+import { PlayerAppearanceView } from './player-appearance';
 
 const HIT_FLASH_MS = 110;
 const BAR_VISIBLE_MS = 4000;
@@ -49,6 +50,7 @@ interface EntityView {
   bar: HealthBar | null;
   /** Health bar width: sized to the body, not the (mostly empty) sprite frame. */
   barWidth: number;
+  appearance: PlayerAppearanceView | null;
 }
 
 export class EntityLayer {
@@ -142,6 +144,10 @@ export class EntityLayer {
         view.glow.alpha = 0.25 + 0.1 * rank + 0.15 * Math.sin(this.clockMs / (260 - 30 * rank));
       } else view.glow.alpha = 0;
 
+      const custom =
+        player && e === sim.player && view.appearance?.update(sim, dir8, view.animMs, alpha, view.glow.alpha);
+      view.sprite.visible = view.glow.visible = !custom;
+
       // A boss's health is the big bar at the bottom of the screen, not one over its head.
       if (view.bar) view.bar.root.visible = !boss;
       if (view.bar && !boss) {
@@ -170,7 +176,8 @@ export class EntityLayer {
     const glow = new PixiSprite(this.assets.missingTexture);
     glow.blendMode = 'add';
     glow.alpha = 0;
-    root.addChild(sprite, glow);
+    const appearance = new PlayerAppearanceView(this.assets);
+    root.addChild(sprite, glow, appearance.root);
     this.root.addChild(root);
     const view: EntityView = {
       root,
@@ -182,6 +189,7 @@ export class EntityLayer {
       flashMs: 0,
       bar: null,
       barWidth: 16,
+      appearance,
     };
     this.views.set(e, view);
     return view;
