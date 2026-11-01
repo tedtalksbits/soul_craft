@@ -24,7 +24,14 @@ import { playerLevel } from '../../sim/modules/progression';
 import { unlockHint } from '../../sim/modules/unlocks';
 import type { PlayerAction } from '../../sim/input';
 import { canCraft, canUpgrade, nextUpgrade, stationNearby } from '../../sim/modules/crafting';
-import { gearOf, armorValue, perkLines, perkText, weaponNumbers } from '../../sim/modules/gear';
+import {
+  gearOf,
+  armorValue,
+  legendaryPower,
+  perkLines,
+  perkText,
+  weaponNumbers,
+} from '../../sim/modules/gear';
 import {
   compareGear,
   countItem,
@@ -356,13 +363,25 @@ export class InventoryScreen {
     const slot = gearSlotOf(def);
     const lines = perkLines(sim.content, stack);
     const old = comparison?.replaces ? perkLines(sim.content, comparison.replaces) : [];
-    const perkRow = (line: (typeof lines)[number], cls: string) =>
-      h(
+    const playing = sim.ecs.get(sim.player, Abilities)?.class;
+    const perkRow = (line: (typeof lines)[number], change: string) => {
+      const classes = ['perk', change, line.drawback ? 'drawback' : '', line.greater ? 'greater' : ''];
+      // A class perk for another class does nothing while you play this one.
+      if (line.cls !== undefined && line.cls !== playing) classes.push('idle');
+      return h(
         'li',
-        { class: `perk ${cls}` },
+        { class: classes.filter(Boolean).join(' ') },
+        line.greater
+          ? h('span', { class: 'star', title: 'Greater: stronger than its tier allows' }, '★ ')
+          : '',
         perkText(sim.content, line),
         line.innate ? h('span', { class: 'tag' }, ' innate') : '',
+        line.cls !== undefined
+          ? h('span', { class: 'tag' }, ` ${sim.content.playerClass(line.cls).name}`)
+          : '',
       );
+    };
+    const power = legendaryPower(sim.content, stack);
     const gained = (perk: string) => comparison !== null && !old.some((o) => o.perk === perk);
     const panel = h(
       'div',
@@ -371,15 +390,23 @@ export class InventoryScreen {
       h(
         'div',
         { class: 'tierline' },
-        `${tier.name} ${slot ? capitalize(slot) : ''} · Item level ${gear.ilvl}`,
+        `${gear.blighted ? 'Blighted ' : ''}${tier.name} ${slot ? capitalize(slot) : ''} · Item level ${gear.ilvl}`,
       ),
       comparison ? this.comparisonTable(sim, comparison) : '',
+      power
+        ? h(
+            'div',
+            { class: 'power-line' },
+            h('div', { class: 'pname' }, power.name),
+            h('div', {}, power.text),
+          )
+        : '',
       h('ul', { class: 'facts' }, ...gearFacts(sim, stack).map((f) => h('li', {}, f))),
       lines.length > 0 || old.length > 0
         ? h(
             'ul',
             { class: 'perks' },
-            ...lines.map((line) => perkRow(line, gained(line.perk) ? 'gain' : '')),
+            ...lines.map((line) => perkRow(line, gained(line.perk) && !line.drawback ? 'gain' : '')),
             ...old.filter((o) => !lines.some((l) => l.perk === o.perk)).map((line) => perkRow(line, 'lose')),
           )
         : h('p', { class: 'hint' }, 'No perks.'),

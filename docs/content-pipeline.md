@@ -81,9 +81,16 @@ innate perks, so tuning a base re-tunes every copy.
 `loot.json` holds the five `tiers` (name, color, how many perks they roll, and multipliers for base stats and
 perk strength), `itemLevelGrowth` (per item level above 1), `perkSpread` (how far a roll lands from its target),
 `pity` (after `after` drops in a row below `tier`, the next is that tier or better), the named `tables` of tier
-odds, and `perks`: each `{ text, stat, value, integer, slots }`, where `text` shows `{v}` as the value. An enemy
-drops gear with `gear { chance, table }`; its item level is the biome's `itemLevel`. Validation insists every slot
-can roll the best tier's number of perks and has a base that can drop.
+odds, `greater` and `blight` (from which tier, how often, and how much stronger), `smartLoot` (the share of
+class perks that are for the class being played), and `perks`. A perk is `{ text, stat | effect, value, slots }`
+plus optional `integer`, `fixed` (never scaled or spread), `class` (works only for that class), `minTier` and
+`drawback` (a Blighted item's: it takes its stat away and only rolls as one). A stat perk's `text` shows `{v}` as
+the value. An `effect` is one of the class modifier effect types, so gear and modifiers share the same hooks;
+its numbers are written at strength 1 and the roll scales them (item level doesn't), and `{v}` shows its headline
+number. A weapon, armor piece or ring with a `power { name, text, effect }` is a Legendary base: it drops only as a
+Legendary, and its `innate` perk is the power's partner. An enemy drops gear with `gear { chance, table }`; its
+item level is the biome's `itemLevel`. Validation insists every slot can roll the best tier's number of perks and
+has a base that can drop, and that class perks and effects name real classes and abilities.
 
 Armor cuts hits to `k / (k + Armor)` (`player.json → armor`), never past `cap` with buffs. Attributes gain less
 past `leveling.softCaps`: each `perLevel` value is `[below, between, past]` the two breakpoints, and gear's

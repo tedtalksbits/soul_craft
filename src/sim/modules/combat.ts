@@ -33,6 +33,7 @@ import { dropGear } from './gear';
 import { dropPickup } from './pickups';
 import { onHurt, onKill } from './modifiers';
 import { absorb } from './overshield';
+import { afterHurt, catchesKillingBlow, keepsFooting, onDodge } from './perks';
 import { takeAmbush, unveil } from './stealth';
 
 export interface Hit {
@@ -86,8 +87,11 @@ function damagePlayer(
 ): HitResult {
   const { ecs } = sim;
   const def = sim.content.player;
-  if (player.state === 'dead' || sim.state.cheats.god || (ecs.get(e, Invulnerable)?.ticks ?? 0) > 0)
+  if (player.state === 'dead' || sim.state.cheats.god) return 'ignored';
+  if ((ecs.get(e, Invulnerable)?.ticks ?? 0) > 0) {
+    onDodge(sim);
     return 'ignored';
+  }
 
   // Armor and buffs absorb a fraction of every blow; something always gets through.
   const dealt = Math.max(1, Math.round(hit.amount * (1 - playerStats(sim, e).defense)));
@@ -112,7 +116,7 @@ function damagePlayer(
     ability: hit.ability ?? null,
   });
 
-  if (health.hp <= 0) {
+  if (health.hp <= 0 && !catchesKillingBlow(sim, health)) {
     const lost = Math.floor(player.souls * def.death.soulPenalty);
     player.souls -= lost;
     player.state = 'dead';
@@ -120,8 +124,11 @@ function damagePlayer(
     sim.state.lastDeath = { x: body.x, y: body.y };
     sim.events.emit({ type: 'playerDied', soulsLost: lost });
   } else {
-    player.state = 'hurt';
-    player.t = 0;
+    afterHurt(sim, health);
+    if (!keepsFooting(sim)) {
+      player.state = 'hurt';
+      player.t = 0;
+    }
   }
   return 'hit';
 }

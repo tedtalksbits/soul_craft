@@ -59,17 +59,25 @@ describe('rolling gear', () => {
 
   it('lands each perk within its spread of the target for the item level and tier', () => {
     for (let seed = 1; seed <= 40; seed++) {
-      const { gear } = rollDrop(content, 'noble', 4, seed);
-      for (const p of gear!.perks) {
-        const def = loot.perks[p.perk]!;
-        const target = def.value * (1 + loot.itemLevelGrowth * 3) * loot.tiers.noble.perkStrength;
-        if (def.integer) {
-          expect(Number.isInteger(p.value)).toBe(true);
-          expect(p.value).toBeGreaterThanOrEqual(Math.max(1, Math.round(target * (1 - loot.perkSpread))));
-          expect(p.value).toBeLessThanOrEqual(Math.round(target * (1 + loot.perkSpread)));
-        } else {
-          expect(p.value).toBeGreaterThanOrEqual(target * (1 - loot.perkSpread) - 0.001);
-          expect(p.value).toBeLessThanOrEqual(target * (1 + loot.perkSpread) + 0.001);
+      for (const item of ['iron_sword', 'iron_helm', 'iron_mail', 'iron_greaves', 'ring_of_breath']) {
+        for (const p of rollGear(content, item, 'noble', 4, seed).gear!.perks) {
+          const def = loot.perks[p.perk]!;
+          if (def.fixed) {
+            expect(p.value).toBe(def.value);
+            continue;
+          }
+          // Effects don't grow with item level; a Greater perk is that much stronger again.
+          const level = def.effect ? 1 : 1 + loot.itemLevelGrowth * 3;
+          const greater = p.greater ? loot.greater.factor : 1;
+          const target = def.value * level * loot.tiers.noble.perkStrength * greater;
+          const [lo, hi] = [target * (1 - loot.perkSpread), target * (1 + loot.perkSpread)];
+          if (def.integer) {
+            expect(p.value).toBeGreaterThanOrEqual(Math.max(1, Math.round(lo)));
+            expect(p.value).toBeLessThanOrEqual(Math.round(hi));
+          } else {
+            expect(p.value).toBeGreaterThanOrEqual(lo - 0.001);
+            expect(p.value).toBeLessThanOrEqual(hi + 0.001);
+          }
         }
       }
     }

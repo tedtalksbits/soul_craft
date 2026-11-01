@@ -24,6 +24,9 @@
       ["legendary", 2]
     ]
   },
+  "greater": { "tier": "noble", "chance": 0.05, "factor": 1.5 },
+  "blight": { "tier": "rare", "chance": 0.04, "factor": 1.4 },
+  "smartLoot": 0.85,
   "perks": {
     "damage": { "text": "+{v} damage", "stat": "damage", "value": 0.08, "slots": ["weapon"] },
     "critChance": {
@@ -102,6 +105,135 @@
       "stat": "healing",
       "value": 0.15,
       "slots": ["ring"]
+    },
+    "killHeal": {
+      "text": "Kills heal {v} HP",
+      "effect": { "type": "kill", "where": "any", "heal": 4 },
+      "slots": ["weapon"]
+    },
+    "classCooldown": {
+      "text": "Your class ability is ready {v} sooner",
+      "effect": { "type": "cooldown", "slot": "class", "factor": 0.88 },
+      "slots": ["helmet"]
+    },
+    "aoeCooldown": {
+      "text": "Your AoE ability is ready {v} sooner",
+      "effect": { "type": "cooldown", "slot": "aoe", "factor": 0.88 },
+      "slots": ["helmet"]
+    },
+    "energyGain": { "text": "+{v} super charge", "stat": "energyGain", "value": 0.1, "slots": ["helmet"] },
+    "restShield": {
+      "text": "Resting leaves you {v} overshield",
+      "effect": { "type": "restShield", "amount": 20, "seconds": 30 },
+      "slots": ["chest"]
+    },
+    "poise": {
+      "text": "Once every {v} s, a blow that would make you flinch doesn’t",
+      "effect": { "type": "poise", "seconds": 12 },
+      "slots": ["chest"]
+    },
+    "rollIframes": {
+      "text": "+{v} i-frames on rolls",
+      "stat": "rollIframes",
+      "value": 2,
+      "integer": true,
+      "fixed": true,
+      "minTier": "rare",
+      "slots": ["legs"]
+    },
+    "rollDistance": { "text": "+{v} roll distance", "stat": "rollDistance", "value": 0.1, "slots": ["legs"] },
+    "flaskCharges": {
+      "text": "+{v} flask charge",
+      "stat": "flaskCharges",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "minTier": "noble",
+      "slots": ["ring"]
+    },
+    "chargeShield": {
+      "text": "Shield Charge leaves you {v} overshield",
+      "effect": { "type": "castShield", "slot": "class", "amount": 15, "seconds": 4 },
+      "slots": ["ring"],
+      "class": "vanguard"
+    },
+    "slamCooldown": {
+      "text": "Ground Slam is ready {v} sooner",
+      "effect": { "type": "cooldown", "slot": "aoe", "factor": 0.85 },
+      "slots": ["ring"],
+      "class": "vanguard"
+    },
+    "ironWill": {
+      "text": "Every 10 damage you take gives {v} super energy",
+      "effect": { "type": "hurt", "energy": 0.15 },
+      "slots": ["ring"],
+      "class": "vanguard"
+    },
+    "ambush": {
+      "text": "Blows out of hiding land {v} harder",
+      "effect": { "type": "ambush", "bonus": 0.25 },
+      "slots": ["ring"],
+      "class": "stalker"
+    },
+    "stepOnKill": {
+      "text": "Kills bring Shadowstep back {v} s sooner",
+      "effect": { "type": "kill", "where": "any", "cooldown": { "slot": "class", "seconds": 1 } },
+      "slots": ["ring"],
+      "class": "stalker"
+    },
+    "bombCooldown": {
+      "text": "Ash Bomb is ready {v} sooner",
+      "effect": { "type": "cooldown", "slot": "aoe", "factor": 0.85 },
+      "slots": ["ring"],
+      "class": "stalker"
+    },
+    "kindling": {
+      "text": "Kills in your fire take {v} s off Fire Pot",
+      "effect": { "type": "kill", "where": "zone", "cooldown": { "slot": "aoe", "seconds": 1.5 } },
+      "slots": ["ring"],
+      "class": "ashcaller"
+    },
+    "repelCooldown": {
+      "text": "Repel is ready {v} sooner",
+      "effect": { "type": "cooldown", "slot": "class", "factor": 0.85 },
+      "slots": ["ring"],
+      "class": "ashcaller"
+    },
+    "emberHeart": {
+      "text": "Kills give {v} super energy",
+      "effect": { "type": "kill", "where": "any", "energy": 3 },
+      "slots": ["ring"],
+      "class": "ashcaller"
+    },
+    "frail": {
+      "text": "−{v} max HP",
+      "stat": "maxHp",
+      "value": 10,
+      "integer": true,
+      "drawback": true,
+      "slots": ["weapon", "helmet", "chest", "legs", "ring"]
+    },
+    "winded": {
+      "text": "−{v} stamina regen",
+      "stat": "staminaRegen",
+      "value": 0.1,
+      "drawback": true,
+      "slots": ["weapon", "helmet", "chest", "legs", "ring"]
+    },
+    "brittle": {
+      "text": "−{v} Armor",
+      "stat": "armor",
+      "value": 3,
+      "integer": true,
+      "drawback": true,
+      "slots": ["weapon", "helmet", "chest", "legs", "ring"]
+    },
+    "leaden": {
+      "text": "Rolls cost {v} more stamina",
+      "stat": "rollStamina",
+      "value": 0.1,
+      "drawback": true,
+      "slots": ["weapon", "helmet", "chest", "legs", "ring"]
     }
   }
 }

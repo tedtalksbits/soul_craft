@@ -32,7 +32,8 @@ import { pressedSlot, refreshAbilities, giveStartingClass, startCast, updateCast
 import { applyDamage, rollDamage } from './combat';
 import { giveStartingAttributes } from './progression';
 import { interact } from './interaction';
-import { beginUse, finishUse, giveStartingKit, playerStats, syncVitals } from './items';
+import { beginUse, finishUse, flaskCapacity, giveStartingKit, playerStats, syncVitals } from './items';
+import { onRest, onWeaponHit } from './perks';
 import { resetEnemies } from './streaming';
 import { strikeTiles } from './terrain';
 
@@ -156,12 +157,17 @@ function updatePlayer(sim: Simulation): void {
       if (p.t >= def.attack.duration) setState(p, 'free');
       break;
     case 'roll': {
-      const speed = lerp(def.roll.speed, def.moveSpeed * 0.75, p.t / def.roll.duration);
+      const rollStats = playerStats(sim, e);
+      const speed = lerp(
+        def.roll.speed * (1 + rollStats.rollDistance),
+        def.moveSpeed * 0.75,
+        p.t / def.roll.duration,
+      );
       motion.vx = p.dirX * speed;
       motion.vy = p.dirY * speed;
       if (p.t === def.roll.iframesFrom) {
         // One window covering the rest of the i-frames; never shortens an existing grace period.
-        const ticks = def.roll.iframesTo - def.roll.iframesFrom + 1;
+        const ticks = def.roll.iframesTo - def.roll.iframesFrom + 1 + rollStats.rollIframes;
         const inv = ecs.get(e, Invulnerable);
         if (!inv) ecs.add(e, Invulnerable, { ticks });
         else inv.ticks = Math.max(inv.ticks, ticks);
@@ -280,7 +286,10 @@ function strike(sim: Simulation, e: Entity, p: Player): void {
       knockback: stats.knockback,
       charges: true,
     });
-    if (result === 'hit') sim.hitstop = Math.max(sim.hitstop, def.attack.hitstop);
+    if (result === 'hit') {
+      sim.hitstop = Math.max(sim.hitstop, def.attack.hitstop);
+      onWeaponHit(sim, target);
+    }
     if (result === 'blocked') {
       // Bounced off a shield: a short stagger and a shove back.
       const motion = ecs.need(e, Motion);
@@ -313,7 +322,7 @@ export function respawnPlayer(sim: Simulation): void {
   body.y = spawn.y;
   health.hp = health.max;
   stamina.value = stamina.max;
-  p.flasks = p.maxFlasks;
+  p.flasks = flaskCapacity(sim);
   p.buffered = null;
   p.using = null;
   setState(p, 'free');
@@ -322,6 +331,7 @@ export function respawnPlayer(sim: Simulation): void {
   for (const [proj] of ecs.query(Projectile)) ecs.destroy(proj);
   refreshAbilities(sim);
   resetEnemies(sim);
+  onRest(sim);
   sim.events.emit({ type: 'playerRespawned' });
 }
 

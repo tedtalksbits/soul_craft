@@ -205,6 +205,8 @@ export const Overshield = defineComponent<Overshield>('overshield');
 export interface PerkRoll {
   perk: string;
   value: number;
+  /** Rolled Greater: stronger than the tier usually allows, and marked with a star. */
+  greater?: true;
 }
 
 /**
@@ -217,7 +219,26 @@ export interface Gear {
   ilvl: number;
   seed: number;
   perks: PerkRoll[];
+  /** One of `perks` is a drawback, and the rest rolled stronger for it. */
+  blighted?: true;
 }
+
+/**
+ * Timers and counters behind gear perks and Legendary powers, on the player. Added the first time one
+ * is needed, so a save from before it still loads.
+ */
+export interface PerkState {
+  /** Ticks until each once-in-a-while effect (by effect type) works again. */
+  cooldowns: Record<string, number>;
+  /** Weapon hits in the current streak, and ticks left before it lapses. */
+  streak: number;
+  streakTicks: number;
+  /** A Last Ember already spent since the last rest. */
+  emberSpent: boolean;
+  /** The tick the roll whose stamina was already given back began on. */
+  refundedRoll: number;
+}
+export const PerkState = defineComponent<PerkState>('perkState');
 
 /**
  * One inventory slot: an item, how many, its forge upgrade level, and for gear, its rolls. Gear without

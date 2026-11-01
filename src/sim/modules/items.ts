@@ -14,6 +14,7 @@ import type { Content } from '../../content/content';
 import { gearSlotOf } from '../../content/content';
 import { ATTRIBUTES, TIERS, type AttributeId, type StatId } from '../../content/schemas';
 import {
+  Abilities,
   Attributes,
   Buffs,
   Empowered,
@@ -63,6 +64,11 @@ export interface PlayerStats {
   /** Multiplies ability damage, and the super's charge rate. */
   abilityDamage: number;
   energyRate: number;
+  /** Extra i-frame ticks on a roll, and how much farther it goes (a fraction). */
+  rollIframes: number;
+  rollDistance: number;
+  /** Extra flask charges from gear. */
+  flaskCharges: number;
   /** Attribute points from leveling plus gear. */
   attributes: Record<AttributeId, number>;
 }
@@ -221,7 +227,10 @@ export function computeStats(
     healing: 1 + gear.healing,
     souls: 1 + gear.souls,
     abilityDamage: 1 + gear.abilityDamage + gain(per.attunement.abilityDamage, 'attunement'),
-    energyRate: 1 + gain(per.attunement.energy, 'attunement'),
+    energyRate: 1 + gain(per.attunement.energy, 'attunement') + gear.energyGain,
+    rollIframes: gear.rollIframes,
+    rollDistance: gear.rollDistance,
+    flaskCharges: gear.flaskCharges,
     attributes,
   };
 }
@@ -312,6 +321,11 @@ export function compareGear(sim: Simulation, index: number): Comparison | null {
     now: summary(sim.content, eq, attrs),
     after: summary(sim.content, { ...eq, [slot]: stack }, attrs),
   };
+}
+
+/** How many flask charges a refill gives: the player's own (the well raises it) plus gear's. */
+export function flaskCapacity(sim: Simulation): number {
+  return sim.ecs.need(sim.player, Player).maxFlasks + playerStats(sim, sim.player).flaskCharges;
 }
 
 /**
@@ -506,9 +520,10 @@ const commands: SimCommand[] = [
       const ilvl = a.optNumber('ilvl') ?? 1;
       const seed = sim.rng.int(1, 0x7fffffff);
       const id = a.optString('id');
+      const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
       const stack = id
-        ? rollGear(sim.content, id, tier, ilvl, seed)
-        : rollDrop(sim.content, tier, ilvl, seed);
+        ? rollGear(sim.content, id, tier, ilvl, seed, cls)
+        : rollDrop(sim.content, tier, ilvl, seed, cls);
       if (!addStack(sim, sim.player, stack)) throw new CommandError('inventory is full');
       return `added ${tier} ${stack.item} (ilvl ${ilvl})`;
     },

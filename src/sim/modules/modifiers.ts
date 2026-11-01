@@ -9,11 +9,12 @@
  */
 import { CommandError } from '../../core/commands';
 import type { AbilitySlot, ModifierEffect } from '../../content/schemas';
-import { Abilities, Body, Health, Player, Zone } from '../components';
+import { Abilities, Body, Equipment, Health, Player, Zone } from '../components';
 import { TICK_RATE } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { gainEnergy } from './energy';
+import { gearEffects } from './gear';
 import { grantOvershield } from './overshield';
 
 /** How many modifiers the player can wear: the base slots plus those each defeated Warden adds. */
@@ -36,21 +37,26 @@ export function modifiersOf(sim: Simulation, cls: string): string[] {
     .map(([id]) => id);
 }
 
-/** Every effect of the modifiers worn, of one kind. */
-function effects<T extends ModifierEffect['type']>(
+/**
+ * Every effect in play of one kind: the worn modifiers', plus what worn gear adds (effect perks for
+ * the class being played, and Legendary powers). Gear and modifiers share these hooks.
+ */
+export function activeEffects<T extends ModifierEffect['type']>(
   sim: Simulation,
   type: T,
 ): Extract<ModifierEffect, { type: T }>[] {
-  return wornModifiers(sim)
-    .flatMap((id) => sim.content.modifiers.modifiers[id]?.effects ?? [])
-    .filter((fx): fx is Extract<ModifierEffect, { type: T }> => fx.type === type);
+  const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
+  return [
+    ...wornModifiers(sim).flatMap((id) => sim.content.modifiers.modifiers[id]?.effects ?? []),
+    ...gearEffects(sim.content, sim.ecs.get(sim.player, Equipment), cls),
+  ].filter((fx): fx is Extract<ModifierEffect, { type: T }> => fx.type === type);
 }
 
 // ------------------------------------------------------------------ hooks
 
 /** A slot's cooldown in ticks, after any modifier that shortens it. */
 export function modifiedCooldown(sim: Simulation, slot: 'aoe' | 'class', seconds: number): number {
-  const factor = effects(sim, 'cooldown')
+  const factor = activeEffects(sim, 'cooldown')
     .filter((fx) => fx.slot === slot)
     .reduce((f, fx) => f * fx.factor, 1);
   return Math.round(seconds * factor * TICK_RATE);
@@ -58,23 +64,23 @@ export function modifiedCooldown(sim: Simulation, slot: 'aoe' | 'class', seconds
 
 /** After the player uses the ability in `slot`. */
 export function onCast(sim: Simulation, slot: AbilitySlot): void {
-  for (const fx of effects(sim, 'castShield'))
+  for (const fx of activeEffects(sim, 'castShield'))
     if (fx.slot === slot) grantOvershield(sim, fx.amount, fx.amount, fx.seconds);
 }
 
 /** The extra damage a blow out of hiding gets from modifiers, on top of the ability's own. */
 export function ambushBonus(sim: Simulation): number {
-  return effects(sim, 'ambush').reduce((n, fx) => n + fx.bonus, 0);
+  return activeEffects(sim, 'ambush').reduce((n, fx) => n + fx.bonus, 0);
 }
 
 /** After the player takes `amount` damage (before any overshield soaks it). */
 export function onHurt(sim: Simulation, amount: number): void {
-  for (const fx of effects(sim, 'hurt')) gainEnergy(sim, amount * fx.energy);
+  for (const fx of activeEffects(sim, 'hurt')) gainEnergy(sim, amount * fx.energy);
 }
 
 /** After the player kills an enemy standing at `body`. */
 export function onKill(sim: Simulation, body: Body): void {
-  const kills = effects(sim, 'kill');
+  const kills = activeEffects(sim, 'kill');
   if (kills.length === 0) return;
   const inZone = [...sim.ecs.query(Zone, Body)].some(
     ([, z, zb]) => Math.hypot(body.x - zb.x, body.y - zb.y) <= z.radius + Math.max(body.w, body.h) / 2,

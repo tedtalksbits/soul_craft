@@ -215,6 +215,114 @@
     "stack": 1,
     "innate": [{ "perk": "staminaRegen", "value": 0.2 }]
   },
+  "cinderbrand": {
+    "kind": "weapon",
+    "name": "Cinderbrand",
+    "description": "A blade quenched in a dying bonfire. It still remembers the heat.",
+    "icon": "iron_sword",
+    "stack": 1,
+    "weapon": { "damage": 17, "staminaCost": 15, "reach": 17, "width": 19, "knockback": 3.4 },
+    "upgrades": [
+      { "damage": 3, "souls": 120, "items": [{ "item": "iron_scrap", "count": 4 }] },
+      { "damage": 3, "souls": 200, "items": [{ "item": "iron_scrap", "count": 6 }] },
+      {
+        "damage": 4,
+        "souls": 320,
+        "items": [
+          { "item": "iron_scrap", "count": 8 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "damage": 4,
+        "souls": 460,
+        "items": [
+          { "item": "iron_scrap", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 5,
+        "souls": 640,
+        "items": [
+          { "item": "iron_scrap", "count": 12 },
+          { "item": "bone_shard", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "critChance", "value": 0.05 }],
+    "power": {
+      "name": "Kindled Edge",
+      "text": "Every third hit in a row sets the ground under the foe alight.",
+      "effect": {
+        "type": "streakBurst",
+        "hits": 3,
+        "window": 1.5,
+        "ability": "fire_pot",
+        "radius": 18,
+        "damage": 5,
+        "duration": 180,
+        "interval": 30
+      }
+    }
+  },
+  "crown_of_the_unforgotten": {
+    "kind": "armor",
+    "name": "Crown of the Unforgotten",
+    "description": "A circlet of blackened iron. Wearing it, you hear the names of the fallen.",
+    "icon": "iron_helm",
+    "stack": 1,
+    "armor": { "slot": "helmet", "value": 3, "weight": "plate" },
+    "innate": [{ "perk": "attunement", "value": 1 }],
+    "power": {
+      "name": "Vigil",
+      "text": "Your super charges while you stand still.",
+      "effect": { "type": "stillEnergy", "perSecond": 3 }
+    }
+  },
+  "pyreheart_cuirass": {
+    "kind": "armor",
+    "name": "Pyreheart Cuirass",
+    "description": "Its breastplate is warm to the touch, and warmer when you bleed.",
+    "icon": "iron_mail",
+    "stack": 1,
+    "armor": { "slot": "chest", "value": 6, "weight": "plate" },
+    "innate": [{ "perk": "maxHp", "value": 10 }],
+    "power": {
+      "name": "Last Coal",
+      "text": "Falling below a third of your health wraps you in 40 overshield, once every 30 seconds.",
+      "effect": { "type": "lowHealthShield", "below": 0.33, "amount": 40, "seconds": 6, "cooldown": 30 }
+    }
+  },
+  "ashwalker_greaves": {
+    "kind": "armor",
+    "name": "Ashwalker Greaves",
+    "description": "Light as ash, and they leave none behind.",
+    "icon": "iron_greaves",
+    "stack": 1,
+    "armor": { "slot": "legs", "value": 3, "weight": "leather" },
+    "innate": [{ "perk": "rollStamina", "value": 0.08 }],
+    "power": {
+      "name": "Ashwalk",
+      "text": "Rolling through a blow gives back the roll’s stamina.",
+      "effect": { "type": "dodgeRefund" }
+    }
+  },
+  "ring_of_the_last_ember": {
+    "kind": "ring",
+    "name": "Ring of the Last Ember",
+    "description": "A cinder set in bone. It flares once, and only once, between rests.",
+    "icon": "ring_vigor",
+    "stack": 1,
+    "innate": [{ "perk": "healing", "value": 0.15 }],
+    "power": {
+      "name": "The Last Ember",
+      "text": "Once per rest, a killing blow leaves you at 1 HP with full stamina.",
+      "effect": { "type": "lastEmber" }
+    }
+  },
   "field_bandage": {
     "kind": "consumable",
     "name": "Field Bandage",

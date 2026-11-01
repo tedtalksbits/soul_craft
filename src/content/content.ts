@@ -36,6 +36,7 @@ import {
   type ItemKind,
   type LootDef,
   type ModifierDef,
+  type ModifierEffect,
   type ModifiersDef,
   type NpcDef,
   type ObjectiveDef,
@@ -227,7 +228,7 @@ export function buildContent(files: ContentFiles): Content {
 
   checkReferences({ enemies, tiles, biomes, world, prefabs }, problems);
   checkItems({ player, enemies, tiles, items, recipes }, problems);
-  checkGear({ player, enemies, biomes, items, loot }, problems);
+  checkGear({ player, enemies, biomes, items, loot, abilities, classes }, problems);
   checkClasses({ player, abilities, classes }, problems);
   checkModifiers({ enemies, abilities, classes, modifiers }, problems);
   checkRestoration({ items, prefabs, restoration }, problems);
@@ -479,8 +480,9 @@ function checkItems(
 }
 
 /**
- * Gear holds together: perks name real stats and slots, every slot can roll a full set of perks for
- * the best tier, enemies name real drop tables, and a new game starts with exactly one weapon.
+ * Gear holds together: every slot can roll a full set of perks for the best tier, class perks and
+ * effects name real classes and abilities, Legendary bases fit their slot, enemies name real drop
+ * tables, and a new game starts with exactly one weapon.
  */
 function checkGear(
   c: {
@@ -489,13 +491,27 @@ function checkGear(
     biomes: Record<string, BiomeDef>;
     items: Record<string, ItemDef>;
     loot: LootDef;
+    abilities: Record<string, AbilityDef>;
+    classes: Record<string, ClassDef>;
   },
   problems: string[],
 ): void {
   const { loot } = c;
+  // An effect that names an ability (a burning streak's look) must name a real one.
+  const effect = (where: string, fx: ModifierEffect) => {
+    if (fx.type === 'streakBurst' && !(fx.ability in c.abilities))
+      problems.push(`${where}: unknown ability "${fx.ability}"`);
+  };
+  for (const [id, perk] of Object.entries(loot.perks)) {
+    if (perk.class !== undefined && !(perk.class in c.classes))
+      problems.push(`loot.json: perks.${id}: unknown class "${perk.class}"`);
+    if (perk.effect) effect(`loot.json: perks.${id}`, perk.effect);
+    if (!perk.text.includes('{v}') && !perk.effect)
+      problems.push(`loot.json: perks.${id}: a stat perk's text needs {v}`);
+  }
   const mostPerks = Math.max(...TIERS.map((t) => loot.tiers[t].perks));
   for (const slot of ['weapon', 'helmet', 'chest', 'legs', 'ring'] as const) {
-    const pool = Object.values(loot.perks).filter((p) => p.slots.includes(slot)).length;
+    const pool = Object.values(loot.perks).filter((p) => p.slots.includes(slot) && !p.drawback).length;
     if (pool < mostPerks)
       problems.push(`loot.json: perks: only ${pool} can roll on a ${slot}, but a tier rolls ${mostPerks}`);
     const droppable = Object.values(c.items).some(
@@ -512,6 +528,7 @@ function checkGear(
       if (!(roll.perk in loot.perks)) problems.push(`items.json: ${id}.innate: unknown perk "${roll.perk}"`);
     if (def.kind === 'ring' && def.innate.length === 0)
       problems.push(`items.json: ${id}: a ring needs an innate perk`);
+    if (def.power) effect(`items.json: ${id}.power`, def.power.effect);
   }
   for (const [id, e] of Object.entries(c.enemies))
     if (e.gear && !(e.gear.table in loot.tables))

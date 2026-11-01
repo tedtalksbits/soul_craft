@@ -194,6 +194,38 @@ export const ModifierEffectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('castShield'), slot: AbilitySlotSchema, amount: pos, seconds: pos }),
   /** The first blow out of hiding (Vanish) deals `bonus` more on top of the ability's own. */
   z.object({ type: z.literal('ambush'), bonus: pos }),
+  /** Resting at a bonfire leaves `amount` overshield for `seconds`. */
+  z.object({ type: z.literal('restShield'), amount: pos, seconds: pos }),
+  /** A blow that would make the player flinch doesn't, at most once every `seconds`. */
+  z.object({ type: z.literal('poise'), seconds: pos }),
+  /** Once per rest, a killing blow leaves the player at 1 HP with full stamina instead. */
+  z.object({ type: z.literal('lastEmber') }),
+  /** The super charges by `perSecond` while the player stands still. */
+  z.object({ type: z.literal('stillEnergy'), perSecond: pos }),
+  /** Dropping below `below` of max health gives `amount` overshield for `seconds`, at most once every `cooldown` seconds. */
+  z.object({
+    type: z.literal('lowHealthShield'),
+    below: fraction,
+    amount: pos,
+    seconds: pos,
+    cooldown: pos,
+  }),
+  /** Rolling through a blow (its i-frames taking the hit) gives back the roll's stamina, once per roll. */
+  z.object({ type: z.literal('dodgeRefund') }),
+  /**
+   * Every `hits` weapon hits, each within `window` seconds of the last, set the ground under the last
+   * one alight: a zone of `ability`'s look that burns for `damage` every `interval` ticks.
+   */
+  z.object({
+    type: z.literal('streakBurst'),
+    hits: z.number().int().min(2),
+    window: pos,
+    ability: z.string(),
+    radius: pos,
+    damage: pos,
+    duration: ticks,
+    interval: ticks,
+  }),
 ]);
 export type ModifierEffect = z.infer<typeof ModifierEffectSchema>;
 
@@ -261,6 +293,11 @@ const gearBase = {
   innate: z.array(PerkRollSchema).default([]),
   /** How often this base is picked when gear drops, relative to the others of its slot. 0 = never drops. */
   drop: nonneg.default(1),
+  /**
+   * Makes this a Legendary base: it only ever drops as a Legendary, carrying this hand-made power (and its
+   * `innate` perk as the power's partner) on top of the tier's rolled perks.
+   */
+  power: z.object({ name: z.string(), text: z.string(), effect: ModifierEffectSchema }).optional(),
 };
 
 export const ItemSchema = z.discriminatedUnion('kind', [
@@ -531,20 +568,49 @@ export const PerkStatSchema = z.enum([
   'endurance',
   'might',
   'attunement',
+  'energyGain',
+  'rollIframes',
+  'rollDistance',
+  'flaskCharges',
 ]);
 export type PerkStat = z.infer<typeof PerkStatSchema>;
 
-export const PerkSchema = z.object({
-  /** Shown on the item; `{v}` becomes the value (a percentage for fractions). */
-  text: z.string(),
-  stat: PerkStatSchema,
-  /** Strength at item level 1 on a Common-strength roll; tier and item level scale it. */
-  value: pos,
-  /** Rounded to a whole number (and at least 1): points, never fractions. */
-  integer: z.boolean().default(false),
-  /** Slots it can roll on. */
-  slots: z.array(GearSlotSchema).min(1),
-});
+/**
+ * A perk changes a stat, or adds an effect of the kinds class modifiers use (a heal on kill, a shorter
+ * cooldown, a shield on cast), so gear and modifiers share one set of hooks.
+ */
+export const PerkSchema = z
+  .object({
+    /**
+     * Shown on the item; `{v}` becomes the value. For a stat that is a percentage for fractions; for an
+     * effect, its headline number (seconds, HP, a percentage) at the rolled strength.
+     */
+    text: z.string(),
+    stat: PerkStatSchema.optional(),
+    effect: ModifierEffectSchema.optional(),
+    /**
+     * For a stat, its strength at item level 1 on a Common-strength roll (tier and item level scale it).
+     * An effect's numbers are written at strength 1; tier strength and the roll scale them, item level doesn't.
+     */
+    value: pos.default(1),
+    /** Rounded to a whole number (and at least 1): points, never fractions. */
+    integer: z.boolean().default(false),
+    /** Never scaled or spread: always exactly `value` (a whole extra flask charge). */
+    fixed: z.boolean().default(false),
+    /** Slots it can roll on. */
+    slots: z.array(GearSlotSchema).min(1),
+    /** A class perk: it works only while playing this class, and smart loot favors the class you play. */
+    class: z.string().optional(),
+    /** Only rolls on this tier or better. */
+    minTier: TierSchema.optional(),
+    /** A Blighted item's drawback: it takes its stat away, and only rolls as one. */
+    drawback: z.boolean().default(false),
+  })
+  .refine(
+    (p) => (p.stat === undefined) !== (p.effect === undefined),
+    'a perk has a stat or an effect, not both',
+  )
+  .refine((p) => !p.drawback || p.stat !== undefined, 'a drawback takes a stat away');
 export type PerkDef = z.infer<typeof PerkSchema>;
 
 const TierDefSchema = z.object({
@@ -578,6 +644,15 @@ export const LootSchema = z.object({
   pity: z.object({ after: z.number().int().min(1), tier: TierSchema }),
   /** Named tier odds that enemies' `gear.table` refers to. */
   tables: z.record(z.string(), weighted(TierSchema)),
+  /** On this tier or better, each rolled perk has `chance` of being Greater: `factor` times as strong. */
+  greater: z.object({ tier: TierSchema, chance: fraction, factor: pos }),
+  /**
+   * A drop of this tier or better has `chance` of being Blighted: one drawback perk, and every other
+   * rolled perk `factor` times as strong.
+   */
+  blight: z.object({ tier: TierSchema, chance: fraction, factor: pos }),
+  /** Of the class perks that roll, about this share are for the class being played. */
+  smartLoot: fraction,
   perks: z.record(z.string(), PerkSchema),
 });
 export type LootDef = z.infer<typeof LootSchema>;

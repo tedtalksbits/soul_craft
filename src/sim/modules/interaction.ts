@@ -12,6 +12,8 @@ import { TILE } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { refreshAbilities } from './abilities';
+import { flaskCapacity } from './items';
+import { onRest } from './perks';
 import { talkTo } from './objectives';
 import { pursued } from './stealth';
 import { resetEnemies } from './streaming';
@@ -140,10 +142,11 @@ export function restAt(sim: Simulation, bonfireEntity: Entity): void {
   const stamina = ecs.need(e, Stamina);
   health.hp = health.max;
   stamina.value = stamina.max;
-  p.flasks = p.maxFlasks;
+  p.flasks = flaskCapacity(sim);
   p.state = 'sit';
   p.t = 0;
   refreshAbilities(sim);
+  onRest(sim);
   resetEnemies(sim);
   sim.events.emit({ type: 'rested', id: bonfire.id, name: bonfire.name });
 }

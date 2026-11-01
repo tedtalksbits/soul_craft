@@ -644,7 +644,7 @@ kbd {
   color: #8fd47a;
 }
 .inventory .perk.gain::before {
-  content: '+ ';
+  content: '▲ ';
   color: inherit;
   font-size: 1em;
 }
@@ -653,9 +653,35 @@ kbd {
   text-decoration: line-through;
 }
 .inventory .perk.lose::before {
-  content: '− ';
+  content: '▼ ';
   color: inherit;
   font-size: 1em;
+}
+.inventory .perk.drawback {
+  color: #d9826f;
+}
+.inventory .perk.drawback::before {
+  content: '✖ ';
+  color: inherit;
+}
+.inventory .perk.idle {
+  opacity: 0.5;
+}
+.inventory .perk .star {
+  color: #ffd76a;
+  text-shadow: 0 0 4px rgba(255, 200, 80, 0.6);
+}
+.inventory .power-line {
+  margin: 0.2em 0 0.5em;
+  padding: 0.35em 0.5em;
+  border-left: 2px solid var(--tier);
+  background: rgba(255, 179, 64, 0.07);
+  font-size: 0.9em;
+}
+.inventory .power-line .pname {
+  font-family: var(--display);
+  color: var(--tier);
+  letter-spacing: 0.06em;
 }
 .inventory .perk .tag {
   color: var(--dim);

@@ -188,7 +188,19 @@ export class Audio {
         return this.arp([659 * p, 988 * p], 50, 0.2, 0.04);
       }
       case 'gearDropped':
-        // Rare and better ring out as they fall; a Legendary gets a heavier bell. Nothing else uses these.
+        // Rare and better ring out as they fall; a Legendary gets a heavier bell. A Greater perk adds its
+        // own high star, and a Blighted item a sour low note. Nothing else uses these.
+        if (e.greater) this.arp([2093, 2637, 3136], 60, 0.5, 0.035);
+        if (e.blighted)
+          this.tone(
+            [
+              [110, 1],
+              [117, 0.8],
+            ],
+            0.9,
+            0.08,
+            'sawtooth',
+          );
         if (e.tier === 'legendary') {
           this.burst(0.4, 2400, 0.25, 'highpass');
           return this.arp([392, 523, 659, 784, 1047, 1319], 110, 1.4, 0.07);
@@ -196,6 +208,23 @@ export class Audio {
         if (e.tier === 'noble') return this.arp([523, 659, 784, 1047], 90, 0.9, 0.06);
         if (e.tier === 'rare') return this.arp([659, 880, 1175], 80, 0.6, 0.05);
         return;
+      case 'lastEmber':
+        this.burst(0.5, 900, 0.3, 'lowpass');
+        return this.arp([262, 392, 523, 784], 120, 1.2, 0.07);
+      case 'keptFooting':
+        return this.tone(
+          [
+            [90, 1],
+            [180, 0.4],
+          ],
+          0.18,
+          0.12,
+          'triangle',
+        );
+      case 'dodged':
+        return this.arp([880, 1320], 40, 0.2, 0.04);
+      case 'streakBurst':
+        return this.burst(0.35, 1400, 0.22, 'lowpass');
       case 'crafted':
         this.burst(0.12, 2600, 0.15, 'highpass');
         return this.arp([523, 784], 80, 0.35, 0.05);

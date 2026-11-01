@@ -54,6 +54,34 @@ describe('gear content', () => {
   });
 });
 
+describe('perk content', () => {
+  it('rejects a class perk for a class that does not exist, and a power naming an unknown ability', () => {
+    const files = { ...readContentFiles() } as Record<string, unknown>;
+    const loot = files['loot.json'] as { perks: Record<string, object> };
+    files['loot.json'] = {
+      ...loot,
+      perks: { ...loot.perks, ambush: { ...loot.perks['ambush'], class: 'bard' } },
+    };
+    const items = files['items.json'] as Record<string, { power: { effect: object } }>;
+    const brand = items['cinderbrand']!;
+    files['items.json'] = {
+      ...items,
+      cinderbrand: {
+        ...brand,
+        power: { ...brand.power, effect: { ...brand.power.effect, ability: 'nope' } },
+      },
+    };
+    try {
+      buildContent(files);
+      expect.unreachable();
+    } catch (err) {
+      const text = (err as ContentError).problems.join('\n');
+      expect(text).toMatch(/loot\.json: perks\.ambush: unknown class "bard"/);
+      expect(text).toMatch(/items\.json: cinderbrand\.power: unknown ability "nope"/);
+    }
+  });
+});
+
 describe('sprite sheets', () => {
   const sheets = readdirSync(SPRITES).filter((f) => f.endsWith('.json'));
 

@@ -204,7 +204,12 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    tables; Armor on the k = 60 curve with a 75% cap; soft-capped attributes; Power; the paper-doll equipment
    screen with try-on comparisons, tier borders and a "worse" badge; enemy drops by biome item level, with pity;
    forge gear recipes removed; a new game starts in Common sword, hood, jacket and wraps.
-2. **Perks:** pools per slot and weapon type, Greater perks, smart loot, Legendary powers, Blighted items.
+2. **Perks (built):** effect perks that share the class modifiers' hooks (kill heals, cooldowns, a rest
+   shield, poise), class perks on rings with smart loot, Greater perks (Noble and up, 1 in 20, ×1.5), Blighted
+   drops (Rare and up, 4%, a drawback and ×1.4), tier floors (an extra flask charge from Noble, extra roll i-frames
+   from Rare), no doubled perks, and five Legendary bases with hand-made powers: Cinderbrand, Crown of the
+   Unforgotten, Pyreheart Cuirass, Ashwalker Greaves and Ring of the Last Ember. Weapon-type perk pools and the
+   other Legendary weapons come with phase 3.
 3. **Weapon types:** chains, charged attacks and dash-strikes; sword, spear and hammer, then daggers, then bow and
    Ember staff.
 4. **Economy:** salvage, temper, upgrade and infuse, cleanse, coatings, tools, ranked projects, the Gambler, respec.

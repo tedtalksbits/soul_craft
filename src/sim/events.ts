@@ -51,8 +51,21 @@ export type SimEvent =
   /** `tier` is set for a piece of gear. */
   | { type: 'itemGained'; item: string; count: number; tier: TierId | null }
   /** A piece of gear fell from an enemy (for its chime and beam). */
-  | { type: 'gearDropped'; item: string; tier: TierId; x: number; y: number }
+  | {
+      type: 'gearDropped';
+      item: string;
+      tier: TierId;
+      greater: boolean;
+      blighted: boolean;
+      x: number;
+      y: number;
+    }
   | { type: 'inventoryFull'; item: string }
+  /** Gear perks and powers at work: a flinch shrugged off, the Last Ember catching a killing blow, a roll's stamina refunded, a burning streak. */
+  | { type: 'keptFooting' }
+  | { type: 'lastEmber' }
+  | { type: 'dodged' }
+  | { type: 'streakBurst'; x: number; y: number }
   | { type: 'equipped'; item: string; slot: EquipSlot }
   | { type: 'unequipped'; item: string; slot: EquipSlot }
   /** Gear can't change with an enemy after the player. */

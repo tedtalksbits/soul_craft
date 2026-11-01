@@ -479,6 +479,25 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 2 as built (2026-11-01).** Choices made while building it:
+
+- **Effect perks reuse the class modifier effects** (`activeEffects` merges worn modifiers and gear), and seven
+  new effect types were added for gear: `restShield`, `poise`, `lastEmber`, `stillEnergy`, `lowHealthShield`,
+  `dodgeRefund` and `streakBurst`. Modifiers can use them too. An effect perk's numbers scale with tier strength
+  and the roll, not item level, so a cooldown cut never runs away.
+- **Class perks roll on rings only:** three per class, built from that class's modifier effects. Smart loot keeps
+  class perks' share of the pool and gives 85% of it to the class being played; a class perk for another class
+  shows dimmed and does nothing.
+- **Legendaries:** one per slot for now: Cinderbrand (every third hit in a row sets the ground alight), Crown of
+  the Unforgotten (the super charges while you stand still), Pyreheart Cuirass (a 40 overshield below a third of
+  your health, every 30 s), Ashwalker Greaves (rolling through a blow refunds the roll) and Ring of the Last Ember.
+  They borrow the iron bases' icons until phase 7. The spear, hammer, dagger, bow and staff Legendaries in
+  section 6 wait on phase 3, since their powers change verbs those weapons bring.
+- **Weapon-type pools wait on phase 3** for the same reason. Phase 2's weapon perks are the "every weapon" pool.
+- **A rolled perk never repeats a perk the base already carries**, so a Legendary's partner perk is never doubled.
+- **No save change:** Greater and Blighted are optional fields, and perk timers live in a component that is added
+  the first time it is needed, so version 15 saves still load.
+
 **Phase 1 as built (2026-11-01).** Everything in the phase 1 row, plus soft-capped attributes. Choices made while
 building it:
 

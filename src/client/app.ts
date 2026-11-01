@@ -495,6 +495,8 @@ export class App {
         return;
       case 'restRefused':
         return this.ui.toast("You can't rest with enemies nearby.");
+      case 'lastEmber':
+        return this.ui.banner('THE LAST EMBER FLARES', 'good');
       case 'gearLocked':
         return this.ui.toast("You can't change gear with enemies nearby.");
       case 'flaskEmpty':
