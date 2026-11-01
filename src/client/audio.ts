@@ -260,6 +260,13 @@ export class Audio {
         const p = this.chainPitch();
         return this.arp([659 * p, 988 * p], 50, 0.2, 0.04);
       }
+      case 'gambled':
+        // A coin's clink, then the tier's own chime for anything good.
+        this.arp([1568, 2093], 35, 0.2, 0.04);
+        if (e.tier === 'legendary') return this.arp([392, 523, 659, 784, 1047, 1319], 110, 1.4, 0.07);
+        if (e.tier === 'noble') return this.arp([523, 659, 784, 1047], 90, 0.9, 0.06);
+        if (e.tier === 'rare') return this.arp([659, 880, 1175], 80, 0.6, 0.05);
+        return;
       case 'gearDropped':
         // Rare and better ring out as they fall; a Legendary gets a heavier bell. A Greater perk adds its
         // own high star, and a Blighted item a sour low note. Nothing else uses these.

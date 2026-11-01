@@ -40,7 +40,14 @@
     "frames": ["tree"],
     "solid": true,
     "overlay": true,
-    "cut": { "hits": 3, "drops": [{ "kind": "item", "item": "ashwood", "chance": 1, "amount": [1, 2] }] },
+    "cut": {
+      "hits": 3,
+      "drops": [{ "kind": "item", "item": "ashwood", "chance": 1, "amount": [1, 2] }],
+      "tool": "axe",
+      "toolDrops": [
+        { "tier": 2, "drops": [{ "kind": "item", "item": "glowspore", "chance": 0.1, "amount": [1, 1] }] }
+      ]
+    },
     "map": "#2e4024"
   },
   {
@@ -48,7 +55,14 @@
     "frames": ["fungal_tree"],
     "solid": true,
     "overlay": true,
-    "cut": { "hits": 3, "drops": [{ "kind": "item", "item": "fungal_cap", "chance": 1, "amount": [1, 2] }] },
+    "cut": {
+      "hits": 3,
+      "drops": [{ "kind": "item", "item": "fungal_cap", "chance": 1, "amount": [1, 2] }],
+      "tool": "axe",
+      "toolDrops": [
+        { "tier": 1, "drops": [{ "kind": "item", "item": "glowspore", "chance": 0.2, "amount": [1, 1] }] }
+      ]
+    },
     "map": "#1e3a34"
   },
   {
@@ -56,7 +70,14 @@
     "frames": ["dead_tree"],
     "solid": true,
     "overlay": true,
-    "cut": { "hits": 2, "drops": [{ "kind": "item", "item": "ashwood", "chance": 1, "amount": [1, 1] }] },
+    "cut": {
+      "hits": 2,
+      "drops": [{ "kind": "item", "item": "ashwood", "chance": 1, "amount": [1, 1] }],
+      "tool": "axe",
+      "toolDrops": [
+        { "tier": 2, "drops": [{ "kind": "item", "item": "bone_shard", "chance": 0.25, "amount": [1, 1] }] }
+      ]
+    },
     "map": "#3a302a"
   },
   {
@@ -69,6 +90,10 @@
       "drops": [
         { "kind": "item", "item": "fungal_cap", "chance": 1, "amount": [1, 1] },
         { "kind": "item", "item": "glowspore", "chance": 0.6, "amount": [1, 2] }
+      ],
+      "tool": "axe",
+      "toolDrops": [
+        { "tier": 2, "drops": [{ "kind": "item", "item": "slime_gel", "chance": 0.25, "amount": [1, 1] }] }
       ]
     },
     "light": { "radius": 34, "intensity": 0.7 },
@@ -80,7 +105,15 @@
     "solid": true,
     "overlay": true,
     "map": "#6a6660",
-    "cut": { "hits": 4, "drops": [{ "kind": "item", "item": "stone", "chance": 1, "amount": [1, 2] }] }
+    "cut": {
+      "hits": 4,
+      "drops": [{ "kind": "item", "item": "stone", "chance": 1, "amount": [1, 2] }],
+      "tool": "pick",
+      "toolDrops": [
+        { "tier": 1, "drops": [{ "kind": "item", "item": "iron_scrap", "chance": 0.35, "amount": [1, 1] }] },
+        { "tier": 2, "drops": [{ "kind": "item", "item": "bone_shard", "chance": 0.25, "amount": [1, 1] }] }
+      ]
+    }
   },
   { "id": "grave", "frames": ["grave"], "solid": true, "overlay": true, "map": "#8a8884" },
   { "id": "roof", "frames": ["roof"], "solid": true, "map": "#5a4440" },

@@ -15,6 +15,8 @@ export interface SimState {
   spawnEpoch: number;
   /** Gear drops in a row below the pity tier (`loot.json → pity`); the next one past the limit is better. */
   lootPity: number;
+  /** Ranks a rebuilt project has risen past I (2 means rank III). Absent in saves from before it. */
+  projectRanks?: Record<string, number>;
   /** Tiers whose gear is salvaged the moment it is picked up. Absent in saves from before it. */
   autoSalvage?: TierId[];
   litBonfires: Record<string, true>;

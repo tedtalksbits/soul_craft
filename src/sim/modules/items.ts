@@ -17,6 +17,7 @@ import {
   Abilities,
   Attributes,
   Buffs,
+  Coating,
   Empowered,
   Equipment,
   Health,
@@ -409,6 +410,12 @@ export function finishUse(sim: Simulation, e: Entity, item: string): void {
     sim.events.emit({ type: 'healed', amount: healed });
     return;
   }
+  if (effect.type === 'coat') {
+    // A new coating wipes the old one off.
+    sim.ecs.add(e, Coating, { coating: effect.coating, item, ticks: Math.round(effect.seconds * TICK_RATE) });
+    sim.events.emit({ type: 'coated', item, seconds: effect.seconds });
+    return;
+  }
   const buffs = sim.ecs.need(e, Buffs);
   // Drinking the same kind again refreshes it rather than stacking.
   buffs.active = buffs.active.filter((b) => b.stat !== effect.stat);
@@ -457,6 +464,11 @@ function processActions(sim: Simulation): void {
 }
 
 function tickBuffs(sim: Simulation): void {
+  const coating = sim.ecs.get(sim.player, Coating);
+  if (coating && --coating.ticks <= 0) {
+    sim.ecs.remove(sim.player, Coating);
+    sim.events.emit({ type: 'coatingEnded' });
+  }
   for (const [e, buffs] of sim.ecs.query(Buffs)) {
     if (buffs.active.length === 0) continue;
     const ended = buffs.active.filter((b) => --b.ticks <= 0);

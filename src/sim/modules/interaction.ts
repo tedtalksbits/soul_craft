@@ -12,6 +12,8 @@ import { TILE } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { refreshAbilities } from './abilities';
+import { hasGambler } from './gambler';
+import { nextStage } from './restoration';
 import { flaskCapacity } from './items';
 import { onRest } from './perks';
 import { talkTo } from './objectives';
@@ -61,7 +63,13 @@ export function findInteraction(sim: Simulation): Interaction | null {
       label: `Use ${STATIONS[station.station].toLowerCase()}`,
     }));
   for (const [pe, site, b] of ecs.query(Project, Body)) {
-    const label = sim.state.restored[site.project] ? 'Look' : 'Rebuild';
+    const label = !sim.state.restored[site.project]
+      ? 'Rebuild'
+      : hasGambler(sim, site.project)
+        ? 'Visit'
+        : nextStage(sim, site.project)
+          ? 'Improve'
+          : 'Look';
     consider(b, () => ({ kind: 'project', entity: pe, label }));
   }
   for (const [ne, npc, b] of ecs.query(Npc, Body)) {
@@ -89,8 +97,9 @@ export function interact(sim: Simulation): void {
   else if (target.kind === 'project') {
     const id = sim.ecs.need(target.entity, Project).project;
     const def = sim.content.restoration[id];
-    // A rebuilt site speaks (its returned villager); a ruin opens the rebuild screen.
-    if (sim.state.restored[id] && def) sim.events.emit({ type: 'read', lines: [...def.restoredLines] });
+    // A ruin, a site with another rank to raise or a shop opens the rebuild screen; a finished site speaks.
+    const open = !sim.state.restored[id] || nextStage(sim, id) !== null || hasGambler(sim, id);
+    if (!open && def) sim.events.emit({ type: 'read', lines: [...def.restoredLines] });
     else sim.events.emit({ type: 'projectOpened', project: id });
   } else {
     const at = sim.ecs.need(target.entity, Body);

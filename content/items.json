@@ -55,6 +55,38 @@
     "icon": "warden_mark",
     "stack": 99
   },
+  "iron_axe": {
+    "kind": "tool",
+    "name": "Iron Axe",
+    "description": "A woodsman’s axe. Trees come down in half the swings.",
+    "icon": "iron_axe",
+    "stack": 1,
+    "tool": { "kind": "axe", "tier": 1, "power": 1, "yield": 0.5 }
+  },
+  "iron_pickaxe": {
+    "kind": "tool",
+    "name": "Iron Pickaxe",
+    "description": "Splits rock along its grain, and finds the iron in it.",
+    "icon": "iron_pickaxe",
+    "stack": 1,
+    "tool": { "kind": "pick", "tier": 1, "power": 1, "yield": 0.5 }
+  },
+  "steel_axe": {
+    "kind": "tool",
+    "name": "Smith’s Axe",
+    "description": "Bright-edged and balanced. Nothing in the wilds stands long against it.",
+    "icon": "steel_axe",
+    "stack": 1,
+    "tool": { "kind": "axe", "tier": 2, "power": 2, "yield": 1 }
+  },
+  "steel_pickaxe": {
+    "kind": "tool",
+    "name": "Smith’s Pickaxe",
+    "description": "It rings on stone, and the stone gives up what it hides.",
+    "icon": "steel_pickaxe",
+    "stack": 1,
+    "tool": { "kind": "pick", "tier": 2, "power": 2, "yield": 1 }
+  },
   "chipped_sword": {
     "kind": "weapon",
     "name": "Chipped Sword",
@@ -1312,6 +1344,34 @@
     "icon": "potion_breath",
     "stack": 5,
     "effect": { "type": "buff", "stat": "staminaRegen", "amount": 0.5, "seconds": 60 }
+  },
+  "fire_oil": {
+    "kind": "consumable",
+    "name": "Fire Oil",
+    "description": "Glowspore pressed in gel. Rub it on a blade and every cut catches.",
+    "icon": "fire_oil",
+    "stack": 5,
+    "effect": { "type": "coat", "coating": { "kind": "fire", "damage": 3, "seconds": 3 }, "seconds": 90 }
+  },
+  "bleeding_oil": {
+    "kind": "consumable",
+    "name": "Bleeding Oil",
+    "description": "Bone dust in a fungal paste. Wounds it touches will not close.",
+    "icon": "bleeding_oil",
+    "stack": 5,
+    "effect": {
+      "type": "coat",
+      "coating": { "kind": "bleed", "stacks": 4, "ticks": 180, "damage": 1.2, "stagger": 20 },
+      "seconds": 90
+    }
+  },
+  "wardens_bane": {
+    "kind": "consumable",
+    "name": "Warden’s Bane",
+    "description": "Bitter and pale. It eats at the embers a Warden is made of.",
+    "icon": "wardens_bane",
+    "stack": 5,
+    "effect": { "type": "coat", "coating": { "kind": "warden", "bonus": 0.25 }, "seconds": 90 }
   },
   "relic_oath": {
     "kind": "relic",

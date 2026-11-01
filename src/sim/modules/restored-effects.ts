@@ -6,9 +6,22 @@
 import type { RestorationEffect } from '../../content/schemas';
 import type { Simulation } from '../simulation';
 
+/** A project's rank: 0 in ruins, 1 rebuilt, then one more for each rank raised. */
+export function projectRank(sim: Simulation, id: string): number {
+  return sim.state.restored[id] ? 1 + (sim.state.projectRanks?.[id] ?? 0) : 0;
+}
+
+/** Everything a project gives at its rank: its own effects, then each rank's. */
+export function projectEffects(sim: Simulation, id: string): RestorationEffect[] {
+  const def = sim.content.restoration[id];
+  const rank = projectRank(sim, id);
+  if (!def || rank === 0) return [];
+  return [...def.effects, ...def.ranks.slice(0, rank - 1).flatMap((r) => r.effects)];
+}
+
 /** Every effect of every rebuilt project. Projects the content no longer defines give nothing. */
 export function restoredEffects(sim: Simulation): RestorationEffect[] {
-  return Object.keys(sim.state.restored).flatMap((id) => sim.content.restoration[id]?.effects ?? []);
+  return Object.keys(sim.state.restored).flatMap((id) => projectEffects(sim, id));
 }
 
 /** How many stacks the player can carry: the base pack plus a rebuilt storehouse. */

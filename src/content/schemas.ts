@@ -438,6 +438,27 @@ const itemBase = {
 export const StatSchema = z.enum(['damage', 'defense', 'staminaRegen', 'maxHp']);
 export type StatId = z.infer<typeof StatSchema>;
 
+/**
+ * A weapon coating (alchemy): for its time, every weapon hit also sets the foe burning (`damage` a second for
+ * `seconds`), adds a Bleed stack (bursting at `stacks`), or does `bonus` more to bosses.
+ */
+export const CoatingSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('fire'), damage: pos, seconds: pos }),
+  z.object({
+    kind: z.literal('bleed'),
+    stacks: z.number().int().min(1),
+    ticks: ticks,
+    damage: pos,
+    stagger: ticks,
+  }),
+  z.object({ kind: z.literal('warden'), bonus: pos }),
+]);
+export type CoatingDef = z.infer<typeof CoatingSchema>;
+
+/** Gathering tools: the best of each kind carried works by itself. */
+export const ToolKindSchema = z.enum(['axe', 'pick']);
+export type ToolKind = z.infer<typeof ToolKindSchema>;
+
 export const ArmorSlotSchema = z.enum(['helmet', 'chest', 'legs']);
 export type ArmorSlot = z.infer<typeof ArmorSlotSchema>;
 
@@ -531,7 +552,23 @@ export const ItemSchema = z.discriminatedUnion('kind', [
     effect: z.discriminatedUnion('type', [
       z.object({ type: z.literal('heal'), amount: pos }),
       z.object({ type: z.literal('buff'), stat: StatSchema, amount: pos, seconds: pos }),
+      /** Coats the weapon: replaces any coating already on it. */
+      z.object({ type: z.literal('coat'), coating: CoatingSchema, seconds: pos }),
     ]),
+  }),
+  /**
+   * A gathering tool, carried: each swing at a tile it suits deals `power` extra hits, item drops come in
+   * `yield` larger, and the tile's tool drops up to its `tier` open up.
+   */
+  z.object({
+    kind: z.literal('tool'),
+    ...itemBase,
+    tool: z.object({
+      kind: ToolKindSchema,
+      tier: z.number().int().min(1),
+      power: z.number().int().nonnegative(),
+      yield: nonneg,
+    }),
   }),
 ]);
 export type ItemDef = z.infer<typeof ItemSchema>;
@@ -568,6 +605,8 @@ export const RestorationEffectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('forgeSteps') }),
   /** The smith tempers perks and cleanses blight at the forge. */
   z.object({ type: z.literal('smithWork') }),
+  /** The Ember Gambler keeps shop at the site: unidentified gear for a slot of your choice. */
+  z.object({ type: z.literal('gambler') }),
 ]);
 export type RestorationEffect = z.infer<typeof RestorationEffectSchema>;
 
@@ -586,6 +625,16 @@ export const RestorationSchema = z.object({
   sprite: z.object({ ruin: z.string(), restored: z.string() }),
   /** What the site says once rebuilt (a returned villager's words). */
   restoredLines: z.array(z.string()).min(1),
+  /** Ranks II and up, in order: each costs more and adds its effects to the ones before. */
+  ranks: z
+    .array(
+      z.object({
+        description: z.string(),
+        cost: z.object({ items: z.array(ItemCountSchema).min(1), souls: z.number().int().nonnegative() }),
+        effects: z.array(RestorationEffectSchema).min(1),
+      }),
+    )
+    .default([]),
 });
 export type RestorationDef = z.infer<typeof RestorationSchema>;
 export const RestorationsSchema = z.record(z.string(), RestorationSchema);
@@ -859,6 +908,15 @@ export const LootSchema = z.object({
   blight: z.object({ tier: TierSchema, chance: fraction, factor: pos }),
   /** Of the class perks that roll, about this share are for the class being played. */
   smartLoot: fraction,
+  /**
+   * The Ember Gambler: an unidentified piece for a chosen slot, `souls` times the player's level band (one
+   * band per `levelsPerBand` levels, up to the highest item level), its tier rolled from `odds`.
+   */
+  gambler: z.object({
+    souls: z.number().int().min(1),
+    levelsPerBand: z.number().int().min(1),
+    odds: weighted(TierSchema),
+  }),
   /** Smithy work (docs/gear-and-loot.md, section 7). */
   smithy: z.object({
     /**
@@ -1045,6 +1103,10 @@ export const TileSchema = z.object({
       hits: z.number().int().min(1).default(1),
       into: z.string().optional(),
       drops: z.array(DropSchema).default([]),
+      /** The tool that works it faster and richer: an axe for wood, a pick for stone. */
+      tool: ToolKindSchema.optional(),
+      /** Richer drops that need at least a tool of `tier`. */
+      toolDrops: z.array(z.object({ tier: z.number().int().min(1), drops: z.array(DropSchema) })).default([]),
     })
     .optional(),
   light: z.object({ radius: pos, intensity: fraction }).optional(),

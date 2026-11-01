@@ -34,5 +34,72 @@
     ],
     "souls": 40,
     "station": "alchemy"
+  },
+  "fire_oil": {
+    "output": { "item": "fire_oil", "count": 1 },
+    "inputs": [
+      { "item": "glowspore", "count": 2 },
+      { "item": "slime_gel", "count": 1 }
+    ],
+    "souls": 30,
+    "station": "alchemy"
+  },
+  "bleeding_oil": {
+    "output": { "item": "bleeding_oil", "count": 1 },
+    "inputs": [
+      { "item": "fungal_cap", "count": 1 },
+      { "item": "bone_shard", "count": 1 }
+    ],
+    "souls": 30,
+    "station": "alchemy"
+  },
+  "wardens_bane": {
+    "output": { "item": "wardens_bane", "count": 1 },
+    "inputs": [
+      { "item": "bone_shard", "count": 2 },
+      { "item": "glowspore", "count": 1 }
+    ],
+    "souls": 60,
+    "station": "alchemy"
+  },
+  "iron_axe": {
+    "output": { "item": "iron_axe", "count": 1 },
+    "inputs": [
+      { "item": "ashwood", "count": 4 },
+      { "item": "iron_scrap", "count": 4 }
+    ],
+    "souls": 80,
+    "station": "forge"
+  },
+  "iron_pickaxe": {
+    "output": { "item": "iron_pickaxe", "count": 1 },
+    "inputs": [
+      { "item": "ashwood", "count": 3 },
+      { "item": "stone", "count": 4 },
+      { "item": "iron_scrap", "count": 4 }
+    ],
+    "souls": 80,
+    "station": "forge"
+  },
+  "steel_axe": {
+    "output": { "item": "steel_axe", "count": 1 },
+    "inputs": [
+      { "item": "ashwood", "count": 6 },
+      { "item": "iron_scrap", "count": 10 },
+      { "item": "bone_shard", "count": 4 }
+    ],
+    "souls": 300,
+    "station": "forge"
+  },
+  "steel_pickaxe": {
+    "output": { "item": "steel_pickaxe", "count": 1 },
+    "inputs": [
+      { "item": "ashwood", "count": 4 },
+      { "item": "stone", "count": 8 },
+      { "item": "iron_scrap", "count": 10 },
+      { "item": "bone_shard", "count": 4 }
+    ],
+    "souls": 300,
+    "station": "forge"
   }
 }

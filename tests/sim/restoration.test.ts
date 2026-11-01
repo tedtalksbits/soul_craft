@@ -77,7 +77,7 @@ describe('village restoration', () => {
     expect(sim.state.restored).toEqual({});
   });
 
-  it('opens a ruin to rebuild, and lets a rebuilt site speak', () => {
+  it('opens a ruin to rebuild, keeps opening while a rank is left, then lets the site speak', () => {
     const sim = newSim();
     run(sim, 1);
     standAt(sim, 'well');
@@ -85,6 +85,8 @@ describe('village restoration', () => {
       { type: 'projectOpened', project: 'well' },
     ]);
     rebuild(sim, 'well', { free: true });
+    expect(ofType(press(sim, ['use']), 'projectOpened')).toHaveLength(1);
+    for (let i = 0; i < content.restoration['well']!.ranks.length; i++) rebuild(sim, 'well', { free: true });
     expect(ofType(press(sim, ['use']), 'read')[0]?.lines).toEqual(content.restoration['well']!.restoredLines);
   });
 

@@ -8,6 +8,7 @@
 import { Container, Graphics, RenderTexture, Sprite, Texture, type Renderer } from 'pixi.js';
 import { Abilities, Body, Bonfire, Brazier, Empowered, Player, Project, Torch } from '../../sim/components';
 import { TILE } from '../../sim/constants';
+import { projectEffects } from '../../sim/modules/restored-effects';
 import type { Simulation } from '../../sim/simulation';
 import { classPalette } from './class-palette';
 
@@ -145,11 +146,12 @@ export class Lighting {
       lights.push({ x: b.x, y: b.y - 12, radius: 60, intensity: 1, glow: fire(1.1) });
     // Rebuilt sites that give light (the lamps): a steady warm pool, lantern-high.
     for (const [, site, b] of ecs.query(Project, Body)) {
-      if (!sim.state.restored[site.project]) continue;
-      for (const fx of sim.content.restoration[site.project]?.effects ?? []) {
-        if (fx.type === 'light')
-          lights.push({ x: b.x, y: b.y - 16, radius: fx.radius, intensity: 1, glow: fire(0.8) });
-      }
+      // A higher rank burns brighter: the widest of its light effects.
+      const radius = Math.max(
+        0,
+        ...projectEffects(sim, site.project).map((fx) => (fx.type === 'light' ? fx.radius : 0)),
+      );
+      if (radius > 0) lights.push({ x: b.x, y: b.y - 16, radius, intensity: 1, glow: fire(0.8) });
     }
     for (const [, brazier, b] of ecs.query(Brazier, Body)) {
       if (brazier.lit) lights.push({ x: b.x, y: b.y - 10, radius: 70, intensity: 1, glow: fire(1) });

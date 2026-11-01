@@ -687,6 +687,23 @@ kbd {
   color: var(--dim);
   font-size: 0.75em;
 }
+.rebuild-screen .said {
+  font-style: italic;
+  color: var(--dim);
+  margin-bottom: 0.6em;
+}
+.rebuild-screen .gamble-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0.4em 0;
+}
+.rebuild-screen .gamble-slots button {
+  flex: 1 1 5em;
+  width: auto;
+  min-width: 0;
+}
+
 .level-screen .respec {
   display: flex;
   align-items: center;

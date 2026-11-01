@@ -479,6 +479,23 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 4, the rest, as built (2026-11-01).** Choices made while building it:
+
+- **Coatings** are alchemy-table consumables that coat the weapon for 90 s, one at a time: Fire Oil (hits set
+  foes burning, 3 a second for 3 s), Bleeding Oil (hits stack Bleed, bursting at 4, with the dagger rule) and
+  Warden's Bane (+25% to bosses). They work on arrows and fireballs too. The recipes are section 7's.
+- **Tools are carried, not equipped:** the best axe and pickaxe in the pack count by themselves, so they never cost
+  a gear slot. An Iron tier (one extra hit a swing, +50% materials) and a Smith's tier (two, +100%). The tile sheet
+  is hand-drawn, so instead of new "richer nodes" the existing ones hide richer finds behind tool tiers: iron in
+  rock (pick I), bone shards in rock and dead trees and slime gel in giant mushrooms (tier II), glowspore in trees.
+- **Ranks** go on the four small projects, at 2.5x and 6x the rank I souls (materials 1.5x and 2.5x), rank III
+  with a Warden Mark: the well (a flask each), storehouse (8 slots each, and the Gambler at II), palisade (60 and 80
+  paces) and lamps (wider light). A site with something left to do prompts "Improve" (or "Visit" for the shop)
+  and opens its screen, with its villager's words at the top; a finished one speaks as before. Cosmetic projects
+  (statues, banners, gardens) wait for art.
+- **The Ember Gambler** sells a piece for any slot at 250 souls per level band (a band every 8 levels, up to the
+  highest item level), with section 7's odds. A gamble doesn't count toward pity.
+
 **Phase 4, the smithy, as built (2026-11-01).** Choices made while building it:
 
 - **Where the work happens.** The village forge (there from the start) salvages, upgrades and infuses. Tempering

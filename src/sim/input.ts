@@ -1,4 +1,4 @@
-import type { AttributeId, TierId } from '../content/schemas';
+import type { AttributeId, GearSlot, TierId } from '../content/schemas';
 import type { EquipSlot } from './components';
 
 /**
@@ -64,7 +64,9 @@ export type PlayerAction =
   | { type: 'settleTemper'; target: GearTarget; choice: number }
   | { type: 'cleanse'; target: GearTarget }
   /** Gives back every attribute point to spend again, for the souls of one level. Only at a bonfire. */
-  | { type: 'respec' };
+  | { type: 'respec' }
+  /** Buys an unidentified piece for a slot from the Ember Gambler. Only at their shop. */
+  | { type: 'gamble'; slot: GearSlot };
 
 export interface InputFrame {
   /** Movement intent, each axis in [-1, 1]. */

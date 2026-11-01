@@ -12,6 +12,7 @@ import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import type { Check } from './crafting';
 import { countItem, removeItem } from './items';
+import { projectRank } from './restored-effects';
 
 /** How far from a site (in multiples of the interact range) the player may still rebuild it. */
 const SITE_REACH = 2;
@@ -39,27 +40,42 @@ interface RebuildOpts {
   free?: boolean;
 }
 
+/**
+ * What rebuilding a project next takes and gives: rebuilding it from ruins (rank I), or raising it a rank.
+ * Null once it is at its highest rank.
+ */
+export function nextStage(sim: Simulation, id: string) {
+  const def = sim.content.restoration[id];
+  if (!def) return null;
+  const rank = projectRank(sim, id);
+  if (rank === 0) return { rank: 1, cost: def.cost, effects: def.effects, description: def.description };
+  const next = def.ranks[rank - 1];
+  return next ? { rank: rank + 1, ...next } : null;
+}
+
 export function canRebuild(sim: Simulation, id: string, opts: RebuildOpts = {}): Check {
   const def = sim.content.restoration[id];
   if (!def) return fail('no such project');
-  if (sim.state.restored[id]) return fail('already rebuilt');
+  const stage = nextStage(sim, id);
+  if (!stage) return fail(def.ranks.length > 0 ? 'at its highest rank' : 'already rebuilt');
   if (!opts.anywhere && !siteNearby(sim, id)) return fail('too far from the site');
   if (opts.free) return { ok: true };
   const e = sim.player;
   const inv = sim.ecs.need(e, Inventory);
-  for (const input of def.cost.items) {
+  for (const input of stage.cost.items) {
     if (countItem(inv, input.item) < input.count)
       return fail(`needs ${input.count} ${sim.content.item(input.item).name}`);
   }
-  if (sim.ecs.need(e, Player).souls < def.cost.souls) return fail('not enough souls');
+  if (sim.ecs.need(e, Player).souls < stage.cost.souls) return fail('not enough souls');
   return { ok: true };
 }
 
-/** Spends the cost and rebuilds a project. Returns whether it happened. */
+/** Spends the cost and rebuilds a project, or raises it a rank. Returns whether it happened. */
 export function rebuild(sim: Simulation, id: string, opts: RebuildOpts = {}): boolean {
   const def = sim.content.restoration[id];
   const check = canRebuild(sim, id, opts);
-  if (!check.ok || !def) {
+  const stage = nextStage(sim, id);
+  if (!check.ok || !def || !stage) {
     sim.events.emit({
       type: 'rebuildFailed',
       project: id,
@@ -70,18 +86,20 @@ export function rebuild(sim: Simulation, id: string, opts: RebuildOpts = {}): bo
   const p = sim.ecs.need(sim.player, Player);
   if (!opts.free) {
     const inv = sim.ecs.need(sim.player, Inventory);
-    for (const input of def.cost.items) removeItem(inv, input.item, input.count);
-    p.souls -= def.cost.souls;
+    for (const input of stage.cost.items) removeItem(inv, input.item, input.count);
+    p.souls -= stage.cost.souls;
   }
+  if (stage.rank > 1) sim.state.projectRanks = { ...sim.state.projectRanks, [id]: stage.rank - 1 };
   sim.state.restored[id] = true;
-  for (const fx of def.effects) {
+  for (const fx of stage.effects) {
     // The one effect stored on the player rather than read from `restored`: a new charge, filled.
     if (fx.type === 'maxFlasks') {
       p.maxFlasks += fx.amount;
       p.flasks += fx.amount;
     }
   }
-  sim.events.emit({ type: 'restored', project: id });
+  if (stage.rank > 1) sim.events.emit({ type: 'ranked', project: id, rank: stage.rank });
+  else sim.events.emit({ type: 'restored', project: id });
   return true;
 }
 

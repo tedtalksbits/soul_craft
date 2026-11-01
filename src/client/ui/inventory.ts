@@ -5,7 +5,14 @@
  * still (`InputFrame.menu`).
  */
 import { gearSlotOf } from '../../content/content';
-import { ABILITY_SLOTS, ATTRIBUTES, STATIONS, type ItemDef, type StationId } from '../../content/schemas';
+import {
+  ABILITY_SLOTS,
+  ATTRIBUTES,
+  STATIONS,
+  type CoatingDef,
+  type ItemDef,
+  type StationId,
+} from '../../content/schemas';
 import {
   Abilities,
   Attributes,
@@ -876,14 +883,33 @@ function facts(def: ItemDef): string[] {
     case 'material':
       return ['Crafting material', `Stacks to ${def.stack}`];
     case 'consumable':
-      return def.effect.type === 'heal'
-        ? [`Restores ${def.effect.amount} HP`, `Stacks to ${def.stack}`]
-        : [
-            `${statLine(def.effect.stat, def.effect.amount)} for ${def.effect.seconds}s`,
-            `Stacks to ${def.stack}`,
-          ];
+      if (def.effect.type === 'heal') return [`Restores ${def.effect.amount} HP`, `Stacks to ${def.stack}`];
+      if (def.effect.type === 'coat')
+        return [`${coatingLine(def.effect.coating)} for ${def.effect.seconds}s`, `Stacks to ${def.stack}`];
+      return [
+        `${statLine(def.effect.stat, def.effect.amount)} for ${def.effect.seconds}s`,
+        `Stacks to ${def.stack}`,
+      ];
+    case 'tool':
+      return [
+        `${def.tool.kind === 'axe' ? 'Fells trees and mushrooms' : 'Breaks rock'}: +${def.tool.power} ${def.tool.power === 1 ? 'hit' : 'hits'} a swing`,
+        `+${Math.round(def.tool.yield * 100)}% materials, and the richer finds of tier ${def.tool.tier}`,
+        'Works from the pack; the best one carried counts',
+      ];
     default:
       return [];
+  }
+}
+
+/** What a weapon coating does, as the player reads it. */
+function coatingLine(c: CoatingDef): string {
+  switch (c.kind) {
+    case 'fire':
+      return `Weapon hits set foes burning (${c.damage} a second for ${c.seconds}s)`;
+    case 'bleed':
+      return `Weapon hits make foes bleed (bursting at ${c.stacks})`;
+    case 'warden':
+      return `+${Math.round(c.bonus * 100)}% damage to Wardens`;
   }
 }
 

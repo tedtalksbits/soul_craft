@@ -1,14 +1,16 @@
 /**
- * The rebuild screen for a ruined village project: what it was, what it costs (with what the
- * player has), what it will give, and a Rebuild button that queues a `rebuild` action. Like the
- * level screen it reads sim state and never changes it. It closes when the player walks away or
- * the project is rebuilt (the sim then shows the returned villager's words).
+ * The rebuild screen for a village project: what its next stage (rebuilding it, or raising it a
+ * rank) costs, with what the player has, what it will give, and the button that queues a `rebuild`
+ * action. A site with the Ember Gambler's shop shows the shop too. Like the level screen it reads sim
+ * state and never changes it. It closes when the player walks away or nothing is left to do there.
  */
-import type { RestorationEffect } from '../../content/schemas';
+import { GearSlotSchema, type RestorationEffect } from '../../content/schemas';
 import { Inventory, Player } from '../../sim/components';
 import type { PlayerAction } from '../../sim/input';
 import { countItem } from '../../sim/modules/items';
-import { canRebuild, siteNearby } from '../../sim/modules/restoration';
+import { canGamble, gambleItemLevel, gamblePrice, hasGambler } from '../../sim/modules/gambler';
+import { canRebuild, nextStage, siteNearby } from '../../sim/modules/restoration';
+import { projectRank } from '../../sim/modules/restored-effects';
 import type { Simulation } from '../../sim/simulation';
 import { h } from './dom';
 
@@ -33,6 +35,8 @@ export function effectText(fx: RestorationEffect): string {
       return 'The smith returns: forge upgrades beyond the old limit';
     case 'smithWork':
       return 'The smith tempers perks and cleanses blight';
+    case 'gambler':
+      return 'The Ember Gambler sets up shop: unidentified gear for a slot you choose';
   }
 }
 
@@ -66,48 +70,48 @@ export class RebuildScreen {
     this.shown = '';
   }
 
-  /** Redraws when what it shows changes; closes once the site is rebuilt or out of reach. */
+  /** Redraws when what it shows changes; closes once nothing is left to do here, or out of reach. */
   refresh(force = false): void {
     const sim = this.host.sim();
     const id = this.project;
     if (!this.el || id === null) return;
     const def = sim?.content.restoration[id];
-    if (!sim || !def || sim.state.restored[id] || !siteNearby(sim, id)) return this.close();
+    if (!sim || !def || !siteNearby(sim, id)) return this.close();
+    const stage = nextStage(sim, id);
+    const shop = hasGambler(sim, id);
+    if (!stage && !shop) return this.close();
     const inv = sim.ecs.need(sim.player, Inventory);
     const souls = sim.ecs.need(sim.player, Player).souls;
-    const have = def.cost.items.map((c) => countItem(inv, c.item));
-    const key = JSON.stringify([id, have, souls]);
+    const have = stage ? stage.cost.items.map((c) => countItem(inv, c.item)) : [];
+    const key = JSON.stringify([id, have, souls, projectRank(sim, id), inv.stacks.length]);
     if (!force && key === this.shown) return;
     this.shown = key;
 
-    const check = canRebuild(sim, id);
-    const costs = def.cost.items.map((c, i) =>
-      h(
-        'span',
-        { class: (have[i] ?? 0) >= c.count ? 'cost' : 'cost short' },
-        this.host.icon(c.item),
-        `${c.count} ${sim.content.item(c.item).name} (${have[i] ?? 0})`,
-      ),
-    );
-    costs.push(
-      h('span', { class: souls >= def.cost.souls ? 'cost' : 'cost short' }, `${def.cost.souls} souls`),
-    );
-    this.el.replaceChildren(
-      h(
-        'div',
-        { class: 'head' },
-        h('h2', { class: 'title' }, def.name),
-        h('div', { class: 'souls' }, def.tier === 'major' ? 'Major project' : 'Village project'),
-        h('button', { class: 'quiet', onclick: () => this.close() }, 'Close (Esc)'),
-      ),
-      h(
-        'div',
-        { class: 'body' },
-        h('p', { class: 'description' }, def.description),
+    const rank = projectRank(sim, id);
+    const roman = ['', 'I', 'II', 'III', 'IV', 'V'];
+    const body: (HTMLElement | string)[] = [];
+    // A rebuilt site's villager still has their say above what comes next.
+    if (rank > 0) body.push(h('p', { class: 'said' }, def.restoredLines.join(' ')));
+    if (stage) {
+      const check = canRebuild(sim, id);
+      const costs = stage.cost.items.map((c, i) =>
+        h(
+          'span',
+          { class: (have[i] ?? 0) >= c.count ? 'cost' : 'cost short' },
+          this.host.icon(c.item),
+          `${c.count} ${sim.content.item(c.item).name} (${have[i] ?? 0})`,
+        ),
+      );
+      costs.push(
+        h('span', { class: souls >= stage.cost.souls ? 'cost' : 'cost short' }, `${stage.cost.souls} souls`),
+      );
+      const label = stage.rank === 1 ? 'Rebuild' : `Raise to rank ${roman[stage.rank] ?? stage.rank}`;
+      body.push(
+        h('p', { class: 'description' }, stage.description),
         h('h3', {}, 'Needs'),
         h('div', { class: 'costs' }, ...costs),
         h('h3', {}, 'Gives'),
-        h('ul', { class: 'gives' }, ...def.effects.map((fx) => h('li', {}, effectText(fx)))),
+        h('ul', { class: 'gives' }, ...stage.effects.map((fx) => h('li', {}, effectText(fx)))),
         h(
           'button',
           {
@@ -116,9 +120,57 @@ export class RebuildScreen {
             title: check.ok ? '' : check.reason,
             onclick: () => this.host.act({ type: 'rebuild', project: id }),
           },
-          check.ok ? 'Rebuild' : check.reason,
+          check.ok ? label : check.reason,
+        ),
+      );
+    }
+    if (shop) body.push(this.shop(sim));
+    this.el.replaceChildren(
+      h(
+        'div',
+        { class: 'head' },
+        h('h2', { class: 'title' }, rank > 1 ? `${def.name}, rank ${roman[rank] ?? rank}` : def.name),
+        h('div', { class: 'souls' }, def.tier === 'major' ? 'Major project' : 'Village project'),
+        h('button', { class: 'quiet', onclick: () => this.close() }, 'Close (Esc)'),
+      ),
+      h('div', { class: 'body' }, ...body),
+    );
+  }
+
+  /** The Ember Gambler: one button per slot, the price, and the odds. */
+  private shop(sim: Simulation): HTMLElement {
+    const check = canGamble(sim);
+    const price = gamblePrice(sim);
+    const odds = sim.content.loot.gambler.odds;
+    const total = odds.reduce((n, [, w]) => n + w, 0);
+    const names = { weapon: 'Weapon', helmet: 'Helmet', chest: 'Chest', legs: 'Legs', ring: 'Ring' } as const;
+    return h(
+      'div',
+      { class: 'gambler' },
+      h('h3', {}, 'The Ember Gambler'),
+      h(
+        'p',
+        { class: 'description' },
+        `"Pick a slot, any slot. ${price} souls and it's yours, sight unseen." Item level ${gambleItemLevel(sim)}. Odds: ${odds
+          .map(([t, w]) => `${sim.content.loot.tiers[t].name} ${Math.round((w / total) * 100)}%`)
+          .join(', ')}.`,
+      ),
+      h(
+        'div',
+        { class: 'gamble-slots' },
+        ...GearSlotSchema.options.map((slot) =>
+          h(
+            'button',
+            {
+              disabled: !check.ok,
+              title: check.ok ? '' : check.reason,
+              onclick: () => this.host.act({ type: 'gamble', slot }),
+            },
+            names[slot],
+          ),
         ),
       ),
+      check.ok ? '' : h('p', { class: 'hint' }, check.reason),
     );
   }
 }

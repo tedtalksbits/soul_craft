@@ -34,7 +34,14 @@
     "bone_daggers": 27,
     "ashwood_bow": 28,
     "ember_staff": 29,
-    "warden_mark": 30
+    "warden_mark": 30,
+    "fire_oil": 31,
+    "bleeding_oil": 32,
+    "wardens_bane": 33,
+    "iron_axe": 34,
+    "iron_pickaxe": 35,
+    "steel_axe": 36,
+    "steel_pickaxe": 37
   },
   "animations": {}
 }

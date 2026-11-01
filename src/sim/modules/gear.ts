@@ -417,6 +417,28 @@ export function rollDrop(
   return withRolls(content, rng, item, tier, ilvl, seed, cls, blighted);
 }
 
+/**
+ * A piece for a chosen slot (the Gambler's), from its seed: the base by `drop` weight (a Legendary takes the
+ * slot's Legendary base), whether it is Blighted, then the perks.
+ */
+export function rollForSlot(
+  content: Content,
+  slot: GearSlot,
+  tier: TierId,
+  ilvl: number,
+  seed: number,
+  cls: string | null = null,
+): ItemStack | null {
+  const rng = new Rng(seed);
+  const bases = dropBases(content, false).get(slot);
+  if (!bases) return null;
+  const legendary = tier === 'legendary' ? dropBases(content, true).get(slot) : undefined;
+  const item = rng.weighted(legendary ?? bases);
+  const { blight } = content.loot;
+  const blighted = atLeast(tier, blight.tier) && rng.chance(blight.chance);
+  return withRolls(content, rng, item, tier, ilvl, seed, cls, blighted);
+}
+
 /** Rolls a tier from a drop table, honoring pity: after a long run of lesser drops, a good one comes. */
 export function rollTier(sim: Simulation, table: string): TierId {
   const { loot } = sim.content;

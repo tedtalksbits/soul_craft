@@ -96,6 +96,11 @@ export type SimEvent =
   | { type: 'tempered'; item: string }
   | { type: 'cleansed'; item: string }
   | { type: 'respecced'; points: number }
+  /** A weapon coated (and the coating wearing off), a project raised a rank, a gamble paid off. */
+  | { type: 'coated'; item: string; seconds: number }
+  | { type: 'coatingEnded' }
+  | { type: 'ranked'; project: string; rank: number }
+  | { type: 'gambled'; item: string; tier: TierId }
   | { type: 'stationOpened'; station: StationId }
   /** An ability's effects landed. (x, y) is the caster; (tx, ty) where it was aimed. */
   | { type: 'abilityUsed'; ability: string; slot: AbilitySlot; x: number; y: number; tx: number; ty: number }

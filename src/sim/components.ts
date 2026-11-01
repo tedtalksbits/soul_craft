@@ -5,7 +5,7 @@
  */
 import { defineComponent, type Entity } from '../core/ecs';
 import type { Dir } from '../core/math';
-import type { AbilitySlot, StatId, StationId, TierId } from '../content/schemas';
+import type { AbilitySlot, CoatingDef, StatId, StationId, TierId } from '../content/schemas';
 
 /** Collision box, centered on (x, y), in world pixels. */
 export interface Body {
@@ -295,6 +295,21 @@ export interface Pinned {
   ticks: number;
 }
 export const Pinned = defineComponent<Pinned>('pinned');
+
+/** The coating on the player's weapon (an alchemist's oil), and ticks before it wears off. */
+export interface Coating {
+  coating: CoatingDef;
+  item: string;
+  ticks: number;
+}
+export const Coating = defineComponent<Coating>('coating');
+
+/** An enemy on fire: `damage` every second for `ticks` more. */
+export interface Burning {
+  damage: number;
+  ticks: number;
+}
+export const Burning = defineComponent<Burning>('burning');
 
 /** Dagger Bleed on an enemy: `stacks` so far, lapsing `ticks` after the last hit added one. */
 export interface Bleed {

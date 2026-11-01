@@ -18,6 +18,9 @@ import {
   Ai,
   Ambush,
   Bleed,
+  Boss,
+  Burning,
+  Coating,
   Motion,
   Pinned,
   Projectile,
@@ -262,6 +265,9 @@ function shapeHit(
   const totals = gearTotals(sim.content, sim.ecs.get(sim.player, Equipment));
   const midAttack = TELEGRAPH_STATES.has(sim.ecs.get(target, Ai)?.state ?? '');
   let bonus = midAttack ? totals.midAttackDamage : 0;
+  // A Warden's Bane coating bites harder into bosses.
+  const coat = sim.ecs.get(sim.player, Coating)?.coating;
+  if (coat?.kind === 'warden' && sim.ecs.has(target, Boss)) bonus += coat.bonus;
   let crit = false;
   let knockback = 1;
   let mark = false;
@@ -360,6 +366,7 @@ export function strikeWith(sim: Simulation, e: Entity, p: Player): Body | null {
     if (sig.type === 'embers' && totals.bonkKnockback > 0)
       push(sim, target, body, numbers.knockback * totals.bonkKnockback);
     if (sig.type === 'flank') addBleed(sim, target, sig.bleed, numbers.damage, ambushed && roll.crit);
+    applyCoating(sim, target, numbers.damage);
   }
   return null;
 }
@@ -398,6 +405,18 @@ function addBleed(
     stamina.value = Math.min(stamina.max, stamina.value + totals.bleedStamina);
   }
   sim.events.emit({ type: 'weaponRule', rule: 'bleed', x: tb.x, y: tb.y });
+}
+
+/** A coated weapon's hit: the foe catches fire or bleeds (a Warden's Bane works in `shapeHit`). */
+function applyCoating(sim: Simulation, target: Entity, damage: number): void {
+  const coat = sim.ecs.get(sim.player, Coating)?.coating;
+  if (!coat || !sim.ecs.isAlive(target) || sim.ecs.has(target, Dying)) return;
+  if (coat.kind === 'fire') {
+    const burning = sim.ecs.get(target, Burning);
+    const ticks = Math.round(coat.seconds * TICK_RATE);
+    if (burning) Object.assign(burning, { damage: Math.max(burning.damage, coat.damage), ticks });
+    else sim.ecs.add(target, Burning, { damage: coat.damage, ticks });
+  } else if (coat.kind === 'bleed') addBleed(sim, target, coat, damage, false);
 }
 
 /** Extra damage a bleeding foe takes from everything, with the perk for it. */
@@ -538,6 +557,7 @@ function updateArrows(sim: Simulation): void {
       if (result !== 'hit') continue;
       sim.hitstop = Math.max(sim.hitstop, proj.bow.perfect ? 4 : 1);
       onWeaponHit(sim, target);
+      applyCoating(sim, target, proj.damage);
       if (proj.bow.explode) burst(sim, body.x, body.y, proj.bow.explode, proj.damage * 0.6, proj.bow.hit);
       if (sig.type !== 'pin') {
         if (proj.bow.pierce) continue;
@@ -734,6 +754,20 @@ function tickWeapons(sim: Simulation): void {
   for (const [e, mark] of sim.ecs.query(Marked)) if (--mark.ticks <= 0) sim.ecs.remove(e, Marked);
   for (const [e, bleed] of sim.ecs.query(Bleed)) if (--bleed.ticks <= 0) sim.ecs.remove(e, Bleed);
   for (const [e, pins] of sim.ecs.query(Pinned)) if (--pins.ticks <= 0) sim.ecs.remove(e, Pinned);
+  // Burning foes (a fire coating) take their damage once a second.
+  for (const [e, burning, tb] of sim.ecs.query(Burning, Body)) {
+    if (--burning.ticks <= 0) sim.ecs.remove(e, Burning);
+    if (burning.ticks % TICK_RATE !== 0 || sim.ecs.has(e, Dying)) continue;
+    applyDamage(sim, e, {
+      amount: Math.max(1, Math.round(burning.damage)),
+      crit: false,
+      fromX: tb.x,
+      fromY: tb.y,
+      knockback: 0,
+      unblockable: true,
+      charges: true,
+    });
+  }
   // Burning pins, with the bow perk: each lodged arrow scorches its foe once a second.
   const burn = gearTotals(sim.content, sim.ecs.get(sim.player, Equipment)).pinBurn;
   if (burn > 0 && sim.tick % TICK_RATE === 0) {

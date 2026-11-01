@@ -12,7 +12,32 @@
     },
     "effects": [{ "type": "maxFlasks", "amount": 1 }],
     "sprite": { "ruin": "well_ruin", "restored": "well" },
-    "restoredLines": ["The well runs clear again. Your flask can hold one more draught."]
+    "restoredLines": ["The well runs clear again. Your flask can hold one more draught."],
+    "ranks": [
+      {
+        "description": "Dig the well deeper and line it with stone: one more draught for your flask.",
+        "cost": {
+          "items": [
+            { "item": "ashwood", "count": 18 },
+            { "item": "stone", "count": 24 }
+          ],
+          "souls": 250
+        },
+        "effects": [{ "type": "maxFlasks", "amount": 1 }]
+      },
+      {
+        "description": "Bless the deep water with a Warden’s ember: one more draught again.",
+        "cost": {
+          "items": [
+            { "item": "ashwood", "count": 30 },
+            { "item": "stone", "count": 40 },
+            { "item": "warden_mark", "count": 1 }
+          ],
+          "souls": 600
+        },
+        "effects": [{ "type": "maxFlasks", "amount": 1 }]
+      }
+    ]
   },
   "storehouse": {
     "name": "The Storehouse",
@@ -27,7 +52,32 @@
     },
     "effects": [{ "type": "inventorySlots", "amount": 8 }],
     "sprite": { "ruin": "storehouse_ruin", "restored": "storehouse" },
-    "restoredLines": ["Shelves and sacks, stacked to the rafters. Your pack has room for eight more."]
+    "restoredLines": ["Shelves and sacks, stacked to the rafters. Your pack has room for eight more."],
+    "ranks": [
+      {
+        "description": "Add a loft and a counter. Eight more slots, and a peddler with a gambler’s eye has asked for the counter.",
+        "cost": {
+          "items": [
+            { "item": "ashwood", "count": 30 },
+            { "item": "stone", "count": 15 }
+          ],
+          "souls": 375
+        },
+        "effects": [{ "type": "inventorySlots", "amount": 8 }, { "type": "gambler" }]
+      },
+      {
+        "description": "A cellar under the floor, warded with a Warden’s ember: eight more slots.",
+        "cost": {
+          "items": [
+            { "item": "ashwood", "count": 50 },
+            { "item": "stone", "count": 25 },
+            { "item": "warden_mark", "count": 1 }
+          ],
+          "souls": 900
+        },
+        "effects": [{ "type": "inventorySlots", "amount": 8 }]
+      }
+    ]
   },
   "palisade": {
     "name": "The Palisade",
@@ -42,7 +92,32 @@
     },
     "effects": [{ "type": "safeRadius", "tiles": 40 }],
     "sprite": { "ruin": "palisade_ruin", "restored": "palisade" },
-    "restoredLines": ["The palisade stands. Nothing of the blight stirs this close to the village now."]
+    "restoredLines": ["The palisade stands. Nothing of the blight stirs this close to the village now."],
+    "ranks": [
+      {
+        "description": "Raise watchtowers on the wall: nothing of the blight stirs within sixty paces.",
+        "cost": {
+          "items": [
+            { "item": "ashwood", "count": 45 },
+            { "item": "stone", "count": 12 }
+          ],
+          "souls": 500
+        },
+        "effects": [{ "type": "safeRadius", "tiles": 60 }]
+      },
+      {
+        "description": "Set a Warden’s ember in the gate: eighty paces of peace.",
+        "cost": {
+          "items": [
+            { "item": "ashwood", "count": 75 },
+            { "item": "stone", "count": 20 },
+            { "item": "warden_mark", "count": 1 }
+          ],
+          "souls": 1200
+        },
+        "effects": [{ "type": "safeRadius", "tiles": 80 }]
+      }
+    ]
   },
   "lamps": {
     "name": "The Lamp Posts",
@@ -58,7 +133,34 @@
     },
     "effects": [{ "type": "light", "radius": 70 }],
     "sprite": { "ruin": "lamps_ruin", "restored": "lamps" },
-    "restoredLines": ["The lamps burn steady. The road east is lit."]
+    "restoredLines": ["The lamps burn steady. The road east is lit."],
+    "ranks": [
+      {
+        "description": "Glass the lanterns and trim the wicks: a wider pool of light.",
+        "cost": {
+          "items": [
+            { "item": "ashwood", "count": 9 },
+            { "item": "stone", "count": 9 },
+            { "item": "iron_scrap", "count": 6 }
+          ],
+          "souls": 150
+        },
+        "effects": [{ "type": "light", "radius": 100 }]
+      },
+      {
+        "description": "Feed the lamps a Warden’s ember: they burn wide and never gutter.",
+        "cost": {
+          "items": [
+            { "item": "ashwood", "count": 15 },
+            { "item": "stone", "count": 15 },
+            { "item": "iron_scrap", "count": 10 },
+            { "item": "warden_mark", "count": 1 }
+          ],
+          "souls": 360
+        },
+        "effects": [{ "type": "light", "radius": 130 }]
+      }
+    ]
   },
   "smithy": {
     "name": "The Smithy",

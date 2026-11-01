@@ -23,6 +23,7 @@ import { variantsModule } from './variants';
 import { perksModule } from './perks';
 import { weaponsModule } from './weapons';
 import { smithyModule } from './smithy';
+import { gamblerModule } from './gambler';
 
 /**
  * Every simulation feature, in registration order. Within a phase, systems
@@ -34,6 +35,7 @@ export const SIM_MODULES: readonly SimModule[] = [
   itemsModule,
   craftingModule,
   smithyModule,
+  gamblerModule,
   restorationModule,
   abilitiesModule,
   overshieldModule,

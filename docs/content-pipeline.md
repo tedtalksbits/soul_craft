@@ -107,6 +107,11 @@ swinging; a negative `lunge` steps back), and how it is drawn (`arc`,
 `minCharge` and `chargeMove` apply to every type. A perk with `weaponTypes` rolls only on
 weapons of those types.
 
+`restoration.json` projects can have `ranks`: rank II, III and so on, each `{ description, cost, effects }`, raised
+at the site like the first rebuild and adding to the effects before them. The `gambler` effect opens the Ember
+Gambler's shop at the site; `loot.json → gambler` sets the price per level band, the levels in a band, and the
+tier `odds`.
+
 `loot.json → smithy` prices the smithy's work: `salvage` (per tier, how many of each slot's three
 `materials`, plus one `mark` item from a Legendary; never souls), `temper` (souls and items, times a factor per
 tier, rising by `growth` per temper to at most `cap` times), `cleanse` (souls and items) and `infuse` (the share
@@ -119,7 +124,13 @@ attribute points count toward them.
 
 - `relic`: `unlocks` (`class` or `super`) and `source` (where it is found, shown on locked abilities). Taken on
   pickup, never carried; it only drops while its slot is still locked.
-- `consumable`: `effect` is `{ type: "heal", amount }` or `{ type: "buff", stat, amount, seconds }`.
+- `consumable`: `effect` is `{ type: "heal", amount }`, `{ type: "buff", stat, amount, seconds }` or a weapon coating,
+  `{ type: "coat", coating, seconds }`, where `coating` is `{ kind: "fire", damage, seconds }` (hits set foes
+  burning), `{ kind: "bleed", stacks, ticks, damage, stagger }` (hits stack Bleed) or `{ kind: "warden", bonus }`
+  (more damage to bosses). A new coating replaces the old one.
+- `tool`: `tool { kind, tier, power, yield }`, an `axe` or `pick`. It works from the pack (the best of each kind
+  carried counts): `power` extra hits a swing on tiles whose `cut.tool` matches, `yield` more item drops, and the
+  tile's `cut.toolDrops` up to its `tier`.
   Drinking one takes the flask's drink time. A second buff on the same stat refreshes the first.
 
 A buff's `stat` is `damage`, `defense`, `staminaRegen` (fractions: 0.2 = +20%) or `maxHp` (points).

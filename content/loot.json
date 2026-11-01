@@ -27,6 +27,16 @@
   "greater": { "tier": "noble", "chance": 0.05, "factor": 1.5 },
   "blight": { "tier": "rare", "chance": 0.04, "factor": 1.4 },
   "smartLoot": 0.85,
+  "gambler": {
+    "souls": 250,
+    "levelsPerBand": 8,
+    "odds": [
+      ["standard", 68],
+      ["rare", 25],
+      ["noble", 6],
+      ["legendary", 1]
+    ]
+  },
   "smithy": {
     "salvage": {
       "yields": {

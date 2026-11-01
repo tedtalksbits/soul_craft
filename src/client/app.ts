@@ -546,6 +546,22 @@ export class App {
         this.ui.banner(`${def.name.toUpperCase()} REBUILT`, 'good');
         return this.ui.dialog(def.restoredLines);
       }
+      case 'ranked': {
+        const def = this.content.restoration[e.project];
+        if (!def) return;
+        return this.ui.banner(
+          `${def.name.toUpperCase()}: RANK ${['', 'I', 'II', 'III', 'IV', 'V'][e.rank] ?? e.rank}`,
+          'good',
+        );
+      }
+      case 'coated':
+        return this.ui.toast(`${this.content.item(e.item).name}: your weapon is coated for ${e.seconds}s`);
+      case 'coatingEnded':
+        return this.ui.toast('The coating on your weapon has worn off.');
+      case 'gambled':
+        return this.ui.toast(
+          `The Gambler hands over: ${this.content.loot.tiers[e.tier].name} ${this.content.item(e.item).name}`,
+        );
       case 'rebuildFailed':
         return this.ui.toast(`Cannot rebuild: ${e.reason}`);
       case 'bossFightStarted':
