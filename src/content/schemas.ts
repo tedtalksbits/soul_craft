@@ -309,8 +309,8 @@ export const MoveSchema = z
      * `range` px. Reach and width don't apply.
      */
     shot: z.object({ speed: pos, range: pos }).optional(),
-    /** How the swing is drawn, and the body pose it uses. */
-    arc: z.enum(['slash', 'thrust', 'sweep', 'slam']),
+    /** How the swing is drawn (`bash` is a staff's blunt, ember-hot strike), and the body pose it uses. */
+    arc: z.enum(['slash', 'thrust', 'sweep', 'slam', 'bash']),
     pose: z.string().default('attack'),
   })
   .refine(
@@ -795,6 +795,11 @@ export const PlayerSchema = z.object({
   armor: z.object({ k: pos, cap: fraction }),
   /** Super energy, 0-100. Full charges the super; sword and ability hits fill it, the super's own hits don't. */
   energy: z.object({ perDamage: nonneg, perKill: nonneg, perSecond: nonneg }),
+  /**
+   * A class dash throws enemies off (not bosses): they keep aiming where it began until `lostTicks` after it ends, so a
+   * well-timed dash makes a lunge or an arrow miss instead of following the player to where they landed.
+   */
+  dodge: z.object({ lostTicks: ticks }),
 });
 export type PlayerDef = z.infer<typeof PlayerSchema>;
 

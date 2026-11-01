@@ -388,7 +388,8 @@
           "activeTo": 10,
           "hitstop": 3,
           "lunge": 0.3,
-          "arc": "slash"
+          "arc": "bash",
+          "pose": "cast_push"
         },
         {
           "damage": 1,
@@ -400,7 +401,8 @@
           "activeTo": 10,
           "hitstop": 3,
           "lunge": 0.3,
-          "arc": "slash"
+          "arc": "bash",
+          "pose": "cast_push"
         },
         {
           "damage": 1.2,
@@ -412,7 +414,8 @@
           "activeTo": 11,
           "hitstop": 4,
           "stagger": 15,
-          "arc": "slam"
+          "arc": "slam",
+          "pose": "cast_slam"
         }
       ],
       "chainWindow": 14,

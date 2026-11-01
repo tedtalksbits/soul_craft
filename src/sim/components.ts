@@ -176,6 +176,14 @@ export interface Decoy {
 }
 export const Decoy = defineComponent<Decoy>('decoy');
 
+/** Where the player's class dash began: enemies keep aiming there for `ticks` (they lost track of the player). */
+export interface Dodged {
+  x: number;
+  y: number;
+  ticks: number;
+}
+export const Dodged = defineComponent<Dodged>('dodged');
+
 /**
  * The player, unseen (Vanish), for `ticks`. `armed` turns on once the cast that made it is over;
  * attacking after that breaks it into an {@link Ambush}.

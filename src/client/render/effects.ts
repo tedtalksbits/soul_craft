@@ -463,6 +463,22 @@ export class Effects {
           alpha: 0.55 * fade,
         });
         return;
+      case 'bash': {
+        // A staff's blunt strike: a short, thick arc in ember colors, the head trailing sparks.
+        const a = base - 0.7 + f * 1.4;
+        const hx = cx + Math.cos(a) * reach * 0.85;
+        const hy = cy + Math.sin(a) * reach * 0.85;
+        g.arc(cx, cy, reach * 0.85, base - 0.7, a).stroke({ width: 4, color: 0xff8a3a, alpha: 0.45 * fade });
+        g.circle(hx, hy, 2.5).fill({ color: 0xffd27a, alpha: fade });
+        for (let i = 1; i <= 3; i++) {
+          const t = a - i * 0.22;
+          g.circle(cx + Math.cos(t) * reach * 0.85, cy + Math.sin(t) * reach * 0.85, 1.6 - i * 0.3).fill({
+            color: 0xffa040,
+            alpha: (0.8 - i * 0.2) * fade,
+          });
+        }
+        return;
+      }
       case 'slam': {
         const ix = cx + p.dirX * reach * 0.7;
         const iy = cy + p.dirY * reach * 0.7;

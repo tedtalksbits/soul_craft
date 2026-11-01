@@ -9,7 +9,10 @@
     "a": { "tile": "path", "entity": { "kind": "enemy", "archetype": "archer" } },
     "S": {
       "tile": "path",
-      "entity": { "kind": "sign", "lines": ["Scratched into the post: THE FLAME REMEMBERS WHAT WE FORGET."] }
+      "entity": {
+        "kind": "sign",
+        "lines": ["Scratched into the post: a tally of days. It stops at forty-one."]
+      }
     }
   },
   "rows": [

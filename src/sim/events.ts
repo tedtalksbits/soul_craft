@@ -30,7 +30,7 @@ export type SimEvent =
       y: number;
       dirX: number;
       dirY: number;
-      arc: 'slash' | 'thrust' | 'sweep' | 'slam';
+      arc: 'slash' | 'thrust' | 'sweep' | 'slam' | 'bash';
     }
   | { type: 'roll' }
   | { type: 'healed'; amount: number }

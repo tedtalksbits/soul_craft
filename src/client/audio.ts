@@ -46,6 +46,7 @@ export class Audio {
         // Heavier moves whoosh lower and longer.
         if (e.arc === 'slam') return this.burst(0.3, 500, 0.32, 'bandpass', [180, 900]);
         if (e.arc === 'sweep') return this.burst(0.26, 900, 0.28, 'bandpass', [400, 1800]);
+        if (e.arc === 'bash') return this.burst(0.16, 700, 0.26, 'bandpass', [260, 1300]);
         if (e.arc === 'thrust') return this.burst(0.1, 1800, 0.2, 'bandpass', [1200, 3400]);
         return this.burst(0.14, 1300, 0.22, 'bandpass', [700, 2800]);
       case 'chargeStarted':

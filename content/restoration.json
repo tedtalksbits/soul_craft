@@ -177,9 +177,9 @@
     "effects": [{ "type": "forgeSteps" }, { "type": "smithWork" }],
     "sprite": { "ruin": "smithy_ruin", "restored": "smithy" },
     "restoredLines": [
-      "SMITH: The fire's back, and so am I. Bring your blade to the forge.",
-      "SMITH: I can take it past what that old anvil managed. Two more tempers, if you've the iron for it.",
-      "SMITH: And bring me what you find out there. I can reroll a perk, or burn the blight off a cursed piece."
+      "SMITH: Forge is hot again. Bring me your blade.",
+      "SMITH: I can push it past what the old anvil could. Two more tempers, if you've got the iron.",
+      "SMITH: Bring me what you find out there, too. I can reroll a perk, or scrub the blight off a cursed piece."
     ]
   }
 }

@@ -39,7 +39,7 @@ import { modifiedCooldown, onCast } from './modifiers';
 import { grantOvershield } from './overshield';
 import { onAbilityUsed, spendMark } from './weapons';
 import { spawnProjectile } from './projectiles';
-import { clearStealth, spawnDecoy, veil } from './stealth';
+import { clearStealth, loseTrack, spawnDecoy, veil } from './stealth';
 import { abilityPower } from './progression';
 import { slotUnlocked } from './unlocks';
 
@@ -211,6 +211,7 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
           if (!inv) sim.ecs.add(e, Invulnerable, { ticks: fx.ticks + 2 });
           else inv.ticks = Math.max(inv.ticks, fx.ticks + 2);
         }
+        if (e === sim.player) loseTrack(sim, body, fx.ticks);
         tx = body.x + sim.ecs.need(e, Player).dirX * fx.distance;
         ty = body.y + sim.ecs.need(e, Player).dirY * fx.distance;
         break;

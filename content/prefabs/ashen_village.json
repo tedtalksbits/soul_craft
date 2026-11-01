@@ -8,8 +8,8 @@
       "entity": {
         "kind": "sign",
         "lines": [
-          "The roads lead out into lands that change with every waking flame.",
-          "Hollows wander the meadows. Archers keep the hills. Beware the knights who guard the old shrines, and the Warden in his keep to the north."
+          "The roads out of here never lead to the same place twice.",
+          "Hollows in the meadows, archers in the hills. Keep clear of the knights at the shrines, and of the keep up north."
         ]
       }
     },
@@ -29,8 +29,8 @@
       "entity": {
         "kind": "sign",
         "lines": [
-          "ASHEN VILLAGE. The bonfire here was kindled for you.",
-          "Rest to mend your wounds. The Hollow rise again whenever you do.",
+          "ASHEN VILLAGE.",
+          "Resting at the bonfire heals you. It also brings the Hollow back.",
           "Your class gives you three powers: a blast, a class art, and a super that charges as you fight. Open your pack and read Abilities to learn them.",
           "At the bonfire you may take up another class. Pause the game to see every control, or to change them in Settings."
         ]

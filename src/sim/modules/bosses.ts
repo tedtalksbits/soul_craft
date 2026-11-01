@@ -78,8 +78,10 @@ function endFight(sim: Simulation): void {
 function confine(sim: Simulation): void {
   const fight = sim.state.bossFight;
   if (!fight) return;
+  // Only this fight's boss: another one still loaded nearby (the Warden, during Grub's fight) stays in its keep.
   const held: Entity[] = [sim.player];
-  for (const [e] of sim.ecs.query(Boss)) held.push(e);
+  const boss = bossEntity(sim);
+  if (boss !== undefined) held.push(boss);
   for (const [e] of sim.ecs.query(Minion)) held.push(e);
   for (const e of held) {
     const b = sim.ecs.get(e, Body);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   Abilities,
+  Ai,
   Body,
   Bonfire,
   Empowered,
@@ -192,6 +193,25 @@ describe('class abilities', () => {
     const fx = dash.effects[0];
     if (fx?.type !== 'dash') throw new Error('shadowstep is a dash');
     expect(pb.x - start).toBeCloseTo(fx.distance, 0);
+  });
+
+  it('throws off a winding-up enemy: it lunges where the dash began, then finds the player again', () => {
+    const sim = asClass('stalker');
+    const hollow = spawnNear(sim, 'hollow', 0, -30);
+    const brain = content.enemy('hollow').brain;
+    if (brain.type !== 'lunger') throw new Error('the hollow lunges');
+    const ai = sim.ecs.need(hollow, Ai);
+    Object.assign(ai, { state: 'windup', t: brain.windupTicks - 6 });
+    cast(sim, 'classAbility', 6, 100);
+    expect(ai.state).toBe('lunge');
+    // Straight down at the empty spot, not off to the right where the player went.
+    expect(Math.abs(ai.dirX)).toBeLessThan(0.05);
+    const fx = content.ability('shadowstep').effects[0];
+    if (fx?.type !== 'dash') throw new Error('shadowstep is a dash');
+    run(sim, fx.ticks + content.player.dodge.lostTicks);
+    Object.assign(ai, { state: 'windup', t: brain.windupTicks - 1 });
+    run(sim, 2);
+    expect(ai.dirX).toBeGreaterThan(0.5);
   });
 
   it('Shield Charge staggers what it runs into', () => {

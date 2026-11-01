@@ -47,5 +47,6 @@
     }
   },
   "armor": { "k": 60, "cap": 0.75 },
-  "energy": { "perDamage": 0.12, "perKill": 2, "perSecond": 0.25 }
+  "energy": { "perDamage": 0.12, "perKill": 2, "perSecond": 0.25 },
+  "dodge": { "lostTicks": 24 }
 }

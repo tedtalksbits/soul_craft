@@ -113,6 +113,22 @@ describe('the Road Camp', () => {
     expect(here.map(([, e]) => e.archetype)).toEqual(['grub']);
   });
 
+  it('leaves the Warden in its keep when Grub’s fight starts with the keep still loaded', () => {
+    const sim = newSim();
+    const fixed = sim.world.gen.fixedPlacements();
+    const camp = fixed.find((p) => p.prefabId === 'road_camp')!;
+    const keep = fixed.find((p) => p.prefabId === 'warden_arena')!;
+    const pb = sim.ecs.need(sim.player, Body);
+    Object.assign(pb, { x: (keep.x0 + 12) * TILE, y: (keep.y0 + keep.h + 6) * TILE });
+    run(sim, 2);
+    const warden = () => [...sim.ecs.query(Enemy, Body)].find(([, e]) => e.archetype === 'ashen_warden')![2];
+    const home = { x: warden().x, y: warden().y };
+    Object.assign(pb, { x: (camp.x0 + 14) * TILE, y: (camp.y0 + 7) * TILE });
+    run(sim, 2);
+    expect(sim.state.bossFight?.boss).toBe('grub');
+    expect({ x: warden().x, y: warden().y }).toEqual(home);
+  });
+
   it('sits west of the village on the old road, inside its region, with the camp to clear', () => {
     const sim = newSim();
     const placed = sim.world.gen.fixedPlacements().find((p) => p.prefabId === 'road_camp')!;

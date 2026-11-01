@@ -7,10 +7,7 @@
     "B": { "tile": "flagstone", "entity": { "kind": "bonfire", "name": "Wayshrine" } },
     "S": {
       "tile": "flagstone",
-      "entity": {
-        "kind": "sign",
-        "lines": ["A worn waymarker, its letters cut deep against the ash.", "{village}"]
-      }
+      "entity": { "kind": "sign", "lines": ["A waymarker. Most of the letters have worn away.", "{village}"] }
     }
   },
   "rows": [

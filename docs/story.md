@@ -143,14 +143,16 @@ Each has a few lines when they come back, and something new to say as the villag
 
 ## Text in the game that would change
 
+The signs and Maren's lines were rewritten plainer after a playtest (2026-11-01): the village sign is just its name,
+the road sign says the roads "never lead to the same place twice", and the Hollow Camp post shows a tally of days
+instead of a motto. Lines that state the theme outright ("an oath is a memory with a purpose") read as cheesy in
+play; let the details carry it.
+
 Nothing below has been changed yet. Once this draft is agreed, these become memory, not fire:
 
 | Where                   | Now                                                | Would become (proposal)                                                             |
 | ----------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Title screen            | "kindle the flame, and walk the waking lands"      | "remember, and walk the lands that forget"                                          |
-| Village sign            | "The bonfire here was kindled for you."            | "Someone here still remembers you."                                                 |
-| Road sign               | "...lands that change with every waking flame."    | "...lands that are never quite the same twice."                                     |
-| Hollow Camp post        | "THE FLAME REMEMBERS WHAT WE FORGET."              | Keep: it already says it.                                                           |
 | Oath Ember (relic)      | "A guardian's sworn flame."                        | **Knight's Oath**: "The last thing a shrine knight remembered."                     |
 | Sovereign Ember (relic) | "A flame that answers to no one."                  | **Warden's Will**: "What the Warden held onto longest."                             |
 | Warden's Kindling       | "Carried home, it can relight the village smithy." | **Remnant of the Forge**: "Bring it home and the smith will remember the way back." |

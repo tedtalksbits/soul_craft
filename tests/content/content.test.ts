@@ -143,3 +143,22 @@ describe('sprite sheets', () => {
     for (const n of names) expect(existsSync(join(SPRITES, `${n}.json`)), n).toBe(true);
   });
 });
+
+describe('weapon moves', () => {
+  it('give each weapon type its own look: a staff strikes with its own pose and arc, not the sword’s', () => {
+    const sword = content.weapons.types['sword'];
+    const staff = content.weapons.types['staff'];
+    const look = (m: { pose: string; arc: string }) => `${m.pose}/${m.arc}`;
+    const swordLooks = new Set(sword.chain.map(look));
+    expect(staff.chain.filter((m) => swordLooks.has(look(m)))).toEqual([]);
+  });
+
+  it('only name poses the player sheet has', () => {
+    const sheet = JSON.parse(readFileSync(join(SPRITES, 'player.json'), 'utf8')) as {
+      animations: Record<string, unknown>;
+    };
+    const moves = Object.values(content.weapons.types).flatMap((t) => [...t.chain, t.charged, t.dash]);
+    const missing = moves.map((m) => m.pose).filter((pose) => !(`${pose}_down` in sheet.animations));
+    expect(missing).toEqual([]);
+  });
+});

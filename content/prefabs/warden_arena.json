@@ -11,10 +11,7 @@
     "F": { "tile": "stone_floor", "entity": { "kind": "bonfire", "name": "Keep Gate" } },
     "S": {
       "tile": "stone_floor",
-      "entity": {
-        "kind": "sign",
-        "lines": ["Beyond lies the Ashen Warden, who keeps the last Kindling.", "{village}"]
-      }
+      "entity": { "kind": "sign", "lines": ["The keep. The door is barred from the inside.", "{village}"] }
     }
   },
   "rows": [

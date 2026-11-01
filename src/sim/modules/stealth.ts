@@ -4,7 +4,7 @@
  * to go after; combat asks {@link takeAmbush} for the bonus.
  */
 import type { EnemyDef } from '../../content/schemas';
-import { Ai, Ambush, Body, Decoy, Dying, Enemy, Facing, Player, Sprite, Veiled } from '../components';
+import { Ai, Ambush, Body, Decoy, Dodged, Dying, Enemy, Facing, Player, Sprite, Veiled } from '../components';
 import { TICK_RATE } from '../constants';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
@@ -36,6 +36,12 @@ export function veil(sim: Simulation, seconds: number, bonus: number): void {
   sim.events.emit({ type: 'veiled', seconds });
 }
 
+/** A dash starting from `from`: enemies aim at that spot until `lostTicks` after the dash's `ticks` end. */
+export function loseTrack(sim: Simulation, from: Body, ticks: number): void {
+  const lost = ticks + sim.content.player.dodge.lostTicks;
+  sim.ecs.add(sim.player, Dodged, { x: from.x, y: from.y, ticks: lost });
+}
+
 /** Ends the veil without an ambush (the player was hit, or rested). */
 export function unveil(sim: Simulation): void {
   if (!sim.ecs.has(sim.player, Veiled)) return;
@@ -60,7 +66,8 @@ export interface Target {
 
 /**
  * What an enemy goes after: the nearest decoy it can see, else the player, unless the player is
- * dead or veiled and not right beside it. Bosses always go after the player.
+ * dead or veiled and not right beside it. Just after a class dash it still aims where the dash began. Bosses
+ * always go after the player, and are not thrown off by a dash.
  */
 export function enemyTarget(sim: Simulation, def: EnemyDef, body: Body): Target {
   const { ecs } = sim;
@@ -77,7 +84,10 @@ export function enemyTarget(sim: Simulation, def: EnemyDef, body: Body): Target 
   const dist = Math.hypot(pb.x - body.x, pb.y - body.y);
   const dead = ecs.need(sim.player, Player).state === 'dead';
   const hidden = ecs.has(sim.player, Veiled) && dist > VEIL_REVEAL;
-  return { x: pb.x, y: pb.y, sees: !dead && !hidden && dist < def.aggroRange };
+  const sees = !dead && !hidden && dist < def.aggroRange;
+  const dodged = ecs.get(sim.player, Dodged);
+  if (dodged && !def.boss) return { x: dodged.x, y: dodged.y, sees };
+  return { x: pb.x, y: pb.y, sees };
 }
 
 /**
@@ -120,6 +130,8 @@ function tick(sim: Simulation): void {
   }
   const ambush = ecs.get(p, Ambush);
   if (ambush && --ambush.ticks <= 0) ecs.remove(p, Ambush);
+  const dodged = ecs.get(p, Dodged);
+  if (dodged && --dodged.ticks <= 0) ecs.remove(p, Dodged);
 }
 
 /** Resting clears decoys and the veil. */
@@ -127,6 +139,7 @@ export function clearStealth(sim: Simulation): void {
   for (const [e] of sim.ecs.query(Decoy)) sim.ecs.destroy(e);
   sim.ecs.remove(sim.player, Veiled);
   sim.ecs.remove(sim.player, Ambush);
+  sim.ecs.remove(sim.player, Dodged);
 }
 
 // After the player acts (control), so an attack started this tick breaks the veil before it lands (combat).
