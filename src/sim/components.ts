@@ -57,7 +57,8 @@ export interface Invulnerable {
 }
 export const Invulnerable = defineComponent<Invulnerable>('invulnerable');
 
-export type PlayerStateName = 'free' | 'attack' | 'roll' | 'hurt' | 'drink' | 'sit' | 'dead' | 'cast';
+export type PlayerStateName =
+  'free' | 'attack' | 'charge' | 'roll' | 'hurt' | 'drink' | 'sit' | 'dead' | 'cast';
 export interface Player {
   state: PlayerStateName;
   /** Ticks spent in the current state. */
@@ -239,6 +240,37 @@ export interface PerkState {
   refundedRoll: number;
 }
 export const PerkState = defineComponent<PerkState>('perkState');
+
+/**
+ * The player's weapon moves: which move is under way, the chain, the charge, and the windows the
+ * weapon types' rules open. Added the first time the player attacks, so older saves still load.
+ */
+export interface Swing {
+  /** A step of the light chain, the charged attack, or the dash-strike out of a roll. */
+  move: 'chain' | 'charged' | 'dash';
+  step: number;
+  /** How full the charge was when it was let go, 0..1. Full (1) brings its payoff. */
+  charge: number;
+  /** Ticks left in which a tap continues the chain, and the step it continues with. */
+  comboTicks: number;
+  nextStep: number;
+  /** The tick the last roll ended on, for dash-strikes. */
+  rollEndedAt: number;
+  /** Flow (sword): until this tick, a light hit crits and refunds a roll's stamina. */
+  flowUntil: number;
+  /** This move's shockwave has gone out. */
+  shockwave: boolean;
+  /** The attack button has been held since the move began (a tap held long enough becomes a charge). */
+  held: boolean;
+}
+export const Swing = defineComponent<Swing>('swing');
+
+/** Marked by a sworn spear's tipper: the next ability hit staggers it for `stagger` ticks. */
+export interface Marked {
+  ticks: number;
+  stagger: number;
+}
+export const Marked = defineComponent<Marked>('marked');
 
 /**
  * One inventory slot: an item, how many, its forge upgrade level, and for gear, its rolls. Gear without

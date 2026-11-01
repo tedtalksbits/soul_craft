@@ -43,6 +43,63 @@
       "slots": ["weapon"]
     },
     "souls": { "text": "+{v} souls from kills", "stat": "souls", "value": 0.1, "slots": ["weapon", "ring"] },
+    "finisherDamage": {
+      "text": "Chain finishers deal {v} more",
+      "stat": "finisherDamage",
+      "value": 0.3,
+      "slots": ["weapon"],
+      "weaponTypes": ["sword"]
+    },
+    "midAttackDamage": {
+      "text": "+{v} damage to foes mid-attack",
+      "stat": "midAttackDamage",
+      "value": 0.25,
+      "slots": ["weapon"],
+      "weaponTypes": ["sword", "hammer"]
+    },
+    "flowEnergy": {
+      "text": "Flow crits give {v} super energy",
+      "stat": "flowEnergy",
+      "value": 8,
+      "integer": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["sword"]
+    },
+    "tipperDamage": {
+      "text": "Tipper hits deal {v} more",
+      "stat": "tipperDamage",
+      "value": 0.25,
+      "slots": ["weapon"],
+      "weaponTypes": ["spear"]
+    },
+    "reach": {
+      "text": "+{v} reach",
+      "stat": "reach",
+      "value": 0.12,
+      "slots": ["weapon"],
+      "weaponTypes": ["spear", "sword"]
+    },
+    "chargeSpeed": {
+      "text": "Charged attacks are ready {v} sooner",
+      "stat": "chargeSpeed",
+      "value": 0.2,
+      "slots": ["weapon"],
+      "weaponTypes": ["sword", "spear", "hammer"]
+    },
+    "stagger": {
+      "text": "Hits stagger {v} longer",
+      "stat": "stagger",
+      "value": 0.3,
+      "slots": ["weapon"],
+      "weaponTypes": ["hammer", "spear"]
+    },
+    "crushDamage": {
+      "text": "Crushes deal {v} more",
+      "stat": "crushDamage",
+      "value": 0.3,
+      "slots": ["weapon"],
+      "weaponTypes": ["hammer"]
+    },
     "vigor": {
       "text": "+{v} Vigor",
       "stat": "vigor",

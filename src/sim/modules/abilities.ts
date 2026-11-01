@@ -37,6 +37,7 @@ import { applyDamage, rollDamage } from './combat';
 import { FULL_ENERGY, gainEnergy } from './energy';
 import { modifiedCooldown, onCast } from './modifiers';
 import { grantOvershield } from './overshield';
+import { spendMark } from './weapons';
 import { spawnProjectile } from './projectiles';
 import { clearStealth, spawnDecoy, veil } from './stealth';
 import { abilityPower } from './progression';
@@ -360,6 +361,7 @@ function abilityDamage(sim: Simulation, target: Entity, fromX: number, fromY: nu
     ability: hit.ability,
   });
   if (result === 'hit' && hit.stagger > 0) stagger(sim, target, hit.stagger);
+  if (result === 'hit') spendMark(sim, target);
   return result;
 }
 

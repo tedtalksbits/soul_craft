@@ -355,6 +355,42 @@ ICONS['potion_breath'] = [  # tall slender vial
     "................",
     "................",
 ]
+ICONS['ashwood_spear'] = [
+    "..............I.",
+    ".............Ii6",
+    "............Iii6",
+    "...........iii6.",
+    "..........ii66..",
+    ".........a6.....",
+    "........aA......",
+    ".......aA1......",
+    "......aA1.......",
+    ".....aA1........",
+    "....aA1.........",
+    "...aA1..........",
+    "..aA1...........",
+    ".aA1............",
+    ".a1.............",
+    "................",
+]
+ICONS['stone_maul'] = [
+    "................",
+    "....tttttt......",
+    "...tTTttttt(....",
+    "..tTTtttttt((...",
+    "..tTtttttttt(...",
+    "..ttttttttt((...",
+    "...t(((a((((....",
+    "......aA1.......",
+    "......aA1.......",
+    "......aA1.......",
+    "......lL0.......",
+    "......lL0.......",
+    "......aA1.......",
+    "......aA1.......",
+    "......a11.......",
+    "................",
+]
 ICONS['bone_cleaver'] = [
     "................",
     "................",
@@ -504,7 +540,7 @@ ORDER = ['ashwood', 'fungal_cap', 'glowspore', 'iron_scrap', 'bone_shard', 'slim
          'chipped_sword', 'iron_sword', 'bone_cleaver', 'padded_jacket', 'iron_mail',
          'ring_vigor', 'ring_breath', 'bandage', 'potion_ember', 'potion_stone', 'potion_breath',
          'stone', 'kindling', 'relic_oath', 'relic_sovereign',
-         'ashen_hood', 'iron_helm', 'wanderers_wraps', 'iron_greaves']
+         'ashen_hood', 'iron_helm', 'wanderers_wraps', 'iron_greaves', 'ashwood_spear', 'stone_maul']
 
 # ---------------------------------------------------------------- shading and outline
 def paint(rows):

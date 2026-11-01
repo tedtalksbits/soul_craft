@@ -17,6 +17,7 @@ import {
   type ProjectileKind,
 } from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
+import { chargeTicks, currentMove, moveNumbers } from '../../sim/modules/weapons';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
 import { abilityPalette } from './class-palette';
@@ -25,7 +26,6 @@ import { PixelText } from './pixel-text';
 
 const MAX_PARTICLES = 700;
 const FRAME_MS = 1000 / 60;
-const SLASH_MS = 170;
 /** Which sprite sheet each projectile kind is fired from (its release pivots set the flight height). */
 const PROJECTILE_SHEET: Readonly<Record<ProjectileKind, string>> = { arrow: 'archer', knife: 'player' };
 /** Shimmer color behind loot flying to the player. */
@@ -176,6 +176,23 @@ export class Effects {
       case 'swing':
         this.slash = { ageMs: 0, dirX: e.dirX, dirY: e.dirY };
         return;
+      case 'shockwave':
+        this.burst(e.x, e.y, { count: 28, color: 0xc8b48a, speed: 2.2, size: 2, life: 30, z: 2, vz: 0.6 });
+        this.shake = Math.min(9, this.shake + 5);
+        return;
+      case 'weaponRule': {
+        const color =
+          e.rule === 'tipper'
+            ? 0xbfe8ff
+            : e.rule === 'crush'
+              ? 0xe8b070
+              : e.rule === 'flow'
+                ? 0xfff0a0
+                : 0xd0a0ff;
+        this.burst(e.x, e.y, { count: 10, color, speed: 1.6, size: 2, life: 22, z: 6, vz: 0.8 });
+        if (e.rule === 'crush') this.shake = Math.min(8, this.shake + 3);
+        return;
+      }
       case 'bonfireLit':
       case 'rested':
         return;
@@ -341,28 +358,71 @@ export class Effects {
     }
   }
 
+  /**
+   * The weapon's swing, timed to the move's active window (a hammer winds up long before it lands): a
+   * slash arc, a thrust line, a full sweep, or a slam's ring where it lands. A charge glints brighter
+   * as it fills.
+   */
   private drawSlash(sim: Simulation, dtMs: number): void {
     const g = this.slashG;
     g.clear();
-    if (!this.slash) return;
-    this.slash.ageMs += dtMs;
     const p = sim.ecs.get(sim.player, Player);
     const b = sim.ecs.get(sim.player, Body);
-    if (!p || !b || p.state !== 'attack' || this.slash.ageMs > SLASH_MS) {
-      this.slash = null;
-      return;
-    }
-    const f = Math.min(1, this.slash.ageMs / (SLASH_MS * 0.6));
-    const base = Math.atan2(this.slash.dirY, this.slash.dirX);
-    const a = base - 1.3 + f * 2.6;
+    if (!p || !b) return;
     const sheet = this.assets.sheet(sim.ecs.get(sim.player, SpriteDef)?.sheet ?? '');
     const [px, py] = sheet?.def.pivots['swing'] ?? DEFAULT_SWING_PIVOT;
     const cx = Math.round(b.x + px);
     const cy = Math.round(b.y + b.h / 2 + py);
-    g.moveTo(cx, cy)
-      .lineTo(cx + Math.cos(a) * 15, cy + Math.sin(a) * 15)
-      .stroke({ width: 2, color: 0xe4e8ea });
-    g.arc(cx, cy, 14, base - 1.3, a).stroke({ width: 3, color: 0xfff0d2, alpha: 0.5 * (1 - f * 0.5) });
+    if (p.state === 'charge') {
+      const fill = Math.min(1, p.t / chargeTicks(sim));
+      const pulse = fill >= 1 ? 0.6 + 0.4 * Math.sin(p.t / 4) : fill * 0.6;
+      g.circle(cx + p.dirX * 6, cy + p.dirY * 6, 2 + fill * 3).fill({ color: 0xffe2a0, alpha: pulse });
+      return;
+    }
+    if (!this.slash || p.state !== 'attack') {
+      this.slash = null;
+      return;
+    }
+    this.slash.ageMs += dtMs;
+    const move = currentMove(sim);
+    if (p.t < move.activeFrom - 1 || p.t > move.activeTo + 4) return;
+    const f = Math.min(1, Math.max(0, (p.t - move.activeFrom + 1) / (move.activeTo - move.activeFrom + 2)));
+    const fade = p.t > move.activeTo ? 1 - (p.t - move.activeTo) / 5 : 1;
+    const reach = Math.max(12, moveNumbers(sim, move).reach + 4);
+    const base = Math.atan2(p.dirY, p.dirX);
+    switch (move.arc) {
+      case 'slash': {
+        const a = base - 1.3 + f * 2.6;
+        g.moveTo(cx, cy)
+          .lineTo(cx + Math.cos(a) * reach, cy + Math.sin(a) * reach)
+          .stroke({ width: 2, color: 0xe4e8ea, alpha: fade });
+        g.arc(cx, cy, reach - 1, base - 1.3, a).stroke({ width: 3, color: 0xfff0d2, alpha: 0.5 * fade });
+        return;
+      }
+      case 'thrust': {
+        const len = reach * (0.4 + 0.6 * f);
+        g.moveTo(cx, cy)
+          .lineTo(cx + p.dirX * len, cy + p.dirY * len)
+          .stroke({ width: 3, color: 0xfff0d2, alpha: 0.6 * fade });
+        g.moveTo(cx, cy)
+          .lineTo(cx + p.dirX * len, cy + p.dirY * len)
+          .stroke({ width: 1, color: 0xffffff, alpha: fade });
+        return;
+      }
+      case 'sweep':
+        g.arc(cx, cy, reach, base, base + f * Math.PI * 2).stroke({
+          width: 3,
+          color: 0xfff0d2,
+          alpha: 0.55 * fade,
+        });
+        return;
+      case 'slam': {
+        const ix = cx + p.dirX * reach * 0.7;
+        const iy = cy + p.dirY * reach * 0.7;
+        g.circle(ix, iy, 4 + f * 10).stroke({ width: 2, color: 0xe8d8b0, alpha: 0.7 * fade });
+        return;
+      }
+    }
   }
 
   private drawProjectiles(sim: Simulation): void {

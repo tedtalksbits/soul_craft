@@ -1,16 +1,14 @@
 /**
- * Player controller: a small state machine (free, attack, roll, hurt, drink,
- * sit, dead) driven by InputFrames, with stamina gating and input buffering
+ * Player controller: a small state machine (free, attack, charge, roll, hurt,
+ * drink, sit, dead, cast) driven by InputFrames, with stamina gating and input buffering
  * so a press slightly before recovery ends still comes out.
  */
 import type { Entity } from '../../core/ecs';
-import { DIR_VEC, dirFromVec, lerp, normalize, overlaps, type Box } from '../../core/math';
+import { DIR_VEC, dirFromVec, lerp, normalize, type Box } from '../../core/math';
 import { CommandError } from '../../core/commands';
 import {
   Body,
-  Dying,
   Empowered,
-  Enemy,
   Equipment,
   Facing,
   Health,
@@ -26,14 +24,27 @@ import {
 import { TILE } from '../constants';
 import { Action } from '../input';
 import type { SimCommand, SimModule } from '../module';
-import { bodyBox } from '../physics';
 import type { Simulation } from '../simulation';
 import { pressedSlot, refreshAbilities, giveStartingClass, startCast, updateCast } from './abilities';
-import { applyDamage, rollDamage } from './combat';
+import { applyDamage } from './combat';
 import { giveStartingAttributes } from './progression';
 import { interact } from './interaction';
 import { beginUse, finishUse, flaskCapacity, giveStartingKit, playerStats, syncVitals } from './items';
-import { onRest, onWeaponHit } from './perks';
+import { onRest } from './perks';
+import {
+  attackBox as weaponAttackBox,
+  chargeTicks,
+  chooseMove,
+  currentMove,
+  endMove,
+  lungeBlocked,
+  moveNumbers,
+  releaseCharge,
+  rollEnded,
+  slamShockwave,
+  strikeWith,
+  swingOf,
+} from './weapons';
 import { resetEnemies } from './streaming';
 import { strikeTiles } from './terrain';
 
@@ -78,21 +89,9 @@ export function spawnPlayer(sim: Simulation, x: number, y: number, playerClass?:
   return e;
 }
 
-/** The sword's hit box while a swing is active, else null. Exposed for debug overlays. */
+/** The weapon's hit box while a move is active, else null. Exposed for debug overlays. */
 export function attackBox(sim: Simulation, e: Entity): Box | null {
-  const p = sim.ecs.get(e, Player);
-  const body = sim.ecs.get(e, Body);
-  if (!p || !body || p.state !== 'attack') return null;
-  const a = sim.content.player.attack;
-  if (p.t < a.activeFrom || p.t > a.activeTo) return null;
-  const { reach, width } = playerStats(sim, e);
-  const ax = Math.abs(p.dirX);
-  const ay = Math.abs(p.dirY);
-  const w = ax * reach + ay * width;
-  const h = ax * width + ay * reach;
-  const cx = body.x + p.dirX * (body.w / 2 + reach / 2);
-  const cy = body.y + p.dirY * (body.h / 2 + reach / 2);
-  return { x: cx - w / 2, y: cy - h / 2, w, h };
+  return weaponAttackBox(sim, e);
 }
 
 function updatePlayer(sim: Simulation): void {
@@ -110,7 +109,7 @@ function updatePlayer(sim: Simulation): void {
 
   p.t++;
   if (stamina.delay > 0) stamina.delay--;
-  else if (p.state !== 'roll' && p.state !== 'attack')
+  else if (p.state !== 'roll' && p.state !== 'attack' && p.state !== 'charge')
     stamina.value = Math.min(stamina.max, stamina.value + playerStats(sim, e).staminaRegen);
 
   if (p.state === 'dead') {
@@ -122,7 +121,7 @@ function updatePlayer(sim: Simulation): void {
   let [mx, my] = [input.moveX, input.moveY];
   if (Math.hypot(mx, my) > 1) [mx, my] = normalize(mx, my);
 
-  if (p.state !== 'free') {
+  if (p.state !== 'free' && p.state !== 'charge') {
     const early = input.pressed & (Action.attack | Action.roll);
     if (early) p.buffered = { action: early & Action.roll ? Action.roll : Action.attack, age: 0 };
   }
@@ -150,11 +149,34 @@ function updatePlayer(sim: Simulation): void {
       else if (act & Action.use) interact(sim);
       break;
     }
-    case 'attack':
-      motion.vx *= 0.6;
-      motion.vy *= 0.6;
-      if (p.t >= def.attack.activeFrom && p.t <= def.attack.activeTo) strike(sim, e, p);
-      if (p.t >= def.attack.duration) setState(p, 'free');
+    case 'attack': {
+      const move = currentMove(sim);
+      const swing = swingOf(sim);
+      if (!(input.held & Action.attack)) swing.held = false;
+      // A tap still held when the swing would land becomes a charge instead.
+      if (swing.move === 'chain' && swing.held && p.t === move.activeFrom) {
+        setState(p, 'charge');
+        sim.events.emit({ type: 'chargeStarted' });
+        break;
+      }
+      if (p.t <= move.activeTo && move.lunge > 0 && !lungeBlocked(sim, p)) {
+        motion.vx = p.dirX * move.lunge;
+        motion.vy = p.dirY * move.lunge;
+      } else {
+        motion.vx *= 0.6;
+        motion.vy *= 0.6;
+      }
+      // A blow turned by a shield bounces the player out of the move.
+      if (p.t >= move.activeFrom && p.t <= move.activeTo && strike(sim, e, p)) break;
+      slamShockwave(sim, e, p);
+      if (p.t >= move.duration) {
+        endMove(sim);
+        setState(p, 'free');
+      }
+      break;
+    }
+    case 'charge':
+      updateCharge(sim, e, p, facing, stamina, mx, my);
       break;
     case 'roll': {
       const rollStats = playerStats(sim, e);
@@ -172,7 +194,10 @@ function updatePlayer(sim: Simulation): void {
         if (!inv) ecs.add(e, Invulnerable, { ticks });
         else inv.ticks = Math.max(inv.ticks, ticks);
       }
-      if (p.t >= def.roll.duration) setState(p, 'free');
+      if (p.t >= def.roll.duration) {
+        setState(p, 'free');
+        rollEnded(sim);
+      }
       break;
     }
     case 'hurt':
@@ -213,8 +238,8 @@ function setState(p: Player, state: Player['state']): void {
   p.t = 0;
 }
 
-function startAttack(sim: Simulation, e: Entity, p: Player, facing: Facing, stamina: Stamina): void {
-  const def = sim.content.player;
+/** Turns the player toward the aim (or keeps their facing) for a move. */
+function aimMove(sim: Simulation, e: Entity, p: Player, facing: Facing): void {
   const body = sim.ecs.need(e, Body);
   const aim = sim.input.aim;
   const [dx, dy] = aim ? normalize(aim.x - body.x, aim.y - body.y) : DIR_VEC[facing.dir];
@@ -223,11 +248,64 @@ function startAttack(sim: Simulation, e: Entity, p: Player, facing: Facing, stam
     p.dirY = dy;
     facing.dir = dirFromVec(dx, dy, facing.dir);
   } else [p.dirX, p.dirY] = DIR_VEC[facing.dir];
-  stamina.value -= playerStats(sim, e).staminaCost;
+}
+
+function emitSwing(sim: Simulation, e: Entity, p: Player): void {
+  const body = sim.ecs.need(e, Body);
+  const move = currentMove(sim);
+  sim.events.emit({ type: 'swing', x: body.x, y: body.y, dirX: p.dirX, dirY: p.dirY, arc: move.arc });
+}
+
+function startAttack(sim: Simulation, e: Entity, p: Player, facing: Facing, stamina: Stamina): void {
+  aimMove(sim, e, p, facing);
+  chooseMove(sim);
+  stamina.value -= moveNumbers(sim).staminaCost;
+  stamina.delay = sim.content.player.staminaRegenDelay;
+  p.struck = [];
+  setState(p, 'attack');
+  emitSwing(sim, e, p);
+}
+
+/**
+ * Charging a held attack: a slow walk, aimed by the cursor. Let go early and it is the light attack
+ * after all; later, the charged attack, its full payoff once the charge has filled. A roll cancels it.
+ */
+function updateCharge(
+  sim: Simulation,
+  e: Entity,
+  p: Player,
+  facing: Facing,
+  stamina: Stamina,
+  mx: number,
+  my: number,
+): void {
+  const def = sim.content.player;
+  const weapons = sim.content.weapons;
+  const motion = sim.ecs.need(e, Motion);
+  motion.vx = mx * def.moveSpeed * weapons.chargeMove;
+  motion.vy = my * def.moveSpeed * weapons.chargeMove;
+  if (sim.input.aim) aimMove(sim, e, p, facing);
+  const needed = chargeTicks(sim);
+  if (p.t === needed) sim.events.emit({ type: 'chargeFull' });
+  if (sim.input.pressed & Action.roll && stamina.value >= def.roll.minStamina) {
+    startRoll(sim, p, facing, stamina, mx, my);
+    return;
+  }
+  if (sim.input.held & Action.attack) return;
+  const light = currentMove(sim);
+  if (p.t < weapons.minCharge) {
+    // A short hold: the light swing goes out as if it had never paused.
+    p.state = 'attack';
+    p.t = light.activeFrom - 1;
+    return;
+  }
+  const paid = moveNumbers(sim, light).staminaCost;
+  releaseCharge(sim, Math.min(1, p.t / needed));
+  stamina.value -= Math.max(0, moveNumbers(sim).staminaCost - paid);
   stamina.delay = def.staminaRegenDelay;
   p.struck = [];
   setState(p, 'attack');
-  sim.events.emit({ type: 'swing', x: body.x, y: body.y, dirX: p.dirX, dirY: p.dirY });
+  emitSwing(sim, e, p);
 }
 
 function startRoll(
@@ -262,50 +340,30 @@ function useQuickItem(sim: Simulation): void {
   if (quick !== null) beginUse(sim, quick);
 }
 
-function strike(sim: Simulation, e: Entity, p: Player): void {
+/** The move's hits this tick. True when a shield bounced the player off. */
+function strike(sim: Simulation, e: Entity, p: Player): boolean {
   const { ecs } = sim;
   const box = attackBox(sim, e);
-  if (!box) return;
+  if (!box) return false;
   const def = sim.content.player;
   const body = ecs.need(e, Body);
-  const stats = playerStats(sim, e);
-
-  for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
-    if (p.struck.includes(target) || ecs.has(target, Dying) || !overlaps(box, bodyBox(tb))) continue;
-    p.struck.push(target);
-    const roll = rollDamage(sim.rng, {
-      ...def.attack,
-      damage: stats.damage,
-      critChance: stats.critChance,
-      critMultiplier: stats.critMultiplier,
-    });
-    const result = applyDamage(sim, target, {
-      ...roll,
-      fromX: body.x,
-      fromY: body.y,
-      knockback: stats.knockback,
-      charges: true,
-    });
-    if (result === 'hit') {
-      sim.hitstop = Math.max(sim.hitstop, def.attack.hitstop);
-      onWeaponHit(sim, target);
-    }
-    if (result === 'blocked') {
-      // Bounced off a shield: a short stagger and a shove back.
-      const motion = ecs.need(e, Motion);
-      const [nx, ny] = normalize(body.x - tb.x, body.y - tb.y);
-      motion.kx = nx * 2.5;
-      motion.ky = ny * 2.5;
-      p.state = 'hurt';
-      p.t = Math.max(0, def.hurt.stun - 10);
-      return;
-    }
+  const shield = strikeWith(sim, e, p);
+  if (shield) {
+    // Bounced off a shield: a short stagger and a shove back.
+    const motion = ecs.need(e, Motion);
+    const [nx, ny] = normalize(body.x - shield.x, body.y - shield.y);
+    motion.kx = nx * 2.5;
+    motion.ky = ny * 2.5;
+    p.state = 'hurt';
+    p.t = Math.max(0, def.hurt.stun - 10);
+    return true;
   }
 
   // Terrain takes one hit per swing, on the first active tick.
-  if (p.t === def.attack.activeFrom && strikeTiles(sim, box)) {
+  if (p.t === currentMove(sim).activeFrom && strikeTiles(sim, box)) {
     sim.hitstop = Math.max(sim.hitstop, def.attack.hitstop);
   }
+  return false;
 }
 
 export function respawnPlayer(sim: Simulation): void {

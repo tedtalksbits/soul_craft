@@ -20,6 +20,7 @@ import {
   ObjectivesSchema,
   ItemsSchema,
   LootSchema,
+  WeaponsSchema,
   PlayerSchema,
   PrefabSchema,
   RecipesSchema,
@@ -35,6 +36,7 @@ import {
   type ItemDef,
   type ItemKind,
   type LootDef,
+  type WeaponsDef,
   type ModifierDef,
   type ModifierEffect,
   type ModifiersDef,
@@ -73,6 +75,7 @@ const SINGLE_FILES = {
   'modifiers.json': ModifiersSchema,
   'objectives.json': ObjectivesSchema,
   'loot.json': LootSchema,
+  'weapons.json': WeaponsSchema,
 } as const;
 
 const DIRECTORIES = {
@@ -102,6 +105,7 @@ export class Content {
     /** In the order they are offered. */
     readonly objectives: Readonly<Record<string, ObjectiveDef>>,
     readonly loot: LootDef,
+    readonly weapons: WeaponsDef,
   ) {
     this.tileIndex = new Map(tiles.map((t, i) => [t.id, i]));
   }
@@ -205,6 +209,7 @@ export function buildContent(files: ContentFiles): Content {
   const modifiers = parse('modifiers.json', SINGLE_FILES['modifiers.json']);
   const objectives = parse('objectives.json', SINGLE_FILES['objectives.json']);
   const loot = parse('loot.json', SINGLE_FILES['loot.json']);
+  const weapons = parse('weapons.json', SINGLE_FILES['weapons.json']);
   const prefabs = parseDir('prefabs', DIRECTORIES.prefabs);
   const scenarios = parseDir('scenarios', DIRECTORIES.scenarios);
 
@@ -222,13 +227,15 @@ export function buildContent(files: ContentFiles): Content {
     !npcs ||
     !modifiers ||
     !objectives ||
-    !loot
+    !loot ||
+    !weapons
   )
     throw new ContentError(problems);
 
   checkReferences({ enemies, tiles, biomes, world, prefabs }, problems);
   checkItems({ player, enemies, tiles, items, recipes }, problems);
   checkGear({ player, enemies, biomes, items, loot, abilities, classes }, problems);
+  checkWeapons({ weapons, classes, loot }, problems);
   checkClasses({ player, abilities, classes }, problems);
   checkModifiers({ enemies, abilities, classes, modifiers }, problems);
   checkRestoration({ items, prefabs, restoration }, problems);
@@ -253,6 +260,7 @@ export function buildContent(files: ContentFiles): Content {
     modifiers,
     objectives,
     loot,
+    weapons,
   );
 }
 
@@ -559,4 +567,17 @@ export function gearSlotOf(def: ItemDef): 'weapon' | 'helmet' | 'chest' | 'legs'
     default:
       return null;
   }
+}
+
+/** Weapon types name real classes for their affinity, and type perks roll only on weapons. */
+function checkWeapons(
+  c: { weapons: WeaponsDef; classes: Record<string, ClassDef>; loot: LootDef },
+  problems: string[],
+): void {
+  for (const [id, type] of Object.entries(c.weapons.types))
+    for (const cls of type.affinity)
+      if (!(cls in c.classes)) problems.push(`weapons.json: types.${id}.affinity: unknown class "${cls}"`);
+  for (const [id, perk] of Object.entries(c.loot.perks))
+    if (perk.weaponTypes && (perk.slots.length !== 1 || perk.slots[0] !== 'weapon'))
+      problems.push(`loot.json: perks.${id}: a perk for weapon types rolls only on weapons`);
 }

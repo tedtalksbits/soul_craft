@@ -119,6 +119,8 @@ export function scaleEffect(fx: ModifierEffect, strength: number): ModifierEffec
       return { ...fx, damage: fx.damage * strength };
     case 'lastEmber':
     case 'dodgeRefund':
+    case 'tipperMark':
+    case 'slamPull':
       return fx;
   }
 }
@@ -177,6 +179,8 @@ function headline(fx: ModifierEffect): string {
       return tidy(fx.damage);
     case 'lastEmber':
     case 'dodgeRefund':
+    case 'tipperMark':
+    case 'slamPull':
       return '';
   }
 }
@@ -307,6 +311,7 @@ function withRolls(
       slot !== null &&
       !innate.has(id) &&
       p.slots.includes(slot) &&
+      (p.weaponTypes === undefined || (def.kind === 'weapon' && p.weaponTypes.includes(def.weapon.type))) &&
       !p.drawback &&
       (p.minTier === undefined || atLeast(tier, p.minTier)),
   );

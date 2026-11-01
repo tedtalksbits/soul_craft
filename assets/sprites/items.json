@@ -28,7 +28,9 @@
     "ashen_hood": 21,
     "iron_helm": 22,
     "wanderers_wraps": 23,
-    "iron_greaves": 24
+    "iron_greaves": 24,
+    "ashwood_spear": 25,
+    "stone_maul": 26
   },
   "animations": {}
 }

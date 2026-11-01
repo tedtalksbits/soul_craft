@@ -23,7 +23,15 @@ export type SimEvent =
     }
   | { type: 'blocked'; x: number; y: number }
   | { type: 'killed'; target: Entity; archetype: string; x: number; y: number; souls: number }
-  | { type: 'swing'; x: number; y: number; dirX: number; dirY: number }
+  /** A weapon move starting, and how it is drawn. */
+  | {
+      type: 'swing';
+      x: number;
+      y: number;
+      dirX: number;
+      dirY: number;
+      arc: 'slash' | 'thrust' | 'sweep' | 'slam';
+    }
   | { type: 'roll' }
   | { type: 'healed'; amount: number }
   | { type: 'flaskEmpty' }
@@ -63,6 +71,11 @@ export type SimEvent =
   | { type: 'inventoryFull'; item: string }
   /** Gear perks and powers at work: a flinch shrugged off, the Last Ember catching a killing blow, a roll's stamina refunded, a burning streak. */
   | { type: 'keptFooting' }
+  /** Weapon moves: a charge starting and filling, a type's rule landing (flow, tipper, crush, a spent mark), a slam's shockwave. */
+  | { type: 'chargeStarted' }
+  | { type: 'chargeFull' }
+  | { type: 'weaponRule'; rule: string; x: number; y: number }
+  | { type: 'shockwave'; x: number; y: number; radius: number }
   | { type: 'lastEmber' }
   | { type: 'dodged' }
   | { type: 'streakBurst'; x: number; y: number }

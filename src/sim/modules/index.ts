@@ -21,6 +21,7 @@ import { travelModule } from './travel';
 import { modifiersModule } from './modifiers';
 import { variantsModule } from './variants';
 import { perksModule } from './perks';
+import { weaponsModule } from './weapons';
 
 /**
  * Every simulation feature, in registration order. Within a phase, systems
@@ -38,6 +39,7 @@ export const SIM_MODULES: readonly SimModule[] = [
   variantsModule,
   modifiersModule,
   perksModule,
+  weaponsModule,
   playerModule,
   stealthModule,
   enemiesModule,

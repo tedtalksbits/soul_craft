@@ -34,6 +34,7 @@ import { dropPickup } from './pickups';
 import { onHurt, onKill } from './modifiers';
 import { absorb } from './overshield';
 import { afterHurt, catchesKillingBlow, keepsFooting, onDodge } from './perks';
+import { hyperArmored, openFlow } from './weapons';
 import { takeAmbush, unveil } from './stealth';
 
 export interface Hit {
@@ -90,6 +91,7 @@ function damagePlayer(
   if (player.state === 'dead' || sim.state.cheats.god) return 'ignored';
   if ((ecs.get(e, Invulnerable)?.ticks ?? 0) > 0) {
     onDodge(sim);
+    openFlow(sim);
     return 'ignored';
   }
 
@@ -125,7 +127,8 @@ function damagePlayer(
     sim.events.emit({ type: 'playerDied', soulsLost: lost });
   } else {
     afterHurt(sim, health);
-    if (!keepsFooting(sim)) {
+    // Hammer swings and full charges carry through a blow; so does poise, now and then.
+    if (!hyperArmored(sim) && !keepsFooting(sim)) {
       player.state = 'hurt';
       player.t = 0;
     }

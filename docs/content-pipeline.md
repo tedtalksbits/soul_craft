@@ -10,6 +10,7 @@ Everything a designer tunes lives in data, validated on load and hot-reloaded wh
 | `items.json`          | Items: materials, weapons, armor, rings, consumables                               |
 | `recipes.json`        | Crafting recipes: output, inputs, soul cost, station                               |
 | `loot.json`           | Gear tiers, perks, item-level growth, pity and the drop tables enemies name        |
+| `weapons.json`        | Weapon types: each one's chain, charged attack, dash-strike and signature rule     |
 | `restoration.json`    | Village projects: cost, tier, effects, ruin and rebuilt sprites, villager lines    |
 | `npcs.json`           | People to talk to (Maren): name, sprite frame, small talk                          |
 | `objectives.json`     | The story's objectives, in order: giver, HUD line, what is said, the goal          |
@@ -65,9 +66,10 @@ Every item has `kind`, `name`, `description`, `icon` (a frame name in `assets/sp
 
 - `material`: nothing else; used by recipes, upgrades and restoration projects.
 - `key`: nothing else; carried until something spends it (a boss's Kindling, for a major project).
-- `weapon`: `weapon { damage, staminaCost, reach, width, knockback }` and `upgrades`, the forge steps in order,
-  each `{ damage, souls, items }`, plus an optional `requires` (a restoration project that must be rebuilt
-  first: the last steps wait on the smithy). The player's swing uses the equipped weapon; unarmed is weak on purpose.
+- `weapon`: `weapon { type, damage, staminaCost, reach, width, knockback }` and `upgrades`, the forge steps in
+  order, each `{ damage, souls, items }`, plus an optional `requires` (a restoration project that must be rebuilt
+  first: the last steps wait on the smithy). `type` (`sword`, `spear` or `hammer`) picks its moves from
+  `weapons.json`, which multiply these numbers. Unarmed fights like a weak sword, on purpose.
 - `armor`: `armor { slot, value, weight }`: `helmet`, `chest` or `legs`; its Armor at item level 1, Common; and
   `cloth`, `leather` or `plate` (how it will look on the character).
 - `ring`: nothing of its own; its power is its `innate` perk. Two ring slots.
@@ -91,6 +93,15 @@ number. A weapon, armor piece or ring with a `power { name, text, effect }` is a
 Legendary, and its `innate` perk is the power's partner. An enemy drops gear with `gear { chance, table }`; its
 item level is the biome's `itemLevel`. Validation insists every slot can roll the best tier's number of perks and
 has a base that can drop, and that class perks and effects name real classes and abilities.
+
+`weapons.json` gives each weapon type a light `chain` (tapped; the last move is the finisher, and
+`chainWindow` ticks after a move ends the next tap continues it), a `charged` move (held; full after
+`chargeTicks`, else `partial` damage and no payoff), a `dash` move (an attack within `dashWindow` ticks of a
+roll), a `signature` rule (`flow`, `tipper` or `break`) and the classes it has an `affinity` with. Each move sets
+multipliers for `damage`, `stamina`, `reach`, `width` and `knockback`, its timing (`duration`, `activeFrom`,
+`activeTo`), `hitstop`, `lunge`, `stagger`, `hyperArmor`, `around` (a full sweep), and how it is drawn (`arc`,
+`pose`). `affinityBonus`, `minCharge` and `chargeMove` apply to every type. A perk with `weaponTypes` rolls only on
+weapons of those types.
 
 Armor cuts hits to `k / (k + Armor)` (`player.json → armor`), never past `cap` with buffs. Attributes gain less
 past `leveling.softCaps`: each `perLevel` value is `[below, between, past]` the two breakpoints, and gear's

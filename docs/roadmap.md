@@ -210,8 +210,11 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    from Rare), no doubled perks, and five Legendary bases with hand-made powers: Cinderbrand, Crown of the
    Unforgotten, Pyreheart Cuirass, Ashwalker Greaves and Ring of the Last Ember. Weapon-type perk pools and the
    other Legendary weapons come with phase 3.
-3. **Weapon types:** chains, charged attacks and dash-strikes; sword, spear and hammer, then daggers, then bow and
-   Ember staff.
+3. **Weapon types (first half built):** every type taps a light chain with a finisher, holds for a charged
+   attack (full charge has a payoff) and strikes out of a roll; hitstop, lunges, stagger and hyper armor per move,
+   all in `weapons.json`. The sword (Flow), spear (Tipper, a 360° sweep) and hammer (Break: crushes, hyper armor,
+   a full-charge shockwave) are in, with class affinity, type perks, the Ashwood Spear and Stone Maul, and two
+   Legendaries (Oathspear, Gravebell). Still to come: daggers, then the bow and the Ember staff.
 4. **Economy:** salvage, temper, upgrade and infuse, cleanse, coatings, tools, ranked projects, the Gambler, respec.
 5. **Wardens:** chests, signature items, Rekindle, pity and Marks, Heat, alternate kills.
 6. **Onboarding:** the Road Camp objective, with `kill` and `gather` goals.

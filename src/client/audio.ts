@@ -43,7 +43,48 @@ export class Audio {
   handle(e: SimEvent): void {
     switch (e.type) {
       case 'swing':
+        // Heavier moves whoosh lower and longer.
+        if (e.arc === 'slam') return this.burst(0.3, 500, 0.32, 'bandpass', [180, 900]);
+        if (e.arc === 'sweep') return this.burst(0.26, 900, 0.28, 'bandpass', [400, 1800]);
+        if (e.arc === 'thrust') return this.burst(0.1, 1800, 0.2, 'bandpass', [1200, 3400]);
         return this.burst(0.14, 1300, 0.22, 'bandpass', [700, 2800]);
+      case 'chargeStarted':
+        return this.tone(
+          [
+            [146, 1],
+            [220, 0.4],
+          ],
+          0.25,
+          0.05,
+          'triangle',
+        );
+      case 'chargeFull':
+        return this.arp([988, 1480], 45, 0.25, 0.05);
+      case 'weaponRule':
+        if (e.rule === 'tipper') return this.arp([1568, 2093], 30, 0.18, 0.05);
+        if (e.rule === 'crush')
+          return this.tone(
+            [
+              [70, 1],
+              [140, 0.5],
+            ],
+            0.3,
+            0.16,
+            'triangle',
+          );
+        if (e.rule === 'flow') return this.arp([1175, 1568, 2349], 40, 0.3, 0.05);
+        return this.burst(0.2, 1600, 0.2, 'highpass');
+      case 'shockwave':
+        this.burst(0.5, 300, 0.45, 'lowpass');
+        return this.tone(
+          [
+            [55, 1],
+            [82, 0.5],
+          ],
+          0.6,
+          0.18,
+          'sine',
+        );
       case 'damaged':
         if (e.isPlayer) {
           this.burst(0.22, 450, 0.5, 'lowpass');

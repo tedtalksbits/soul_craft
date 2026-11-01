@@ -54,7 +54,7 @@
     "description": "The Firekeeper's old blade. It remembers how to cut.",
     "icon": "chipped_sword",
     "stack": 1,
-    "weapon": { "damage": 12, "staminaCost": 14, "reach": 16, "width": 18, "knockback": 3 },
+    "weapon": { "type": "sword", "damage": 12, "staminaCost": 14, "reach": 16, "width": 18, "knockback": 3 },
     "upgrades": [
       { "damage": 2, "souls": 40, "items": [{ "item": "iron_scrap", "count": 2 }] },
       { "damage": 2, "souls": 80, "items": [{ "item": "iron_scrap", "count": 4 }] },
@@ -86,7 +86,14 @@
     "description": "Plain, heavy and true. The Hollow carried these once.",
     "icon": "iron_sword",
     "stack": 1,
-    "weapon": { "damage": 16, "staminaCost": 16, "reach": 17, "width": 18, "knockback": 3.4 },
+    "weapon": {
+      "type": "sword",
+      "damage": 16,
+      "staminaCost": 16,
+      "reach": 17,
+      "width": 18,
+      "knockback": 3.4
+    },
     "upgrades": [
       { "damage": 3, "souls": 120, "items": [{ "item": "iron_scrap", "count": 4 }] },
       { "damage": 3, "souls": 200, "items": [{ "item": "iron_scrap", "count": 6 }] },
@@ -121,10 +128,17 @@
   "bone_cleaver": {
     "kind": "weapon",
     "name": "Bone Cleaver",
-    "description": "A brutal edge of fused bone on an ashwood haft. Hits hard, tires the arm.",
+    "description": "A slab of fused bone on an ashwood haft. Slow to lift, worse to be under.",
     "icon": "bone_cleaver",
     "stack": 1,
-    "weapon": { "damage": 22, "staminaCost": 24, "reach": 15, "width": 22, "knockback": 4.5 },
+    "weapon": {
+      "type": "hammer",
+      "damage": 22,
+      "staminaCost": 24,
+      "reach": 17,
+      "width": 23,
+      "knockback": 4.5
+    },
     "upgrades": [
       { "damage": 4, "souls": 200, "items": [{ "item": "bone_shard", "count": 4 }] },
       { "damage": 4, "souls": 320, "items": [{ "item": "bone_shard", "count": 6 }] },
@@ -143,6 +157,81 @@
         "items": [
           { "item": "bone_shard", "count": 10 },
           { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "ashwood_spear": {
+    "kind": "weapon",
+    "name": "Ashwood Spear",
+    "description": "A long gray haft with a leaf of iron on the end. Keep them at its length.",
+    "icon": "ashwood_spear",
+    "stack": 1,
+    "weapon": { "type": "spear", "damage": 11, "staminaCost": 13, "reach": 26, "width": 8, "knockback": 3 },
+    "upgrades": [
+      { "damage": 2, "souls": 120, "items": [{ "item": "iron_scrap", "count": 4 }] },
+      { "damage": 2, "souls": 200, "items": [{ "item": "iron_scrap", "count": 6 }] },
+      {
+        "damage": 3,
+        "souls": 320,
+        "items": [
+          { "item": "iron_scrap", "count": 8 },
+          { "item": "ashwood", "count": 4 }
+        ]
+      },
+      {
+        "damage": 3,
+        "souls": 460,
+        "items": [
+          { "item": "iron_scrap", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 4,
+        "souls": 640,
+        "items": [
+          { "item": "iron_scrap", "count": 12 },
+          { "item": "bone_shard", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "stone_maul": {
+    "kind": "weapon",
+    "name": "Stone Maul",
+    "description": "A boulder lashed to a beam. It ends arguments, and it is slow about it.",
+    "icon": "stone_maul",
+    "stack": 1,
+    "weapon": { "type": "hammer", "damage": 24, "staminaCost": 26, "reach": 16, "width": 24, "knockback": 5 },
+    "upgrades": [
+      { "damage": 4, "souls": 200, "items": [{ "item": "stone", "count": 6 }] },
+      {
+        "damage": 4,
+        "souls": 320,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "iron_scrap", "count": 4 }
+        ]
+      },
+      {
+        "damage": 5,
+        "souls": 480,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 6,
+        "souls": 660,
+        "items": [
+          { "item": "stone", "count": 12 },
+          { "item": "iron_scrap", "count": 8 }
         ],
         "requires": "smithy"
       }
@@ -221,7 +310,14 @@
     "description": "A blade quenched in a dying bonfire. It still remembers the heat.",
     "icon": "iron_sword",
     "stack": 1,
-    "weapon": { "damage": 17, "staminaCost": 15, "reach": 17, "width": 19, "knockback": 3.4 },
+    "weapon": {
+      "type": "sword",
+      "damage": 17,
+      "staminaCost": 15,
+      "reach": 17,
+      "width": 19,
+      "knockback": 3.4
+    },
     "upgrades": [
       { "damage": 3, "souls": 120, "items": [{ "item": "iron_scrap", "count": 4 }] },
       { "damage": 3, "souls": 200, "items": [{ "item": "iron_scrap", "count": 6 }] },
@@ -266,6 +362,93 @@
         "duration": 180,
         "interval": 30
       }
+    }
+  },
+  "oathspear": {
+    "kind": "weapon",
+    "name": "Oathspear",
+    "description": "A knight’s spear, its pennant long burned away. It still finds what it was sworn against.",
+    "icon": "ashwood_spear",
+    "stack": 1,
+    "weapon": { "type": "spear", "damage": 12, "staminaCost": 13, "reach": 28, "width": 8, "knockback": 3.2 },
+    "upgrades": [
+      { "damage": 2, "souls": 120, "items": [{ "item": "iron_scrap", "count": 4 }] },
+      { "damage": 2, "souls": 200, "items": [{ "item": "iron_scrap", "count": 6 }] },
+      {
+        "damage": 3,
+        "souls": 320,
+        "items": [
+          { "item": "iron_scrap", "count": 8 },
+          { "item": "ashwood", "count": 4 }
+        ]
+      },
+      {
+        "damage": 3,
+        "souls": 460,
+        "items": [
+          { "item": "iron_scrap", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 4,
+        "souls": 640,
+        "items": [
+          { "item": "iron_scrap", "count": 12 },
+          { "item": "bone_shard", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "tipperDamage", "value": 0.15 }],
+    "power": {
+      "name": "Sworn Mark",
+      "text": "Tipper hits mark a foe. Your next ability to hit a marked foe staggers it outright.",
+      "effect": { "type": "tipperMark", "seconds": 5, "stagger": 90 }
+    }
+  },
+  "gravebell": {
+    "kind": "weapon",
+    "name": "Gravebell",
+    "description": "A bronze bell on a haft of black iron. Its toll calls the dead to hear it.",
+    "icon": "stone_maul",
+    "stack": 1,
+    "weapon": { "type": "hammer", "damage": 25, "staminaCost": 26, "reach": 17, "width": 24, "knockback": 5 },
+    "upgrades": [
+      { "damage": 4, "souls": 200, "items": [{ "item": "stone", "count": 6 }] },
+      {
+        "damage": 4,
+        "souls": 320,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "iron_scrap", "count": 4 }
+        ]
+      },
+      {
+        "damage": 5,
+        "souls": 480,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 6,
+        "souls": 660,
+        "items": [
+          { "item": "stone", "count": 12 },
+          { "item": "iron_scrap", "count": 8 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "stagger", "value": 0.2 }],
+    "power": {
+      "name": "Toll",
+      "text": "A full-charge slam rings out, pulling nearby foes in before the shockwave.",
+      "effect": { "type": "slamPull", "radius": 64 }
     }
   },
   "crown_of_the_unforgotten": {

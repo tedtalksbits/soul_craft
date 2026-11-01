@@ -41,7 +41,8 @@ Cross-module rules live in one place: all damage goes through `combat.applyDamag
 blocking, knockback, hurt states, deaths and loot. All player stats (weapon damage and reach, Armor, perks,
 attributes, buffs) come from `items.playerStats`, a thin wrapper over the pure `computeStats`, so Power and the
 equipment screen's comparisons can try gear on without touching the player; nothing reads `player.json` attack
-numbers directly any more.
+numbers directly any more. Weapon moves (chains, charges, dash-strikes and each type's rule) live in
+`weapons.ts`; the player controller owns the states and asks it which move comes next and what it hits.
 
 ### ECS
 

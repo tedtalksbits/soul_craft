@@ -479,6 +479,27 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 3, first half, as built (2026-11-01).** The combat rework plus sword, spear and hammer. Choices made
+while building it:
+
+- **Tap and hold share one button without delay.** A press starts the light attack at once; if the button is
+  still held when the swing would land, it turns into a charge instead. Let go within `minCharge` ticks and the
+  light swing carries on as if it had never paused.
+- **Moves are data** in `content/weapons.json`, multiplying the weapon's own numbers. The Bone Cleaver is now a
+  hammer; the Ashwood Spear and Stone Maul are new bases.
+- **Lunges stop short of a foe in front**, so a move's step forward never walks the player into contact damage.
+- **Flow also covers the dash-strike**, not only a light hit. With a dash window of 10 ticks and a Flow window of
+  12, a light-hit-only Flow had a two-tick opening; the dash-strike out of the roll is the natural counter.
+- **The sword's affinity is every class**, as the table says; the spear and hammer favor the Vanguard.
+- **Break has no Warden stagger meter to fill yet**, so the hammer's rule is crushes (a hit on a staggered foe
+  crits), hyper armor on every swing, stagger on hit and the full-charge shockwave.
+- **Legendaries:** Oathspear (tipper hits mark a foe; the next ability hit on it staggers it outright, for any
+  class) and Gravebell (a full-charge slam pulls nearby foes in before the shockwave).
+- **Animation:** moves reuse the existing body poses (the swing, the charge-cast and slam-cast poses, and a
+  raised pose while charging) and draw their own arc: a slash, a thrust line, a full sweep or a slam ring. Real
+  per-type weapon layers are phase 7.
+- **No save change:** the move state lives in a component that is added on the first attack.
+
 **Phase 2 as built (2026-11-01).** Choices made while building it:
 
 - **Effect perks reuse the class modifier effects** (`activeEffects` merges worn modifiers and gear), and seven

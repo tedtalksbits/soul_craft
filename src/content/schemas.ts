@@ -212,6 +212,10 @@ export const ModifierEffectSchema = z.discriminatedUnion('type', [
   }),
   /** Rolling through a blow (its i-frames taking the hit) gives back the roll's stamina, once per roll. */
   z.object({ type: z.literal('dodgeRefund') }),
+  /** Spear tipper hits mark the foe for `seconds`; the next ability hit on a marked foe staggers it for `stagger`. */
+  z.object({ type: z.literal('tipperMark'), seconds: pos, stagger: ticks }),
+  /** A full-charge hammer slam first pulls foes within `radius` toward where it lands. */
+  z.object({ type: z.literal('slamPull'), radius: pos }),
   /**
    * Every `hits` weapon hits, each within `window` seconds of the last, set the ground under the last
    * one alight: a zone of `ability`'s look that burns for `damage` every `interval` ticks.
@@ -254,6 +258,107 @@ export const ModifiersSchema = z.object({
   modifiers: z.record(z.string(), ModifierSchema),
 });
 export type ModifiersDef = z.infer<typeof ModifiersSchema>;
+
+// ------------------------------------------------------------------ weapon types
+
+/** Weapon types. Any class can use any of them; each class fights a little better with its own. */
+export const WeaponTypeSchema = z.enum(['sword', 'spear', 'hammer']);
+export type WeaponTypeId = z.infer<typeof WeaponTypeSchema>;
+
+/**
+ * One attack in a weapon type's move set. Damage, stamina, reach, width and knockback multiply the
+ * weapon's own numbers; the timing is in ticks.
+ */
+export const MoveSchema = z
+  .object({
+    damage: pos,
+    stamina: nonneg,
+    reach: pos,
+    width: pos,
+    knockback: nonneg.default(1),
+    duration: ticks,
+    activeFrom: ticks,
+    activeTo: ticks,
+    /** Frames the world freezes when it lands: what makes a heavy hit feel heavy. */
+    hitstop: ticks,
+    /** Forward speed (px per tick) from the start of the move until its last active tick. */
+    lunge: nonneg.default(0),
+    /** Ticks it staggers what it hits (bosses shrug it off). */
+    stagger: ticks.default(0),
+    /** Blows taken during it (until its last active tick) don't make the player flinch. */
+    hyperArmor: z.boolean().default(false),
+    /** Hits everything within `reach` all around, instead of a box in front. */
+    around: z.boolean().default(false),
+    /** How the swing is drawn, and the body pose it uses. */
+    arc: z.enum(['slash', 'thrust', 'sweep', 'slam']),
+    pose: z.string().default('attack'),
+  })
+  .refine(
+    (m) => m.activeFrom <= m.activeTo && m.activeTo < m.duration,
+    'active window must sit inside the move',
+  );
+export type MoveDef = z.infer<typeof MoveSchema>;
+
+/** What makes a weapon type itself, on top of its moves. */
+export const SignatureSchema = z.discriminatedUnion('type', [
+  /**
+   * Sword: a light hit or dash-strike within `window` ticks of a roll that took a blow crits and refunds
+   * the roll's stamina.
+   */
+  z.object({ type: z.literal('flow'), window: ticks }),
+  /**
+   * Spear: hits in the outer `outer` of reach do `bonus` more with `knockback` times the shove; hits
+   * up close shove the foe out with `close` times the knockback. Foes mid-attack take `midAttack` more.
+   */
+  z.object({
+    type: z.literal('tipper'),
+    outer: fraction,
+    bonus: nonneg,
+    knockback: pos,
+    close: pos,
+    midAttack: nonneg,
+  }),
+  /**
+   * Hammer: a hit on a staggered foe crits (a crush). A full-charge slam sends out a shockwave of
+   * `radius` doing `damage` times the weapon's damage and staggering for `stagger`, hit or miss.
+   */
+  z.object({ type: z.literal('break'), shockwave: z.object({ radius: pos, damage: pos, stagger: ticks }) }),
+]);
+
+export const WeaponTypeDefSchema = z.object({
+  name: z.string(),
+  /** The light chain, tapped; the last is the finisher. */
+  chain: z.array(MoveSchema).min(1),
+  /** Ticks after a light attack ends that the next tap still continues the chain. */
+  chainWindow: ticks,
+  /**
+   * Held: charging for `chargeTicks` makes it full, with its payoff (hyper armor, a shockwave). Let go
+   * earlier, after the tap window, and it lands at `partial` of its damage, without the payoff.
+   */
+  charged: MoveSchema.and(z.object({ chargeTicks: z.number().int().min(1), partial: fraction })),
+  /** An attack during a roll, or within `dashWindow` ticks after one. */
+  dash: MoveSchema,
+  dashWindow: ticks,
+  signature: SignatureSchema,
+  /** Classes that fight better with it (by `affinityBonus` more damage). */
+  affinity: z.array(z.string()).default([]),
+});
+export type WeaponTypeDef = z.infer<typeof WeaponTypeDefSchema>;
+
+/** `weapons.json`: every weapon type's moves and rules. */
+export const WeaponsSchema = z.object({
+  /** Extra damage for a class using a weapon type it has an affinity with. */
+  affinityBonus: nonneg,
+  /**
+   * A held attack becomes a charge once held past the light attack's first active tick; let go
+   * before `minCharge` ticks of charging and it is the light attack after all.
+   */
+  minCharge: ticks,
+  /** Speed while charging, as a fraction of walking. */
+  chargeMove: fraction,
+  types: z.object({ sword: WeaponTypeDefSchema, spear: WeaponTypeDefSchema, hammer: WeaponTypeDefSchema }),
+});
+export type WeaponsDef = z.infer<typeof WeaponsSchema>;
 
 // ------------------------------------------------------------------ items & crafting
 
@@ -320,8 +425,15 @@ export const ItemSchema = z.discriminatedUnion('kind', [
     kind: z.literal('weapon'),
     ...itemBase,
     ...gearBase,
-    /** Base numbers at item level 1, Common; tier and item level scale `damage`. */
-    weapon: z.object({ damage: pos, staminaCost: nonneg, reach: pos, width: pos, knockback: nonneg }),
+    /** Base numbers at item level 1, Common; tier and item level scale `damage`. Its type gives its moves. */
+    weapon: z.object({
+      type: WeaponTypeSchema,
+      damage: pos,
+      staminaCost: nonneg,
+      reach: pos,
+      width: pos,
+      knockback: nonneg,
+    }),
     /** Forge upgrades, in order: each adds `damage` and costs souls plus items. */
     upgrades: z
       .array(
@@ -572,6 +684,14 @@ export const PerkStatSchema = z.enum([
   'rollIframes',
   'rollDistance',
   'flaskCharges',
+  'reach',
+  'chargeSpeed',
+  'stagger',
+  'finisherDamage',
+  'midAttackDamage',
+  'tipperDamage',
+  'crushDamage',
+  'flowEnergy',
 ]);
 export type PerkStat = z.infer<typeof PerkStatSchema>;
 
@@ -599,6 +719,8 @@ export const PerkSchema = z
     fixed: z.boolean().default(false),
     /** Slots it can roll on. */
     slots: z.array(GearSlotSchema).min(1),
+    /** Only rolls on weapons of these types (a perk that changes a type's own moves). */
+    weaponTypes: z.array(WeaponTypeSchema).optional(),
     /** A class perk: it works only while playing this class, and smart loot favors the class you play. */
     class: z.string().optional(),
     /** Only rolls on this tier or better. */
