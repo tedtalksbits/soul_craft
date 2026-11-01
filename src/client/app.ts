@@ -23,7 +23,7 @@ import { primaryKey } from './keybinds';
 import { compassDirection } from './ui/travel';
 import { SettingsStore } from './settings';
 import { MapTerrain } from './render/map-terrain';
-import { Tutorial } from './tutorial';
+import { betterGear, Tutorial } from './tutorial';
 import { FixedLoop } from './loop';
 import type { GameRenderer } from './render/renderer';
 import { iconElement, tintedIcon } from './ui/icons';
@@ -143,7 +143,12 @@ export class App {
     addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && !e.defaultPrevented) this.togglePause();
     });
-    this.tutorial = new Tutorial(this.settings, this.ui, (ability) => this.abilityIcon(ability, 2));
+    this.tutorial = new Tutorial(
+      this.settings,
+      this.ui,
+      (ability) => this.abilityIcon(ability, 2),
+      (item) => this.itemIcon(item, 2),
+    );
     this.settings.watch((s) => {
       this.input.bindings = s.bindings;
       this.ui.bindings = s.bindings;
@@ -665,7 +670,16 @@ export class App {
           ? [`${this.content.loot.tiers[e.tier].name} ${this.content.item(e.item).name}`]
           : [`+${e.count} ${this.content.item(e.item).name}`],
     );
-    if (parts.length > 0) this.ui.toast(parts.join(', '), 1800);
+    if (parts.length === 0) return;
+    // Picked-up gear that beats what is worn says so, and where to put it on.
+    const better =
+      events.some((e) => e.type === 'itemGained' && e.tier) && this.sim ? betterGear(this.sim) : null;
+    this.ui.toast(
+      better
+        ? `${parts.join(', ')}. New gear: open your pack (${primaryKey(this.input.bindings, 'inventory')}).`
+        : parts.join(', '),
+      better ? 2600 : 1800,
+    );
   }
 
   private frame(dtMs: number): void {

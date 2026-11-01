@@ -29,5 +29,8 @@
       [null, 2]
     ]
   },
-  "fixed": [{ "prefab": "warden_arena", "region": [0, -1] }]
+  "fixed": [
+    { "prefab": "warden_arena", "region": [0, -1] },
+    { "prefab": "road_camp", "region": [-1, -1], "at": [-40, -9] }
+  ]
 }

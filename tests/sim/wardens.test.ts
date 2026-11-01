@@ -82,6 +82,16 @@ describe('Rekindle', () => {
     expect(sim.state.rekindled?.[WARDEN]).toBeUndefined();
   });
 
+  it('brings the Warden back even inside the village’s widest ward', () => {
+    const sim = newSim();
+    sim.state.bossesDefeated[WARDEN] = true;
+    sim.state.restored['palisade'] = true;
+    sim.state.projectRanks = { palisade: content.restoration['palisade']!.ranks.length + 1 };
+    atWardenBonfire(sim);
+    act(sim, { type: 'rekindle', boss: WARDEN, heat: 1 });
+    expect(bossEntity(sim, WARDEN)).toBeDefined();
+  });
+
   it('needs the Warden’s bonfire', () => {
     const sim = newSim();
     sim.state.bossesDefeated[WARDEN] = true;

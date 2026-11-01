@@ -239,7 +239,7 @@ export function buildContent(files: ContentFiles): Content {
   checkClasses({ player, abilities, classes }, problems);
   checkModifiers({ enemies, abilities, classes, modifiers }, problems);
   checkRestoration({ items, prefabs, restoration }, problems);
-  checkObjectives({ enemies, prefabs, restoration, npcs, objectives }, problems);
+  checkObjectives({ items, enemies, prefabs, restoration, npcs, objectives }, problems);
   if (problems.length > 0) throw new ContentError(problems);
 
   return new Content(
@@ -286,9 +286,10 @@ function checkModifiers(
   }
 }
 
-/** Objectives name real givers, bosses and projects; prefab NPCs name real people. */
+/** Objectives name real givers, bosses, projects, enemies and items; prefab NPCs name real people. */
 function checkObjectives(
   c: {
+    items: Record<string, ItemDef>;
     enemies: Record<string, EnemyDef>;
     prefabs: Record<string, PrefabDef>;
     restoration: Record<string, RestorationDef>;
@@ -300,11 +301,20 @@ function checkObjectives(
   for (const [id, o] of Object.entries(c.objectives)) {
     const at = `objectives.json: ${id}`;
     if (!(o.giver in c.npcs)) problems.push(`${at}.giver: unknown npc "${o.giver}"`);
-    const goal = o.goal;
-    if (goal.type === 'defeat' && !c.enemies[goal.boss]?.boss)
-      problems.push(`${at}.goal.boss: "${goal.boss}" is not a boss`);
-    if (goal.type === 'restore' && !(goal.project in c.restoration))
-      problems.push(`${at}.goal.project: unknown project "${goal.project}"`);
+    const goals = o.goal.type === 'all' ? o.goal.steps.map((s) => s.goal) : [o.goal];
+    for (const goal of goals) {
+      if (goal.type === 'defeat' && !c.enemies[goal.boss]?.boss)
+        problems.push(`${at}.goal.boss: "${goal.boss}" is not a boss`);
+      if (goal.type === 'restore' && !(goal.project in c.restoration))
+        problems.push(`${at}.goal.project: unknown project "${goal.project}"`);
+      if (goal.type === 'kill')
+        for (const e of Object.keys(goal.enemies))
+          if (!(e in c.enemies)) problems.push(`${at}.goal.enemies: unknown enemy "${e}"`);
+      if (goal.type === 'gather' && !(goal.item in c.items))
+        problems.push(`${at}.goal.item: unknown item "${goal.item}"`);
+    }
+    for (const r of o.reward)
+      if (!(r.item in c.items)) problems.push(`${at}.reward: unknown item "${r.item}"`);
   }
   for (const [pid, prefab] of Object.entries(c.prefabs)) {
     for (const [ch, entry] of Object.entries(prefab.legend)) {
@@ -564,9 +574,13 @@ function checkGear(
       if (!def || !gearSlotOf(def)) problems.push(`enemies.json: ${id}.boss.warden: "${item}" is not gear`);
     }
   }
-  for (const [id, e] of Object.entries(c.enemies))
+  for (const [id, e] of Object.entries(c.enemies)) {
     if (e.gear && !(e.gear.table in loot.tables))
       problems.push(`enemies.json: ${id}.gear: unknown table "${e.gear.table}"`);
+    const sure = e.sureGear;
+    if (sure && !Object.values(c.items).some((d) => gearSlotOf(d) === sure.slot && 'drop' in d && d.drop > 0))
+      problems.push(`enemies.json: ${id}.sureGear: no gear drops for the ${sure.slot} slot`);
+  }
 
   const slots = new Set<string>();
   for (const id of c.player.start.gear) {

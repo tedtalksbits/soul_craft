@@ -99,6 +99,34 @@
       "cooldown": 40
     }
   },
+  "grub": {
+    "name": "Grub",
+    "sprite": "hollow",
+    "look": { "scale": 1.5, "tint": "#c8a088" },
+    "body": { "w": 16, "h": 12 },
+    "hp": 170,
+    "speed": 0.5,
+    "aggroRange": 120,
+    "contactDamage": 6,
+    "souls": 90,
+    "drops": [
+      { "kind": "ember", "chance": 1, "amount": [20, 20] },
+      { "kind": "item", "item": "iron_scrap", "chance": 1, "amount": [2, 3] }
+    ],
+    "sureGear": { "slot": "helmet", "tier": "standard" },
+    "recoilTicks": 0,
+    "knockbackTaken": 0.3,
+    "boss": { "title": "Boss of the Road Camp", "arenaTiles": 6 },
+    "brain": {
+      "type": "lunger",
+      "range": 34,
+      "windupTicks": 46,
+      "lungeSpeed": 3.2,
+      "lungeTicks": 12,
+      "lungeDamage": 24,
+      "cooldown": 70
+    }
+  },
   "ashen_warden": {
     "name": "Ashen Warden",
     "sprite": "warden",

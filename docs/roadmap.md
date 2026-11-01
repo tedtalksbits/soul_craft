@@ -232,7 +232,11 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    give only items); Heat 2 and 3 with Warden Sigils (tougher, richer, and a ring of embers from the slam at Heat
    3); the alternate kill (bait its charge onto the braziers three times for the Warden's Brand); and a poise
    meter hammers fill three times faster.
-6. **Onboarding:** the Road Camp objective, with `kill` and `gather` goals.
+6. **Onboarding (built):** Maren's first errand, the Road Camp by the old road west of the village: clear 5 hollows
+   and 3 slimes, beat Grub (a named hollow boss with one slow, telegraphed lunge, who always drops a Standard
+   helmet), and gather 20 fungal caps, which she turns into your first 5 Field Bandages before sending you to rest.
+   New `kill`, `gather` and `all` goals, objective rewards, and a "New gear" card and toast when picked-up gear
+   would raise Power.
 7. **Art:** weapon and armor layers on the character, item icons, beams and chimes.
 
 ### Milestone 5: Life sim, in service of combat

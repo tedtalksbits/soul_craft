@@ -94,6 +94,9 @@ Each has a few lines when they come back, and something new to say as the villag
 ## The arc
 
 1. **Waking.** Maren, the bonfire, the first few Hollow in the meadows. The AoE is the only power you remember.
+   Maren's first errand is the **Road Camp** by the old road west of the village: Hollows dragged the last tools
+   there, their big one calls himself Grub, and she needs fungal caps for bandages. It teaches the loop (fight,
+   gather, rest and the camp refills) before the oath.
 2. **The oath** (an objective, told by Maren): the shrine knights each carry an oath; take one and you'll remember
    your class ability. Told and tracked, not marked on the map: you find a shrine yourself.
 3. **The Ashen Warden**, in the keep to the north. Once Bram's apprentice (or Bram's brother; open). His remnant is

@@ -29,7 +29,8 @@ import type { Simulation } from '../simulation';
 import { gainEnergy } from './energy';
 import { relicWanted } from './unlocks';
 import { playerStats } from './items';
-import { dropGear } from './gear';
+import { dropGear, dropSureGear } from './gear';
+import { countKill } from './objectives';
 import { dropPickup } from './pickups';
 import { onHurt, onKill } from './modifiers';
 import { absorb } from './overshield';
@@ -263,6 +264,8 @@ export function killEnemy(sim: Simulation, e: Entity): void {
   if (spawned) sim.state.killed[spawned.spawnId] = true;
   if (!refight) rollDrops(sim, def.drops, body.x, body.y);
   if (def.gear && sim.rng.chance(def.gear.chance)) dropGear(sim, def.gear.table, body.x, body.y);
+  if (def.sureGear && !refight) dropSureGear(sim, def.sureGear.slot, def.sureGear.tier, body.x, body.y);
+  countKill(sim, enemy.archetype);
   if (def.boss) {
     openChest(sim, e, enemy.archetype, !sim.state.bossesDefeated[enemy.archetype]);
     settleRefight(sim, enemy.archetype, heatOf(sim, e));

@@ -479,6 +479,25 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 6, onboarding, as built (2026-11-01).** Choices made while building it:
+
+- **The Road Camp sits about 40 tiles west of the village,** its road on the row the village's west road leaves by.
+  Fixed set pieces take a whole 96-tile region, which would have put it a long walk out, so a fixed piece can now
+  be placed exactly (`at`).
+- **Grub is a small boss** (a fog gate around his yard and a health bar), so the fight reads as the camp's climax and
+  he stays down once beaten while the camp around him refills on every rest. Until he has art he is a Hollow drawn
+  half again as large and tinted brown. His one attack is the Hollow's lunge, slower to wind up (46 ticks, with the
+  usual orange flash) and much harder.
+- **Kills count from the moment Maren asks,** so "clear the camp" means the camp, not the meadow hollows killed on
+  the way; the other goals are still read from the world.
+- **The caps are handed over** and Maren gives 5 Field Bandages; her last line sends the player to rest and says
+  the camp will fill again. Teaching the alchemy table itself is left to the table.
+- **"New gear: open Equipment"** is a toast whenever picked-up gear would raise Power, and a one-time card (once no
+  enemy is close) that names the piece and the Power it would bring.
+- **The palisade's ward never holds back a boss.** It used to hold back any enemy inside it, which would have kept
+  Grub, and the Warden on a Rekindle once the watchtowers stood, from ever spawning.
+- **Not done:** auto-salvage still starts off (section 6 suggested turning it on after the first area).
+
 **Phase 5, Wardens, as built (2026-11-01).** Choices made while building it:
 
 - **Refights give only items,** as the owner decided in the playtest answers: the chest (gear, materials, Warden

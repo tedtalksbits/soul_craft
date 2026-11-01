@@ -84,7 +84,8 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
       if (
         sim.state.killed[sp.id] ||
         (sim.state.bossesDefeated[ent.archetype] && !isRefight(sim, ent.archetype)) ||
-        inVillageWard(sim, sp) ||
+        // The ward keeps the blight away, never a boss: one held back could never be beaten (or rekindled).
+        (inVillageWard(sim, sp) && !sim.content.enemies[ent.archetype]?.boss) ||
         nearCheckpoint(sim, sp)
       )
         return;

@@ -172,6 +172,7 @@ body {
   font-size: 0.95em;
   line-height: 1.3;
   color: #ece4d2;
+  white-space: pre-line;
   text-shadow:
     0 0 6px #000,
     0 0 2px #000;

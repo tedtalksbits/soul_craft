@@ -1,0 +1,37 @@
+{
+  "name": "The Road Camp",
+  "marker": "camp",
+  "legend": {
+    "#": { "tile": "wall" },
+    ",": { "tile": "path" },
+    "=": { "tile": "path" },
+    "f": { "tile": "fungal_tree" },
+    "G": { "tile": "giant_shroom" },
+    "s": { "tile": "moss", "entity": { "kind": "enemy", "archetype": "slime" } },
+    "h": { "tile": "path", "entity": { "kind": "enemy", "archetype": "hollow" } },
+    "g": { "tile": "path", "entity": { "kind": "enemy", "archetype": "grub" } },
+    "S": {
+      "tile": "path",
+      "entity": { "kind": "sign", "lines": ["Scratched into a plank, badly: GRUBS. KEEP OWT."] }
+    }
+  },
+  "rows": [
+    " f       f     f     f   ",
+    "    f #############      ",
+    "      #,,,,,,,,,,,#    f ",
+    "  f   #,,,,,,,,,,,#      ",
+    "      #,,h,,,,,,,,#  s   ",
+    "f s   #,,,,,,,,,,,#      ",
+    "      #,,,,,,,,,,,#   f  ",
+    "      ,,,,,,g,,,,,#      ",
+    "   f  #,,,,,,,,,,,#      ",
+    " G    #,,,,,,,,,,,# G    ",
+    "      #,,,,,,,,h,,#    f ",
+    "   s  #,,,,,,,,,,,#      ",
+    " f    #,,,,,,,,,,,#      ",
+    "     G#####,,,##### f    ",
+    "           ,,h           ",
+    "    f      h,,S          ",
+    "        f  =======h======"
+  ]
+}

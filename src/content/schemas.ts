@@ -659,12 +659,34 @@ export const NpcSchema = z.object({
 export type NpcDef = z.infer<typeof NpcSchema>;
 export const NpcsSchema = z.record(z.string(), NpcSchema);
 
-/** What finishes an objective. Checked against the world, so it can be met before it is asked. */
-export const ObjectiveGoalSchema = z.discriminatedUnion('type', [
+/**
+ * One thing an objective asks. Most are checked against the world, so they can be met before they are
+ * asked; `kill` alone counts from the moment the objective is given.
+ */
+export const ObjectiveStepGoalSchema = z.discriminatedUnion('type', [
   /** An ability slot awakened (a relic brought to the giver). */
   z.object({ type: z.literal('unlock'), slot: z.enum(['class', 'super']) }),
   z.object({ type: z.literal('defeat'), boss: z.string() }),
   z.object({ type: z.literal('restore'), project: z.string() }),
+  /** Kills by enemy kind since the objective was given, e.g. `{ "hollow": 5, "slime": 3 }`. */
+  z.object({ type: z.literal('kill'), enemies: z.record(z.string(), z.number().int().min(1)) }),
+  /** `count` of an item in the pack; `consume` hands them to the giver when it is reported. */
+  z.object({
+    type: z.literal('gather'),
+    item: z.string(),
+    count: z.number().int().min(1),
+    consume: z.boolean().default(false),
+  }),
+]);
+export type ObjectiveStepGoal = z.infer<typeof ObjectiveStepGoalSchema>;
+
+/** What finishes an objective: one goal, or several shown together (`all`), each with its HUD text. */
+export const ObjectiveGoalSchema = z.union([
+  ObjectiveStepGoalSchema,
+  z.object({
+    type: z.literal('all'),
+    steps: z.array(z.object({ text: z.string(), goal: ObjectiveStepGoalSchema })).min(1),
+  }),
 ]);
 export type ObjectiveGoal = z.infer<typeof ObjectiveGoalSchema>;
 
@@ -684,6 +706,8 @@ export const ObjectiveSchema = z.object({
   /** What the giver says when told it is done. */
   doneLines: z.array(z.string()).min(1),
   goal: ObjectiveGoalSchema,
+  /** Items the giver hands over when it is reported done. */
+  reward: z.array(ItemCountSchema).default([]),
 });
 export type ObjectiveDef = z.infer<typeof ObjectiveSchema>;
 export const ObjectivesSchema = z.record(z.string(), ObjectiveSchema);
@@ -1090,6 +1114,8 @@ export type BrainType = BrainDef['type'];
 export const EnemySchema = z.object({
   name: z.string(),
   sprite: z.string(),
+  /** Drawn larger and tinted: a named enemy that borrows another's sprite until it has its own. */
+  look: z.object({ scale: pos.default(1), tint: color.optional() }).optional(),
   body: size,
   hp: pos,
   speed: nonneg,
@@ -1101,6 +1127,8 @@ export const EnemySchema = z.object({
   drops: z.array(DropSchema).default([]),
   /** The chance it drops a piece of gear, and which `loot.json` table rolls its tier. */
   gear: z.object({ chance: fraction, table: z.string() }).optional(),
+  /** A piece it always drops, for a set slot and tier (Grub's helmet, which teaches the equipment screen). */
+  sureGear: z.object({ slot: GearSlotSchema, tier: TierSchema }).optional(),
   recoilTicks: ticks,
   /** Multiplier on knockback received. 0 = immovable. */
   knockbackTaken: nonneg,
@@ -1217,10 +1245,17 @@ export const WorldSchema = z.object({
   regions: z.object({ sizeChunks: z.number().int().min(1), prefabs: weighted(z.string().nullable()) }),
   /**
    * Set pieces every world has, in the same place: each takes over its region (x, y in regions, the
-   * origin's being 0, 0), centered vertically against the region's west edge.
+   * origin's being 0, 0), centered vertically against the region's west edge unless `at` places it.
    */
   fixed: z
-    .array(z.object({ prefab: z.string(), region: z.tuple([z.number().int(), z.number().int()]) }))
+    .array(
+      z.object({
+        prefab: z.string(),
+        region: z.tuple([z.number().int(), z.number().int()]),
+        /** Its center in world tiles instead, for a set piece that must sit close by; it must stay in its region. */
+        at: z.tuple([z.number().int(), z.number().int()]).optional(),
+      }),
+    )
     .default([]),
 });
 export type WorldDef = z.infer<typeof WorldSchema>;

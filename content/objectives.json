@@ -1,9 +1,35 @@
 {
+  "road_camp": {
+    "giver": "maren",
+    "track": "Clear the Road Camp, west along the old road, and bring Maren fungal caps.",
+    "lines": [
+      "You're awake. Good. I wasn't sure I remembered you well enough.",
+      "Hollows dragged the last of our tools to a camp by the old road, west of here. The big one calls himself Grub. He's proud of it.",
+      "And I can't brew a bandage without fungal caps. They grow on the trees out that way. Bring me twenty."
+    ],
+    "reminder": ["West, along the old road. Clear the camp, and bring me twenty fungal caps."],
+    "doneLines": [
+      "Twenty. Watch, then: crush them, bind them, and that's a bandage. You'll remember how.",
+      "Keep these. When you're hurt, rest at the bonfire. The camp will fill again while you sleep. They always come back."
+    ],
+    "goal": {
+      "type": "all",
+      "steps": [
+        { "text": "Clear the camp", "goal": { "type": "kill", "enemies": { "hollow": 5, "slime": 3 } } },
+        { "text": "Defeat Grub", "goal": { "type": "defeat", "boss": "grub" } },
+        {
+          "text": "Gather fungal caps",
+          "goal": { "type": "gather", "item": "fungal_cap", "count": 20, "consume": true }
+        }
+      ]
+    },
+    "reward": [{ "item": "field_bandage", "count": 5 }]
+  },
   "oath": {
     "giver": "maren",
     "track": "Take an oath from a shrine knight and bring it to Maren.",
     "lines": [
-      "You're awake. Good. I wasn't sure I remembered you well enough.",
+      "You came back. That's the hardest part, most days.",
       "There are knights at the old shrines. They swore to guard our dead, and they still do, though they've forgotten why.",
       "Beat one and bring me what it carries. An oath is a memory with a purpose. It will help you remember yours."
     ],

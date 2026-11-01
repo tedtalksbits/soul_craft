@@ -468,7 +468,23 @@ export function itemLevelAt(sim: Simulation, x: number, y: number): number {
 export function dropGear(sim: Simulation, table: string, x: number, y: number): void {
   const tier = rollTier(sim, table);
   const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
-  const stack = rollDrop(sim.content, tier, itemLevelAt(sim, x, y), sim.rng.int(1, 0x7fffffff), cls);
+  spill(
+    sim,
+    rollDrop(sim.content, tier, itemLevelAt(sim, x, y), sim.rng.int(1, 0x7fffffff), cls),
+    tier,
+    x,
+    y,
+  );
+}
+
+/** Drops a piece for a set slot and tier (an enemy's `sureGear`), rolled like any other. */
+export function dropSureGear(sim: Simulation, slot: GearSlot, tier: TierId, x: number, y: number): void {
+  const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
+  const stack = rollForSlot(sim.content, slot, tier, itemLevelAt(sim, x, y), sim.rng.int(1, 0x7fffffff), cls);
+  if (stack) spill(sim, stack, tier, x, y);
+}
+
+function spill(sim: Simulation, stack: ItemStack, tier: TierId, x: number, y: number): void {
   const gear = stack.gear;
   dropPickup(sim, 'item', 1, x, y, stack.item, gear ?? null);
   sim.events.emit({

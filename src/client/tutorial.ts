@@ -1,12 +1,15 @@
 /**
  * First-time hints: the first time an ability is ready while an enemy is close,
  * and the first time the super is charged, a card names its key and says what
- * it does. Each shows once per device (the ids live in settings, and the
- * settings screen can reset them). Pure presentation: it only reads sim state.
+ * it does; the first time the pack holds gear that would raise Power, with no
+ * enemy close, a card sends the player to the equipment screen. Each shows once
+ * per device (the ids live in settings, and the settings screen can reset them).
+ * Pure presentation: it only reads sim state.
  */
 import { ABILITY_SLOTS, type AbilitySlot } from '../content/schemas';
-import { Abilities, Body, Dying, Enemy, Player } from '../sim/components';
+import { Abilities, Body, Dying, Enemy, Inventory, Player } from '../sim/components';
 import { slotReady } from '../sim/modules/abilities';
+import { compareGear } from '../sim/modules/items';
 import { slotUnlocked } from '../sim/modules/unlocks';
 import type { Simulation } from '../sim/simulation';
 import { primaryKey, type Binding } from './keybinds';
@@ -24,6 +27,19 @@ const SLOT_BINDING: Readonly<Record<AbilitySlot, Binding>> = {
   super: 'super',
 };
 
+/** The piece in the pack that would raise Power the most, with Power now and after, if any would. */
+export function betterGear(sim: Simulation): { item: string; now: number; after: number } | null {
+  const stacks = sim.ecs.get(sim.player, Inventory)?.stacks ?? [];
+  let best: { item: string; now: number; after: number } | null = null;
+  for (const [i, stack] of stacks.entries()) {
+    if (!stack.gear) continue;
+    const c = compareGear(sim, i);
+    if (c && c.after.power > c.now.power && c.after.power > (best?.after ?? 0))
+      best = { item: stack.item, now: c.now.power, after: c.after.power };
+  }
+  return best;
+}
+
 export class Tutorial {
   private quietUntil = 0;
   /** The game the gap was timed in; a new game restarts the tick count. */
@@ -33,6 +49,7 @@ export class Tutorial {
     private readonly settings: SettingsStore,
     private readonly ui: Ui,
     private readonly abilityIcon: (ability: string) => HTMLElement,
+    private readonly itemIcon: (item: string) => HTMLElement,
   ) {}
 
   update(sim: Simulation): void {
@@ -71,6 +88,22 @@ export class Tutorial {
       this.settings.update({ seenHints: [...seen, id] });
       this.quietUntil = sim.tick + GAP_TICKS;
       return;
+    }
+
+    // Never in a fight: the card waits until the area is quiet.
+    const better = !seen.includes('gear') && !enemyNear ? betterGear(sim) : null;
+    if (better) {
+      const pack = primaryKey(this.settings.current.bindings, 'inventory');
+      this.ui.hint({
+        key: pack,
+        title: `New gear: ${sim.content.item(better.item).name}`,
+        text: `Wearing it would raise your Power from ${better.now} to ${better.after}. Open your pack to compare it with what you wear, then equip it.`,
+        footer: 'Power sums up your gear and levels. Nothing is ever locked behind it.',
+        color: '#ecc87a',
+        icon: this.itemIcon(better.item),
+      });
+      this.settings.update({ seenHints: [...seen, 'gear'] });
+      this.quietUntil = sim.tick + GAP_TICKS;
     }
   }
 }

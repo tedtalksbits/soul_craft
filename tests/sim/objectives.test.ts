@@ -26,6 +26,14 @@ function talk(sim: Simulation) {
   return { lines: spoke[0]!.lines, events };
 }
 
+/** A new game with the Road Camp (Maren's first errand) already reported, so she asks for the oath next. */
+function pastCamp(): Simulation {
+  const sim = newSim();
+  sim.state.objectives.done['road_camp'] = true;
+  run(sim, 1);
+  return sim;
+}
+
 /** Beats a shrine knight next to the player and lets the magnet bring in its oath. */
 function bringOath(sim: Simulation) {
   sim.state.cheats.god = true;
@@ -49,8 +57,7 @@ describe('objectives', () => {
   });
 
   it('Maren gives the oath, the HUD tracks it, and asking again gets a reminder', () => {
-    const sim = newSim();
-    run(sim, 1);
+    const sim = pastCamp();
     const { lines, events } = talk(sim);
     expect(lines).toEqual(objectives['oath']!.lines);
     expect(ofType(events, 'objectiveStarted')).toEqual([{ type: 'objectiveStarted', objective: 'oath' }]);
@@ -59,8 +66,7 @@ describe('objectives', () => {
   });
 
   it('bringing her the oath awakens the class ability and she asks for the keep next', () => {
-    const sim = newSim();
-    run(sim, 1);
+    const sim = pastCamp();
     talk(sim);
     bringOath(sim);
     // Carrying it is not enough: nothing is awake until Maren takes it.
@@ -70,13 +76,12 @@ describe('objectives', () => {
     expect(ofType(events, 'abilityUnlocked').map((e) => e.slot)).toEqual(['class']);
     expect(ofType(events, 'objectiveCompleted')).toEqual([{ type: 'objectiveCompleted', objective: 'oath' }]);
     expect(countItem(sim.ecs.need(sim.player, Inventory), 'relic_oath')).toBe(0);
-    expect(sim.state.objectives).toEqual({ active: 'keep', done: { oath: true } });
+    expect(sim.state.objectives).toEqual({ active: 'keep', done: { road_camp: true, oath: true } });
     expect(objectiveText(sim)).toBe(objectives['keep']!.track);
   });
 
   it('an oath taken before she asks is handed over the first time the player speaks to her', () => {
-    const sim = newSim();
-    run(sim, 1);
+    const sim = pastCamp();
     bringOath(sim);
     const { lines } = talk(sim);
     expect(lines).toEqual([
@@ -90,7 +95,7 @@ describe('objectives', () => {
   it('a goal met away from her shows "Return to Maren" until it is reported', () => {
     const sim = newSim();
     run(sim, 1);
-    sim.state.objectives = { active: 'forge', done: { oath: true, keep: true } };
+    sim.state.objectives = { active: 'forge', done: { road_camp: true, oath: true, keep: true } };
     rebuild(sim, 'smithy', { anywhere: true, free: true });
     expect(objectiveText(sim)).toBe('Return to Maren.');
     expect(talk(sim).lines).toEqual(objectives['forge']!.doneLines);
@@ -111,7 +116,7 @@ describe('objectives', () => {
     const sim = newSim();
     run(sim, 1);
     sim.ecs.need(sim.player, Inventory).stacks.push({ item: 'relic_sovereign', count: 1, level: 0 });
-    sim.state.objectives = { active: 'keep', done: { oath: true } };
+    sim.state.objectives = { active: 'keep', done: { road_camp: true, oath: true } };
     sim.ecs.need(sim.player, Abilities).unlocked.class = true;
     const { lines } = talk(sim);
     expect(lines).toEqual([...objectives['keep']!.doneLines, ...objectives['forge']!.lines]);

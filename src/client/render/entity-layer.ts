@@ -11,6 +11,7 @@ import {
   Boss,
   Decoy,
   Dying,
+  Enemy,
   Health,
   Invulnerable,
   Pickup,
@@ -108,6 +109,7 @@ export class EntityLayer {
       view.root.position.set(Math.round(body.x), feetY - Math.round(z));
       view.root.zIndex = feetY;
       const boss = ecs.has(e, Boss);
+      const enemy = ecs.get(e, Enemy);
 
       const dying = ecs.get(e, Dying);
       let alpha = dying ? 1 - dying.t / DEATH_TICKS : 1;
@@ -118,7 +120,14 @@ export class EntityLayer {
       if (player && ecs.has(e, Veiled)) alpha *= 0.3;
       if (ecs.has(e, Decoy)) alpha *= 0.45 + 0.15 * Math.sin(this.clockMs / 90);
       view.sprite.alpha = alpha;
-      view.sprite.tint = ecs.has(e, Decoy) ? 0x8a80a0 : 0xffffff;
+      const look = enemy ? sim.content.enemies[enemy.archetype]?.look : undefined;
+      view.sprite.tint = ecs.has(e, Decoy)
+        ? 0x8a80a0
+        : look?.tint
+          ? Number.parseInt(look.tint.slice(1), 16)
+          : 0xffffff;
+      view.sprite.scale.set(look?.scale ?? 1);
+      view.glow.scale.set(look?.scale ?? 1);
 
       view.flashMs = Math.max(0, view.flashMs - dtMs);
       const ai = ecs.get(e, Ai);

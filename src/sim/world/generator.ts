@@ -177,8 +177,8 @@ export class WorldGenerator {
     const fixedPrefab = fixed ? this.content.prefabs[fixed.prefab] : undefined;
     if (fixed && fixedPrefab) {
       const { pw, ph } = prefabSize(fixedPrefab);
-      const x0 = rx * span + 2;
-      const y0 = ry * span + Math.floor((span - ph) / 2);
+      const x0 = fixed.at ? fixed.at[0] - Math.floor(pw / 2) : rx * span + 2;
+      const y0 = fixed.at ? fixed.at[1] - Math.floor(ph / 2) : ry * span + Math.floor((span - ph) / 2);
       return {
         id: `${fixed.prefab}@${rx},${ry}`,
         prefabId: fixed.prefab,

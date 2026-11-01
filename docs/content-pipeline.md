@@ -170,16 +170,24 @@ each side: walking in starts the fight, a bar shows its name and title, and the 
 ends. Once killed it never respawns. The `warden` brain adds `shieldAt` (health fractions where its shield goes
 up), `adds` (what it calls while shielded) and the slam and charge numbers; prefab `brazier` entities in the arena
 break the shield when the player stands on them all. Boss arenas are placed by `world.json → fixed`
-(`{ "prefab": "warden_arena", "region": [0, -1] }`), so every world has them in the same place.
+(`{ "prefab": "warden_arena", "region": [0, -1] }`), so every world has them in the same place. A fixed piece
+takes over its region; `at` (its center, in world tiles) places it exactly instead, for one that must sit close to
+the village (the Road Camp), and it must stay inside its region. A palisade's ward never holds a boss back.
+
+Any enemy can take `sureGear { slot, tier }` (a piece it always drops: Grub's Standard helmet) and `look { scale,
+tint }`, which draws it larger and tinted while it borrows another enemy's sprite.
 
 ### People and objectives
 
 `npcs.json` names the people the player can talk to; a prefab places one with `{ "kind": "npc", "npc": "maren" }`,
 drawn from the `npcs` sheet by its `sprite` frame. `objectives.json` is the story's to-do list, offered in file
 order: each has a `giver`, the HUD's `track` line, `lines` (asking), `reminder` (asked again) and `doneLines`
-(reported), and a `goal`: `unlock` (an ability slot awakened), `defeat` (a boss) or `restore` (a project). Goals are
-read from the world, so one met early completes the moment it is reported. Objectives are never marked on the map.
-Relics are carried to the giver: talking to Maren with one in the pack hands it over and awakens its slot.
+(reported), and a `goal`: `unlock` (an ability slot awakened), `defeat` (a boss), `restore` (a project), `kill`
+(`enemies`: kills by kind, e.g. `{ "hollow": 5 }`), `gather` (`item`, `count`, and `consume` to hand them over), or
+`all` (`steps`, each a `text` and one of those goals, shown together on the HUD with their counts). Goals are read
+from the world, so one met early completes the moment it is reported; kills alone count from the moment the
+objective is given. `reward` lists items the giver hands over when it is reported. Objectives are never marked on
+the map. Relics are carried to the giver: talking to Maren with one in the pack hands it over and awakens its slot.
 
 ### Leveling
 

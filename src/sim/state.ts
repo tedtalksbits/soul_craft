@@ -79,6 +79,8 @@ export interface ObjectiveState {
   active: string | null;
   /** Objectives reported done to their giver, by id. */
   done: Record<string, true>;
+  /** Kills by enemy kind since the objective under way was given, for its `kill` goals. */
+  kills?: Record<string, number>;
 }
 
 export interface BossFight {
