@@ -4,12 +4,12 @@ Where Soul Craft is going, how far it has got, and what is still undecided. Read
 feature: it says what the feature is for and what it must not grow into. Update it when a milestone lands or a
 decision is made (decisions with lasting technical weight also get an ADR in `docs/adr/`).
 
-Last updated: 2026-10-29, after Milestone 3's foundation.
+Last updated: 2026-10-31, after the gear and loot design.
 
 ## Vision
 
-**A top-down Soulslike action RPG where you fight with elemental class powers, forge your gear from what you
-gather, and explore a world that is different every time the flame wakes.**
+**A top-down Soulslike action RPG where you fight with elemental class powers, hunt your gear from the creatures
+and Wardens of a world that is different every time the flame wakes, and forge it into something greater.**
 
 **Premise.** The land is forgetting itself, and Ashen Village is nearly gone. Maren, the last person who remembers
 it, remembered you back. You were forgotten long ago, so the forgetting has nothing to take from you: you can carry
@@ -24,7 +24,8 @@ Pillars, in priority order:
    tells, losing souls on death), with Destiny-style class abilities on top. Every other system feeds combat.
 2. **A world worth exploring.** A seeded, chunk-streamed overworld with handmade set pieces (villages, shrines,
    boss arenas). Comparable feel: _Tunic_, _Death's Door_, _Hyper Light Drifter_.
-3. **Gather and craft.** Materials from enemies and the land become gear, upgrades and potions.
+3. **Hunt and forge.** Weapons and armor drop from enemies and Wardens with random tiers and perks; materials from
+   enemies and the land become upgrades, potions, tools and a restored village (`docs/gear-and-loot.md`).
 4. **Life sim in service of combat.** Fishing, farming and pets exist to feed the fight (materials, buff food, a
    companion), not as a second game. No seasons, relationships or day/night planned.
 
@@ -73,7 +74,9 @@ These need an answer before the milestones that depend on them.
    of combat. No seasons, relationships or free-form building.
 4. **Terrain art.** PixelLab's top-down tilesets blend terrains at their edges, which needs neighbor-aware tile
    choice in the chunk renderer first. Alternatively, the art agent could make tiles from source like the rest.
-5. **Item quality and perks.** Deferred in Milestone 2 (ADR 0009) until there is loot worth rolling.
+5. ~~**Item quality and perks.**~~ **Decided (2026-10-31):** gear is looted, not crafted, in five tiers with
+   rolled perks, six weapon types, and Warden chests with signature items. The full design and its decisions are in
+   [`docs/gear-and-loot.md`](gear-and-loot.md).
 6. **Co-op.** "Maybe later". The deterministic sim keeps it possible; nothing is planned.
 
 ## Planned
@@ -186,6 +189,24 @@ Base versions are free, variants cost souls, the best come from Wardens.
    Warden.
 5. **Art and tuning (under way):** every variant has its own icon (PixelLab, `docs/ICON_ART.md`). A first
    number pass toned down Pyre, Bastion's shield and Iron Will and raised Meteor; the rest waits on a playtest.
+
+### Next: Gear and loot (decided, not built)
+
+Playtest feedback shifted gear from crafting to loot. The design, its research and the owner's decisions are in
+[`docs/gear-and-loot.md`](gear-and-loot.md). Phases, in order:
+
+0. **Bonfire and saves:** menus pause the game, no resting while enemies are chasing you, respawns random and away
+   from the bonfire, and old saves refused with a "start a new game" message.
+1. **Gear foundation:** weapon, two rings, helmet, chest and legs; item instances with tier, item level, perks and
+   a roll seed; the armor curve; Power; the new equipment screen with comparison; enemy drops; forge gear recipes
+   removed.
+2. **Perks:** pools per slot and weapon type, Greater perks, smart loot, Legendary powers, Blighted items.
+3. **Weapon types:** chains, charged attacks and dash-strikes; sword, spear and hammer, then daggers, then bow and
+   Ember staff.
+4. **Economy:** salvage, temper, upgrade and infuse, cleanse, coatings, tools, ranked projects, the Gambler, respec.
+5. **Wardens:** chests, signature items, Rekindle, pity and Marks, Heat, alternate kills.
+6. **Onboarding:** the Road Camp objective, with `kill` and `gather` goals.
+7. **Art:** weapon and armor layers on the character, item icons, beams and chimes.
 
 ### Milestone 5: Life sim, in service of combat
 
