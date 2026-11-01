@@ -18,7 +18,7 @@ export function iconElement(rect: FrameRect | undefined, scale = 2): HTMLElement
 }
 
 /**
- * A grayscale glyph (class sigils, ability icons) tinted with a color, like Pixi's tint on the
+ * A grayscale class sigil tinted with a color, like Pixi's tint on the
  * HUD: the glyph multiplies the color, then is masked to its own shape so the transparent
  * area stays clear. Keeps the icons' shading while letting content pick the color.
  */

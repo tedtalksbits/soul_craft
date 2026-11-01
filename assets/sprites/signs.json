@@ -1,0 +1,8 @@
+{
+  "image": "signs.png",
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "anchor": [0.5, 1],
+  "frames": { "sign": 0 },
+  "animations": {}
+}

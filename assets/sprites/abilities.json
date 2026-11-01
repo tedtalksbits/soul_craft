@@ -1,7 +1,7 @@
 {
   "image": "abilities.png",
-  "frameWidth": 16,
-  "frameHeight": 16,
+  "frameWidth": 48,
+  "frameHeight": 48,
   "anchor": [0.5, 1],
   "frames": {
     "ground_slam": 0,

@@ -49,6 +49,8 @@ if (command === 'setup') {
     '-r',
     join(ART, 'requirements.txt'),
   ]);
+} else if (command === 'run' && rest[0] === 'icons') {
+  await import('./class-icon-art');
 } else if (command === 'run' && rest[0]) {
   const [tool, ...args] = rest;
   const script = join(ART, `${tool}.py`);

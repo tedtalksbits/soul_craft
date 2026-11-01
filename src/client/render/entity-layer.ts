@@ -16,6 +16,7 @@ import {
   Pickup,
   Player,
   Sprite,
+  Sign,
   Veiled,
 } from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
@@ -71,7 +72,8 @@ export class EntityLayer {
     for (const [e, spriteDef, body] of ecs.query(Sprite, Body)) {
       seen.add(e);
       const view = this.views.get(e) ?? this.create(e);
-      const sheet = this.assets.sheet(spriteDef.sheet);
+      // Old saves still name the shared props sheet for signs.
+      const sheet = this.assets.sheet(ecs.has(e, Sign) ? 'signs' : spriteDef.sheet);
       const { key, dir8, elapsedMs, reverse, cast } = selectAnim(
         sim,
         e,

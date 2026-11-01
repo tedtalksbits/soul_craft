@@ -37,6 +37,7 @@
   { "id": "shallows", "frames": ["shallows"], "map": "#3e6470" },
   {
     "id": "tree",
+    "scenery": { "sheet": "trees", "frame": "tree", "fadeAbove": 45 },
     "frames": ["tree"],
     "solid": true,
     "overlay": true,
@@ -45,6 +46,7 @@
   },
   {
     "id": "fungal_tree",
+    "scenery": { "sheet": "trees", "fadeAbove": 45 },
     "frames": ["fungal_tree"],
     "solid": true,
     "overlay": true,
@@ -53,6 +55,7 @@
   },
   {
     "id": "dead_tree",
+    "scenery": { "sheet": "trees", "fadeAbove": 46 },
     "frames": ["dead_tree"],
     "solid": true,
     "overlay": true,
@@ -61,6 +64,7 @@
   },
   {
     "id": "giant_shroom",
+    "scenery": { "sheet": "trees", "fadeAbove": 37 },
     "frames": ["giant_shroom_0", "giant_shroom_1"],
     "solid": true,
     "overlay": true,

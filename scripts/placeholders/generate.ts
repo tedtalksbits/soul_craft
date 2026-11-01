@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { format, resolveConfig } from 'prettier';
 import type { SpriteSheetFile } from '../../src/content/sprite-sheet';
 import { ROOT } from '../lib/load-content';
-import { buildFont, buildNpcs, buildProps } from './misc';
+import { buildFont, buildProps } from './misc';
 import { buildTiles } from './tiles';
 
 const OUT = join(ROOT, 'assets', 'sprites');
@@ -21,7 +21,6 @@ const SHEETS: Record<string, () => { png: Buffer; json: SpriteSheetFile }> = {
   tiles: buildTiles,
   props: buildProps,
   font: buildFont,
-  npcs: buildNpcs,
 };
 
 const args = process.argv.slice(2);

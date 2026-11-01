@@ -26,7 +26,7 @@ import { MapTerrain } from './render/map-terrain';
 import { Tutorial } from './tutorial';
 import { FixedLoop } from './loop';
 import type { GameRenderer } from './render/renderer';
-import { iconElement, tintedIcon } from './ui/icons';
+import { iconElement } from './ui/icons';
 import { InventoryScreen } from './ui/inventory';
 import { LevelScreen } from './ui/level';
 import { RebuildScreen } from './ui/rebuild';
@@ -175,22 +175,16 @@ export class App {
   }
 
   /** An item's icon from the items sheet, as a DOM element. */
-  /** A class's sigil, tinted with its element. */
+  /** A class's hand-pixeled emblem in its own material palette. */
   sigilIcon(cls: string, scale = 2): HTMLElement {
-    const def = this.content.classes[cls];
-    return tintedIcon(this.assets.sheet('sigils')?.frameRect(cls), def?.element.base ?? '#ffffff', scale);
+    return iconElement(this.assets.sheet('sigils')?.frameRect(cls), scale);
   }
 
-  /** An ability's icon, tinted with its class's element. A variant without its own icon shows its base's. */
+  /** Full-color ability artwork. A variant without its own icon shows its base's. */
   abilityIcon(ability: string, scale = 2): HTMLElement {
     const base = this.content.baseAbility(ability);
-    const cls = Object.values(this.content.classes).find((c) => Object.values(c.abilities).includes(base));
     const sheet = this.assets.sheet('abilities');
-    return tintedIcon(
-      sheet?.frameRect(ability) ?? sheet?.frameRect(base),
-      cls?.element.base ?? '#ffffff',
-      scale,
-    );
+    return iconElement(sheet?.frameRect(ability) ?? sheet?.frameRect(base), scale);
   }
 
   itemIcon(item: string, scale = 2): HTMLElement {
@@ -609,6 +603,7 @@ export class App {
     });
     // The held AoE's landing preview (hold to aim, release to throw).
     this.renderer.abilityFx.aimPreview = free ? this.input.aimPreview : undefined;
+    this.renderer.aimPointer = free ? this.input.pointerPosition : null;
     this.renderer.render(dtMs, () => {
       for (const fn of this.frameListeners) fn(dtMs);
     });

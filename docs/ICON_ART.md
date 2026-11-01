@@ -1,5 +1,25 @@
 # Ability icon request: variants
 
+## Current full-color icons
+
+Ability icons now use 48×48 frames with full-color steel/blue, spectral violet and ember palettes.
+The original 27 frame names and indices are preserved. Menus display icons at 96px; the HUD
+uses 24px slots (half native size).
+Class emblems are separately hand-authored at 24px with restrained material palettes:
+blue steel shield, violet hood and dagger, and a warm ember flame. They are displayed
+without tinting. Regenerate with `pnpm art icons` (`scripts/class-icon-art.ts`).
+
+Source: `tools/art/source/abilities.png`, generated with the built-in image tool as an exact
+9-column × 3-row atlas. Repack with `pnpm exec tsx scripts/ability-icon-art.ts`.
+`pnpm art icons` only regenerates class emblems and cannot overwrite the ability artwork.
+
+Generation prompt: a production atlas of 27 detailed dark-fantasy pixel-art ability icons,
+48px logical resolution, nine equal square columns by three rows, no text or gutters,
+large readable silhouettes and pale highlights on charcoal backgrounds. Row one contains
+the nine base abilities; rows two and three contain the 18 variants in the existing frame order.
+
+The notes below describe the previous grayscale pack and are retained as historical reference.
+
 **Done (2026-10-31).** The pack was generated with PixelLab as described below (`icons_roll3`), and Rally, Knife
 Fan, Pyre, Vanish and Ghost Run came from a reroll (`icons_roll4`). The picks are in `PICKS` in `tools/art/icons.py`.
 The note is kept as the template for future icon requests: it is self-contained for the art agent, which can't

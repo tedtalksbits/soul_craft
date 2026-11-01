@@ -1,0 +1,8 @@
+{
+  "image": "trees.png",
+  "frameWidth": 48,
+  "frameHeight": 64,
+  "anchor": [0.5, 1],
+  "frames": { "tree": 0, "fungal_tree": 1, "dead_tree": 2, "giant_shroom_0": 3, "giant_shroom_1": 4 },
+  "animations": {}
+}

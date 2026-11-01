@@ -9,7 +9,8 @@
  * The game renders at a fixed low resolution and is scaled up with nearest
  * neighbour filtering, so every pixel stays crisp.
  */
-import { Application, Container, TextureStyle } from 'pixi.js';
+import { Application, Container, Graphics, TextureStyle } from 'pixi.js';
+import aimCursorUrl from '../../../assets/cursors/aim.png?url';
 import { Body } from '../../sim/components';
 import { TILE } from '../../sim/constants';
 import type { SimEvent } from '../../sim/events';
@@ -38,6 +39,8 @@ export class GameRenderer {
   /** Screen-space container for debug overlays. */
   readonly debugScreen = new Container();
   readonly camera = { x: 0, y: 0 };
+  aimPointer: Readonly<{ x: number; y: number }> | null = null;
+  private readonly aimMarker = new Graphics();
   /** The view in world pixels (game pixels) right now. Fill mode changes it with the window. */
   readonly view = { w: VIEW_W, h: VIEW_H };
   private fill = false;
@@ -56,8 +59,8 @@ export class GameRenderer {
     private readonly wrap: HTMLElement,
     assets: Assets,
   ) {
-    this.chunks = new ChunkLayer(assets);
     this.entities = new EntityLayer(assets);
+    this.chunks = new ChunkLayer(assets, this.entities.root);
     this.effects = new Effects(assets);
     this.abilityFx = new AbilityFx(this.effects, assets);
     this.bossFx = new BossFx(this.effects);
@@ -78,6 +81,7 @@ export class GameRenderer {
       this.overDark,
       this.beacons.root,
       this.debugScreen,
+      this.aimMarker,
       this.hud.root,
     );
     addEventListener('resize', () => this.resize());
@@ -97,6 +101,10 @@ export class GameRenderer {
       autoStart: false,
     });
     stage.appendChild(app.canvas);
+    // Pixi writes an inline cursor style during pointer events, overriding CSS.
+    const cursor = `url("${aimCursorUrl}") 16 16, crosshair`;
+    app.renderer.events.cursorStyles.default = cursor;
+    app.canvas.style.cursor = cursor;
     return new GameRenderer(app, wrap, assets);
   }
 
@@ -118,6 +126,7 @@ export class GameRenderer {
     this.hud.root.visible = sim !== null;
     this.lighting.root.visible = sim !== null;
     this.beacons.root.visible = sim !== null;
+    this.aimMarker.clear();
     if (sim) this.snapCamera(sim);
   }
 
@@ -152,7 +161,7 @@ export class GameRenderer {
       this.world.position.set(-cam.x, -cam.y);
       this.overDark.position.set(-cam.x, -cam.y);
 
-      this.chunks.sync(sim);
+      this.chunks.sync(sim, dtMs);
       this.entities.sync(sim, dtMs);
       const biome = pb
         ? sim.content.biomes[sim.world.gen.biomeAt(Math.floor(pb.x / TILE), Math.floor(pb.y / TILE))]
@@ -170,6 +179,24 @@ export class GameRenderer {
       );
       this.beacons.update(sim, cam, this.view, dtMs);
       this.hud.update(sim, dtMs);
+      this.aimMarker.clear();
+      if (pb && this.aimPointer) {
+        const aim = this.toWorld(this.aimPointer.x, this.aimPointer.y);
+        const dx = aim.x - pb.x;
+        const dy = aim.y - pb.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance > 4) {
+          // A short dotted bearing cue near the player is visible even when
+          // the cursor is far away, without implying melee reaches the cursor.
+          for (const radius of [18, 24, 30]) {
+            if (radius >= distance) break;
+            const x = Math.round(pb.x - cam.x + (dx / distance) * radius);
+            const y = Math.round(pb.y - cam.y + (dy / distance) * radius);
+            this.aimMarker.rect(x - 2, y - 2, 5, 5).fill(0x10151c);
+            this.aimMarker.rect(x - 1, y - 1, 3, 3).fill(radius === 30 ? 0xfff4cc : 0xf8b94e);
+          }
+        }
+      }
     }
     beforeDraw?.();
     this.app.render();

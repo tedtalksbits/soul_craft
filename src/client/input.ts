@@ -62,8 +62,10 @@ export class InputCapture {
     addEventListener('blur', () => {
       this.held.clear();
       this.aiming = false;
+      this.pointer = null;
     });
     target.addEventListener('mousedown', (e) => {
+      this.pointer = { x: e.clientX, y: e.clientY };
       if (e.button === 2) this.aiming = false; // right-click cancels a held throw
       if (!this.enabled || e.button !== 0) return;
       this.pressed |= Action.attack;
@@ -87,6 +89,11 @@ export class InputCapture {
   get aimPreview(): { x: number; y: number } | null | undefined {
     if (!this.aiming || !this.enabled) return undefined;
     return this.pointer ? this.toWorld(this.pointer.x, this.pointer.y) : null;
+  }
+
+  /** Client coordinates keep the visual aim aligned while the camera moves. */
+  get pointerPosition(): Readonly<{ x: number; y: number }> | null {
+    return this.enabled ? this.pointer : null;
   }
 
   /** The frame for the next tick. Clears accumulated presses. */

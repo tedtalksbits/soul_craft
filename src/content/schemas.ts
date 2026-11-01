@@ -602,6 +602,15 @@ export const TileSchema = z.object({
   solid: z.boolean().default(false),
   /** The frame has transparency and is drawn over the local biome's ground (trees, rocks). */
   overlay: z.boolean().default(false),
+  /** Optional full-size scenery, anchored to the bottom center of its collision tile. */
+  scenery: z
+    .object({
+      sheet: z.string(),
+      frame: z.string().optional(),
+      /** Top rows that may fade when they hide the player; the trunk stays opaque. */
+      fadeAbove: z.number().int().positive().optional(),
+    })
+    .optional(),
   /** Defaults to `solid`. Water is solid to walkers but arrows fly over it. */
   blocksProjectiles: z.boolean().optional(),
   /**

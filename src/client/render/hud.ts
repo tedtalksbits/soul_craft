@@ -92,7 +92,7 @@ export class Hud {
   }
 
   /**
-   * The class sigil, then the AoE, class ability and super (G / C / V by default): each ability's icon in the class's color. A ready ability
+   * The class sigil, then full-color AoE, class ability and super icons (G / C / V by default). A ready ability
    * is bright; one cooling down is dim, with the slot filling back up from the bottom. The
    * super fills with energy, glows when full, and shows the time left while it runs.
    */
@@ -111,7 +111,7 @@ export class Hud {
     this.sigil.visible = sigil !== undefined;
     if (sigil) {
       this.sigil.texture = sigil;
-      this.sigil.tint = pal.base;
+      this.sigil.tint = 0xffffff;
       this.sigil.position.set(SIGIL_X, y);
     }
 
@@ -138,9 +138,10 @@ export class Hud {
         icon.visible = tex !== undefined;
         if (tex) icon.texture = tex;
         // A locked slot shows its icon as a faint gray silhouette: there to see, not yet to use.
-        icon.tint = locked ? 0x6a6a70 : ready ? pal.light : pal.base;
+        icon.tint = locked ? 0x777780 : 0xffffff;
         icon.alpha = locked ? 0.3 : ready ? 1 : 0.45;
         icon.position.set(x, y);
+        icon.setSize(SLOT, SLOT);
       }
       if (locked) return;
       if (!ready) {
@@ -259,8 +260,8 @@ export class Hud {
   }
 }
 
-/** Ability slot size (px): the icons' size, shown at 1x. */
-const SLOT = 16;
+/** 48px ability art at exactly half size keeps pixel clusters crisp on the HUD. */
+const SLOT = 24;
 const SLOT_GAP = 3;
 
 /** The slots that get a key label: the three abilities, then the quick item. */
