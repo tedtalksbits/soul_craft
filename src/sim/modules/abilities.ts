@@ -425,7 +425,8 @@ function tickAreas(sim: Simulation): void {
     if (since >= zone.duration) ecs.destroy(e);
   }
   for (const [e, proj, body] of ecs.query(Projectile, Body)) {
-    if (proj.team !== 'player') continue;
+    // Bow arrows are the weapons module's.
+    if (proj.team !== 'player' || proj.bow) continue;
     const point = { x: body.x - 1, y: body.y - 1, w: 2, h: 2 };
     for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
       if (ecs.has(target, Dying) || !overlaps(point, bodyBox(tb))) continue;

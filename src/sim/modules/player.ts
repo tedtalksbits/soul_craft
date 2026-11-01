@@ -43,6 +43,10 @@ import {
   rollEnded,
   slamShockwave,
   strikeWith,
+  fireShot,
+  inPerfectWindow,
+  takeFreeRoll,
+  weaponType,
   swingCost,
   throughGrace,
   swingOf,
@@ -162,13 +166,15 @@ function updatePlayer(sim: Simulation): void {
         break;
       }
       throughGrace(sim, e, p);
-      if (p.t <= move.activeTo && move.lunge > 0 && !lungeBlocked(sim, p)) {
+      // A step forward stops short of a foe; a step back (a backflip shot) never does.
+      if (p.t <= move.activeTo && move.lunge !== 0 && (move.lunge < 0 || !lungeBlocked(sim, p))) {
         motion.vx = p.dirX * move.lunge;
         motion.vy = p.dirY * move.lunge;
       } else {
         motion.vx *= 0.6;
         motion.vy *= 0.6;
       }
+      fireShot(sim, e, p);
       // A blow turned by a shield bounces the player out of the move.
       if (p.t >= move.activeFrom && p.t <= move.activeTo && strike(sim, e, p)) break;
       slamShockwave(sim, e, p);
@@ -294,7 +300,13 @@ function updateCharge(
     startRoll(sim, p, facing, stamina, mx, my);
     return;
   }
-  if (sim.input.held & Action.attack) return;
+  // A drawn bow burns stamina; out of it, the arrow goes.
+  const drain = weaponType(sim).def.drawDrain;
+  if (drain > 0) {
+    stamina.value = Math.max(0, stamina.value - drain);
+    stamina.delay = def.staminaRegenDelay;
+  }
+  if (sim.input.held & Action.attack && !(drain > 0 && stamina.value <= 0)) return;
   const light = currentMove(sim);
   if (p.t < weapons.minCharge) {
     // A short hold: the light swing goes out as if it had never paused.
@@ -303,7 +315,7 @@ function updateCharge(
     return;
   }
   const paid = moveNumbers(sim, light).staminaCost;
-  releaseCharge(sim, Math.min(1, p.t / needed));
+  releaseCharge(sim, Math.min(1, p.t / needed), inPerfectWindow(sim, p.t));
   stamina.value -= Math.max(0, moveNumbers(sim).staminaCost - paid);
   stamina.delay = def.staminaRegenDelay;
   p.struck = [];
@@ -321,7 +333,7 @@ function startRoll(
 ): void {
   const def = sim.content.player;
   [p.dirX, p.dirY] = mx || my ? normalize(mx, my) : DIR_VEC[facing.dir];
-  stamina.value -= playerStats(sim, sim.player).rollStamina;
+  if (!takeFreeRoll(sim)) stamina.value -= playerStats(sim, sim.player).rollStamina;
   stamina.delay = def.staminaRegenDelay;
   setState(p, 'roll');
   sim.events.emit({ type: 'roll' });

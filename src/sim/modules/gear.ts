@@ -122,6 +122,7 @@ export function scaleEffect(fx: ModifierEffect, strength: number): ModifierEffec
     case 'tipperMark':
     case 'slamPull':
     case 'vanishStrikes':
+    case 'perfectRefund':
       return fx;
   }
 }
@@ -183,6 +184,7 @@ function headline(fx: ModifierEffect): string {
     case 'tipperMark':
     case 'slamPull':
     case 'vanishStrikes':
+    case 'perfectRefund':
       return '';
   }
 }

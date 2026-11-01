@@ -2,7 +2,8 @@
  * Weapon types (docs/gear-and-loot.md, section 5): every type follows the same input rules, so learning
  * one teaches the rest. Tap for the light chain (its last hit is the finisher), hold for a charged
  * attack with a payoff at full charge, and attack out of a roll for a dash-strike. Each type adds one
- * signature rule: the sword's Flow, the spear's Tipper, the hammer's Break, the daggers' Flank and Bleed.
+ * signature rule: the sword's Flow, the spear's Tipper, the hammer's Break, the daggers' Flank and Bleed,
+ * the bow's Pin and Perfect Shot. A bow's moves fire arrows instead of swinging; drawing it burns stamina.
  *
  * The moves are data (`content/weapons.json`) multiplying the equipped weapon's own numbers. The player
  * controller owns the states; this module decides which move comes next, what it hits and how hard.
@@ -16,6 +17,8 @@ import {
   Ai,
   Ambush,
   Bleed,
+  Pinned,
+  Projectile,
   Body,
   Decoy,
   Dying,
@@ -42,6 +45,7 @@ import { gainEnergy } from './energy';
 import { gearEffects, gearTotals } from './gear';
 import { playerStats } from './items';
 import { onWeaponHit } from './perks';
+import { spawnProjectile } from './projectiles';
 
 /** The equipped weapon's type and its moves. Bare hands fight like a sword. */
 export function weaponType(sim: Simulation): { id: WeaponTypeId; def: WeaponTypeDef } {
@@ -106,12 +110,22 @@ export function chooseMove(sim: Simulation): void {
   s.held = (sim.input.held & Action.attack) !== 0;
 }
 
-/** Turns the move under way into the charged attack, `charge` full (0..1). */
-export function releaseCharge(sim: Simulation, charge: number): void {
+/** Turns the move under way into the charged attack, `charge` full (0..1), let go in the Perfect window or not. */
+export function releaseCharge(sim: Simulation, charge: number, perfect = false): void {
   const s = swingOf(sim);
   s.move = 'charged';
   s.charge = charge;
   s.shockwave = false;
+  s.perfect = perfect;
+}
+
+/** Whether letting go of a charge `t` ticks in lands in the bow's Perfect window. */
+export function inPerfectWindow(sim: Simulation, t: number): boolean {
+  const sig = weaponType(sim).def.signature;
+  if (sig.type !== 'pin') return false;
+  const needed = chargeTicks(sim);
+  const extra = gearTotals(sim.content, sim.ecs.get(sim.player, Equipment)).perfectWindow;
+  return t >= needed && t < needed + sig.window + extra;
 }
 
 /** After a move ends: a light attack opens the window for the chain's next step. */
@@ -196,7 +210,7 @@ export function attackBox(sim: Simulation, e: Entity): Box | null {
   const body = sim.ecs.get(e, Body);
   if (!p || !body || p.state !== 'attack') return null;
   const move = currentMove(sim);
-  if (p.t < move.activeFrom || p.t > move.activeTo) return null;
+  if (move.shot || p.t < move.activeFrom || p.t > move.activeTo) return null;
   const { reach, width } = moveNumbers(sim, move);
   if (move.around) {
     const r = reach + Math.max(body.w, body.h) / 2;
@@ -396,13 +410,150 @@ export function throughGrace(sim: Simulation, e: Entity, p: Player): void {
   else inv.ticks = Math.max(inv.ticks, ticks);
 }
 
-/** What the swing starting now costs: every fifth is free with the perk for it. */
+/**
+ * What the swing starting now costs: every fifth is free with the perk for it, and so is a bow shot out
+ * of a roll with its perk.
+ */
 export function swingCost(sim: Simulation): number {
   const s = swingOf(sim);
   s.swings = (s.swings ?? 0) + 1;
+  const totals = gearTotals(sim.content, sim.ecs.get(sim.player, Equipment));
   const free =
-    gearTotals(sim.content, sim.ecs.get(sim.player, Equipment)).freeFifth > 0 && s.swings % 5 === 0;
+    (totals.freeFifth > 0 && s.swings % 5 === 0) ||
+    (totals.freeDashShot > 0 && s.move === 'dash' && currentMove(sim).shot !== undefined);
   return free ? 0 : moveNumbers(sim).staminaCost;
+}
+
+/** The next roll is free once (a Legendary bow's reward for a Perfect Shot); true if this one was. */
+export function takeFreeRoll(sim: Simulation): boolean {
+  const s = sim.ecs.get(sim.player, Swing);
+  if (!s?.freeRoll) return false;
+  s.freeRoll = false;
+  return true;
+}
+
+/**
+ * A bow move looses its arrow (or three, split, on a charged shot with the perk). A Perfect Shot carries
+ * its bonus with it. A quick shot with a foe right in front kicks it away first, with the perk.
+ */
+export function fireShot(sim: Simulation, e: Entity, p: Player): void {
+  const move = currentMove(sim);
+  if (!move.shot || p.t !== move.activeFrom) return;
+  const s = swingOf(sim);
+  const { def } = weaponType(sim);
+  const sig = def.signature;
+  const totals = gearTotals(sim.content, sim.ecs.get(e, Equipment));
+  const body = sim.ecs.need(e, Body);
+  const perfect = s.move === 'charged' && s.perfect === true && sig.type === 'pin';
+  const numbers = moveNumbers(sim, move);
+  const damage = numbers.damage * (perfect ? 1 + sig.bonus : 1);
+  const angles = s.move === 'charged' && totals.splitShot > 0 ? [-0.2, 0, 0.2] : [0];
+  const base = Math.atan2(p.dirY, p.dirX);
+  for (const a of angles) {
+    spawnProjectile(sim, {
+      kind: 'arrow',
+      team: 'player',
+      x: body.x + p.dirX * 6,
+      y: body.y + p.dirY * 6,
+      dirX: Math.cos(base + a),
+      dirY: Math.sin(base + a),
+      speed: move.shot.speed,
+      damage,
+      life: Math.round(move.shot.range / move.shot.speed),
+      perfect,
+    });
+  }
+  if (perfect) {
+    sim.events.emit({ type: 'weaponRule', rule: 'perfect', x: body.x, y: body.y });
+    const cls = sim.ecs.get(e, Abilities)?.class ?? null;
+    if (gearEffects(sim.content, sim.ecs.get(e, Equipment), cls).some((fx) => fx.type === 'perfectRefund'))
+      s.freeRoll = true;
+  }
+  if (s.move === 'chain' && totals.bowKick > 0) kickAway(sim, body, p, numbers.damage);
+}
+
+/** Shoves a foe right in front of the player away, for a little damage. */
+function kickAway(sim: Simulation, body: Body, p: Player, damage: number): void {
+  for (const [target, , tb] of sim.ecs.query(Enemy, Body, Health)) {
+    if (sim.ecs.has(target, Dying)) continue;
+    const dx = tb.x - body.x;
+    const dy = tb.y - body.y;
+    if (dx * p.dirX + dy * p.dirY <= 0 || Math.hypot(dx, dy) > (body.w + tb.w) / 2 + 8) continue;
+    applyDamage(sim, target, {
+      amount: Math.max(1, Math.round(damage * 0.5)),
+      crit: false,
+      fromX: body.x,
+      fromY: body.y,
+      knockback: 5,
+      charges: true,
+    });
+  }
+}
+
+/**
+ * The player's arrows in flight: a hit lodges a pin and stops; a Perfect Shot pierces, staggers, and
+ * rips out every pin for extra damage. A raised shield stops any arrow.
+ */
+function updateArrows(sim: Simulation): void {
+  const { ecs } = sim;
+  const { def } = weaponType(sim);
+  const sig = def.signature;
+  const totals = gearTotals(sim.content, ecs.get(sim.player, Equipment));
+  for (const [arrow, proj, body] of ecs.query(Projectile, Body)) {
+    if (!proj.bow) continue;
+    const point = { x: body.x - 1, y: body.y - 1, w: 2, h: 2 };
+    for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
+      if (proj.bow.hit.includes(target) || ecs.has(target, Dying) || !overlaps(point, bodyBox(tb))) continue;
+      proj.bow.hit.push(target);
+      const result = applyDamage(sim, target, {
+        amount: Math.max(1, Math.round(proj.damage)),
+        crit: proj.bow.perfect,
+        fromX: body.x - proj.vx * 4,
+        fromY: body.y - proj.vy * 4,
+        knockback: proj.bow.perfect ? 2.5 : 0.5,
+        charges: true,
+      });
+      if (result === 'blocked') {
+        ecs.destroy(arrow);
+        break;
+      }
+      if (result !== 'hit') continue;
+      sim.hitstop = Math.max(sim.hitstop, proj.bow.perfect ? 4 : 1);
+      onWeaponHit(sim, target);
+      if (sig.type !== 'pin') {
+        ecs.destroy(arrow);
+        break;
+      }
+      if (proj.bow.perfect) {
+        stagger(sim, target, sig.stagger);
+        ripPins(sim, target, proj.damage * sig.rip * (1 + totals.pinDamage));
+        continue; // a Perfect Shot flies on
+      }
+      const pins = ecs.get(target, Pinned) ?? ecs.add(target, Pinned, { count: 0, ticks: 0 });
+      pins.count = Math.min(sig.pins, pins.count + 1);
+      pins.ticks = sig.ticks;
+      ecs.destroy(arrow);
+      break;
+    }
+  }
+}
+
+/** Tears every pin out of a foe, `each` damage apiece. */
+function ripPins(sim: Simulation, target: Entity, each: number): void {
+  const pins = sim.ecs.get(target, Pinned);
+  if (!pins || !sim.ecs.isAlive(target) || sim.ecs.has(target, Dying)) return;
+  sim.ecs.remove(target, Pinned);
+  const tb = sim.ecs.need(target, Body);
+  applyDamage(sim, target, {
+    amount: Math.max(1, Math.round(each * pins.count)),
+    crit: false,
+    fromX: tb.x,
+    fromY: tb.y,
+    knockback: 0,
+    unblockable: true,
+    charges: true,
+  });
+  sim.events.emit({ type: 'weaponRule', rule: 'rip', x: tb.x, y: tb.y });
 }
 
 /** A sworn spear's tipper marks the foe; the next ability hit on it staggers it outright. */
@@ -480,9 +631,13 @@ function tickWeapons(sim: Simulation): void {
   if (s && s.comboTicks > 0) s.comboTicks--;
   for (const [e, mark] of sim.ecs.query(Marked)) if (--mark.ticks <= 0) sim.ecs.remove(e, Marked);
   for (const [e, bleed] of sim.ecs.query(Bleed)) if (--bleed.ticks <= 0) sim.ecs.remove(e, Bleed);
+  for (const [e, pins] of sim.ecs.query(Pinned)) if (--pins.ticks <= 0) sim.ecs.remove(e, Pinned);
 }
 
 export const weaponsModule: SimModule = {
   id: 'weapons',
-  systems: [{ phase: 'cleanup', run: tickWeapons }],
+  systems: [
+    { phase: 'combat', run: updateArrows },
+    { phase: 'cleanup', run: tickWeapons },
+  ],
 };

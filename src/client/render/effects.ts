@@ -10,6 +10,7 @@ import {
   Body,
   Magnetized,
   Pickup,
+  Pinned,
   Player,
   Projectile,
   Sprite as SpriteDef,
@@ -17,7 +18,7 @@ import {
   type ProjectileKind,
 } from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
-import { chargeTicks, currentMove, moveNumbers } from '../../sim/modules/weapons';
+import { chargeTicks, currentMove, inPerfectWindow, moveNumbers } from '../../sim/modules/weapons';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
 import { abilityPalette } from './class-palette';
@@ -187,6 +188,8 @@ export class Effects {
           flow: 0xfff0a0,
           flank: 0xffd0d0,
           bleed: 0xb0202a,
+          perfect: 0xffffff,
+          rip: 0xe8d8a8,
         };
         const color = COLORS[e.rule] ?? 0xd0a0ff;
         this.burst(e.x, e.y, { count: 10, color, speed: 1.6, size: 2, life: 22, z: 6, vz: 0.8 });
@@ -376,7 +379,12 @@ export class Effects {
     if (p.state === 'charge') {
       const fill = Math.min(1, p.t / chargeTicks(sim));
       const pulse = fill >= 1 ? 0.6 + 0.4 * Math.sin(p.t / 4) : fill * 0.6;
-      g.circle(cx + p.dirX * 6, cy + p.dirY * 6, 2 + fill * 3).fill({ color: 0xffe2a0, alpha: pulse });
+      // The bow's Perfect window flashes white: let go now.
+      const perfect = inPerfectWindow(sim, p.t);
+      g.circle(cx + p.dirX * 6, cy + p.dirY * 6, 2 + fill * 3 + (perfect ? 2 : 0)).fill({
+        color: perfect ? 0xffffff : 0xffe2a0,
+        alpha: perfect ? 1 : pulse,
+      });
       return;
     }
     if (!this.slash || p.state !== 'attack') {
@@ -385,6 +393,8 @@ export class Effects {
     }
     this.slash.ageMs += dtMs;
     const move = currentMove(sim);
+    // A bow shot draws its arrow, not a swing.
+    if (move.shot) return;
     if (p.t < move.activeFrom - 1 || p.t > move.activeTo + 4) return;
     const f = Math.min(1, Math.max(0, (p.t - move.activeFrom + 1) / (move.activeTo - move.activeFrom + 2)));
     const fade = p.t > move.activeTo ? 1 - (p.t - move.activeTo) / 5 : 1;
@@ -428,6 +438,17 @@ export class Effects {
   private drawProjectiles(sim: Simulation): void {
     const g = this.projectileG;
     g.clear();
+    // Arrows lodged in a foe stick out of it, one shaft per pin.
+    for (const [, pins, b] of sim.ecs.query(Pinned, Body)) {
+      for (let i = 0; i < pins.count; i++) {
+        const a = -2.4 + i * 0.55;
+        const x = b.x + Math.cos(a) * 3;
+        const y = b.y - b.h / 2 + Math.sin(a) * 3;
+        g.moveTo(x, y)
+          .lineTo(x + Math.cos(a) * 5, y + Math.sin(a) * 5)
+          .stroke({ width: 1, color: 0xd8c8a0 });
+      }
+    }
     for (const [, proj, body] of sim.ecs.query(Projectile, Body)) {
       const x = body.x;
       const y = body.y + this.flightHeight(proj);

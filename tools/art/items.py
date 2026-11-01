@@ -409,6 +409,24 @@ ICONS['bone_daggers'] = [
     "................",
     "................",
 ]
+ICONS['ashwood_bow'] = [
+    "................",
+    "......aa........",
+    ".....aA.w.......",
+    "....aA..w.......",
+    "...aA...w.......",
+    "...a1...w.......",
+    "..aA....w.......",
+    "..l0....w.......",
+    "..l0....w.......",
+    "..aA....w.......",
+    "...a1...w.......",
+    "...aA...w.......",
+    "....aA..w.......",
+    ".....aA.w.......",
+    "......aa........",
+    "................",
+]
 ICONS['bone_cleaver'] = [
     "................",
     "................",
@@ -558,7 +576,7 @@ ORDER = ['ashwood', 'fungal_cap', 'glowspore', 'iron_scrap', 'bone_shard', 'slim
          'chipped_sword', 'iron_sword', 'bone_cleaver', 'padded_jacket', 'iron_mail',
          'ring_vigor', 'ring_breath', 'bandage', 'potion_ember', 'potion_stone', 'potion_breath',
          'stone', 'kindling', 'relic_oath', 'relic_sovereign',
-         'ashen_hood', 'iron_helm', 'wanderers_wraps', 'iron_greaves', 'ashwood_spear', 'stone_maul', 'bone_daggers']
+         'ashen_hood', 'iron_helm', 'wanderers_wraps', 'iron_greaves', 'ashwood_spear', 'stone_maul', 'bone_daggers', 'ashwood_bow']
 
 # ---------------------------------------------------------------- shading and outline
 def paint(rows):

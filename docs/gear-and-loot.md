@@ -479,6 +479,23 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 3, the bow, as built (2026-11-01).** Choices made while building it:
+
+- **Shots are moves.** A move with a `shot` fires an arrow on its first active tick instead of swinging, so the
+  bow uses the same tap, hold and roll inputs as everything else: a quick shot, a draw, and a backflip shot (a
+  move whose lunge steps backward).
+- **Stamina is the only ammo**, as decided: each shot costs stamina, and a drawn bow burns more every tick (the
+  Monster Hunter bow). With an empty bar the arrow goes on its own. Drawing slows the walk like any charge.
+- **Pin and Perfect Shot:** arrows lodge in a foe (up to 5, for 6 s). Let go of a full draw within 6 ticks and it
+  is a Perfect Shot: +60%, piercing, a stagger, and every pin ripped out for half the shot's damage each. The draw
+  glint flashes white in the window. A raised shield still stops any arrow.
+- **Perks:** a longer Perfect window, more damage from ripped pins, a split charged shot (Rare and up), a quick
+  shot that kicks away a foe up close, and free shots out of a roll. "Pins burn or bleed" waits for the staff's
+  fire.
+- **Pale Wind:** a Perfect Shot makes your next roll free.
+- **Not yet:** the Stalker's "a Latch target is pinned automatically" and the Ashcaller's "pins ignite" (section 5's
+  affinity examples); the bow's 12% affinity bonus for both classes is in.
+
 **Phase 3, twin daggers, as built (2026-11-01).** Choices made while building them:
 
 - **Flank** reads which way a foe faces: from more than a quarter turn behind, a hit crits for +50%. For the

@@ -23,7 +23,7 @@ import {
   Torch,
 } from '../../sim/components';
 import { TICK_RATE } from '../../sim/constants';
-import { currentMove } from '../../sim/modules/weapons';
+import { currentMove, weaponType } from '../../sim/modules/weapons';
 import type { Simulation } from '../../sim/simulation';
 import { dir8FromVec, resolveDir8, type Dir8 } from './facing';
 
@@ -114,7 +114,7 @@ export function selectAnim(
   if (player) {
     pose = player.state === 'free' ? (moving ? 'walk' : 'idle') : player.state;
     if (player.state === 'attack') pose = currentMove(sim).pose;
-    if (player.state === 'charge') pose = 'cast_raise';
+    if (player.state === 'charge') pose = weaponType(sim).def.chargePose;
     if (player.state === 'cast') {
       const c = castPose(sim, e, player.t);
       if (c) {

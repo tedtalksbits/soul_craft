@@ -68,7 +68,7 @@ Every item has `kind`, `name`, `description`, `icon` (a frame name in `assets/sp
 - `key`: nothing else; carried until something spends it (a boss's Kindling, for a major project).
 - `weapon`: `weapon { type, damage, staminaCost, reach, width, knockback }` and `upgrades`, the forge steps in
   order, each `{ damage, souls, items }`, plus an optional `requires` (a restoration project that must be rebuilt
-  first: the last steps wait on the smithy). `type` (`sword`, `spear`, `hammer` or `daggers`) picks its moves from
+  first: the last steps wait on the smithy). `type` (`sword`, `spear`, `hammer`, `daggers` or `bow`) picks its moves from
   `weapons.json`, which multiply these numbers. Unarmed fights like a weak sword, on purpose.
 - `armor`: `armor { slot, value, weight }`: `helmet`, `chest` or `legs`; its Armor at item level 1, Common; and
   `cloth`, `leather` or `plate` (how it will look on the character).
@@ -97,10 +97,12 @@ has a base that can drop, and that class perks and effects name real classes and
 `weapons.json` gives each weapon type a light `chain` (tapped; the last move is the finisher, and
 `chainWindow` ticks after a move ends the next tap continues it), a `charged` move (held; full after
 `chargeTicks`, else `partial` damage and no payoff), a `dash` move (an attack within `dashWindow` ticks of a
-roll), a `signature` rule (`flow`, `tipper`, `break` or `flank`) and the classes it has an `affinity` with. Each move sets
+roll), a `signature` rule (`flow`, `tipper`, `break`, `flank` or `pin`) and the classes it has an `affinity` with. Each move sets
 multipliers for `damage`, `stamina`, `reach`, `width` and `knockback`, its timing (`duration`, `activeFrom`,
-`activeTo`), `hitstop`, `lunge`, `stagger`, `hyperArmor`, `around` (a full sweep), `through` (lunges through foes, untouchable), and how it is drawn (`arc`,
-`pose`). `affinityBonus`, `minCharge` and `chargeMove` apply to every type. A perk with `weaponTypes` rolls only on
+`activeTo`), `hitstop`, `lunge`, `stagger`, `hyperArmor`, `around` (a full sweep), `through` (lunges through foes, untouchable), `shot` (fires an arrow instead of
+swinging; a negative `lunge` steps back), and how it is drawn (`arc`,
+`pose`). A type can also set `drawDrain` (stamina a held charge burns per tick) and `chargePose`. `affinityBonus`,
+`minCharge` and `chargeMove` apply to every type. A perk with `weaponTypes` rolls only on
 weapons of those types.
 
 Armor cuts hits to `k / (k + Armor)` (`player.json → armor`), never past `cap` with buffs. Attributes gain less

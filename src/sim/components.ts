@@ -266,6 +266,10 @@ export interface Swing {
   held: boolean;
   /** Swings made, for perks that act on every so many. Absent in saves from before it. */
   swings?: number;
+  /** The charged shot under way was let go in the Perfect window. */
+  perfect?: boolean;
+  /** The next roll costs no stamina (a Legendary's reward for a Perfect Shot). */
+  freeRoll?: boolean;
 }
 export const Swing = defineComponent<Swing>('swing');
 
@@ -275,6 +279,13 @@ export interface Marked {
   stagger: number;
 }
 export const Marked = defineComponent<Marked>('marked');
+
+/** Bow arrows lodged in an enemy, and ticks until the last falls out. */
+export interface Pinned {
+  count: number;
+  ticks: number;
+}
+export const Pinned = defineComponent<Pinned>('pinned');
 
 /** Dagger Bleed on an enemy: `stacks` so far, lapsing `ticks` after the last hit added one. */
 export interface Bleed {
@@ -399,6 +410,8 @@ export interface Projectile {
   /** For the player's thrown knives: the ability that threw it, and how long a hit staggers. */
   ability: string | null;
   stagger: number;
+  /** A player's bow arrow: a Perfect Shot pierces, and nothing is hit twice. Absent on other projectiles. */
+  bow?: { perfect: boolean; hit: Entity[] };
 }
 export const Projectile = defineComponent<Projectile>('projectile');
 

@@ -313,6 +313,67 @@
         "bleed": { "stacks": 5, "ticks": 180, "damage": 1.5, "stagger": 30 }
       },
       "affinity": ["stalker"]
+    },
+    "bow": {
+      "name": "Bow",
+      "chain": [
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 14,
+          "activeFrom": 4,
+          "activeTo": 4,
+          "hitstop": 1,
+          "shot": { "speed": 4.5, "range": 200 },
+          "arc": "thrust",
+          "pose": "cast_throw"
+        }
+      ],
+      "chainWindow": 0,
+      "charged": {
+        "damage": 2.4,
+        "stamina": 1.2,
+        "reach": 1,
+        "width": 1,
+        "duration": 14,
+        "activeFrom": 3,
+        "activeTo": 3,
+        "hitstop": 3,
+        "chargeTicks": 36,
+        "partial": 0.5,
+        "shot": { "speed": 6, "range": 260 },
+        "arc": "thrust",
+        "pose": "cast_throw"
+      },
+      "dash": {
+        "damage": 1.2,
+        "stamina": 1,
+        "reach": 1,
+        "width": 1,
+        "duration": 18,
+        "activeFrom": 8,
+        "activeTo": 8,
+        "hitstop": 1,
+        "lunge": -2.2,
+        "shot": { "speed": 4.5, "range": 200 },
+        "arc": "thrust",
+        "pose": "cast_throw"
+      },
+      "dashWindow": 10,
+      "signature": {
+        "type": "pin",
+        "pins": 5,
+        "ticks": 360,
+        "window": 6,
+        "bonus": 0.6,
+        "stagger": 40,
+        "rip": 0.5
+      },
+      "affinity": ["stalker", "ashcaller"],
+      "drawDrain": 0.35,
+      "chargePose": "cast_throw"
     }
   }
 }

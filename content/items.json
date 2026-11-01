@@ -327,6 +327,96 @@
       }
     ]
   },
+  "ashwood_bow": {
+    "kind": "weapon",
+    "name": "Ashwood Bow",
+    "description": "A plain stave of gray wood. It asks for patience and pays for it.",
+    "icon": "ashwood_bow",
+    "stack": 1,
+    "weapon": { "type": "bow", "damage": 6, "staminaCost": 9, "reach": 16, "width": 6, "knockback": 1 },
+    "upgrades": [
+      { "damage": 1, "souls": 110, "items": [{ "item": "ashwood", "count": 4 }] },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "bone_shard", "count": 4 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "bone_shard", "count": 8 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "bone_recurve": {
+    "kind": "weapon",
+    "name": "Bone Recurve",
+    "description": "Horn and bone, glued and bound. It bites harder than its size.",
+    "icon": "ashwood_bow",
+    "stack": 1,
+    "weapon": { "type": "bow", "damage": 7, "staminaCost": 10, "reach": 16, "width": 6, "knockback": 1.2 },
+    "upgrades": [
+      { "damage": 1, "souls": 110, "items": [{ "item": "ashwood", "count": 4 }] },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "bone_shard", "count": 4 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "bone_shard", "count": 8 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
   "ashen_hood": {
     "kind": "armor",
     "name": "Ashen Hood",
@@ -590,6 +680,57 @@
       "name": "Second Bite",
       "text": "Vanish lasts until you have struck twice, and both strikes are ambushes.",
       "effect": { "type": "vanishStrikes", "strikes": 2 }
+    }
+  },
+  "pale_wind": {
+    "kind": "weapon",
+    "name": "Pale Wind",
+    "description": "Its string hums before you draw it, as if it already knows where to aim.",
+    "icon": "ashwood_bow",
+    "stack": 1,
+    "weapon": { "type": "bow", "damage": 7, "staminaCost": 9, "reach": 16, "width": 6, "knockback": 1.2 },
+    "upgrades": [
+      { "damage": 1, "souls": 110, "items": [{ "item": "ashwood", "count": 4 }] },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "bone_shard", "count": 4 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "bone_shard", "count": 8 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "pinDamage", "value": 0.15 }],
+    "power": {
+      "name": "Following Wind",
+      "text": "A Perfect Shot makes your next roll cost no stamina.",
+      "effect": { "type": "perfectRefund" }
     }
   },
   "crown_of_the_unforgotten": {

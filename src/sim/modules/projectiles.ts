@@ -26,6 +26,8 @@ export function spawnProjectile(
     /** For the player's knives: the ability that threw it and how long its hit staggers. */
     ability?: string;
     stagger?: number;
+    /** A player's bow arrow, and whether it was a Perfect Shot. */
+    perfect?: boolean;
   },
 ): void {
   const e = sim.ecs.create();
@@ -40,6 +42,7 @@ export function spawnProjectile(
     blockable: true,
     ability: p.ability ?? null,
     stagger: p.stagger ?? 0,
+    ...(p.perfect !== undefined ? { bow: { perfect: p.perfect, hit: [] } } : {}),
   });
 }
 

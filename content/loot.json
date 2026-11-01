@@ -141,6 +141,50 @@
       "slots": ["weapon"],
       "weaponTypes": ["daggers"]
     },
+    "perfectWindow": {
+      "text": "The Perfect window is {v} ticks longer",
+      "stat": "perfectWindow",
+      "value": 3,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "pinDamage": {
+      "text": "Ripped pins deal {v} more",
+      "stat": "pinDamage",
+      "value": 0.3,
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "splitShot": {
+      "text": "Charged shots split in three",
+      "stat": "splitShot",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "minTier": "rare",
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "bowKick": {
+      "text": "A quick shot up close kicks the foe away",
+      "stat": "bowKick",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "freeDashShot": {
+      "text": "Shots out of a roll cost no stamina",
+      "stat": "freeDashShot",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
     "vigor": {
       "text": "+{v} Vigor",
       "stat": "vigor",

@@ -218,6 +218,8 @@ export const ModifierEffectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('slamPull'), radius: pos }),
   /** Vanish lasts through this many strikes instead of breaking on the first; each one is an ambush. */
   z.object({ type: z.literal('vanishStrikes'), strikes: z.number().int().min(2) }),
+  /** A Perfect Shot makes the next roll cost no stamina. */
+  z.object({ type: z.literal('perfectRefund') }),
   /**
    * Every `hits` weapon hits, each within `window` seconds of the last, set the ground under the last
    * one alight: a zone of `ability`'s look that burns for `damage` every `interval` ticks.
@@ -264,7 +266,7 @@ export type ModifiersDef = z.infer<typeof ModifiersSchema>;
 // ------------------------------------------------------------------ weapon types
 
 /** Weapon types. Any class can use any of them; each class fights a little better with its own. */
-export const WeaponTypeSchema = z.enum(['sword', 'spear', 'hammer', 'daggers']);
+export const WeaponTypeSchema = z.enum(['sword', 'spear', 'hammer', 'daggers', 'bow']);
 export type WeaponTypeId = z.infer<typeof WeaponTypeSchema>;
 
 /**
@@ -283,8 +285,8 @@ export const MoveSchema = z
     activeTo: ticks,
     /** Frames the world freezes when it lands: what makes a heavy hit feel heavy. */
     hitstop: ticks,
-    /** Forward speed (px per tick) from the start of the move until its last active tick. */
-    lunge: nonneg.default(0),
+    /** Speed (px per tick) from the start of the move until its last active tick: forward, or back if negative. */
+    lunge: z.number().default(0),
     /** Ticks it staggers what it hits (bosses shrug it off). */
     stagger: ticks.default(0),
     /** Blows taken during it (until its last active tick) don't make the player flinch. */
@@ -293,6 +295,11 @@ export const MoveSchema = z
     around: z.boolean().default(false),
     /** Lunges through foes instead of stopping short, untouchable until its last active tick. */
     through: z.boolean().default(false),
+    /**
+     * Fires an arrow on its first active tick instead of swinging: flying `speed` px per tick for at most
+     * `range` px. Reach and width don't apply.
+     */
+    shot: z.object({ speed: pos, range: pos }).optional(),
     /** How the swing is drawn, and the body pose it uses. */
     arc: z.enum(['slash', 'thrust', 'sweep', 'slam']),
     pose: z.string().default('attack'),
@@ -338,6 +345,20 @@ export const SignatureSchema = z.discriminatedUnion('type', [
     bonus: nonneg,
     bleed: z.object({ stacks: z.number().int().min(1), ticks: ticks, damage: pos, stagger: ticks }),
   }),
+  /**
+   * Bow: arrows lodge in a foe (up to `pins`, each lasting `ticks`). Let go of a full draw within
+   * `window` ticks and it is a Perfect Shot: `bonus` more damage, piercing, a stagger, and every pin
+   * ripped out for `rip` times the shot's damage each.
+   */
+  z.object({
+    type: z.literal('pin'),
+    pins: z.number().int().min(1),
+    ticks: ticks,
+    window: ticks,
+    bonus: nonneg,
+    stagger: ticks,
+    rip: nonneg,
+  }),
 ]);
 
 export const WeaponTypeDefSchema = z.object({
@@ -357,6 +378,10 @@ export const WeaponTypeDefSchema = z.object({
   signature: SignatureSchema,
   /** Classes that fight better with it (by `affinityBonus` more damage). */
   affinity: z.array(z.string()).default([]),
+  /** Stamina a held charge burns every tick (a drawn bow); out of stamina, it lets go. */
+  drawDrain: nonneg.default(0),
+  /** The body pose while charging. */
+  chargePose: z.string().default('cast_raise'),
 });
 export type WeaponTypeDef = z.infer<typeof WeaponTypeDefSchema>;
 
@@ -376,6 +401,7 @@ export const WeaponsSchema = z.object({
     spear: WeaponTypeDefSchema,
     hammer: WeaponTypeDefSchema,
     daggers: WeaponTypeDefSchema,
+    bow: WeaponTypeDefSchema,
   }),
 });
 export type WeaponsDef = z.infer<typeof WeaponsSchema>;
@@ -717,6 +743,11 @@ export const PerkStatSchema = z.enum([
   'bleedVulnerability',
   'freeFifth',
   'ambushBleed',
+  'perfectWindow',
+  'pinDamage',
+  'splitShot',
+  'bowKick',
+  'freeDashShot',
 ]);
 export type PerkStat = z.infer<typeof PerkStatSchema>;
 
