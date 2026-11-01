@@ -72,6 +72,12 @@ export class SettingsScreen {
           'The bar across the top pointing to bonfires, home, your pin.',
           () => this.set({ compass: !s.compass }),
         ),
+        toggle(
+          'Show helmet',
+          s.helmet,
+          'Draw your helmet on your character. It protects you either way.',
+          () => this.set({ helmet: !s.helmet }),
+        ),
         h(
           'div',
           { class: 'row' },

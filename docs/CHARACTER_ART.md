@@ -164,6 +164,11 @@ slightly hunched, compact silhouette.
   During `attack` the hand is empty and the effect supplies the blade.
 - **Left arm:** small round wooden shield, tarnished brass boss, iron rim.
 
+That is the Ashen One in plate with the full helm and a sword. Since gear phase 7 the look follows the gear worn:
+the body is cloth, leather or plate by the chest's weight (bare-headed, with the crimson cape always), the helmet
+is a hood, an open cap or the plumed full helm by its weight, and the weapon in hand is its type's. Trims (the
+buckle, straps, rims, hems) take the piece's tier color. See `tools/art/README.md`, "Gear (kits and layers)".
+
 | Material                 | Base      | Shadow    |
 | ------------------------ | --------- | --------- |
 | Armor steel              | `#9da2a8` | `#5f646b` |

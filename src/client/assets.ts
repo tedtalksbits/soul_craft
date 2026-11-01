@@ -4,7 +4,7 @@
  * object every frame, so a hot-reloaded sheet shows up without touching views.
  */
 import { ImageSource, Rectangle, Texture } from 'pixi.js';
-import { SpriteSheetSchema, type SpriteSheetDef } from '../content/sprite-sheet';
+import { resolveSheet, type SpriteSheetDef } from '../content/sprite-sheet';
 
 const SHEET_JSON = import.meta.glob<unknown>('/assets/sprites/*.json', { eager: true, import: 'default' });
 const SHEET_PNG = import.meta.glob<string>('/assets/sprites/*.png', {
@@ -119,10 +119,8 @@ export class Assets {
         const name = nameOf(path);
         const pngUrl = SHEET_PNG[path.replace(/\.json$/, '.png')];
         if (!pngUrl) throw new Error(`Sprite sheet ${path} has no matching PNG`);
-        assets.sheets.set(
-          name,
-          new SpriteSheet(name, SpriteSheetSchema.parse(raw), await loadImage(pngUrl), pngUrl),
-        );
+        const def = resolveSheet(raw, (layout) => SHEET_JSON[`/assets/sprites/${layout}.json`]);
+        assets.sheets.set(name, new SpriteSheet(name, def, await loadImage(pngUrl), pngUrl));
       }),
     );
     return assets;
@@ -143,7 +141,7 @@ export class Assets {
     const raw: unknown = await (
       await fetch(`/assets/sprites/${name}.json${bust}`, { cache: 'no-store' })
     ).json();
-    const def = SpriteSheetSchema.parse(raw);
+    const def = resolveSheet(raw, (layout) => SHEET_JSON[`/assets/sprites/${layout}.json`]);
     const url = `/assets/sprites/${def.image}${bust}`;
     this.sheets.set(name, new SpriteSheet(name, def, await loadImage(url), url));
     this.version++;

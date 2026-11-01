@@ -157,6 +157,7 @@ export class App {
       this.audio.muted = s.muted;
       this.renderer.setFill(s.fill);
       this.renderer.hud.showCompass = s.compass;
+      this.renderer.showHelmet = s.helmet;
     });
     document.addEventListener('fullscreenchange', () => this.ui.refreshSettings());
     addEventListener('pointerdown', () => this.audio.unlock());

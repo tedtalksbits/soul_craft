@@ -47,8 +47,43 @@ RAMPS = {
     10: ('#111111', '#111111', '#111111', '#111111'),  # eye slit
     11: ('#e1e5e9', '#b9bec4', '#858b92', '#4d5258'),  # blade
     12: ('#ffc46e', '#ff9a30', '#c4691c', '#7a3e10'),  # flask (orange)
+    13: ('#b8aa9a', '#968878', '#6e6256', '#463e36'),  # ashen skin
+    14: ('#4a4440', '#36302c', '#24201e', '#141210'),  # hair
+    15: ('#8c8270', '#6e6656', '#4e483c', '#2e2a22'),  # undyed tunic
+    16: ('#7a5a40', '#5e4430', '#422f20', '#261a12'),  # leather jerkin
+    # the helmet group (30-39): drawn on its own layer
+    30: ('#c3c7cb', '#9da2a8', '#5f646b', '#34373c'),  # helm steel
+    31: ('#8e8676', '#6e675a', '#4c473e', '#2c2924'),  # hood cloth
+    33: ('#c43a2a', '#a3261c', '#7a1c15', '#45100c'),  # plume
+    35: ('#111111', '#111111', '#111111', '#111111'),  # eye slit
+    36: ('#7d8188', '#5f646b', '#41454b', '#26282c'),  # faceplate band
+    # the weapon group (40-59): drawn on its own layer
+    40: ('#e1e5e9', '#b9bec4', '#858b92', '#4d5258'),  # blade
+    41: ('#5c4535', '#45342a', '#30241d', '#1c1511'),  # grip leather
+    42: ('#ecd096', '#d0a85c', '#9a7536', '#5c4220'),  # guard and pommel
+    43: ('#71543a', '#5a412b', '#3f2d1e', '#241a11'),  # shield wood
+    44: ('#7d8188', '#5f646b', '#41454b', '#26282c'),  # shield rim
+    46: ('#c8b896', '#a89a7a', '#7a6e56', '#4a4234'),  # ash shaft
+    47: ('#c3c7cb', '#9da2a8', '#5f646b', '#34373c'),  # iron head
+    48: ('#a49a88', '#827868', '#5a5248', '#36322c'),  # stone head
+    49: ('#e7dec4', '#c8c0a8', '#8a8470', '#5f5a49'),  # bone
+    50: ('#b08a5c', '#8a6a44', '#5e4830', '#36291a'),  # bow wood
+    51: ('#e8e2d0', '#c8c0a8', '#a09880', '#6e6656'),  # bowstring
+    52: ('#ffe0a0', '#ffb050', '#e07020', '#8a3a10'),  # ember orb
+    53: ('#7a6a58', '#5e5040', '#40362a', '#261f18'),  # staff wood
+    # trims: neutral grays the game tints with the piece's tier color
+    60: ('#ffffff', '#d4d4d4', '#9c9c9c', '#5c5c5c'),  # chest trim
+    61: ('#ffffff', '#d4d4d4', '#9c9c9c', '#5c5c5c'),  # helmet trim
 }
+GRAY = ('#e8e8e8', '#b4b4b4', '#7c7c7c', '#444444')   # legs, recolored for the game to tint
 RAMPS = {k: [hx(c) for c in v] for k, v in RAMPS.items()}
+GRAY = [hx(c) for c in GRAY]
+
+# What the character wears: its chest's weight, its helmet's shape and its weapon's type. Each kit is
+# rendered whole, then cut into the layers the game stacks (see KITS).
+KIT = dict(chest='plate', helm='helm', weapon='sword')
+HELM_MATS = set(range(30, 40))
+WEAPON_MATS = set(range(40, 60))
 
 # ---------------------------------------------------------------- voxel grid
 RES = 0.5
@@ -174,23 +209,90 @@ HELM_CY = float(torso_cy(23)) - 0.9
 _rng = np.random.default_rng(7)
 HEM = _rng.choice([0, 0, 0.5, 1.0, 1.5, 2.5, 3.5], size=32)
 
-def draw_sword(put, C, grip, bdir, ref=(0, 1.0, 0)):
+def _axes(bdir, ref):
     bdir = np.asarray(bdir, float)
     bdir = bdir / np.linalg.norm(bdir)
-    grip = np.asarray(grip, float)
-    guard_c = grip + bdir * 1.4
-    put(capsule(C, grip - bdir * 1.2, grip + bdir * 0.6, 0.55), 9)               # grip
-    put(capsule(C, grip - bdir * 1.6, grip - bdir * 1.2, 0.75), 5)               # pommel
     perp = np.cross(bdir, ref)
     if np.linalg.norm(perp) < 1e-3:
         perp = np.cross(bdir, [0, 0, 1.0])
-    perp /= np.linalg.norm(perp)
-    put(capsule(C, guard_c - perp * 1.9, guard_c + perp * 1.9, 0.5), 5)         # crossguard
+    return bdir, perp / np.linalg.norm(perp)
+
+def draw_sword(put, C, grip, bdir, ref=(0, 1.0, 0)):
+    bdir, perp = _axes(bdir, ref)
+    grip = np.asarray(grip, float)
+    guard_c = grip + bdir * 1.4
+    put(capsule(C, grip - bdir * 1.2, grip + bdir * 0.6, 0.55), 41)              # grip
+    put(capsule(C, grip - bdir * 1.6, grip - bdir * 1.2, 0.75), 42)              # pommel
+    put(capsule(C, guard_c - perp * 1.9, guard_c + perp * 1.9, 0.5), 42)        # crossguard
     blade = capsule(C, guard_c, guard_c + bdir * 12.5, 0.75, 0.35)
-    put(blade, 11)
+    put(blade, 40)
     chip = guard_c + bdir * 7.0 + perp * 0.6
     put(blade & ball(C, chip, 0.5), 0)                                           # a chip
     return guard_c + bdir * 12.5
+
+def draw_spear(put, C, grip, bdir, ref=(0, 1.0, 0)):
+    """A long ash shaft through the hand, the iron head out along the blade direction."""
+    bdir, _ = _axes(bdir, ref)
+    grip = np.asarray(grip, float)
+    put(capsule(C, grip - bdir * 6.0, grip + bdir * 14.6, 0.6), 46)
+    put(capsule(C, grip - bdir * 0.8, grip + bdir * 0.8, 0.72), 41)              # wrapped grip
+    put(capsule(C, grip + bdir * 14.4, grip + bdir * 15.0, 0.85), 42)            # socket
+    put(capsule(C, grip + bdir * 15.0, grip + bdir * 19.5, 1.1, 0.2), 47)        # head
+
+def draw_hammer(put, C, grip, bdir, ref=(0, 1.0, 0)):
+    """A short haft hanging from the hand, a heavy stone head at its end."""
+    bdir, perp = _axes(bdir, ref)
+    grip = np.asarray(grip, float)
+    put(capsule(C, grip - bdir * 1.8, grip + bdir * 9.0, 0.5), 46)
+    put(capsule(C, grip - bdir * 1.0, grip + bdir * 1.0, 0.62), 41)
+    head = grip + bdir * 9.8
+    put(capsule(C, head - perp * 2.6, head + perp * 2.6, 1.75), 48)
+    put(capsule(C, head - perp * 2.9, head - perp * 2.5, 1.9), 47)               # iron bands
+    put(capsule(C, head + perp * 2.5, head + perp * 2.9, 1.9), 47)
+
+def draw_dagger(put, C, grip, bdir, ref=(0, 1.0, 0)):
+    bdir, perp = _axes(bdir, ref)
+    grip = np.asarray(grip, float)
+    put(capsule(C, grip - bdir * 1.0, grip + bdir * 0.5, 0.5), 41)
+    put(capsule(C, grip + bdir * 0.8 - perp * 1.1, grip + bdir * 0.8 + perp * 1.1, 0.4), 42)
+    put(capsule(C, grip + bdir * 0.9, grip + bdir * 7.2, 0.7, 0.22), 40)
+
+def draw_bow(put, C, hand, up, fwd):
+    """A bow held upright in the hand: its limbs arc forward, the string straight behind them."""
+    up = np.asarray(up, float) / np.linalg.norm(up)
+    fwd = np.asarray(fwd, float)
+    fwd = fwd - (fwd @ up) * up
+    fwd /= np.linalg.norm(fwd)
+    hand = np.asarray(hand, float)
+    pts = [hand + up * (7.2 * t) + fwd * (1.8 * (1 - t * t) - 0.6) for t in np.linspace(-1, 1, 9)]
+    for a, b in zip(pts, pts[1:]):
+        put(capsule(C, a, b, 0.62), 50)
+    put(capsule(C, hand - up * 0.9, hand + up * 0.9, 0.62), 41)                  # grip
+    for tip, inward in ((pts[0], pts[1]), (pts[-1], pts[-2])):
+        put(capsule(C, tip, tip + (tip - inward) * 0.4, 0.45), 49)                # bone tips
+    put(capsule(C, pts[0] - fwd * 0.4, pts[-1] - fwd * 0.4, 0.18), 51)           # string
+
+def draw_staff(put, C, grip, bdir, ref=(0, 1.0, 0)):
+    """A tall staff through the hand: its foot out along the blade direction, the ember at its head."""
+    bdir, perp = _axes(bdir, ref)
+    grip = np.asarray(grip, float)
+    top = grip - bdir * 14.0
+    put(capsule(C, grip + bdir * 4.5, top, 0.62), 53)
+    put(capsule(C, grip - bdir * 0.9, grip + bdir * 0.9, 0.72), 41)
+    for k in (-1, 1):
+        put(capsule(C, top, top - bdir * 2.0 + perp * 1.5 * k, 0.38), 47)        # the iron cage
+    put(ball(C, top - bdir * 2.0, 1.55), 52)                                     # the ember
+
+WEAPONS = {'sword': draw_sword, 'spear': draw_spear, 'hammer': draw_hammer, 'daggers': draw_dagger,
+           'staff': draw_staff}
+
+def draw_weapon(put, C, grip, bdir, ref=(0, 1.0, 0)):
+    kind = KIT['weapon']
+    if kind in WEAPONS:
+        WEAPONS[kind](put, C, grip, bdir, ref)
+    elif kind == 'bow':        # laid down (lap, ground): along the blade direction
+        bd, perp = _axes(bdir, ref)
+        draw_bow(put, C, np.asarray(grip, float) + bd * 2.0, bd, perp)
 
 def draw_shield(put, C, sc, sn):
     sn = np.asarray(sn, float)
@@ -200,9 +302,9 @@ def draw_shield(put, C, sc, sn):
     h = rx * sn[0] + ry * sn[1] + rz * sn[2]
     radial = np.sqrt(np.maximum(rx * rx + ry * ry + rz * rz - h * h, 0))
     disc = (radial < 4.6) & (np.abs(h) < 0.55)
-    put(disc & (radial >= 3.8), 7)
-    put(disc & (radial < 3.8), 6)
-    put((radial < 1.3) & (h >= 0.0) & (h < 0.55 + 0.9 * (1 - radial / 1.3)), 5)
+    put(disc & (radial >= 3.8), 44)
+    put(disc & (radial < 3.8), 43)
+    put((radial < 1.3) & (h >= 0.0) & (h < 0.55 + 0.9 * (1 - radial / 1.3)), 42)
 
 # ---------------------------------------------------------------- the model
 def build(pose):
@@ -266,41 +368,78 @@ def build(pose):
         lift = A[2] + dz - 1.15
         put(capsule(CB, A - 0.9 * fd + [0, 0, -0.2], A + 2.0 * fd + [0, 0, -0.4 + 0.3 * lift], 1.25), 9)
 
-    # ---- torso, in torso coordinates (same shapes as the walk model)
+    # ---- torso, in torso coordinates (same shapes as the walk model), by the chest's weight
+    chest = KIT['chest']
+    front, back, skirt = {'plate': (1, 2, 2), 'leather': (16, 16, 16), 'cloth': (15, 15, 15)}[chest]
     x, y, z = CT
     cy = torso_cy(z)
-    put((((x / 5.0) ** 2 + ((y - cy) / 3.2) ** 2) < 1) & (z >= 10) & (z < 13.6), 2)           # mail skirt
+    skirt_z0 = 9.0 if chest == 'cloth' else 10
+    put((((x / 5.0) ** 2 + ((y - cy) / 3.2) ** 2) < 1) & (z >= skirt_z0) & (z < 13.6), skirt)  # skirt
+    if chest == 'cloth':                                                                       # the hem
+        put((((x / 5.05) ** 2 + ((y - cy) / 3.25) ** 2) < 1) & (z >= skirt_z0) & (z < skirt_z0 + 0.9), 60)
     put((((x / 4.9) ** 2 + ((y - cy) / 3.15) ** 2) < 1) & (z >= 13.5) & (z < 15), 9)          # belt
-    put((np.abs(x) < 0.9) & (y < cy - 2.2) & (y > cy - 3.6) & (z >= 13.5) & (z < 15), 5)      # buckle
+    put((np.abs(x) < 0.9) & (y < cy - 2.2) & (y > cy - 3.6) & (z >= 13.5) & (z < 15), 60)     # buckle
     rx = 4.9 + (np.clip(z, 15, 22) - 15) * 0.12
+    if chest == 'cloth':
+        rx = rx - 0.3
     tor = (((x / rx) ** 2 + ((y - cy) / 3.0) ** 2) < 1) & (z >= 15) & (z < 23)
     tor &= ~((z > 21.5) & (((x / rx) ** 2) > 0.55))
-    put(tor & (y < cy + 0.4), 1)
-    put(tor & (y >= cy + 0.4), 2)
-    put((((x / 2.4) ** 2 + ((y - torso_cy(23)) / 2.2) ** 2) < 1) & (z >= 22.5) & (z < 23.6), 1)  # gorget
+    put(tor & (y < cy + 0.4), front)
+    put(tor & (y >= cy + 0.4), back)
+    if chest == 'leather':     # crossed straps on the jerkin
+        put(tor & (y < cy - 1.6) & (np.abs(np.abs(x) - (z - 15) * 0.55) < 0.45), 60)
+    if chest == 'plate':       # a gilt band along the cuirass's lower edge
+        put(tor & (y < cy + 0.4) & (z < 15.9), 60)
+    neck = 1 if chest == 'plate' else 13
+    put((((x / 2.4) ** 2 + ((y - torso_cy(23)) / 2.2) ** 2) < 1) & (z >= 22.5) & (z < 23.6), neck)  # gorget / neck
+    if chest == 'cloth':       # the collar's edge
+        put((((x / 2.6) ** 2 + ((y - torso_cy(23)) / 2.4) ** 2) < 1) & (z >= 22.5) & (z < 23.0), 60)
 
-    # ---- head, in head coordinates
+    # ---- head, in head coordinates: the bare head always, a helmet over it on its own layer
     hx_, hy_, hz_ = CH
     hcy, hz0, hz1 = HELM_CY, 23.2, 28.4
     ddx, ddy = np.abs(hx_), np.abs(hy_ - hcy)
-    box = ((ddx / 3.3) ** 4 + (ddy / 3.3) ** 4 < 1) & (hz_ >= hz0) & (hz_ < hz1)
-    dome = (ddx ** 2 + ddy ** 2 + ((hz_ - hz1) * 1.25) ** 2 < 3.3 ** 2) & (hz_ >= hz1)
-    put(box | dome, 1)
-    put(box & (hy_ < hcy - 2.3) & (ddx < 2.1) & (hz_ >= 26.0) & (hz_ < 27.0), 10)            # eye slit
-    put(box & (hy_ < hcy - 2.3) & (hz_ >= 23.2) & (hz_ < 24.0), 7)                           # faceplate band
-    sway = pose.get('plume', 0.0)
-    pts = [(0, hcy - 0.6, 30.6), (0, hcy + 0.2, 33.4), (0, hcy + 1.6 + 0.3 * sway, 35.4),
-           (0, hcy + 3.4 + 0.6 * sway, 36.0 - 0.2 * sway), (0, hcy + 5.4 + 0.9 * sway, 35.0 - 0.5 * sway)]
-    rads = [2.0, 2.3, 2.1, 1.7, 1.1]
-    for i in range(len(pts) - 1):
-        put(capsule(CH, pts[i], pts[i + 1], rads[i], rads[i + 1]), 4)
-    put(capsule(CH, (0, hcy, 30.6), (0, hcy + 0.2, 31.4), 1.2), 5)                          # plume cup
+    skull = ball(CH, (0, hcy, 26.2), 2.75)
+    put(skull, 13)
+    put(skull & ((hz_ > 26.9) | (hy_ > hcy + 0.6)), 14)                                     # hair
+    put(skull & (hy_ < hcy - 2.0) & (ddx > 0.6) & (ddx < 1.6) & (hz_ >= 25.9) & (hz_ < 26.7), 10)  # eyes
+    helm = KIT['helm']
+    if helm == 'helm':
+        box = ((ddx / 3.3) ** 4 + (ddy / 3.3) ** 4 < 1) & (hz_ >= hz0) & (hz_ < hz1)
+        dome = (ddx ** 2 + ddy ** 2 + ((hz_ - hz1) * 1.25) ** 2 < 3.3 ** 2) & (hz_ >= hz1)
+        put(box | dome, 30)
+        put(box & (hy_ < hcy - 2.3) & (ddx < 2.1) & (hz_ >= 26.0) & (hz_ < 27.0), 35)       # eye slit
+        put(box & (hy_ < hcy - 2.3) & (hz_ >= 23.2) & (hz_ < 24.0), 36)                      # faceplate band
+        put(box & (hz_ >= 27.6) & (hz_ < 28.4), 61)                                          # brow band
+        sway = pose.get('plume', 0.0)
+        pts = [(0, hcy - 0.6, 30.6), (0, hcy + 0.2, 33.4), (0, hcy + 1.6 + 0.3 * sway, 35.4),
+               (0, hcy + 3.4 + 0.6 * sway, 36.0 - 0.2 * sway), (0, hcy + 5.4 + 0.9 * sway, 35.0 - 0.5 * sway)]
+        rads = [2.0, 2.3, 2.1, 1.7, 1.1]
+        for i in range(len(pts) - 1):
+            put(capsule(CH, pts[i], pts[i + 1], rads[i], rads[i + 1]), 33)
+        put(capsule(CH, (0, hcy, 30.6), (0, hcy + 0.2, 31.4), 1.2), 61)                     # plume cup
+    elif helm == 'cap':        # an open-faced iron cap with a nasal
+        cap = ball(CH, (0, hcy, 26.4), 3.25) & (hz_ >= 26.6)
+        put(cap, 30)
+        put(cap & (hz_ < 27.3), 61)                                                          # its rim
+        put(capsule(CH, (0, hcy - 3.0, 27.0), (0, hcy - 3.1, 25.2), 0.45), 30)              # nasal
+    elif helm == 'hood':       # a cowl over the head and shoulders, open at the face
+        shell = ball(CH, (0, hcy + 0.3, 26.4), 3.6) & ~ball(CH, (0, hcy + 0.3, 26.4), 2.9)
+        face = (hy_ < hcy - 1.2) & (ddx < 2.0) & (hz_ > 24.2) & (hz_ < 27.6)
+        put(shell & ~face, 31)
+        put(shell & ~face & (hy_ < hcy - 1.0) & (ddx < 2.6) & (hz_ > 23.8) & (hz_ < 28.2) &
+            ~((hy_ < hcy - 1.6) & (ddx < 2.3) & (hz_ > 23.9) & (hz_ < 27.9)), 61)            # the edge round the face
+        put(capsule(CH, (0, hcy + 2.6, 26.0), (0, hcy + 3.4, 23.0), 2.4, 3.0) & (hz_ < 25.6), 31)   # the drape
 
-    # ---- pauldrons
+    # ---- pauldrons: steel on plate, small leather caps on leather, none on cloth
     for sx in (-1, 1):
+        if chest == 'cloth':
+            break
         c = np.array([5.6 * sx, float(torso_cy(21)) + 0.2, 21.3])
         d2 = (x - c[0]) ** 2 + ((y - c[1]) * 1.1) ** 2 + ((z - c[2]) * 1.2) ** 2
-        put((d2 < 3.1 ** 2) & (z > 19.4), 1)
+        r = 3.1 if chest == 'plate' else 2.6
+        put((d2 < r ** 2) & (z > 19.4), front)
+        put((d2 < r ** 2) & (d2 > (r - 0.7) ** 2) & (z > 19.4) & (z < 20.3), 60)            # rim
 
     # ---- arms (torso coordinates)
     a = pose.get('arm', 0.0)
@@ -319,22 +458,36 @@ def build(pose):
         else:
             el = np.array((6.9, float(torso_cy(17)) - 0.2 + 0.4 * a, 16.8))
             hd = np.array((6.3, -3.4 + 0.7 * a, 15.4))
-        put(capsule(CT, S, el, 1.35), 2)
-        put(capsule(CT, el, hd, 1.35, 1.25), 1)
+        upper, fore = {'plate': (2, 1), 'leather': (16, 9), 'cloth': (15, 15)}[chest]
+        put(capsule(CT, S, el, 1.35), upper)
+        put(capsule(CT, el, hd, 1.35, 1.25), fore)
+        if chest == 'cloth':   # a cuff at the wrist
+            put(capsule(CT, el + 0.8 * (hd - el), el + 0.95 * (hd - el), 1.4), 60)
         arms[side] = (S, el, hd)
 
-    # ---- sword
+    # ---- the weapon (its type's model; daggers come in pairs, the bow sits in the shield hand)
     sword = pose.get('sword', 'hand')
-    if sword == 'hand':
-        sd = pose.get('sword_dir', (-0.30, -0.40 - 0.25 * a, -0.87))
-        draw_sword(put, CT, arms['R'][2], sd)
-    elif sword == 'lap':
+    weapon = KIT['weapon']
+    if sword == 'hand' and weapon != 'none':
+        sd = np.asarray(pose.get('sword_dir', (-0.30, -0.40 - 0.25 * a, -0.87)), float)
+        if 'sword_dir' not in pose and weapon in ('spear', 'staff'):
+            # Carried upright at rest: the spear's head and the staff's ember above the shoulder.
+            sd = np.array((-0.05, -0.22, 1.0)) if weapon == 'spear' else np.array((0.05, 0.22, -1.0))
+        if weapon == 'bow':
+            draw_bow(put, CT, arms['L'][2], (0.15, -0.1, 1.0), (0.3, -1.0, 0.0))
+        else:
+            draw_weapon(put, CT, arms['R'][2], sd)
+        if weapon == 'daggers':
+            draw_dagger(put, CT, arms['L'][2], sd * np.array([-1.0, 1.0, 1.0]))
+    elif sword == 'lap' and weapon != 'none':
         g = pose.get('lap_grip', (-6.6, -4.4, 14.6))
-        draw_sword(put, CB, g, (1.0, 0.04, 0.0), ref=(0, 0, 1.0))
+        draw_weapon(put, CB, g, (1.0, 0.04, 0.0), ref=(0, 0, 1.0))
 
-    # ---- shield
+    # ---- shield: only with the sword (sword and board); other weapons leave the hand free
     sh = pose.get('shield', {})
-    if 'body_center' in sh:
+    if weapon != 'sword':
+        pass
+    elif 'body_center' in sh:
         draw_shield(put, CB, np.asarray(sh['body_center'], float), sh['normal'])
     else:
         sc = arms['L'][2] + np.asarray(sh.get('offset', (1.8, -0.3, 0.0)))
@@ -384,10 +537,10 @@ def build(pose):
     drop = -shift_k * RES
 
     # ---- props placed in the world after landing
-    if sword == 'ground':
+    if sword == 'ground' and weapon != 'none':
         hand_w = to_world(torso, arms['R'][2]) + [0, 0, drop]
         g = np.array([hand_w[0] - 1.5, hand_w[1] + 1.0, 0.7])
-        draw_sword(put, (X, Y, Z), g, pose.get('ground_dir', (-0.25, -1.0, 0.0)), ref=(0, 0, 1.0))
+        draw_weapon(put, (X, Y, Z), g, pose.get('ground_dir', (-0.25, -1.0, 0.0)), ref=(0, 0, 1.0))
 
     # ---- normals: blurred occupancy gradient, cloth replaced by its analytic normal
     occ = gauss3d((M > 0).astype(float), 1.6)
@@ -482,7 +635,7 @@ def compose(out_mat, out_lvl, depth):
             outline[s2, :3] = dark
             outline[s2, 3] = 255
     img = np.where(img[..., 3:] > 0, img, outline)
-    return img
+    return img, lvl, out_mat
 
 
 # ---------------------------------------------------------------- animations
@@ -725,64 +878,136 @@ def render_shifted(theta, dx, dy):
     finally:
         xs, ys = xs0, ys0
 
-# ---------------------------------------------------------------- export
-def generate(out_dir='.'):
-    rows = []        # list of 8 images per frame row
-    meta_anims = {}
-    report = {}
-    row = 0
-    for name, poses, fps, loop in ANIMATIONS:
-        shifts = {d: (0.0, 0.0) for d, _ in DIRECTIONS}
-        if name in FIT:
-            ext = {d: [] for d, _ in DIRECTIONS}
-            for pose in poses:
-                build(pose)
-                for d, ang in DIRECTIONS:
-                    ext[d].append(screen_extent(np.radians(ang)))
-            shifts = {d: fit_shift(ext[d]) for d, _ in DIRECTIONS}
+# ---------------------------------------------------------------- kits and layers
+# Every kit renders the same rows in the same order, so every sheet shares player.json's frame layout
+# (the layer sheets say `"layout": "player"`). Each kit is rendered whole and cut into layers: a layer keeps
+# only its materials' visible pixels (plus their outline), so whatever stood in front of a piece in the render
+# already hides it, in every direction. The game stacks: body, legs, chest trim, helmet, helmet trim, weapon.
+BODY = dict(helm='none', weapon='none')
+WEARER = dict(chest='leather', helm='none', weapon='none')
+KITS = {
+    'cloth':   (dict(BODY, chest='cloth'),   {'player': 'all', 'player_legs': 'legs', 'player_trim_cloth': 'trim60'}),
+    'leather': (dict(BODY, chest='leather'), {'player_leather': 'all', 'player_trim_leather': 'trim60'}),
+    'plate':   (dict(BODY, chest='plate'),   {'player_plate': 'all', 'player_trim_plate': 'trim60'}),
+    'hood':    (dict(WEARER, helm='hood'),   {'player_hood': 'helm', 'player_hood_trim': 'trim61'}),
+    'cap':     (dict(WEARER, helm='cap'),    {'player_cap': 'helm', 'player_cap_trim': 'trim61'}),
+    'helm':    (dict(WEARER, helm='helm'),   {'player_helm': 'helm', 'player_helm_trim': 'trim61'}),
+    **{w: (dict(WEARER, weapon=w), {f'player_{w}': 'weapon'})
+       for w in ('sword', 'spear', 'hammer', 'daggers', 'bow', 'staff')},
+}
+
+def neighbors_in(mask):
+    out = np.zeros_like(mask)
+    for di, dj in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+        out |= np.pad(mask, 1)[1 - di:1 - di + mask.shape[0], 1 - dj:1 - dj + mask.shape[1]]
+    return out
+
+def cut(kind, img, lvl, mat):
+    """One layer out of a composed frame."""
+    if kind == 'all':
+        return img
+    out = np.zeros_like(img)
+    if kind in ('trim60', 'trim61'):
+        sel = mat == int(kind[4:])
+    elif kind == 'legs':                       # the trousers, in grays for the game to tint
+        sel = mat == 8
+        for l in range(4):
+            s2 = sel & (lvl == l)
+            out[s2, :3] = GRAY[l]
+            out[s2, 3] = 255
+        return out
+    else:
+        group = HELM_MATS if kind == 'helm' else WEAPON_MATS
+        sel = np.isin(mat, list(group))
+        sel = sel | ((mat == 0) & (img[..., 3] > 0) & neighbors_in(sel))   # and the outline round it
+    out[sel] = img[sel]
+    return out
+
+def kit_extents(name):
+    """Pass 1: every pose's screen extent in every direction, for the shared fit."""
+    KIT.update(KITS[name][0])
+    ext = {}
+    for anim, poses, _fps, _loop in ANIMATIONS:
+        for pose in poses:
+            build(pose)
+            for d, ang in DIRECTIONS:
+                ext.setdefault(f'{anim}/{d}', []).append([float(v) for v in screen_extent(np.radians(ang))])
+    return name, ext
+
+def kit_render(args):
+    """Pass 2: render the kit with the shared shifts and write its layers. Returns the cast_throw pivots."""
+    name, shifts, out_dir = args
+    KIT.update(KITS[name][0])
+    outputs = KITS[name][1]
+    rows = {sheet: [] for sheet in outputs}
+    throw = {}
+    for anim, poses, _fps, _loop in ANIMATIONS:
         for fi, pose in enumerate(poses):
             info = build(pose)
-            if name == 'cast_throw' and fi == CAST_RELEASE[name]:
+            if anim == 'cast_throw' and fi == CAST_RELEASE[anim]:
                 throw_hand = info['hands']['L']            # the open hand at release
-            if name == 'walk' and fi == 0:
-                a = info['ankles']
-                report['walk_stride_px'] = round(float(abs(a['R'][1] - a['L'][1])), 1)
-            imgs = []
+                for d, ang in DIRECTIONS:
+                    throw[d] = [int(round(v)) for v in project(throw_hand, np.radians(ang))]
+            frames = {sheet: [] for sheet in outputs}
             for d, ang in DIRECTIONS:
-                dx, dsy = shifts[d]
-                imgs.append(Image.fromarray(
-                    compose(*render_shifted(np.radians(ang), dx, dsy / np.sin(PHI))), 'RGBA'))
-            rows.append(imgs)
+                dx, dsy = shifts[f'{anim}/{d}']
+                img, lvl, mat = compose(*render_shifted(np.radians(ang), dx, dsy / np.sin(PHI)))
+                for sheet, kind in outputs.items():
+                    frames[sheet].append(Image.fromarray(cut(kind, img, lvl, mat), 'RGBA'))
+            for sheet in outputs:
+                rows[sheet].append(frames[sheet])
+    for sheet, sheet_rows in rows.items():
+        im = Image.new('RGBA', (W * 8, H * len(sheet_rows)), (0, 0, 0, 0))
+        for r, imgs in enumerate(sheet_rows):
+            for c, fr in enumerate(imgs):
+                im.paste(fr, (c * W, r * H))
+        im.save(os.path.join(out_dir, f'{sheet}.png'))
+        if sheet != 'player':
+            with open(os.path.join(out_dir, f'{sheet}.json'), 'w', encoding='utf-8', newline='\n') as f:
+                f.write(json.dumps({'image': f'{sheet}.png', 'layout': 'player'}, indent=2) + '\n')
+    print(f'{name}: {", ".join(outputs)}', flush=True)
+    return name, throw
+
+# ---------------------------------------------------------------- export
+def generate(out_dir='.', kits=None):
+    from multiprocessing import Pool
+    names = list(kits or KITS)
+    os.makedirs(out_dir, exist_ok=True)
+    with Pool(min(len(KITS), os.cpu_count() or 4)) as pool:
+        # The fit is shared by every kit (always measured over all of them), so the layers line up.
+        merged = {}
+        for _name, ext in pool.map(kit_extents, list(KITS)):
+            for key, es in ext.items():
+                merged.setdefault(key, []).extend(es)
+        shifts = {key: fit_shift(es) for key, es in merged.items()}
+        throws = dict(pool.map(kit_render, [(n, shifts, out_dir) for n in names]))
+
+    meta_anims = {}
+    row = 0
+    for anim, poses, fps, loop in ANIMATIONS:
         for c, (d, _) in enumerate(DIRECTIONS):
             entry = {'frames': [(row + i) * 8 + c for i in range(len(poses))], 'fps': fps, 'loop': loop}
-            dx, dsy = shifts[d]
+            dx, dsy = shifts[f'{anim}/{d}']
             if dx or dsy:
                 entry['offset'] = [int(-dx), int(dsy)]   # undo the fit shift in game
-            if name in CAST_RELEASE:
-                entry['release'] = CAST_RELEASE[name]
-            if name == 'cast_throw':
+            if anim in CAST_RELEASE:
+                entry['release'] = CAST_RELEASE[anim]
+            if anim == 'cast_throw' and 'cloth' in throws:
                 # as for the archer's arrows: where the thrown object leaves the hand, per direction
-                rx, ry = (int(round(v)) for v in project(throw_hand, np.radians(dict(DIRECTIONS)[d])))
-                entry['pivots'] = {'release': [rx, ry]}
-            meta_anims[f'{name}_{d}'] = entry
+                entry['pivots'] = {'release': throws['cloth'][d]}
+            meta_anims[f'{anim}_{d}'] = entry
         row += len(poses)
-        print(f'{name}: {len(poses)} frame(s)', flush=True)
-
-    sheet = Image.new('RGBA', (W * 8, H * len(rows)), (0, 0, 0, 0))
-    for r, imgs in enumerate(rows):
-        for c, im in enumerate(imgs):
-            sheet.paste(im, (c * W, r * H))
-    os.makedirs(out_dir, exist_ok=True)
-    sheet.save(os.path.join(out_dir, 'player.png'))
-    meta = {'image': 'player.png', 'frameWidth': W, 'frameHeight': H, 'anchor': [0.5, 1],
-            'pivots': PIVOTS, 'frames': {}, 'animations': meta_anims}
-    with open(os.path.join(out_dir, 'player.json'), 'w', encoding='utf-8') as f:
-        json.dump(meta, f, indent=2)
-        f.write('\n')
-    return sheet, meta, report
+    if 'cloth' in throws:
+        meta = {'image': 'player.png', 'frameWidth': W, 'frameHeight': H, 'anchor': [0.5, 1],
+                'pivots': PIVOTS, 'frames': {}, 'animations': meta_anims}
+        with open(os.path.join(out_dir, 'player.json'), 'w', encoding='utf-8', newline='\n') as f:
+            json.dump(meta, f, indent=2)
+            f.write('\n')
+    return names
 
 
 if __name__ == '__main__':
     default_out = Path(__file__).resolve().parents[2] / 'assets' / 'sprites'
-    sheet, meta, report = generate(sys.argv[1] if len(sys.argv) > 1 else str(default_out))
-    print('sheet', sheet.size, report)
+    out = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1] in KITS else str(default_out)
+    only = [a for a in sys.argv[1:] if a in KITS] or None
+    print('wrote', generate(out, only))

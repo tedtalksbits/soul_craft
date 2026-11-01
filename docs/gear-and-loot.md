@@ -479,6 +479,27 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 7, second half, as built (2026-11-01).** Gear on the character:
+
+- **Layers cut from whole renders.** The generator renders the character in each kit (a body per chest weight,
+  each helmet, each weapon type) and cuts out each piece's visible pixels, so front and back drawing order in
+  every direction comes from the render itself rather than per-direction rules. Twelve kits make 3 bodies and 16
+  layers, all on one frame layout (a layer sheet names `"layout": "player"`).
+- **Weights pick the shapes:** cloth chest a tunic, leather a strapped jerkin with small pauldrons, plate the
+  original cuirass; cloth helmet a hood, leather an open cap with a nasal, plate the plumed full helm. Nothing new
+  in the content: an armor piece's existing `weight` decides. With no chest worn the body is the cloth tunic.
+- **Tier color is a tint, not a palette swap:** trims (buckle, straps, rims, hems, the helm's brow band and plume
+  cup) and the legs are drawn in grays and multiplied by the tier's color, the legs muted toward dark gray so
+  trousers never shout. It costs no art per tier; the ramps the design named (soot, ember green, blue, violet,
+  gold) are the tier colors already in `loot.json`.
+- **Weapons share the body's poses** (the sword-and-board animation): the spear and staff stand upright at rest,
+  the hammer hangs, daggers come in pairs, and the bow sits in the shield hand. Only the sword brings the shield.
+  During attacks the hand is empty, as before; the swing effect draws the blow.
+- **The ring shimmer** is a single ember pixel that winks around the body while a Legendary ring is worn.
+- **"Show helmet"** is a display setting; the helmet's stats count either way.
+- **Not done:** a swing arc per weapon type (the existing per-move swing effects stay), and the Crown of the
+  Unforgotten shows as the full helm (it has plate weight); a circlet would need a fourth shape.
+
 **Phase 7, first half, as built (2026-11-01).** Icons and drop feel:
 
 - **Every gear base has its own icon,** drawn in the items generator like the rest: Iron Dirks, Bone Recurve,

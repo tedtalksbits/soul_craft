@@ -154,37 +154,37 @@
       "frames": [72, 80, 88, 96],
       "fps": 14,
       "loop": false,
-      "offset": [0, 4]
+      "offset": [0, 9]
     },
     "roll_down_right": {
       "frames": [73, 81, 89, 97],
       "fps": 14,
       "loop": false,
-      "offset": [0, 4]
+      "offset": [0, 8]
     },
     "roll_right": {
       "frames": [74, 82, 90, 98],
       "fps": 14,
       "loop": false,
-      "offset": [0, 4]
+      "offset": [0, 6]
     },
     "roll_up_right": {
       "frames": [75, 83, 91, 99],
       "fps": 14,
       "loop": false,
-      "offset": [0, 5]
+      "offset": [0, 9]
     },
     "roll_up": {
       "frames": [76, 84, 92, 100],
       "fps": 14,
       "loop": false,
-      "offset": [0, 2]
+      "offset": [0, 7]
     },
     "roll_up_left": {
       "frames": [77, 85, 93, 101],
       "fps": 14,
       "loop": false,
-      "offset": [0, 1]
+      "offset": [0, 2]
     },
     "roll_left": {
       "frames": [78, 86, 94, 102],
@@ -196,7 +196,7 @@
       "frames": [79, 87, 95, 103],
       "fps": 14,
       "loop": false,
-      "offset": [0, 2]
+      "offset": [0, 4]
     },
     "drink_down": {
       "frames": [104, 112],
@@ -297,25 +297,25 @@
       "frames": [128],
       "fps": 1,
       "loop": false,
-      "offset": [0, 9]
+      "offset": [0, 11]
     },
     "dead_down_right": {
       "frames": [129],
       "fps": 1,
       "loop": false,
-      "offset": [0, 12]
+      "offset": [0, 14]
     },
     "dead_right": {
       "frames": [130],
       "fps": 1,
       "loop": false,
-      "offset": [0, 7]
+      "offset": [2, 8]
     },
     "dead_up_right": {
       "frames": [131],
       "fps": 1,
       "loop": false,
-      "offset": [3, 4]
+      "offset": [6, 7]
     },
     "dead_up": {
       "frames": [132],
@@ -333,13 +333,13 @@
       "frames": [134],
       "fps": 1,
       "loop": false,
-      "offset": [0, 3]
+      "offset": [-2, 3]
     },
     "dead_down_left": {
       "frames": [135],
       "fps": 1,
       "loop": false,
-      "offset": [-3, 4]
+      "offset": [-6, 4]
     },
     "hurt_down": {
       "frames": [136],
@@ -356,13 +356,13 @@
       "frames": [138],
       "fps": 4.29,
       "loop": false,
-      "offset": [0, 2]
+      "offset": [0, 4]
     },
     "hurt_up_right": {
       "frames": [139],
       "fps": 4.29,
       "loop": false,
-      "offset": [0, 2]
+      "offset": [0, 3]
     },
     "hurt_up": {
       "frames": [140],
@@ -391,21 +391,21 @@
       "frames": [144, 152, 160, 168, 176],
       "fps": 15,
       "loop": false,
-      "offset": [0, 6],
+      "offset": [0, 11],
       "release": 2
     },
     "cast_slam_down_right": {
       "frames": [145, 153, 161, 169, 177],
       "fps": 15,
       "loop": false,
-      "offset": [0, 6],
+      "offset": [0, 11],
       "release": 2
     },
     "cast_slam_right": {
       "frames": [146, 154, 162, 170, 178],
       "fps": 15,
       "loop": false,
-      "offset": [0, 2],
+      "offset": [0, 7],
       "release": 2
     },
     "cast_slam_up_right": {
@@ -433,14 +433,14 @@
       "frames": [150, 158, 166, 174, 182],
       "fps": 15,
       "loop": false,
-      "offset": [0, 1],
+      "offset": [0, 2],
       "release": 2
     },
     "cast_slam_down_left": {
       "frames": [151, 159, 167, 175, 183],
       "fps": 15,
       "loop": false,
-      "offset": [0, 4],
+      "offset": [0, 7],
       "release": 2
     },
     "cast_throw_down": {
@@ -541,7 +541,7 @@
       "frames": [218, 226, 234],
       "fps": 12,
       "loop": false,
-      "offset": [0, 1],
+      "offset": [-1, 1],
       "release": 1
     },
     "cast_charge_up_right": {
@@ -555,7 +555,7 @@
       "frames": [220, 228, 236],
       "fps": 12,
       "loop": false,
-      "offset": [0, 3],
+      "offset": [0, 4],
       "release": 1
     },
     "cast_charge_up_left": {
@@ -569,7 +569,7 @@
       "frames": [222, 230, 238],
       "fps": 12,
       "loop": false,
-      "offset": [0, 1],
+      "offset": [1, 1],
       "release": 1
     },
     "cast_charge_down_left": {
@@ -680,14 +680,14 @@
       "frames": [270, 278, 286, 294],
       "fps": 10,
       "loop": false,
-      "offset": [0, 1],
+      "offset": [0, 4],
       "release": 2
     },
     "cast_raise_down_left": {
       "frames": [271, 279, 287, 295],
       "fps": 10,
       "loop": false,
-      "offset": [0, 1],
+      "offset": [0, 4],
       "release": 2
     }
   }

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { PNG } from 'pngjs';
 import { describe, expect, it } from 'vitest';
 import { buildContent, ContentError } from '../../src/content/content';
-import { SpriteSheetSchema } from '../../src/content/sprite-sheet';
+import { LayoutRefSchema, resolveSheet, SpriteSheetSchema } from '../../src/content/sprite-sheet';
 import { readContentFiles, ROOT } from '../../scripts/lib/load-content';
 import { content } from '../helpers';
 
@@ -85,13 +85,26 @@ describe('perk content', () => {
 describe('sprite sheets', () => {
   const sheets = readdirSync(SPRITES).filter((f) => f.endsWith('.json'));
 
+  const read = (file: string): unknown => JSON.parse(readFileSync(join(SPRITES, file), 'utf8'));
+  const sheet = (file: string) => resolveSheet(read(file), (layout) => read(`${layout}.json`));
+
   it.each(sheets)('%s is valid and has its image', (file) => {
-    const def = SpriteSheetSchema.parse(JSON.parse(readFileSync(join(SPRITES, file), 'utf8')));
+    const def = sheet(file);
     expect(existsSync(join(SPRITES, def.image))).toBe(true);
   });
 
+  it.each(sheets)('%s, when on another sheet layout, matches the size of that image', (file) => {
+    const ref = LayoutRefSchema.safeParse(read(file));
+    if (!ref.success) return;
+    const size = (image: string) => {
+      const { width, height } = PNG.sync.read(readFileSync(join(SPRITES, image)));
+      return [width, height];
+    };
+    expect(size(ref.data.image)).toEqual(size(sheet(`${ref.data.layout}.json`).image));
+  });
+
   it.each(sheets)('%s only references frames that exist in its image', (file) => {
-    const def = SpriteSheetSchema.parse(JSON.parse(readFileSync(join(SPRITES, file), 'utf8')));
+    const def = sheet(file);
     const { width, height } = PNG.sync.read(readFileSync(join(SPRITES, def.image)));
     expect(width % def.frameWidth, 'image width is a whole number of frames').toBe(0);
     expect(height % def.frameHeight, 'image height is a whole number of frames').toBe(0);

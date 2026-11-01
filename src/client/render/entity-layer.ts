@@ -3,7 +3,7 @@
  * bars. Animation choice is derived from sim state each frame; nothing here
  * feeds back into the simulation.
  */
-import { Container, Graphics, Sprite as PixiSprite } from 'pixi.js';
+import { Container, Graphics, Sprite as PixiSprite, Texture } from 'pixi.js';
 import type { Entity } from '../../core/ecs';
 import {
   Ai,
@@ -28,6 +28,7 @@ import type { Assets } from '../assets';
 import { castFrame, selectAnim } from './anim-select';
 import type { Dir8 } from './facing';
 import { PixelText } from './pixel-text';
+import { playerLook, type Layer } from './player-look';
 
 const HIT_FLASH_MS = 110;
 const BAR_VISIBLE_MS = 4000;
@@ -49,10 +50,16 @@ interface EntityView {
   bar: HealthBar | null;
   /** Health bar width: sized to the body, not the (mostly empty) sprite frame. */
   barWidth: number;
+  /** The player's gear, stacked on the body frame for frame (player-look.ts). */
+  layers: PixiSprite[];
+  /** A Legendary ring's ember glint, made when first needed. */
+  glint: PixiSprite | null;
 }
 
 export class EntityLayer {
   readonly root = new Container({ sortableChildren: true });
+  /** Draw the worn helmet (a display setting). */
+  showHelmet = true;
   private readonly views = new Map<Entity, EntityView>();
   private clockMs = 0;
 
@@ -73,7 +80,9 @@ export class EntityLayer {
     for (const [e, spriteDef, body] of ecs.query(Sprite, Body)) {
       seen.add(e);
       const view = this.views.get(e) ?? this.create(e);
-      const sheet = this.assets.sheet(spriteDef.sheet);
+      // Whatever is drawn as the player (the player, a decoy) wears the player's gear.
+      const look = spriteDef.sheet === 'player' ? playerLook(sim, this.showHelmet) : null;
+      const sheet = this.assets.sheet(look?.body ?? spriteDef.sheet) ?? this.assets.sheet(spriteDef.sheet);
       const { key, dir8, elapsedMs, reverse, cast } = selectAnim(
         sim,
         e,
@@ -99,6 +108,7 @@ export class EntityLayer {
         view.glow.anchor.set(...sheet!.def.anchor);
         view.sprite.position.set(...anim.offset);
         view.glow.position.set(...anim.offset);
+        this.syncLayers(view, look?.layers ?? [], key, idx, anim.offset, sheet!.def.anchor);
       }
 
       view.barWidth = Math.max(16, body.w + 8);
@@ -120,14 +130,16 @@ export class EntityLayer {
       if (player && ecs.has(e, Veiled)) alpha *= 0.3;
       if (ecs.has(e, Decoy)) alpha *= 0.45 + 0.15 * Math.sin(this.clockMs / 90);
       view.sprite.alpha = alpha;
-      const look = enemy ? sim.content.enemies[enemy.archetype]?.look : undefined;
+      const enemyLook = enemy ? sim.content.enemies[enemy.archetype]?.look : undefined;
       view.sprite.tint = ecs.has(e, Decoy)
         ? 0x8a80a0
-        : look?.tint
-          ? Number.parseInt(look.tint.slice(1), 16)
+        : enemyLook?.tint
+          ? Number.parseInt(enemyLook.tint.slice(1), 16)
           : 0xffffff;
-      view.sprite.scale.set(look?.scale ?? 1);
-      view.glow.scale.set(look?.scale ?? 1);
+      view.sprite.scale.set(enemyLook?.scale ?? 1);
+      view.glow.scale.set(enemyLook?.scale ?? 1);
+      for (const l of view.layers) l.alpha = alpha;
+      this.shimmer(view, look?.shimmer === true && !dying);
 
       view.flashMs = Math.max(0, view.flashMs - dtMs);
       const ai = ecs.get(e, Ai);
@@ -189,9 +201,58 @@ export class EntityLayer {
       flashMs: 0,
       bar: null,
       barWidth: 16,
+      layers: [],
+      glint: null,
     };
     this.views.set(e, view);
     return view;
+  }
+
+  /** Puts each gear layer's frame for this animation and frame index over the body; spare layers hide. */
+  private syncLayers(
+    view: EntityView,
+    layers: readonly Layer[],
+    key: string,
+    idx: number,
+    offset: readonly [number, number],
+    anchor: readonly [number, number],
+  ): void {
+    layers.forEach((layer, i) => {
+      let s = view.layers[i];
+      if (!s) {
+        s = new PixiSprite(this.assets.missingTexture);
+        view.layers.push(s);
+        view.root.addChildAt(s, view.root.getChildIndex(view.sprite) + 1 + i);
+      }
+      const tex = this.assets.sheet(layer.sheet)?.anim(key)?.textures[idx];
+      s.visible = tex !== undefined;
+      if (!tex) return;
+      s.texture = tex;
+      s.tint = layer.tint;
+      s.anchor.set(...anchor);
+      s.position.set(...offset);
+    });
+    for (let i = layers.length; i < view.layers.length; i++) view.layers[i]!.visible = false;
+  }
+
+  /** A Legendary ring's shimmer: a single ember pixel that winks around the body every so often. */
+  private shimmer(view: EntityView, on: boolean): void {
+    if (!on) {
+      if (view.glint) view.glint.visible = false;
+      return;
+    }
+    if (!view.glint) {
+      view.glint = new PixiSprite(Texture.WHITE);
+      view.glint.setSize(1, 1);
+      view.glint.blendMode = 'add';
+      view.root.addChild(view.glint);
+    }
+    const beat = Math.floor(this.clockMs / 140);
+    const seed = Math.sin(beat * 12.9898) * 43758.5453;
+    const r = seed - Math.floor(seed);
+    view.glint.visible = beat % 5 < 2;
+    view.glint.tint = r > 0.5 ? 0xffd27a : 0xff9a30;
+    view.glint.position.set(Math.round((r - 0.5) * 14), -8 - Math.round(r * 12));
   }
 
   private makeBar(view: EntityView): HealthBar {

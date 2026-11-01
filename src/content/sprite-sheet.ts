@@ -44,6 +44,20 @@ export const SpriteSheetSchema = z.object({
     )
     .default({}),
 });
+/**
+ * A sheet drawn on another's frame layout: only its image is its own, everything else (frame size, anchor, pivots,
+ * animations) is the `layout` sheet's. The player's gear layers use it, so each layer stacks frame for frame on
+ * the body without repeating its animation table.
+ */
+export const LayoutRefSchema = z.object({ image: z.string(), layout: z.string() });
+
+/** A sheet file, either complete or on another sheet's layout (`lookup` reads a sheet file by name). */
+export function resolveSheet(raw: unknown, lookup: (name: string) => unknown): SpriteSheetDef {
+  const ref = LayoutRefSchema.safeParse(raw);
+  if (!ref.success) return SpriteSheetSchema.parse(raw);
+  return { ...SpriteSheetSchema.parse(lookup(ref.data.layout)), image: ref.data.image };
+}
+
 /** A parsed sheet, defaults applied. */
 export type SpriteSheetDef = z.infer<typeof SpriteSheetSchema>;
 /** What a sheet file may contain (defaulted fields optional). Use when writing sheets. */

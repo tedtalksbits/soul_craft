@@ -108,6 +108,11 @@ export class GameRenderer {
     return this.app.canvas;
   }
 
+  /** Draw the player's worn helmet (a display setting). */
+  set showHelmet(on: boolean) {
+    this.entities.showHelmet = on;
+  }
+
   /** Switch to a different simulation (new game, load, snapshot restore) or none. */
   attach(sim: Simulation | null): void {
     this.sim = sim;

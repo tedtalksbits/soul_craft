@@ -7,7 +7,7 @@ PNG and JSON along with the script change.
 
 ```bash
 pnpm art:setup          # once: creates tools/art/.venv and installs requirements.txt (needs Python 3.10+)
-pnpm art ashen_one      # regenerate assets/sprites/player.png + player.json (about 80 s)
+pnpm art ashen_one      # regenerate assets/sprites/player*.png + .json: the body and every gear layer (about 30 min)
 pnpm art hollow         # regenerate assets/sprites/hollow.png + hollow.json (about 80 s)
 pnpm art archer         # regenerate assets/sprites/archer.png + archer.json (about 80 s)
 pnpm art knight         # regenerate assets/sprites/knight.png + knight.json
@@ -27,20 +27,20 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 
 ## Tools
 
-| Tool           | Writes       | Contents                                                                                                                                                                                  |
-| -------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ashen_one.py` | `player.*`   | The Ashen One: idle, walk, attack, roll, drink, sit, dead, hurt and five cast poses (slam, throw, charge, push, raise, each with a `release` frame); 8 directions, 48×48 (sheet 384×1776) |
-| `hollow.py`    | `hollow.*`   | The Hollow: idle, walk, windup, attack, hurt, dead; 8 directions, 48×48 (sheet 384×624); `head` pivot                                                                                     |
-| `archer.py`    | `archer.*`   | The Archer: the same six animations; `head` plus per-direction `release` on `attack_<dir>`                                                                                                |
-| `knight.py`    | `knight.*`   | The Oathbound Knight: idle, walk, windup, attack (looping charge), stunned, dead; `head` pivot                                                                                            |
-| `warden.py`    | `warden.*`   | The Ashen Warden (boss): idle, walk, windup, attack (looping charge), raise, slam, recover, channel, stunned, dead; 8 directions, **64×64**, drawn for no tint; `head` pivot              |
-| `slime.py`     | `slime.*`    | The Fungal Slime: undirected idle, hop (lift drawn in, ground shadow), hurt, dead; `head` pivot                                                                                           |
-| `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels); includes `relic_oath` and `relic_sovereign`                                         |
-| `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 32×48 `frames`, voxel-rendered like the characters                                                                                            |
-| `village.py`   | `village.*`  | The five restoration sites as named 32×32 `frames`: ruins in row 1, rebuilt sites in row 2 (well, storehouse, palisade, lamps, smithy)                                                    |
-| `arena.py`     | `arena.*`    | The Warden arena's brazier, 16×24: `brazier` (cold, a still in `frames`) and `brazier_lit` (3 frames, 8 fps, loop)                                                                        |
-| `ui_kit.py`    | `assets/ui/` | 9-slice UI pieces and their states, cut from one PixelLab sheet (`assets/ui/source/kit.png`)                                                                                              |
-| `icons.py`     | `sigils.*`   | 16×16 tintable class sigils, plus `abilities.*` (ability icons), picked from PixelLab rolls in `assets/sprites/source/`                                                                   |
+| Tool           | Writes       | Contents                                                                                                                                                                                                                                                                                           |
+| -------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ashen_one.py` | `player*.*`  | The Ashen One: idle, walk, attack, roll, drink, sit, dead, hurt and five cast poses (slam, throw, charge, push, raise, each with a `release` frame); 8 directions, 48×48 (sheet 384×1776). One body per chest weight and a layer for each helmet, trim, the legs and every weapon type (see below) |
+| `hollow.py`    | `hollow.*`   | The Hollow: idle, walk, windup, attack, hurt, dead; 8 directions, 48×48 (sheet 384×624); `head` pivot                                                                                                                                                                                              |
+| `archer.py`    | `archer.*`   | The Archer: the same six animations; `head` plus per-direction `release` on `attack_<dir>`                                                                                                                                                                                                         |
+| `knight.py`    | `knight.*`   | The Oathbound Knight: idle, walk, windup, attack (looping charge), stunned, dead; `head` pivot                                                                                                                                                                                                     |
+| `warden.py`    | `warden.*`   | The Ashen Warden (boss): idle, walk, windup, attack (looping charge), raise, slam, recover, channel, stunned, dead; 8 directions, **64×64**, drawn for no tint; `head` pivot                                                                                                                       |
+| `slime.py`     | `slime.*`    | The Fungal Slime: undirected idle, hop (lift drawn in, ground shadow), hurt, dead; `head` pivot                                                                                                                                                                                                    |
+| `items.py`     | `items.*`    | 16×16 item icons as named `frames`, painted as pixel grids rather than voxels (too small for voxels); includes `relic_oath` and `relic_sovereign`                                                                                                                                                  |
+| `stations.py`  | `stations.*` | Crafting stations (forge, alchemy) as named 32×48 `frames`, voxel-rendered like the characters                                                                                                                                                                                                     |
+| `village.py`   | `village.*`  | The five restoration sites as named 32×32 `frames`: ruins in row 1, rebuilt sites in row 2 (well, storehouse, palisade, lamps, smithy)                                                                                                                                                             |
+| `arena.py`     | `arena.*`    | The Warden arena's brazier, 16×24: `brazier` (cold, a still in `frames`) and `brazier_lit` (3 frames, 8 fps, loop)                                                                                                                                                                                 |
+| `ui_kit.py`    | `assets/ui/` | 9-slice UI pieces and their states, cut from one PixelLab sheet (`assets/ui/source/kit.png`)                                                                                                                                                                                                       |
+| `icons.py`     | `sigils.*`   | 16×16 tintable class sigils, plus `abilities.*` (ability icons), picked from PixelLab rolls in `assets/sprites/source/`                                                                                                                                                                            |
 
 ## How the Ashen One generator works
 
@@ -67,6 +67,17 @@ lit from the upper left, quantized to 4-step material ramps (`RAMPS`), then give
 - **Pivots:** points the engine attaches effects to, in pixels from the feet anchor (`PIVOTS`). `swing` is
   the sword arc center.
 - **Palette:** edit `RAMPS`; each material is (highlight, base, shadow, deep).
+- **Gear (kits and layers):** `KITS` lists what gets rendered: a body for each chest weight (cloth, leather,
+  plate, with a bare head and no weapon), the character in each helmet (hood, cap, full helm) and holding each
+  weapon type (sword and shield, spear, hammer, daggers, bow, staff). Each kit is rendered whole and cut into
+  layers by material group (`cut`): a layer keeps only its group's visible pixels and their outline, so whatever
+  stood in front of a piece in the render already hides it, in every direction. Materials 30-39 are the helmet,
+  40-59 the weapon; 60 and 61 are the chest's and helmet's trim, drawn in grays that the game tints with the
+  piece's tier color, and the trousers are cut out in grays the same way (`player_legs`). Every kit renders the
+  same rows, and the fit (`FIT`) is measured over all of them, so every sheet shares one layout: `player.json` has
+  it, and each layer's JSON just says `{ "image": ..., "layout": "player" }`. The game stacks body, legs, chest
+  trim, helmet, helmet trim and weapon (`src/client/render/player-look.ts`). The kits render in parallel
+  processes; `pnpm art ashen_one sword spear` re-renders only those kits (the fit still covers them all).
 
 ## Conventions for new character tools
 
