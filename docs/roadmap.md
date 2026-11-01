@@ -219,7 +219,11 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    release in the Perfect window pierces and rips out every pin; the Ashwood Bow, Bone Recurve and Pale Wind.
    The Ember staff is in: melee hits store Embers (up to 4) that its charged fireball spends (a weak spark
    with none), the Ember Staff and Charred Rod, and Hearthwood. All six weapon types are built.
-4. **Economy:** salvage, temper, upgrade and infuse, cleanse, coatings, tools, ranked projects, the Gambler, respec.
+4. **Economy (first half built):** salvage (at the forge or a bonfire; materials by tier, a Warden Mark from a
+   Legendary, never souls) with locking, junk marks, "salvage junk" and auto-salvage for Common and Standard;
+   armor upgrades; infusing an old piece's upgrades onto a new one; tempering a perk and cleansing blight (the
+   smith, once the smithy is rebuilt); respec at a bonfire. Still to come: coatings, tools, ranked projects and the
+   Gambler.
 5. **Wardens:** chests, signature items, Rekindle, pity and Marks, Heat, alternate kills.
 6. **Onboarding:** the Road Camp objective, with `kill` and `gather` goals.
 7. **Art:** weapon and armor layers on the character, item icons, beams and chimes.

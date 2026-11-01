@@ -22,7 +22,8 @@ import { canChoose, versionsOf } from '../../sim/modules/variants';
 import { canWear, modifierSlots, modifiersOf, wornModifiers } from '../../sim/modules/modifiers';
 import { playerLevel } from '../../sim/modules/progression';
 import { unlockHint } from '../../sim/modules/unlocks';
-import type { PlayerAction } from '../../sim/input';
+import type { GearTarget, PlayerAction } from '../../sim/input';
+import { AUTO_SALVAGE_TIERS } from '../../sim/modules/smithy';
 import { canCraft, canUpgrade, nextUpgrade, stationNearby } from '../../sim/modules/crafting';
 import {
   gearOf,
@@ -45,6 +46,7 @@ import type { Simulation } from '../../sim/simulation';
 import { TICK_RATE } from '../../sim/constants';
 import { primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
+import { gearWork } from './smithy-panel';
 
 export interface InventoryHost {
   sim(): Simulation | null;
@@ -90,6 +92,8 @@ export class InventoryScreen {
   /** The station this screen was opened at; filters the crafting list. */
   private station: StationId | null = null;
   private selected: Selection | null = null;
+  /** A Noble or Legendary salvage waiting on its second press. */
+  private confirmSalvage = false;
   private shown = '';
 
   constructor(
@@ -150,6 +154,10 @@ export class InventoryScreen {
       sim.ecs.get(e, Buffs)?.active.map((b) => b.stat),
       stationNearby(sim, 'forge'),
       stationNearby(sim, 'alchemy'),
+      sim.ecs.get(e, Player)?.state === 'sit',
+      sim.state.restored,
+      sim.state.autoSalvage,
+      this.confirmSalvage,
       this.tab === 'abilities' ? abilityStatus(sim) : null,
       this.tab === 'abilities' ? variantSignature(sim) : null,
       this.host.bindings(),
@@ -283,6 +291,7 @@ export class InventoryScreen {
         { class: 'col' },
         h('h2', {}, `Pack ${stacks.length}/${slots}`),
         h('div', { class: 'grid' }, ...grid),
+        this.packTools(sim),
       ),
       h('div', { class: 'col detail' }, this.selectedDetail(sim)),
     );
@@ -290,6 +299,7 @@ export class InventoryScreen {
 
   private select(selection: Selection | null): void {
     this.selected = selection;
+    this.confirmSalvage = false;
     this.refresh(true);
   }
 
@@ -298,9 +308,13 @@ export class InventoryScreen {
     if (picked && 'slot' in picked) {
       const stack = sim.ecs.need(sim.player, Equipment)[picked.slot];
       if (stack)
-        return this.gearDetail(sim, stack, [
-          h('button', { onclick: () => this.host.act({ type: 'unequip', slot: picked.slot }) }, 'Unequip'),
-        ]);
+        return this.gearDetail(
+          sim,
+          stack,
+          [h('button', { onclick: () => this.host.act({ type: 'unequip', slot: picked.slot }) }, 'Unequip')],
+          null,
+          this.work(sim, { slot: picked.slot }, stack),
+        );
     }
     const index = picked && 'pack' in picked ? picked.pack : null;
     const stack = index === null ? undefined : sim.ecs.need(sim.player, Inventory).stacks[index];
@@ -317,6 +331,7 @@ export class InventoryScreen {
         stack,
         [h('button', { onclick: () => this.host.act({ type: 'equip', index }) }, 'Equip')],
         comparison,
+        this.work(sim, { pack: index }, stack),
       );
     }
     const quick = sim.ecs.need(sim.player, Equipment).quick;
@@ -356,6 +371,7 @@ export class InventoryScreen {
     stack: ItemStack,
     buttons: HTMLElement[],
     comparison: Comparison | null = null,
+    work: HTMLElement | null = null,
   ): HTMLElement {
     const def = sim.content.item(stack.item);
     const gear = gearOf(stack);
@@ -412,6 +428,7 @@ export class InventoryScreen {
         : h('p', { class: 'hint' }, 'No perks.'),
       h('p', { class: 'flavor' }, def.description),
       h('div', { class: 'actions' }, ...buttons),
+      work ?? '',
     );
     panel.style.setProperty('--tier', tier.color);
     return panel;
@@ -458,6 +475,52 @@ export class InventoryScreen {
     );
   }
 
+  /** The smithy's buttons for a piece of gear, wired to this screen. */
+  private work(sim: Simulation, target: GearTarget, stack: ItemStack): HTMLElement {
+    return gearWork(sim, target, stack, {
+      act: (action) => this.host.act(action),
+      confirming: this.confirmSalvage,
+      confirm: (on) => {
+        this.confirmSalvage = on;
+        this.refresh(true);
+      },
+    });
+  }
+
+  /** Under the pack: salvage everything marked junk, and which tiers salvage themselves on pickup. */
+  private packTools(sim: Simulation): HTMLElement {
+    const stacks = sim.ecs.need(sim.player, Inventory).stacks;
+    const junk = stacks.filter((s) => s.junk && !s.locked).length;
+    const can = stationNearby(sim, 'forge') || sim.ecs.need(sim.player, Player).state === 'sit';
+    const auto = sim.state.autoSalvage ?? [];
+    return h(
+      'div',
+      { class: 'pack-tools' },
+      h(
+        'button',
+        {
+          class: 'work',
+          disabled: !can || junk === 0,
+          title: can ? '' : 'salvage at the forge or a bonfire',
+          onclick: () => this.host.act({ type: 'salvageJunk' }),
+        },
+        `Salvage junk (${junk})`,
+      ),
+      h('span', { class: 'hint' }, 'Auto-salvage:'),
+      ...AUTO_SALVAGE_TIERS.map((tier) => {
+        const on = auto.includes(tier);
+        return h(
+          'button',
+          {
+            class: on ? 'work toggle on' : 'work toggle',
+            onclick: () => this.host.act({ type: 'autoSalvage', tier, on: !on }),
+          },
+          `${on ? '☑' : '☐'} ${sim.content.loot.tiers[tier].name}`,
+        );
+      }),
+    );
+  }
+
   /** An item's name in its tier's color, with its upgrade level. */
   private gearName(sim: Simulation, stack: ItemStack): HTMLElement {
     const def = sim.content.item(stack.item);
@@ -487,6 +550,8 @@ export class InventoryScreen {
       if (stack.count > 1 || def.kind === 'consumable')
         cell.append(h('span', { class: 'count' }, String(stack.count)));
       if (stack.level > 0) cell.append(h('span', { class: 'level' }, `+${stack.level}`));
+      if (stack.locked) cell.append(h('span', { class: 'mark', title: 'Locked' }, '🔒'));
+      else if (stack.junk) cell.append(h('span', { class: 'mark junk', title: 'Junk' }, '✕'));
     }
     if (label) cell.append(h('span', { class: 'label' }, label));
     return cell;

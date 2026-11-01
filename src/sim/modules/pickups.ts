@@ -3,6 +3,7 @@ import { Body, Health, Magnetized, Pickup, Player, Sprite, type Gear, type Picku
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { addItem, addStack, roomFor } from './items';
+import { autoSalvage } from './smithy';
 
 /** Ticks before a fresh drop can be collected, so it visibly pops out first. */
 const COLLECT_DELAY = 20;
@@ -47,9 +48,13 @@ function updatePickups(sim: Simulation): void {
     if (reachable) {
       if (pickup.kind === 'item' && pickup.item !== null) {
         const gear = pickup.gear;
-        const left = gear
-          ? Number(!addStack(sim, p, { item: pickup.item, count: 1, level: 0, gear }))
-          : addItem(sim, p, pickup.item, pickup.amount);
+        const stack = { item: pickup.item, count: 1, level: 0, ...(gear ? { gear } : {}) };
+        // Gear of a tier the player auto-salvages becomes materials on the spot.
+        if (gear && autoSalvage(sim, stack)) {
+          ecs.destroy(e);
+          continue;
+        }
+        const left = gear ? Number(!addStack(sim, p, stack)) : addItem(sim, p, pickup.item, pickup.amount);
         const taken = pickup.amount - left;
         if (taken > 0)
           sim.events.emit({ type: 'itemGained', item: pickup.item, count: taken, tier: gear?.tier ?? null });

@@ -107,6 +107,8 @@ export interface Attributes {
   endurance: number;
   might: number;
   attunement: number;
+  /** Levels given back by a respec, to be spent again for free. Absent in saves from before it. */
+  unspent?: number;
 }
 export const Attributes = defineComponent<Attributes>('attributes');
 
@@ -224,6 +226,11 @@ export interface Gear {
   perks: PerkRoll[];
   /** One of `perks` is a drawback, and the rest rolled stronger for it. */
   blighted?: true;
+  /** Times tempered, and the perk (by index) every temper after the first must reroll. */
+  tempers?: number;
+  tempered?: number;
+  /** A temper waiting on the player's choice: the perk being rerolled, and the two new perks offered. */
+  offer?: { perk: number; rolls: PerkRoll[] };
 }
 
 /**
@@ -305,6 +312,9 @@ export interface ItemStack {
   count: number;
   level: number;
   gear?: Gear;
+  /** Kept out of bulk salvage, or marked to go in it. */
+  locked?: true;
+  junk?: true;
 }
 
 /** What the player carries. Order is the display order; capacity is `inventoryCapacity()` (base slots plus a rebuilt storehouse). */

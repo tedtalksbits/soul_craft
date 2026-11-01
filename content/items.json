@@ -48,6 +48,13 @@
     "icon": "slime_gel",
     "stack": 99
   },
+  "warden_mark": {
+    "kind": "material",
+    "name": "Warden Mark",
+    "description": "A shard of a Warden’s ember, still warm. Salvaged Legendaries give one up; the best work wants them.",
+    "icon": "warden_mark",
+    "stack": 99
+  },
   "chipped_sword": {
     "kind": "weapon",
     "name": "Chipped Sword",
@@ -528,7 +535,43 @@
     "icon": "ashen_hood",
     "stack": 1,
     "armor": { "slot": "helmet", "value": 2, "weight": "cloth" },
-    "innate": [{ "perk": "abilityDamage", "value": 0.05 }]
+    "innate": [{ "perk": "abilityDamage", "value": 0.05 }],
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "iron_helm": {
     "kind": "armor",
@@ -536,7 +579,43 @@
     "description": "A dented pot of a helm. It rings when struck, and holds.",
     "icon": "iron_helm",
     "stack": 1,
-    "armor": { "slot": "helmet", "value": 4, "weight": "plate" }
+    "armor": { "slot": "helmet", "value": 4, "weight": "plate" },
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "padded_jacket": {
     "kind": "armor",
@@ -545,7 +624,43 @@
     "icon": "padded_jacket",
     "stack": 1,
     "armor": { "slot": "chest", "value": 4, "weight": "cloth" },
-    "innate": [{ "perk": "maxHp", "value": 10 }]
+    "innate": [{ "perk": "maxHp", "value": 10 }],
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "iron_mail": {
     "kind": "armor",
@@ -553,7 +668,43 @@
     "description": "Scrap rings, patiently riveted. Heavy, but it holds.",
     "icon": "iron_mail",
     "stack": 1,
-    "armor": { "slot": "chest", "value": 7, "weight": "plate" }
+    "armor": { "slot": "chest", "value": 7, "weight": "plate" },
+    "upgrades": [
+      {
+        "armor": 2,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 3,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 3,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "wanderers_wraps": {
     "kind": "armor",
@@ -562,7 +713,43 @@
     "icon": "wanderers_wraps",
     "stack": 1,
     "armor": { "slot": "legs", "value": 2, "weight": "cloth" },
-    "innate": [{ "perk": "rollStamina", "value": 0.08 }]
+    "innate": [{ "perk": "rollStamina", "value": 0.08 }],
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "iron_greaves": {
     "kind": "armor",
@@ -570,7 +757,43 @@
     "description": "Plates strapped over the knee. Every step is a decision.",
     "icon": "iron_greaves",
     "stack": 1,
-    "armor": { "slot": "legs", "value": 4, "weight": "plate" }
+    "armor": { "slot": "legs", "value": 4, "weight": "plate" },
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "ring_of_vigor": {
     "kind": "ring",
@@ -907,7 +1130,43 @@
       "name": "Vigil",
       "text": "Your super charges while you stand still.",
       "effect": { "type": "stillEnergy", "perSecond": 3 }
-    }
+    },
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "pyreheart_cuirass": {
     "kind": "armor",
@@ -921,7 +1180,43 @@
       "name": "Last Coal",
       "text": "Falling below a third of your health wraps you in 40 overshield, once every 30 seconds.",
       "effect": { "type": "lowHealthShield", "below": 0.33, "amount": 40, "seconds": 6, "cooldown": 30 }
-    }
+    },
+    "upgrades": [
+      {
+        "armor": 2,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 3,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 3,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "ashwalker_greaves": {
     "kind": "armor",
@@ -935,7 +1230,43 @@
       "name": "Ashwalk",
       "text": "Rolling through a blow gives back the roll’s stamina.",
       "effect": { "type": "dodgeRefund" }
-    }
+    },
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "ring_of_the_last_ember": {
     "kind": "ring",

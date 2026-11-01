@@ -511,6 +511,17 @@ export const ItemSchema = z.discriminatedUnion('kind', [
      * and how heavy it looks on the character.
      */
     armor: z.object({ slot: ArmorSlotSchema, value: pos, weight: z.enum(['cloth', 'leather', 'plate']) }),
+    /** Forge upgrades, in order: each adds `armor` and costs souls plus items. */
+    upgrades: z
+      .array(
+        z.object({
+          armor: pos,
+          souls: z.number().int().nonnegative(),
+          items: z.array(ItemCountSchema),
+          requires: z.string().optional(),
+        }),
+      )
+      .default([]),
   }),
   /** A ring's power is its innate perk. */
   z.object({ kind: z.literal('ring'), ...itemBase, ...gearBase }),
@@ -555,6 +566,8 @@ export const RestorationEffectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('light'), radius: pos }),
   /** Unlocks forge upgrade steps that name this project in `requires`: the smithy. */
   z.object({ type: z.literal('forgeSteps') }),
+  /** The smith tempers perks and cleanses blight at the forge. */
+  z.object({ type: z.literal('smithWork') }),
 ]);
 export type RestorationEffect = z.infer<typeof RestorationEffectSchema>;
 
@@ -846,6 +859,42 @@ export const LootSchema = z.object({
   blight: z.object({ tier: TierSchema, chance: fraction, factor: pos }),
   /** Of the class perks that roll, about this share are for the class being played. */
   smartLoot: fraction,
+  /** Smithy work (docs/gear-and-loot.md, section 7). */
+  smithy: z.object({
+    /**
+     * Salvage: per tier, how many of each of the slot's three materials, plus (for a Legendary) one `mark`.
+     * It never pays souls.
+     */
+    salvage: z.object({
+      yields: z.object({
+        common: z.tuple([nonneg, nonneg, nonneg]),
+        standard: z.tuple([nonneg, nonneg, nonneg]),
+        rare: z.tuple([nonneg, nonneg, nonneg]),
+        noble: z.tuple([nonneg, nonneg, nonneg]),
+        legendary: z.tuple([nonneg, nonneg, nonneg]),
+      }),
+      materials: z.object({
+        weapon: z.tuple([z.string(), z.string(), z.string()]),
+        armor: z.tuple([z.string(), z.string(), z.string()]),
+        ring: z.tuple([z.string(), z.string(), z.string()]),
+      }),
+      mark: z.string(),
+    }),
+    /**
+     * Tempering one perk: the base cost times the tier's factor, rising by `growth` with each temper of the
+     * same item, to at most `cap` times.
+     */
+    temper: z.object({
+      souls: z.number().int().nonnegative(),
+      items: z.array(ItemCountSchema),
+      tiers: z.object({ standard: pos, rare: pos, noble: pos, legendary: pos }),
+      growth: nonneg,
+      cap: pos,
+    }),
+    cleanse: z.object({ souls: z.number().int().nonnegative(), items: z.array(ItemCountSchema) }),
+    /** Infusing costs this share of the materials and souls the old item's upgrades took. */
+    infuse: fraction,
+  }),
   perks: z.record(z.string(), PerkSchema),
 });
 export type LootDef = z.infer<typeof LootSchema>;

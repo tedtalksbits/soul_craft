@@ -33,7 +33,8 @@
     "stone_maul": 26,
     "bone_daggers": 27,
     "ashwood_bow": 28,
-    "ember_staff": 29
+    "ember_staff": 29,
+    "warden_mark": 30
   },
   "animations": {}
 }

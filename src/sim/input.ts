@@ -1,4 +1,4 @@
-import type { AttributeId } from '../content/schemas';
+import type { AttributeId, TierId } from '../content/schemas';
 import type { EquipSlot } from './components';
 
 /**
@@ -25,6 +25,9 @@ export type ActionName = keyof typeof Action;
  * Menu actions (inventory, crafting). They travel inside the InputFrame like
  * button presses, so they are just as deterministic and replayable.
  */
+/** A piece of gear the smithy works on: in the pack, or worn. */
+export type GearTarget = { pack: number } | { slot: EquipSlot };
+
 export type PlayerAction =
   | { type: 'equip'; index: number }
   | { type: 'unequip'; slot: EquipSlot }
@@ -48,7 +51,20 @@ export type PlayerAction =
    */
   | { type: 'chooseVariant'; base: string; ability: string }
   /** Puts on (or takes off) a class modifier, learning it first if needed. Only at a bonfire. */
-  | { type: 'wearModifier'; modifier: string; on: boolean };
+  | { type: 'wearModifier'; modifier: string; on: boolean }
+  /** Smithy work. Salvaging needs the forge or a bonfire; upgrading and infusing the forge; tempering and cleansing the smith. */
+  | { type: 'salvage'; index: number }
+  | { type: 'salvageJunk' }
+  | { type: 'mark'; index: number; mark: 'lock' | 'junk' | null }
+  | { type: 'autoSalvage'; tier: TierId; on: boolean }
+  | { type: 'upgradeGear'; target: GearTarget }
+  | { type: 'infuse'; from: GearTarget; to: GearTarget }
+  | { type: 'temper'; target: GearTarget; perk: number }
+  /** Settles a temper: 0 keeps the old perk, 1 or 2 takes a new one. */
+  | { type: 'settleTemper'; target: GearTarget; choice: number }
+  | { type: 'cleanse'; target: GearTarget }
+  /** Gives back every attribute point to spend again, for the souls of one level. Only at a bonfire. */
+  | { type: 'respec' };
 
 export interface InputFrame {
   /** Movement intent, each axis in [-1, 1]. */

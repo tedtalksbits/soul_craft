@@ -105,6 +105,12 @@ describe('sprite sheets', () => {
     expect(named.filter((n) => !(n in def.frames))).toEqual([]);
   });
 
+  it('every item icon exists in the items sheet', () => {
+    const items = SpriteSheetSchema.parse(JSON.parse(readFileSync(join(SPRITES, 'items.json'), 'utf8')));
+    const missing = Object.entries(content.items).filter(([, def]) => !(def.icon in items.frames));
+    expect(missing.map(([id, def]) => `${id}: ${def.icon}`)).toEqual([]);
+  });
+
   it('every tile frame exists in the tiles sheet', () => {
     const tiles = SpriteSheetSchema.parse(JSON.parse(readFileSync(join(SPRITES, 'tiles.json'), 'utf8')));
     const missing = content.tiles.flatMap((t) =>

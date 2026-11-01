@@ -445,6 +445,24 @@ ICONS['ember_staff'] = [
     "................",
     "................",
 ]
+ICONS['warden_mark'] = [
+    "................",
+    "................",
+    ".......hh.......",
+    "......hHHh......",
+    ".....hHooHh.....",
+    "....hHoOOoHh....",
+    "...hHoO**OoHh...",
+    "...h=oO**Oo=h...",
+    "....h=oOOo=h....",
+    ".....h=oo=h.....",
+    "......h==h......",
+    ".......hh.......",
+    "................",
+    "................",
+    "................",
+    "................",
+]
 ICONS['bone_cleaver'] = [
     "................",
     "................",
@@ -594,7 +612,7 @@ ORDER = ['ashwood', 'fungal_cap', 'glowspore', 'iron_scrap', 'bone_shard', 'slim
          'chipped_sword', 'iron_sword', 'bone_cleaver', 'padded_jacket', 'iron_mail',
          'ring_vigor', 'ring_breath', 'bandage', 'potion_ember', 'potion_stone', 'potion_breath',
          'stone', 'kindling', 'relic_oath', 'relic_sovereign',
-         'ashen_hood', 'iron_helm', 'wanderers_wraps', 'iron_greaves', 'ashwood_spear', 'stone_maul', 'bone_daggers', 'ashwood_bow', 'ember_staff']
+         'ashen_hood', 'iron_helm', 'wanderers_wraps', 'iron_greaves', 'ashwood_spear', 'stone_maul', 'bone_daggers', 'ashwood_bow', 'ember_staff', 'warden_mark']
 
 # ---------------------------------------------------------------- shading and outline
 def paint(rows):

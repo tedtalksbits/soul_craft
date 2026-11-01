@@ -21,7 +21,7 @@ export function giveStartingAttributes(sim: Simulation, e: Entity): void {
 
 /** The player's level: one, plus every point spent. */
 export function playerLevel(attrs: Attributes): number {
-  return 1 + ATTRIBUTES.reduce((n, id) => n + attrs[id], 0);
+  return 1 + ATTRIBUTES.reduce((n, id) => n + attrs[id], 0) + (attrs.unspent ?? 0);
 }
 
 /** Souls the next level costs, from the level the player is leaving. */
@@ -38,17 +38,19 @@ export function abilityPower(sim: Simulation): number {
 
 export type LevelCheck = { ok: true; cost: number } | { ok: false; reason: string };
 
-/** Whether the player can level now: resting at a bonfire, with the souls for it. */
+/** Whether the player can level now: resting at a bonfire, with the souls for it (or a point a respec gave back). */
 export function canLevelUp(sim: Simulation): LevelCheck {
   const p = sim.ecs.need(sim.player, Player);
-  const cost = levelCost(sim);
   if (p.state !== 'sit') return { ok: false, reason: 'rest at a bonfire to level up' };
+  if ((sim.ecs.need(sim.player, Attributes).unspent ?? 0) > 0) return { ok: true, cost: 0 };
+  const cost = levelCost(sim);
   if (p.souls < cost) return { ok: false, reason: `needs ${cost} souls` };
   return { ok: true, cost };
 }
 
 function raise(sim: Simulation, attribute: AttributeId, cost: number): void {
   const attrs = sim.ecs.need(sim.player, Attributes);
+  if ((attrs.unspent ?? 0) > 0) attrs.unspent = (attrs.unspent ?? 0) - 1;
   sim.ecs.need(sim.player, Player).souls -= cost;
   attrs[attribute]++;
   syncVitals(sim, sim.player);
@@ -60,8 +62,43 @@ function levelUp(sim: Simulation, action: Extract<PlayerAction, { type: 'levelUp
   if (check.ok) raise(sim, action.attribute, check.cost);
 }
 
+/** Attribute points a respec would give back: every one spent. */
+function spentPoints(attrs: Attributes): number {
+  return ATTRIBUTES.reduce((n, id) => n + attrs[id], 0);
+}
+
+/**
+ * Whether the player can respec now: resting, with points spent, and the souls for one level at their
+ * level (cheap enough to experiment, dear enough to mean it).
+ */
+export function canRespec(sim: Simulation): LevelCheck {
+  const p = sim.ecs.need(sim.player, Player);
+  if (p.state !== 'sit') return { ok: false, reason: 'rest at a bonfire to respec' };
+  if (spentPoints(sim.ecs.need(sim.player, Attributes)) === 0)
+    return { ok: false, reason: 'no points spent' };
+  const cost = levelCost(sim);
+  if (p.souls < cost) return { ok: false, reason: `needs ${cost} souls` };
+  return { ok: true, cost };
+}
+
+/** Gives back every spent attribute point, to raise again for free. The player's level stays. */
+function respec(sim: Simulation): void {
+  const check = canRespec(sim);
+  if (!check.ok) return;
+  const attrs = sim.ecs.need(sim.player, Attributes);
+  const points = spentPoints(attrs);
+  sim.ecs.need(sim.player, Player).souls -= check.cost;
+  for (const id of ATTRIBUTES) attrs[id] = 0;
+  attrs.unspent = (attrs.unspent ?? 0) + points;
+  syncVitals(sim, sim.player);
+  sim.events.emit({ type: 'respecced', points });
+}
+
 function processActions(sim: Simulation): void {
-  for (const action of sim.input.actions ?? []) if (action.type === 'levelUp') levelUp(sim, action);
+  for (const action of sim.input.actions ?? []) {
+    if (action.type === 'levelUp') levelUp(sim, action);
+    else if (action.type === 'respec') respec(sim);
+  }
 }
 
 // ------------------------------------------------------------------ dev commands

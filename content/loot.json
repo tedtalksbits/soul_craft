@@ -27,6 +27,32 @@
   "greater": { "tier": "noble", "chance": 0.05, "factor": 1.5 },
   "blight": { "tier": "rare", "chance": 0.04, "factor": 1.4 },
   "smartLoot": 0.85,
+  "smithy": {
+    "salvage": {
+      "yields": {
+        "common": [1, 0, 0],
+        "standard": [2, 0, 0],
+        "rare": [3, 1, 0],
+        "noble": [4, 2, 1],
+        "legendary": [6, 3, 0]
+      },
+      "materials": {
+        "weapon": ["iron_scrap", "bone_shard", "glowspore"],
+        "armor": ["stone", "bone_shard", "glowspore"],
+        "ring": ["bone_shard", "glowspore", "slime_gel"]
+      },
+      "mark": "warden_mark"
+    },
+    "temper": {
+      "souls": 40,
+      "items": [{ "item": "bone_shard", "count": 2 }],
+      "tiers": { "standard": 1, "rare": 1, "noble": 2, "legendary": 3 },
+      "growth": 0.5,
+      "cap": 4
+    },
+    "cleanse": { "souls": 200, "items": [{ "item": "glowspore", "count": 3 }] },
+    "infuse": 0.25
+  },
   "perks": {
     "damage": { "text": "+{v} damage", "stat": "damage", "value": 0.08, "slots": ["weapon"] },
     "critChance": {

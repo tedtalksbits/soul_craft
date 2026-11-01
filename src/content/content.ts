@@ -541,6 +541,18 @@ function checkGear(
     if (def.power?.text.includes('{v}'))
       problems.push(`items.json: ${id}.power.text: write the number out; {v} is only filled in for perks`);
   }
+  const { smithy } = loot;
+  const known = (where: string, item: string) => {
+    if (!(item in c.items)) problems.push(`loot.json: ${where}: unknown item "${item}"`);
+  };
+  for (const [kind, list] of Object.entries(smithy.salvage.materials))
+    for (const item of list) known(`smithy.salvage.materials.${kind}`, item);
+  known('smithy.salvage.mark', smithy.salvage.mark);
+  for (const c2 of smithy.temper.items) known('smithy.temper.items', c2.item);
+  for (const c2 of smithy.cleanse.items) known('smithy.cleanse.items', c2.item);
+  for (const [id, def] of Object.entries(c.items))
+    if (def.kind === 'armor')
+      for (const u of def.upgrades) for (const c2 of u.items) known(`(items.json) ${id}.upgrades`, c2.item);
   for (const [id, e] of Object.entries(c.enemies))
     if (e.gear && !(e.gear.table in loot.tables))
       problems.push(`enemies.json: ${id}.gear: unknown table "${e.gear.table}"`);

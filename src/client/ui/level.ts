@@ -6,7 +6,7 @@
 import { ATTRIBUTES, type AttributeId } from '../../content/schemas';
 import { Attributes, Health, Player, Stamina } from '../../sim/components';
 import type { PlayerAction } from '../../sim/input';
-import { canLevelUp, levelCost, playerLevel } from '../../sim/modules/progression';
+import { canLevelUp, canRespec, levelCost, playerLevel } from '../../sim/modules/progression';
 import { attributeGain, playerStats } from '../../sim/modules/items';
 import type { Simulation } from '../../sim/simulation';
 import { h } from './dom';
@@ -128,11 +128,35 @@ export class LevelScreen {
               title: check.ok ? '' : check.reason,
               onclick: () => this.host.act({ type: 'levelUp', attribute: id }),
             },
-            check.ok ? 'Raise' : check.reason,
+            check.ok ? (check.cost === 0 ? 'Raise (free)' : 'Raise') : check.reason,
           ),
         ),
       ),
+      this.respecRow(sim),
       h('p', { class: 'hint' }, 'Souls are lost when you die. Spend them while you rest.'),
+    );
+  }
+
+  /** Points a respec gave back, and the button to take every point back again. */
+  private respecRow(sim: Simulation): HTMLElement {
+    const unspent = sim.ecs.need(sim.player, Attributes).unspent ?? 0;
+    const check = canRespec(sim);
+    return h(
+      'div',
+      { class: 'respec' },
+      unspent > 0
+        ? h('span', { class: 'next' }, `${unspent} free ${unspent === 1 ? 'point' : 'points'} to spend`)
+        : '',
+      h(
+        'button',
+        {
+          class: 'quiet',
+          disabled: !check.ok,
+          title: check.ok ? '' : check.reason,
+          onclick: () => this.host.act({ type: 'respec' }),
+        },
+        check.ok ? `Respec: take back every point · ${check.cost} souls` : `Respec (${check.reason})`,
+      ),
     );
   }
 }

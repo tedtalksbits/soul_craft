@@ -71,7 +71,8 @@ Every item has `kind`, `name`, `description`, `icon` (a frame name in `assets/sp
   first: the last steps wait on the smithy). `type` (`sword`, `spear`, `hammer`, `daggers`, `bow` or `staff`) picks its moves from
   `weapons.json`, which multiply these numbers. Unarmed fights like a weak sword, on purpose.
 - `armor`: `armor { slot, value, weight }`: `helmet`, `chest` or `legs`; its Armor at item level 1, Common; and
-  `cloth`, `leather` or `plate` (how it will look on the character).
+  `cloth`, `leather` or `plate` (how it will look on the character). Plus `upgrades`, forge steps like a weapon's
+  that each add `armor`.
 - `ring`: nothing of its own; its power is its `innate` perk. Two ring slots.
 
 Weapons, armor and rings are gear, and gear is loot (docs/gear-and-loot.md). Each also takes `innate` (fixed perks,
@@ -105,6 +106,12 @@ swinging; a negative `lunge` steps back), and how it is drawn (`arc`,
 `pose`). A type can also set `drawDrain` (stamina a held charge burns per tick) and `chargePose`. `affinityBonus`,
 `minCharge` and `chargeMove` apply to every type. A perk with `weaponTypes` rolls only on
 weapons of those types.
+
+`loot.json → smithy` prices the smithy's work: `salvage` (per tier, how many of each slot's three
+`materials`, plus one `mark` item from a Legendary; never souls), `temper` (souls and items, times a factor per
+tier, rising by `growth` per temper to at most `cap` times), `cleanse` (souls and items) and `infuse` (the share
+of the old item's upgrade costs that moving them takes). The `smithWork` restoration effect brings the smith
+back, for tempering and cleansing.
 
 Armor cuts hits to `k / (k + Armor)` (`player.json → armor`), never past `cap` with buffs. Attributes gain less
 past `leveling.softCaps`: each `perLevel` value is `[below, between, past]` the two breakpoints, and gear's

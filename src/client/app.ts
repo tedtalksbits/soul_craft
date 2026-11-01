@@ -572,7 +572,21 @@ export class App {
         return this.ui.toast(e.count > 1 ? `Crafted ${name} ×${e.count}` : `Crafted ${name}`);
       }
       case 'craftFailed':
-        return this.ui.toast(`Cannot craft: ${e.reason}`);
+        return this.ui.toast(
+          `Cannot ${e.recipe === 'salvage' || e.recipe === 'temper' || e.recipe === 'cleanse' || e.recipe === 'infuse' || e.recipe === 'upgrade' ? e.recipe : 'craft'}: ${e.reason}`,
+        );
+      case 'salvaged':
+        return this.ui.toast(
+          `Salvaged ${this.content.item(e.item).name}: ${e.materials.map((m) => `+${m.count} ${this.content.item(m.item).name}`).join(', ')}`,
+        );
+      case 'infused':
+        return this.ui.toast(`${this.content.item(e.to).name} infused to +${e.level}`);
+      case 'tempered':
+        return this.ui.toast('Tempered. Choose which perk to keep.');
+      case 'cleansed':
+        return this.ui.banner(`${this.content.item(e.item).name.toUpperCase()} CLEANSED`, 'good');
+      case 'respecced':
+        return this.ui.toast(`${e.points} points to spend again`);
       case 'upgraded':
         return this.ui.banner(`${this.content.item(e.item).name.toUpperCase()} +${e.level}`, 'good');
       case 'inventoryFull':

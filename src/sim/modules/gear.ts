@@ -59,11 +59,12 @@ export function weaponNumbers(content: Content, stack: ItemStack): WeaponNumbers
   return { ...def.weapon, damage };
 }
 
-/** A helmet's, chest's or legs' own Armor (perks not included); 0 for anything else. */
+/** A helmet's, chest's or legs' own Armor after tier, item level and forge upgrades (perks not included); 0 for anything else. */
 export function armorValue(content: Content, stack: ItemStack): number {
   const def = content.items[stack.item];
   if (def?.kind !== 'armor') return 0;
-  return Math.max(1, Math.round(def.armor.value * statScale(content, gearOf(stack))));
+  const upgrades = def.upgrades.slice(0, stack.level).reduce((n, u) => n + u.armor, 0);
+  return Math.max(1, Math.round(def.armor.value * statScale(content, gearOf(stack)))) + upgrades;
 }
 
 function rounded(def: PerkDef, value: number): number {
@@ -299,6 +300,58 @@ function perkWeights(content: Content, pool: [string, PerkDef][], cls: string | 
   );
 }
 
+/**
+ * Every perk that can roll on an item of this base and tier, leaving out drawbacks, perks below their
+ * tier floor, perks for other weapon types, and any perk the base already carries or `taken` names (no
+ * doubled lines on one item).
+ */
+export function perkPool(
+  content: Content,
+  item: string,
+  tier: TierId,
+  taken: readonly string[],
+): [string, PerkDef][] {
+  const def = content.item(item);
+  const slot = gearSlotOf(def);
+  const innate = new Set([...(isGear(def) ? def.innate.map((r) => r.perk) : []), ...taken]);
+  return Object.entries(content.loot.perks).filter(
+    ([id, p]) =>
+      slot !== null &&
+      !innate.has(id) &&
+      p.slots.includes(slot) &&
+      (p.weaponTypes === undefined || (def.kind === 'weapon' && p.weaponTypes.includes(def.weapon.type))) &&
+      !p.drawback &&
+      (p.minTier === undefined || atLeast(tier, p.minTier)),
+  );
+}
+
+/**
+ * Takes one perk out of `pool` and rolls it: smart loot picks it, then its value lands within the spread
+ * (Greater on good tiers, and stronger on a Blighted item).
+ */
+export function rollOne(
+  content: Content,
+  rng: Rng,
+  pool: [string, PerkDef][],
+  tier: TierId,
+  ilvl: number,
+  cls: string | null,
+  blighted: boolean,
+): PerkRoll {
+  const { loot } = content;
+  const weights = perkWeights(content, pool, cls);
+  const index = rng.weighted(weights.map((w, j) => [j, w] as const));
+  const [id, def] = pool.splice(index, 1)[0]!;
+  const greater = atLeast(tier, loot.greater.tier) && rng.chance(loot.greater.chance);
+  const value = rollValue(content, rng, def, tier, ilvl) * (greater ? loot.greater.factor : 1);
+  const boosted = blighted && !def.fixed ? value * loot.blight.factor : value;
+  return {
+    perk: id,
+    value: def.fixed ? def.value : rounded(def, boosted),
+    ...(greater ? { greater: true } : {}),
+  };
+}
+
 function withRolls(
   content: Content,
   rng: Rng,
@@ -309,35 +362,12 @@ function withRolls(
   cls: string | null,
   blighted: boolean,
 ): ItemStack {
-  const def = content.item(item);
-  const slot = gearSlotOf(def);
+  const slot = gearSlotOf(content.item(item));
   const { loot } = content;
-  // Never a perk the base already carries: no doubled lines on one item.
-  const innate = new Set(isGear(def) ? def.innate.map((r) => r.perk) : []);
-  const pool = Object.entries(loot.perks).filter(
-    ([id, p]) =>
-      slot !== null &&
-      !innate.has(id) &&
-      p.slots.includes(slot) &&
-      (p.weaponTypes === undefined || (def.kind === 'weapon' && p.weaponTypes.includes(def.weapon.type))) &&
-      !p.drawback &&
-      (p.minTier === undefined || atLeast(tier, p.minTier)),
-  );
+  const pool = perkPool(content, item, tier, []);
   const perks: PerkRoll[] = [];
-  const canBeGreater = atLeast(tier, loot.greater.tier);
-  for (let i = 0; i < loot.tiers[tier].perks && pool.length > 0; i++) {
-    const weights = perkWeights(content, pool, cls);
-    const index = rng.weighted(weights.map((w, j) => [j, w] as const));
-    const [id, def] = pool.splice(index, 1)[0]!;
-    const greater = canBeGreater && rng.chance(loot.greater.chance);
-    const value = rollValue(content, rng, def, tier, ilvl) * (greater ? loot.greater.factor : 1);
-    const boosted = blighted && !def.fixed ? value * loot.blight.factor : value;
-    perks.push({
-      perk: id,
-      value: def.fixed ? def.value : rounded(def, boosted),
-      ...(greater ? { greater: true } : {}),
-    });
-  }
+  for (let i = 0; i < loot.tiers[tier].perks && pool.length > 0; i++)
+    perks.push(rollOne(content, rng, pool, tier, ilvl, cls, blighted));
   const gear: Gear = { tier, ilvl, seed, perks };
   if (blighted) {
     const drawbacks = Object.entries(loot.perks).filter(

@@ -1,5 +1,5 @@
 import type { Entity } from '../core/ecs';
-import type { AbilitySlot, AttributeId, StatId, StationId, TierId } from '../content/schemas';
+import type { AbilitySlot, AttributeId, ItemCount, StatId, StationId, TierId } from '../content/schemas';
 import type { EquipSlot, PickupKind } from './components';
 
 /**
@@ -90,6 +90,12 @@ export type SimEvent =
   | { type: 'crafted'; recipe: string; item: string; count: number }
   | { type: 'craftFailed'; recipe: string; reason: string }
   | { type: 'upgraded'; item: string; level: number }
+  /** Smithy work done: gear broken into materials, upgrades moved, a perk tempered, blight burned off, attributes reset. */
+  | { type: 'salvaged'; item: string; tier: TierId; materials: ItemCount[] }
+  | { type: 'infused'; from: string; to: string; level: number }
+  | { type: 'tempered'; item: string }
+  | { type: 'cleansed'; item: string }
+  | { type: 'respecced'; points: number }
   | { type: 'stationOpened'; station: StationId }
   /** An ability's effects landed. (x, y) is the caster; (tx, ty) where it was aimed. */
   | { type: 'abilityUsed'; ability: string; slot: AbilitySlot; x: number; y: number; tx: number; ty: number }

@@ -687,6 +687,64 @@ kbd {
   color: var(--dim);
   font-size: 0.75em;
 }
+.level-screen .respec {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.8em;
+  margin: 0.6em 0 0.3em;
+}
+
+/* Smithy work in the details panel, and the pack's salvage tools. */
+.inventory .smithy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 0.6em;
+  padding-top: 0.5em;
+  border-top: 1px solid rgba(214, 190, 140, 0.2);
+}
+.inventory .smithy .marks,
+.inventory .pack-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.inventory .pack-tools {
+  margin-top: 0.6em;
+}
+.inventory .work {
+  font-size: 0.8em;
+  text-align: left;
+  padding: 0.15em 0.5em;
+}
+.inventory .work.danger {
+  color: #e07060;
+}
+.inventory .work.gain {
+  color: #8fd47a;
+}
+.inventory .work.toggle.on {
+  color: var(--ember);
+}
+.inventory .offer {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0.3em;
+  border: 1px solid var(--tier);
+}
+.inventory .cell .mark {
+  position: absolute;
+  left: -7px;
+  bottom: -9px;
+  font-size: 0.7em;
+  text-shadow: 0 0 3px #000;
+}
+.inventory .cell .mark.junk {
+  color: #e07060;
+}
 .inventory .flavor {
   color: var(--dim);
   font-style: italic;

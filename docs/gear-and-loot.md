@@ -479,6 +479,25 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 4, the smithy, as built (2026-11-01).** Choices made while building it:
+
+- **Where the work happens.** The village forge (there from the start) salvages, upgrades and infuses. Tempering
+  and cleansing are the smith's craft, so they wait for the smithy to be rebuilt (a new `smithWork` restoration
+  effect), which gives that project a payoff beyond the last upgrade steps. Salvage also works at a bonfire, as
+  section 6 asks for junk.
+- **Salvage yields** follow section 7's table: weapons give iron scrap, bone shard and glowspore; armor stone, bone
+  shard and glowspore; rings bone shard, glowspore and slime gel, by tier (Common 1; Standard 2; Rare 3 + 1; Noble
+  4 + 2 + 1; Legendary 6 + 3 and a Warden Mark). The Warden Mark is a new material, ready for phase 5.
+- **Bulk salvage never touches Noble or Legendary pieces**, even marked junk: they go one at a time, and the
+  details panel asks twice. Locked pieces are never salvaged at all.
+- **Auto-salvage** covers Common and Standard and starts off; turning it on by default after the first area waits
+  for the onboarding work in phase 6.
+- **Tempering** follows the design: pick a perk, pay, then keep it or take one of two new ones; after the first
+  temper only that perk can be rerolled. Offers come from the item's own seed, advanced each time, so reloading a
+  save gives the same offers. Standard counts as tier factor 1, like Rare.
+- **Infusing** costs a quarter of the materials and souls the old piece's upgrades took, rounded up.
+- **Respec** gives every spent point back as free points (the level stays) for the souls of one level.
+
 **Phase 3, the Ember staff, as built (2026-11-01).** Choices made while building it:
 
 - **Strike to cast:** every staff hit stores an Ember (up to 4, shown as coals over the player's head). The
