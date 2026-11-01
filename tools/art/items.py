@@ -211,6 +211,78 @@ ICONS['iron_mail'] = [
     "................",
     "................",
 ]
+ICONS['ashen_hood'] = [
+    "................",
+    "................",
+    "......pppp......",
+    ".....pPPPpp.....",
+    "....pPPpppp@....",
+    "...pPPp000pp@...",
+    "...pPp00000p@...",
+    "...pP0000000p@..",
+    "...pp0000000p@..",
+    "...pp0000000p@..",
+    "..pppp00000pp@..",
+    "..pPppp000ppp@..",
+    "..pppppppppp@@..",
+    "...p@@@@@@@@@...",
+    "................",
+    "................",
+]
+ICONS['iron_helm'] = [
+    "................",
+    "................",
+    "......iiii......",
+    "....iiIIiiii....",
+    "...iIIiiiiii6...",
+    "...iIiiiiiiii6..",
+    "...iIiiiiiiii6..",
+    "...iiiiiiiiii6..",
+    "...i000000000i..",
+    "...iIii0iiiii6..",
+    "...iIii0iiiii6..",
+    "...iiii0iiii66..",
+    "....i66.0.66i...",
+    "................",
+    "................",
+    "................",
+]
+ICONS['wanderers_wraps'] = [
+    "................",
+    "................",
+    "....www..www....",
+    "....wWw..wWw....",
+    "....w^w..w^w....",
+    "....wWw..wWw....",
+    "....w^w..w^w....",
+    "....wWw..wWw....",
+    "....w^w..w^w....",
+    "....lll..lll....",
+    "....lLl..lLl....",
+    "...llll..llll...",
+    "..lllll..lllll..",
+    "..00000..00000..",
+    "................",
+    "................",
+]
+ICONS['iron_greaves'] = [
+    "................",
+    "................",
+    "....iii..iii....",
+    "....iIi..iIi....",
+    "...iIii..iIii...",
+    "...iii6..iii6...",
+    "....i6....i6....",
+    "....iIi..iIi....",
+    "....iii..iii....",
+    "....ii6..ii6....",
+    "....lll..lll....",
+    "...llll..llll...",
+    "..lllll..lllll..",
+    "..00000..00000..",
+    "................",
+    "................",
+]
 ICONS['bandage'] = [
     "................",
     "................",
@@ -431,7 +503,8 @@ ICONS['relic_sovereign'] = [   # the Sovereign Ember: a crimson flame with a cro
 ORDER = ['ashwood', 'fungal_cap', 'glowspore', 'iron_scrap', 'bone_shard', 'slime_gel',
          'chipped_sword', 'iron_sword', 'bone_cleaver', 'padded_jacket', 'iron_mail',
          'ring_vigor', 'ring_breath', 'bandage', 'potion_ember', 'potion_stone', 'potion_breath',
-         'stone', 'kindling', 'relic_oath', 'relic_sovereign']
+         'stone', 'kindling', 'relic_oath', 'relic_sovereign',
+         'ashen_hood', 'iron_helm', 'wanderers_wraps', 'iron_greaves']
 
 # ---------------------------------------------------------------- shading and outline
 def paint(rows):

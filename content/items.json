@@ -77,12 +77,13 @@
         ],
         "requires": "smithy"
       }
-    ]
+    ],
+    "drop": 0
   },
   "iron_sword": {
     "kind": "weapon",
     "name": "Iron Sword",
-    "description": "Hammered from scrap at a village forge. Heavier, truer.",
+    "description": "Plain, heavy and true. The Hollow carried these once.",
     "icon": "iron_sword",
     "stack": 1,
     "weapon": { "damage": 16, "staminaCost": 16, "reach": 17, "width": 18, "knockback": 3.4 },
@@ -147,13 +148,31 @@
       }
     ]
   },
+  "ashen_hood": {
+    "kind": "armor",
+    "name": "Ashen Hood",
+    "description": "Ash-gray wool, cut loose. It keeps the cold out and the mind clear.",
+    "icon": "ashen_hood",
+    "stack": 1,
+    "armor": { "slot": "helmet", "value": 2, "weight": "cloth" },
+    "innate": [{ "perk": "abilityDamage", "value": 0.05 }]
+  },
+  "iron_helm": {
+    "kind": "armor",
+    "name": "Iron Helm",
+    "description": "A dented pot of a helm. It rings when struck, and holds.",
+    "icon": "iron_helm",
+    "stack": 1,
+    "armor": { "slot": "helmet", "value": 4, "weight": "plate" }
+  },
   "padded_jacket": {
     "kind": "armor",
     "name": "Padded Jacket",
-    "description": "Layers of fungal fibre bound with gel. Takes the edge off a blow.",
+    "description": "Layers of fungal fiber bound with gel. Takes the edge off a blow.",
     "icon": "padded_jacket",
     "stack": 1,
-    "armor": { "defense": 0.1 }
+    "armor": { "slot": "chest", "value": 4, "weight": "cloth" },
+    "innate": [{ "perk": "maxHp", "value": 10 }]
   },
   "iron_mail": {
     "kind": "armor",
@@ -161,23 +180,40 @@
     "description": "Scrap rings, patiently riveted. Heavy, but it holds.",
     "icon": "iron_mail",
     "stack": 1,
-    "armor": { "defense": 0.22 }
+    "armor": { "slot": "chest", "value": 7, "weight": "plate" }
+  },
+  "wanderers_wraps": {
+    "kind": "armor",
+    "name": "Wanderer's Wraps",
+    "description": "Bound shins and soft boots, made for long roads and quick feet.",
+    "icon": "wanderers_wraps",
+    "stack": 1,
+    "armor": { "slot": "legs", "value": 2, "weight": "cloth" },
+    "innate": [{ "perk": "rollStamina", "value": 0.08 }]
+  },
+  "iron_greaves": {
+    "kind": "armor",
+    "name": "Iron Greaves",
+    "description": "Plates strapped over the knee. Every step is a decision.",
+    "icon": "iron_greaves",
+    "stack": 1,
+    "armor": { "slot": "legs", "value": 4, "weight": "plate" }
   },
   "ring_of_vigor": {
     "kind": "ring",
     "name": "Ring of Vigor",
-    "description": "A bone band set with a glowing spore. Raises maximum health.",
+    "description": "A bone band set with a glowing spore.",
     "icon": "ring_vigor",
     "stack": 1,
-    "ring": { "stat": "maxHp", "amount": 20 }
+    "innate": [{ "perk": "maxHp", "value": 15 }]
   },
   "ring_of_breath": {
     "kind": "ring",
     "name": "Ring of Breath",
-    "description": "Cool to the touch. Stamina returns faster.",
+    "description": "Cool to the touch. Breathing comes easier.",
     "icon": "ring_breath",
     "stack": 1,
-    "ring": { "stat": "staminaRegen", "amount": 0.3 }
+    "innate": [{ "perk": "staminaRegen", "value": 0.2 }]
   },
   "field_bandage": {
     "kind": "consumable",

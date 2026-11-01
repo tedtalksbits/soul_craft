@@ -199,9 +199,11 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    or changing gear while an enemy is after you; wild enemies come back somewhere new at each rest and never
    within `world.restClearance` tiles of the bonfire; saves before version 14 are refused with a "start a new
    game" message.
-1. **Gear foundation:** weapon, two rings, helmet, chest and legs; item instances with tier, item level, perks and
-   a roll seed; the armor curve; Power; the new equipment screen with comparison; enemy drops; forge gear recipes
-   removed.
+1. **Gear foundation (built):** weapon, two rings, helmet, chest and legs; every piece of gear carries its tier,
+   item level, rolled perks and roll seed; `loot.json` holds tiers, a first pool of 17 stat perks and the drop
+   tables; Armor on the k = 60 curve with a 75% cap; soft-capped attributes; Power; the paper-doll equipment
+   screen with try-on comparisons, tier borders and a "worse" badge; enemy drops by biome item level, with pity;
+   forge gear recipes removed; a new game starts in Common sword, hood, jacket and wraps.
 2. **Perks:** pools per slot and weapon type, Greater perks, smart loot, Legendary powers, Blighted items.
 3. **Weapon types:** chains, charged attacks and dash-strikes; sword, spear and hammer, then daggers, then bow and
    Ember staff.

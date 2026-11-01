@@ -10,7 +10,7 @@ import { Attributes, Player } from '../components';
 import type { PlayerAction } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
-import { syncVitals } from './items';
+import { playerStats, syncVitals } from './items';
 import { unlockSlot } from './unlocks';
 
 /** A freshly spawned player: level 1, nothing spent. */
@@ -30,10 +30,9 @@ export function levelCost(sim: Simulation): number {
   return Math.round(base * growth ** (playerLevel(attrs) - 1));
 }
 
-/** How much stronger Attunement makes the player's abilities (1 = no bonus). */
+/** How much stronger Attunement and gear make the player's abilities (1 = no bonus). */
 export function abilityPower(sim: Simulation): number {
-  const attunement = sim.ecs.get(sim.player, Attributes)?.attunement ?? 0;
-  return 1 + attunement * sim.content.player.leveling.perLevel.attunement.abilityDamage;
+  return playerStats(sim, sim.player).abilityDamage;
 }
 
 export type LevelCheck = { ok: true; cost: number } | { ok: false; reason: string };

@@ -479,6 +479,24 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 1 as built (2026-11-01).** Everything in the phase 1 row, plus soft-capped attributes. Choices made while
+building it:
+
+- **Perks start as stat perks only:** 17 in `loot.json` (damage, crits, stamina, souls, the four attributes, Armor,
+  HP, roll cost, move speed, healing and ability damage), spread so every slot can roll three. Behavior perks,
+  class perks, Greater and Blighted rolls are phase 2. Until then a Legendary rolls its three random perks and
+  has no fixed power yet.
+- **Bases:** two per armor slot, a light one with an innate perk (Ashen Hood: +5% ability damage; Padded Jacket:
+  +10 HP; Wanderer's Wraps: rolls cost 8% less) and an iron one with more Armor. The Iron Sword and Bone Cleaver
+  drop; the Chipped Sword never does. Rings are now Ring of Vigor (+15 HP) and Ring of Breath (+20% stamina regen),
+  lowered from +20 and +30% since they also roll perks.
+- **Drops** pick the slot first (each slot equally likely), then the base, then the perks, all from the item's
+  seed. The tier and the seed come from the sim's RNG, and pity counts there.
+- **Drop feel, for now:** gear on the ground glows in its tier color and pulses harder the better it is; Rare,
+  Noble and Legendary drops each chime differently. Ground labels, beams, minimap pips and elites visibly holding
+  their drop wait for phase 7 (art); clutter tools (salvage, junk, locking) wait for phase 4.
+- **The equipment screen** puts the details under the pack, so the panel fits a small window.
+
 ---
 
 ## 12. Decisions (2026-10-31)

@@ -32,6 +32,28 @@ describe('content files', () => {
   });
 });
 
+describe('gear content', () => {
+  it('rejects a perk pool too small for the best tier, and unknown perks and tables', () => {
+    const files = { ...readContentFiles() } as Record<string, unknown>;
+    const loot = files['loot.json'] as { perks: Record<string, unknown> };
+    files['loot.json'] = { ...loot, perks: { damage: loot.perks['damage'] } };
+    const enemies = files['enemies.json'] as Record<string, object>;
+    files['enemies.json'] = {
+      ...enemies,
+      slime: { ...enemies['slime'], gear: { chance: 0.1, table: 'nope' } },
+    };
+    try {
+      buildContent(files);
+      expect.unreachable();
+    } catch (err) {
+      const text = (err as ContentError).problems.join('\n');
+      expect(text).toMatch(/loot\.json: perks: only 1 can roll on a weapon/);
+      expect(text).toMatch(/items\.json: ashen_hood\.innate: unknown perk "abilityDamage"/);
+      expect(text).toMatch(/enemies\.json: slime\.gear: unknown table "nope"/);
+    }
+  });
+});
+
 describe('sprite sheets', () => {
   const sheets = readdirSync(SPRITES).filter((f) => f.endsWith('.json'));
 

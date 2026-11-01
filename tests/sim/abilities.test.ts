@@ -16,7 +16,7 @@ import { applyDamage } from '../../src/sim/modules/combat';
 import { restAt } from '../../src/sim/modules/interaction';
 import { playerStats } from '../../src/sim/modules/items';
 import { Simulation } from '../../src/sim/simulation';
-import { content, face, newSim, ofType, press, run, spawnNear } from '../helpers';
+import { content, face, newSim, ofType, press, run, spawnNear, unarmored } from '../helpers';
 
 /** A fresh game as the given class, invulnerable so enemies can't interrupt casts. */
 function asClass(cls: string): Simulation {
@@ -235,7 +235,7 @@ describe('supers', () => {
   });
 
   it('Earthshatter halves the damage the player takes while it lasts', () => {
-    const sim = asClass('vanguard');
+    const sim = unarmored(asClass('vanguard'));
     sim.state.cheats.god = false;
     abilities(sim).energy = 100;
     cast(sim, 'super', castTicks('earthshatter'));

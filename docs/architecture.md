@@ -38,8 +38,10 @@ its own dev commands. Every tick runs the phases in order:
 | `cleanup` | death timers, i-frame and buff timers; then the ECS flushes deletes |
 
 Cross-module rules live in one place: all damage goes through `combat.applyDamage`, which handles i-frames,
-blocking, knockback, hurt states, deaths and loot. All player stats (weapon damage and reach, armor, rings,
-buffs) come from `items.playerStats`; nothing reads `player.json` attack numbers directly any more.
+blocking, knockback, hurt states, deaths and loot. All player stats (weapon damage and reach, Armor, perks,
+attributes, buffs) come from `items.playerStats`, a thin wrapper over the pure `computeStats`, so Power and the
+equipment screen's comparisons can try gear on without touching the player; nothing reads `player.json` attack
+numbers directly any more.
 
 ### ECS
 

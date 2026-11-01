@@ -13,6 +13,8 @@ const fraction = z.number().min(0).max(1);
 const range = z.tuple([z.number(), z.number()]).refine(([a, b]) => a <= b, 'range min must be <= max');
 const size = z.object({ w: pos, h: pos });
 const weighted = <T extends z.ZodType>(item: T) => z.array(z.tuple([item, pos])).min(1);
+/** Per-point gains below, between and past the attribute soft caps. */
+const gains = z.tuple([nonneg, nonneg, nonneg]);
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'expected a #rrggbb color');
 
 // ------------------------------------------------------------------ classes & abilities
@@ -244,6 +246,23 @@ const itemBase = {
 export const StatSchema = z.enum(['damage', 'defense', 'staminaRegen', 'maxHp']);
 export type StatId = z.infer<typeof StatSchema>;
 
+export const ArmorSlotSchema = z.enum(['helmet', 'chest', 'legs']);
+export type ArmorSlot = z.infer<typeof ArmorSlotSchema>;
+
+/** A perk on a piece of gear: which one (`loot.json → perks`) and how strong. */
+export const PerkRollSchema = z.object({ perk: z.string(), value: pos });
+
+/** What every piece of gear has on top of its kind's numbers. */
+const gearBase = {
+  /**
+   * Fixed perks every copy carries, at item level 1, Common strength (tier and item level scale them
+   * like base stats). A ring's whole power is here.
+   */
+  innate: z.array(PerkRollSchema).default([]),
+  /** How often this base is picked when gear drops, relative to the others of its slot. 0 = never drops. */
+  drop: nonneg.default(1),
+};
+
 export const ItemSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('material'), ...itemBase }),
   /** A story item (a boss's Kindling): kept in the pack, spent only by restoration projects. */
@@ -263,6 +282,8 @@ export const ItemSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('weapon'),
     ...itemBase,
+    ...gearBase,
+    /** Base numbers at item level 1, Common; tier and item level scale `damage`. */
     weapon: z.object({ damage: pos, staminaCost: nonneg, reach: pos, width: pos, knockback: nonneg }),
     /** Forge upgrades, in order: each adds `damage` and costs souls plus items. */
     upgrades: z
@@ -280,13 +301,15 @@ export const ItemSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('armor'),
     ...itemBase,
-    armor: z.object({ defense: z.number().min(0).max(0.9) }),
+    ...gearBase,
+    /**
+     * Which body slot it goes in, its Armor at item level 1, Common (tier and item level scale it),
+     * and how heavy it looks on the character.
+     */
+    armor: z.object({ slot: ArmorSlotSchema, value: pos, weight: z.enum(['cloth', 'leather', 'plate']) }),
   }),
-  z.object({
-    kind: z.literal('ring'),
-    ...itemBase,
-    ring: z.object({ stat: StatSchema, amount: pos }),
-  }),
+  /** A ring's power is its innate perk. */
+  z.object({ kind: z.literal('ring'), ...itemBase, ...gearBase }),
   z.object({
     kind: z.literal('consumable'),
     ...itemBase,
@@ -435,14 +458,14 @@ export const PlayerSchema = z.object({
   exploration: z.object({ revealRadius: pos }),
   /** How many different stacks the player can carry. */
   inventorySlots: z.number().int().min(1),
-  /** A new game starts as this class, with this weapon equipped and these items carried. */
   /**
-   * A new game starts as this class, with this weapon and these items. Only the AoE ability
+   * A new game starts as this class, wearing this gear and carrying these items. Only the AoE ability
    * is known at first unless `unlocked` says otherwise; relics unlock the rest.
    */
   start: z.object({
     class: z.string(),
-    weapon: z.string(),
+    /** Gear worn from the start, all Common at item level 1. */
+    gear: z.array(z.string()).min(1),
     items: z.array(ItemCountSchema).default([]),
     unlocked: z.object({ class: z.boolean(), super: z.boolean() }).default({ class: false, super: false }),
   }),
@@ -452,23 +475,112 @@ export const PlayerSchema = z.object({
    */
   leveling: z.object({
     cost: z.object({ base: pos, growth: z.number().min(1) }),
+    /**
+     * Attribute points past each breakpoint give less (points from gear count too): each `perLevel`
+     * entry is the gain per point below the first breakpoint, between the two, and past the second.
+     */
+    softCaps: z.tuple([z.number().int().min(1), z.number().int().min(1)]),
     perLevel: z.object({
       /** Max health per point. */
-      vigor: z.object({ maxHp: nonneg }),
+      vigor: z.object({ maxHp: gains }),
       /** Max stamina per point. */
-      endurance: z.object({ maxStamina: nonneg }),
-      /** Sword damage per point, as a fraction (0.05 = +5%). */
-      might: z.object({ damage: nonneg }),
+      endurance: z.object({ maxStamina: gains }),
+      /** Weapon damage per point, as a fraction (0.05 = +5%). */
+      might: z.object({ damage: gains }),
       /** Ability damage and super charge rate per point, as fractions. */
-      attunement: z.object({ abilityDamage: nonneg, energy: nonneg }),
+      attunement: z.object({ abilityDamage: gains, energy: gains }),
     }),
   }),
+  /**
+   * Armor's curve: a hit is cut to `k / (k + Armor)`, so every point is worth the same extra effective
+   * health. Damage reduction from everything together never passes `cap`.
+   */
+  armor: z.object({ k: pos, cap: fraction }),
   /** Super energy, 0-100. Full charges the super; sword and ability hits fill it, the super's own hits don't. */
   energy: z.object({ perDamage: nonneg, perKill: nonneg, perSecond: nonneg }),
 });
 export type PlayerDef = z.infer<typeof PlayerSchema>;
 
 // ------------------------------------------------------------------ loot
+
+/** Gear tiers, worst to best. Order matters: pity compares tiers by it. */
+export const TierSchema = z.enum(['common', 'standard', 'rare', 'noble', 'legendary']);
+export type TierId = z.infer<typeof TierSchema>;
+export const TIERS: readonly TierId[] = TierSchema.options;
+
+/** Every gear slot a perk can roll on. */
+export const GearSlotSchema = z.enum(['weapon', 'helmet', 'chest', 'legs', 'ring']);
+export type GearSlot = z.infer<typeof GearSlotSchema>;
+
+/** What a perk changes. Fractions (0.08 = +8%) except the point stats (HP, stamina, Armor, attributes). */
+export const PerkStatSchema = z.enum([
+  'damage',
+  'critChance',
+  'critDamage',
+  'attackStamina',
+  'souls',
+  'maxHp',
+  'maxStamina',
+  'armor',
+  'staminaRegen',
+  'rollStamina',
+  'moveSpeed',
+  'healing',
+  'abilityDamage',
+  'vigor',
+  'endurance',
+  'might',
+  'attunement',
+]);
+export type PerkStat = z.infer<typeof PerkStatSchema>;
+
+export const PerkSchema = z.object({
+  /** Shown on the item; `{v}` becomes the value (a percentage for fractions). */
+  text: z.string(),
+  stat: PerkStatSchema,
+  /** Strength at item level 1 on a Common-strength roll; tier and item level scale it. */
+  value: pos,
+  /** Rounded to a whole number (and at least 1): points, never fractions. */
+  integer: z.boolean().default(false),
+  /** Slots it can roll on. */
+  slots: z.array(GearSlotSchema).min(1),
+});
+export type PerkDef = z.infer<typeof PerkSchema>;
+
+const TierDefSchema = z.object({
+  name: z.string(),
+  color,
+  /** Perks rolled when it drops. */
+  perks: z.number().int().nonnegative(),
+  /** Multiplies base stats (damage, Armor, innate perks). */
+  stats: pos,
+  /** Multiplies rolled perk values. */
+  perkStrength: pos,
+});
+
+/** `loot.json`: tiers, perks and the drop tables enemies name. */
+export const LootSchema = z.object({
+  tiers: z.object({
+    common: TierDefSchema,
+    standard: TierDefSchema,
+    rare: TierDefSchema,
+    noble: TierDefSchema,
+    legendary: TierDefSchema,
+  }),
+  /** Base stats and perks grow by this fraction per item level above 1. */
+  itemLevelGrowth: nonneg,
+  /** Rolled perk values land within this fraction either side of their target. */
+  perkSpread: fraction,
+  /**
+   * After `after` drops in a row below `tier`, the next drop is `tier` or better. The count is kept
+   * in the save.
+   */
+  pity: z.object({ after: z.number().int().min(1), tier: TierSchema }),
+  /** Named tier odds that enemies' `gear.table` refers to. */
+  tables: z.record(z.string(), weighted(TierSchema)),
+  perks: z.record(z.string(), PerkSchema),
+});
+export type LootDef = z.infer<typeof LootSchema>;
 
 /** A pickup that may spawn when something dies or a tile is cut. */
 export const DropSchema = z
@@ -579,6 +691,8 @@ export const EnemySchema = z.object({
   souls: z.number().int().nonnegative(),
   /** Pickups scattered on death. */
   drops: z.array(DropSchema).default([]),
+  /** The chance it drops a piece of gear, and which `loot.json` table rolls its tier. */
+  gear: z.object({ chance: fraction, table: z.string() }).optional(),
   recoilTicks: ticks,
   /** Multiplier on knockback received. 0 = immovable. */
   knockbackTaken: nonneg,
@@ -627,6 +741,8 @@ export const TilesSchema = z.array(TileSchema).min(1);
 
 export const BiomeSchema = z.object({
   name: z.string(),
+  /** The item level of gear that drops here. */
+  itemLevel: z.number().int().min(1),
   ground: weighted(z.string()),
   scatter: z
     .array(z.object({ tile: z.string(), scale: pos, threshold: fraction, chance: fraction }))

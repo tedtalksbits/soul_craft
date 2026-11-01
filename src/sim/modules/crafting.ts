@@ -31,8 +31,10 @@ export function stationNearby(sim: Simulation, station: StationId): boolean {
 export function canCraft(sim: Simulation, recipeId: string, opts: { ignoreStation?: boolean } = {}): Check {
   const recipe = sim.content.recipes[recipeId];
   if (!recipe) return fail('no such recipe');
-  if (recipe.station && !opts.ignoreStation && !stationNearby(sim, recipe.station))
-    return fail(`needs a ${STATIONS[recipe.station].toLowerCase()}`);
+  if (recipe.station && !opts.ignoreStation && !stationNearby(sim, recipe.station)) {
+    const station = STATIONS[recipe.station].toLowerCase();
+    return fail(`needs ${/^[aeiou]/.test(station) ? 'an' : 'a'} ${station}`);
+  }
   const e = sim.player;
   if (sim.ecs.need(e, Player).souls < recipe.souls) return fail('not enough souls');
   const inv = sim.ecs.need(e, Inventory);

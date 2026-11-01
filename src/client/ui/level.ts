@@ -7,7 +7,7 @@ import { ATTRIBUTES, type AttributeId } from '../../content/schemas';
 import { Attributes, Health, Player, Stamina } from '../../sim/components';
 import type { PlayerAction } from '../../sim/input';
 import { canLevelUp, levelCost, playerLevel } from '../../sim/modules/progression';
-import { playerStats } from '../../sim/modules/items';
+import { attributeGain, playerStats } from '../../sim/modules/items';
 import type { Simulation } from '../../sim/simulation';
 import { h } from './dom';
 
@@ -76,22 +76,34 @@ export class LevelScreen {
 
   private body(sim: Simulation): HTMLElement {
     const attrs = sim.ecs.need(sim.player, Attributes);
-    const per = sim.content.player.leveling.perLevel;
+    const { perLevel: per, softCaps } = sim.content.player.leveling;
     const stats = playerStats(sim, sim.player);
     const health = sim.ecs.need(sim.player, Health);
     const stamina = sim.ecs.need(sim.player, Stamina);
     const check = canLevelUp(sim);
     const pct = (f: number) => `${Math.round(f * 100)}%`;
+    // What one more point gives, counting gear's points toward the soft caps.
+    const next = (id: AttributeId, gains: readonly [number, number, number]) => {
+      const points = stats.attributes[id];
+      return attributeGain(sim.content, gains, points + 1) - attributeGain(sim.content, gains, points);
+    };
+    const softened = (id: AttributeId) => (stats.attributes[id] >= softCaps[0] ? ', softened' : '');
     const rows: Record<AttributeId, { now: string; next: string }> = {
-      vigor: { now: `${health.max} max health`, next: `+${per.vigor.maxHp} max health` },
-      endurance: { now: `${stamina.max} max stamina`, next: `+${per.endurance.maxStamina} max stamina` },
+      vigor: {
+        now: `${health.max} max health`,
+        next: `+${Math.round(next('vigor', per.vigor.maxHp))} max health${softened('vigor')}`,
+      },
+      endurance: {
+        now: `${stamina.max} max stamina`,
+        next: `+${Math.round(next('endurance', per.endurance.maxStamina))} max stamina${softened('endurance')}`,
+      },
       might: {
-        now: `${Math.round(stats.damage)} sword damage`,
-        next: `+${pct(per.might.damage)} sword damage`,
+        now: `${Math.round(stats.damage)} weapon damage`,
+        next: `+${pct(next('might', per.might.damage))} weapon damage${softened('might')}`,
       },
       attunement: {
-        now: `+${pct(attrs.attunement * per.attunement.abilityDamage)} ability damage`,
-        next: `+${pct(per.attunement.abilityDamage)} ability damage, +${pct(per.attunement.energy)} super charge`,
+        now: `+${pct(stats.abilityDamage - 1)} ability damage`,
+        next: `+${pct(next('attunement', per.attunement.abilityDamage))} ability damage, +${pct(next('attunement', per.attunement.energy))} super charge${softened('attunement')}`,
       },
     };
     return h(

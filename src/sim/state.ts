@@ -11,6 +11,8 @@ export interface SimState {
    * reloads between rests puts its enemies back where they were.
    */
   spawnEpoch: number;
+  /** Gear drops in a row below the pity tier (`loot.json → pity`); the next one past the limit is better. */
+  lootPity: number;
   litBonfires: Record<string, true>;
   /**
    * Every lit bonfire's name and position, kept even when its chunk is unloaded, so the player can
@@ -85,6 +87,7 @@ export function initialState(seed: number): SimState {
     seed,
     killed: {},
     spawnEpoch: 0,
+    lootPity: 0,
     litBonfires: {},
     bonfires: {},
     checkpoint: null,

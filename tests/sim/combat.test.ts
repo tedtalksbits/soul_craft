@@ -4,7 +4,7 @@ import { Ai, Body, Health, Player, Stamina } from '../../src/sim/components';
 import { TILE } from '../../src/sim/constants';
 import { applyDamage } from '../../src/sim/modules/combat';
 import { spawnProjectile } from '../../src/sim/modules/projectiles';
-import { content, face, newSim, ofType, press, run, spawnNear } from '../helpers';
+import { content, face, newSim, ofType, press, run, spawnNear, unarmored } from '../helpers';
 
 describe('player melee', () => {
   it('kills a slime in a few swings and banks its souls', () => {
@@ -89,7 +89,7 @@ describe('player defense', () => {
   });
 
   it('a ready shield turns arrows from the front but not from behind', () => {
-    const sim = newSim();
+    const sim = unarmored(newSim());
     const pb = sim.ecs.need(sim.player, Body);
     const health = sim.ecs.need(sim.player, Health);
     face(sim, 'left');
@@ -155,6 +155,7 @@ describe('death and respawn', () => {
     expect(ofType(events, 'playerRespawned')).toHaveLength(1);
     const pb = sim.ecs.need(sim.player, Body);
     expect(Math.abs(pb.x - checkpoint.x)).toBeLessThan(2);
-    expect(sim.ecs.need(sim.player, Health).hp).toBe(content.player.maxHp);
+    const health = sim.ecs.need(sim.player, Health);
+    expect(health.hp).toBe(health.max);
   });
 });

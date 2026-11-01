@@ -45,7 +45,9 @@ describe('inventory', () => {
     const pb = sim.ecs.need(sim.player, Body);
     dropPickup(sim, 'item', 3, pb.x, pb.y, 'iron_scrap');
     const events = run(sim, 40);
-    expect(ofType(events, 'itemGained')).toEqual([{ type: 'itemGained', item: 'iron_scrap', count: 3 }]);
+    expect(ofType(events, 'itemGained')).toEqual([
+      { type: 'itemGained', item: 'iron_scrap', count: 3, tier: null },
+    ]);
     expect(countItem(inv(sim), 'iron_scrap')).toBe(3);
 
     addItem(sim, sim.player, 'ashwood', 99 * content.player.inventorySlots);
@@ -67,24 +69,30 @@ describe('equipment', () => {
     expect(playerStats(sim, sim.player).damage).toBe(16);
   });
 
-  it('armor absorbs a fraction of incoming damage', () => {
+  it('armor cuts every hit along its curve', () => {
     const sim = newSim();
     addItem(sim, sim.player, 'iron_mail', 1);
     act(sim, { type: 'equip', index: indexOf(sim, 'iron_mail') });
+    const { armor } = playerStats(sim, sim.player);
+    expect(armor).toBe(2 + 7 + 2); // hood, mail, wraps
+    const health = sim.ecs.need(sim.player, Health);
+    const before = health.hp;
     const pb = sim.ecs.need(sim.player, Body);
     applyDamage(sim, sim.player, { amount: 50, crit: false, fromX: pb.x, fromY: pb.y - 1, knockback: 0 });
-    expect(sim.ecs.need(sim.player, Health).hp).toBe(100 - Math.round(50 * 0.78));
+    const k = content.player.armor.k;
+    expect(health.hp).toBe(before - Math.round((50 * k) / (k + armor)));
   });
 
   it('a ring of vigor raises max health, and removing it brings health back within the cap', () => {
     const sim = newSim();
+    const health = sim.ecs.need(sim.player, Health);
+    const max = health.max;
     addItem(sim, sim.player, 'ring_of_vigor', 1);
     act(sim, { type: 'equip', index: indexOf(sim, 'ring_of_vigor') });
-    const health = sim.ecs.need(sim.player, Health);
-    expect(health.max).toBe(120);
-    health.hp = 120;
+    expect(health.max).toBe(max + 15);
+    health.hp = health.max;
     act(sim, { type: 'unequip', slot: 'ring0' });
-    expect(health).toMatchObject({ max: 100, hp: 100 });
+    expect(health).toMatchObject({ max, hp: max });
   });
 });
 
@@ -127,22 +135,21 @@ describe('crafting', () => {
     expect(sim.ecs.need(sim.player, Player).souls).toBe(5);
   });
 
-  it('needs the forge for forge recipes', () => {
+  it('needs the alchemy table for alchemy recipes', () => {
     const sim = newSim();
-    addItem(sim, sim.player, 'iron_scrap', 6);
-    addItem(sim, sim.player, 'ashwood', 2);
-    sim.ecs.need(sim.player, Player).souls = 500;
+    addItem(sim, sim.player, 'glowspore', 2);
+    addItem(sim, sim.player, 'slime_gel', 1);
+    sim.ecs.need(sim.player, Player).souls = 100;
     sim.ecs.need(sim.player, Body).x += 400;
     run(sim, 2);
-    const away = act(sim, { type: 'craft', recipe: 'iron_sword' });
-    expect(ofType(away, 'craftFailed')[0]?.reason).toBe('needs a forge');
+    const away = act(sim, { type: 'craft', recipe: 'ember_tonic' });
+    expect(ofType(away, 'craftFailed')[0]?.reason).toBe('needs an alchemy table');
 
-    goTo(sim, 'forge');
-    expect(stationNearby(sim, 'forge')).toBe(true);
-    expect(canCraft(sim, 'iron_sword')).toEqual({ ok: true });
-    act(sim, { type: 'craft', recipe: 'iron_sword' });
-    expect(countItem(inv(sim), 'iron_sword')).toBe(1);
-    expect(sim.ecs.need(sim.player, Player).souls).toBe(350);
+    goTo(sim, 'alchemy');
+    expect(stationNearby(sim, 'alchemy')).toBe(true);
+    act(sim, { type: 'craft', recipe: 'ember_tonic' });
+    expect(countItem(inv(sim), 'ember_tonic')).toBe(1);
+    expect(sim.ecs.need(sim.player, Player).souls).toBe(60);
   });
 
   it('reports what is missing without spending anything', () => {

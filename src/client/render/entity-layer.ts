@@ -18,6 +18,7 @@ import {
   Sprite,
   Veiled,
 } from '../../sim/components';
+import { TIERS } from '../../content/schemas';
 import type { SimEvent } from '../../sim/events';
 import { TELEGRAPH_STATES } from '../../sim/modules/brains';
 import { DEATH_TICKS } from '../../sim/modules/combat';
@@ -100,7 +101,9 @@ export class EntityLayer {
       }
 
       view.barWidth = Math.max(16, body.w + 8);
-      const z = ecs.get(e, Pickup)?.z ?? 0;
+      const pickup = ecs.get(e, Pickup);
+      const z = pickup?.z ?? 0;
+      const lootTier = pickup?.gear?.tier;
       const feetY = Math.round(body.y + body.h / 2);
       view.root.position.set(Math.round(body.x), feetY - Math.round(z));
       view.root.zIndex = feetY;
@@ -130,6 +133,11 @@ export class EntityLayer {
       } else if (telegraph) {
         view.glow.tint = 0xff5020;
         view.glow.alpha = 0.55;
+      } else if (lootTier && lootTier !== 'common') {
+        // Gear on the ground glows in its tier's color; the better the tier, the stronger the pulse.
+        const rank = TIERS.indexOf(lootTier);
+        view.glow.tint = Number.parseInt(sim.content.loot.tiers[lootTier].color.slice(1), 16);
+        view.glow.alpha = 0.25 + 0.1 * rank + 0.15 * Math.sin(this.clockMs / (260 - 30 * rank));
       } else view.glow.alpha = 0;
 
       // A boss's health is the big bar at the bottom of the screen, not one over its head.

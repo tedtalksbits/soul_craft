@@ -597,7 +597,11 @@ export class App {
   /** One toast for everything picked up this tick, so a burst of drops reads as one line. */
   private toastGains(events: readonly SimEvent[]): void {
     const parts = events.flatMap((e) =>
-      e.type === 'itemGained' ? [`+${e.count} ${this.content.item(e.item).name}`] : [],
+      e.type !== 'itemGained'
+        ? []
+        : e.tier
+          ? [`${this.content.loot.tiers[e.tier].name} ${this.content.item(e.item).name}`]
+          : [`+${e.count} ${this.content.item(e.item).name}`],
     );
     if (parts.length > 0) this.ui.toast(parts.join(', '), 1800);
   }

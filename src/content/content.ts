@@ -9,6 +9,7 @@
 import type { z } from 'zod';
 import {
   ABILITY_SLOTS,
+  TIERS,
   AbilitiesSchema,
   BiomesSchema,
   ClassesSchema,
@@ -18,6 +19,7 @@ import {
   NpcsSchema,
   ObjectivesSchema,
   ItemsSchema,
+  LootSchema,
   PlayerSchema,
   PrefabSchema,
   RecipesSchema,
@@ -32,6 +34,7 @@ import {
   type ItemCount,
   type ItemDef,
   type ItemKind,
+  type LootDef,
   type ModifierDef,
   type ModifiersDef,
   type NpcDef,
@@ -68,6 +71,7 @@ const SINGLE_FILES = {
   'npcs.json': NpcsSchema,
   'modifiers.json': ModifiersSchema,
   'objectives.json': ObjectivesSchema,
+  'loot.json': LootSchema,
 } as const;
 
 const DIRECTORIES = {
@@ -96,6 +100,7 @@ export class Content {
     readonly modifiers: ModifiersDef,
     /** In the order they are offered. */
     readonly objectives: Readonly<Record<string, ObjectiveDef>>,
+    readonly loot: LootDef,
   ) {
     this.tileIndex = new Map(tiles.map((t, i) => [t.id, i]));
   }
@@ -198,6 +203,7 @@ export function buildContent(files: ContentFiles): Content {
   const npcs = parse('npcs.json', SINGLE_FILES['npcs.json']);
   const modifiers = parse('modifiers.json', SINGLE_FILES['modifiers.json']);
   const objectives = parse('objectives.json', SINGLE_FILES['objectives.json']);
+  const loot = parse('loot.json', SINGLE_FILES['loot.json']);
   const prefabs = parseDir('prefabs', DIRECTORIES.prefabs);
   const scenarios = parseDir('scenarios', DIRECTORIES.scenarios);
 
@@ -214,12 +220,14 @@ export function buildContent(files: ContentFiles): Content {
     !restoration ||
     !npcs ||
     !modifiers ||
-    !objectives
+    !objectives ||
+    !loot
   )
     throw new ContentError(problems);
 
   checkReferences({ enemies, tiles, biomes, world, prefabs }, problems);
   checkItems({ player, enemies, tiles, items, recipes }, problems);
+  checkGear({ player, enemies, biomes, items, loot }, problems);
   checkClasses({ player, abilities, classes }, problems);
   checkModifiers({ enemies, abilities, classes, modifiers }, problems);
   checkRestoration({ items, prefabs, restoration }, problems);
@@ -243,6 +251,7 @@ export function buildContent(files: ContentFiles): Content {
     npcs,
     modifiers,
     objectives,
+    loot,
   );
 }
 
@@ -449,7 +458,6 @@ function checkItems(
     for (const d of list) if (d.item !== undefined) item(where, d.item);
   };
 
-  item('player.json: start.weapon', c.player.start.weapon, 'weapon');
   counts('player.json: start.items', c.player.start.items);
   for (const [id, e] of Object.entries(c.enemies)) drops(`enemies.json: ${id}.drops`, e.drops);
   for (const t of c.tiles) if (t.cut) drops(`tiles.json: ${t.id}.cut.drops`, t.cut.drops);
@@ -467,5 +475,71 @@ function checkItems(
   for (const [id, r] of Object.entries(c.recipes)) {
     item(`recipes.json: ${id}.output`, r.output.item);
     counts(`recipes.json: ${id}.inputs`, r.inputs);
+  }
+}
+
+/**
+ * Gear holds together: perks name real stats and slots, every slot can roll a full set of perks for
+ * the best tier, enemies name real drop tables, and a new game starts with exactly one weapon.
+ */
+function checkGear(
+  c: {
+    player: PlayerDef;
+    enemies: Record<string, EnemyDef>;
+    biomes: Record<string, BiomeDef>;
+    items: Record<string, ItemDef>;
+    loot: LootDef;
+  },
+  problems: string[],
+): void {
+  const { loot } = c;
+  const mostPerks = Math.max(...TIERS.map((t) => loot.tiers[t].perks));
+  for (const slot of ['weapon', 'helmet', 'chest', 'legs', 'ring'] as const) {
+    const pool = Object.values(loot.perks).filter((p) => p.slots.includes(slot)).length;
+    if (pool < mostPerks)
+      problems.push(`loot.json: perks: only ${pool} can roll on a ${slot}, but a tier rolls ${mostPerks}`);
+    const droppable = Object.values(c.items).some(
+      (d) =>
+        (d.kind === 'weapon' || d.kind === 'armor' || d.kind === 'ring') &&
+        gearSlotOf(d) === slot &&
+        d.drop > 0,
+    );
+    if (!droppable) problems.push(`items.json: no ${slot} can drop (every one has "drop": 0)`);
+  }
+  for (const [id, def] of Object.entries(c.items)) {
+    if (def.kind !== 'weapon' && def.kind !== 'armor' && def.kind !== 'ring') continue;
+    for (const roll of def.innate)
+      if (!(roll.perk in loot.perks)) problems.push(`items.json: ${id}.innate: unknown perk "${roll.perk}"`);
+    if (def.kind === 'ring' && def.innate.length === 0)
+      problems.push(`items.json: ${id}: a ring needs an innate perk`);
+  }
+  for (const [id, e] of Object.entries(c.enemies))
+    if (e.gear && !(e.gear.table in loot.tables))
+      problems.push(`enemies.json: ${id}.gear: unknown table "${e.gear.table}"`);
+
+  const slots = new Set<string>();
+  for (const id of c.player.start.gear) {
+    const def = c.items[id];
+    const slot = def ? gearSlotOf(def) : null;
+    if (!def) problems.push(`player.json: start.gear: unknown item "${id}"`);
+    else if (!slot) problems.push(`player.json: start.gear: "${id}" is a ${def.kind}, not gear`);
+    else if (slot !== 'ring' && slots.has(slot))
+      problems.push(`player.json: start.gear: two items for the ${slot}`);
+    if (slot) slots.add(slot);
+  }
+  if (!slots.has('weapon')) problems.push('player.json: start.gear: needs a weapon');
+}
+
+/** Which gear slot an item goes in, or null for anything that is not gear. */
+export function gearSlotOf(def: ItemDef): 'weapon' | 'helmet' | 'chest' | 'legs' | 'ring' | null {
+  switch (def.kind) {
+    case 'weapon':
+      return 'weapon';
+    case 'armor':
+      return def.armor.slot;
+    case 'ring':
+      return 'ring';
+    default:
+      return null;
   }
 }

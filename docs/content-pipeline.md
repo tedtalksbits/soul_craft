@@ -9,6 +9,7 @@ Everything a designer tunes lives in data, validated on load and hot-reloaded wh
 | `player.json`         | Player stats: health, stamina, attack timing, roll, flask, pack size, starting kit |
 | `items.json`          | Items: materials, weapons, armor, rings, consumables                               |
 | `recipes.json`        | Crafting recipes: output, inputs, soul cost, station                               |
+| `loot.json`           | Gear tiers, perks, item-level growth, pity and the drop tables enemies name        |
 | `restoration.json`    | Village projects: cost, tier, effects, ruin and rebuilt sprites, villager lines    |
 | `npcs.json`           | People to talk to (Maren): name, sprite frame, small talk                          |
 | `objectives.json`     | The story's objectives, in order: giver, HUD line, what is said, the goal          |
@@ -67,14 +68,33 @@ Every item has `kind`, `name`, `description`, `icon` (a frame name in `assets/sp
 - `weapon`: `weapon { damage, staminaCost, reach, width, knockback }` and `upgrades`, the forge steps in order,
   each `{ damage, souls, items }`, plus an optional `requires` (a restoration project that must be rebuilt
   first: the last steps wait on the smithy). The player's swing uses the equipped weapon; unarmed is weak on purpose.
-- `armor`: `armor { defense }`, the fraction of incoming damage absorbed (capped at 0.9 with buffs).
-- `ring`: `ring { stat, amount }`. Two ring slots.
+- `armor`: `armor { slot, value, weight }`: `helmet`, `chest` or `legs`; its Armor at item level 1, Common; and
+  `cloth`, `leather` or `plate` (how it will look on the character).
+- `ring`: nothing of its own; its power is its `innate` perk. Two ring slots.
+
+Weapons, armor and rings are gear, and gear is loot (docs/gear-and-loot.md). Each also takes `innate` (fixed perks,
+`[{ perk, value }]`, at item level 1, Common strength) and `drop` (how often the base is picked when gear drops,
+relative to the others of its slot; `0` never drops, like the Chipped Sword). A copy's tier, item level, rolled
+perks and roll seed live on the item itself, not here; tier and item level scale the base's damage, Armor and
+innate perks, so tuning a base re-tunes every copy.
+
+`loot.json` holds the five `tiers` (name, color, how many perks they roll, and multipliers for base stats and
+perk strength), `itemLevelGrowth` (per item level above 1), `perkSpread` (how far a roll lands from its target),
+`pity` (after `after` drops in a row below `tier`, the next is that tier or better), the named `tables` of tier
+odds, and `perks`: each `{ text, stat, value, integer, slots }`, where `text` shows `{v}` as the value. An enemy
+drops gear with `gear { chance, table }`; its item level is the biome's `itemLevel`. Validation insists every slot
+can roll the best tier's number of perks and has a base that can drop.
+
+Armor cuts hits to `k / (k + Armor)` (`player.json → armor`), never past `cap` with buffs. Attributes gain less
+past `leveling.softCaps`: each `perLevel` value is `[below, between, past]` the two breakpoints, and gear's
+attribute points count toward them.
+
 - `relic`: `unlocks` (`class` or `super`) and `source` (where it is found, shown on locked abilities). Taken on
   pickup, never carried; it only drops while its slot is still locked.
 - `consumable`: `effect` is `{ type: "heal", amount }` or `{ type: "buff", stat, amount, seconds }`.
   Drinking one takes the flask's drink time. A second buff on the same stat refreshes the first.
 
-Stats are `damage`, `defense`, `staminaRegen` (fractions: 0.2 = +20%) and `maxHp` (points).
+A buff's `stat` is `damage`, `defense`, `staminaRegen` (fractions: 0.2 = +20%) or `maxHp` (points).
 
 A recipe is `{ output { item, count }, inputs [{ item, count }], souls, station }`, where `station` is
 `"forge"`, `"alchemy"` or `null` (craftable anywhere). Stations are prefab entities; the player must stand

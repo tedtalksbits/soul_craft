@@ -38,9 +38,9 @@ change:
    never edited once shipped, and run in sequence.
 3. Add a test that migrates a fixture of the old version (`tests/save/save.test.ts` shows the pattern).
 
-**Old saves.** `OLDEST_SAVE_VERSION` is the oldest save this build loads. The gear and loot rework (version 14)
-replaced crafted gear, and every earlier save was a playtest, so it was raised to 14 and the migrations from
-versions 1 to 13 were deleted. A save older than that is refused with "This save is from an older version of
+**Old saves.** `OLDEST_SAVE_VERSION` is the oldest save this build loads. The gear and loot rework (versions 14
+and 15) replaced crafted gear, and every earlier save was a playtest, so it was raised to 15 and the migrations
+from versions 1 to 13 were deleted. A save older than that is refused with "This save is from an older version of
 the game and can't be loaded. Start a new game." (`OldSaveError`), and its slot on the title screen offers
 New game. Raise it again only for a change old games can't survive; otherwise write a migration.
 

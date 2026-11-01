@@ -1,5 +1,5 @@
 import type { Entity } from '../core/ecs';
-import type { AbilitySlot, AttributeId, StatId, StationId } from '../content/schemas';
+import type { AbilitySlot, AttributeId, StatId, StationId, TierId } from '../content/schemas';
 import type { EquipSlot, PickupKind } from './components';
 
 /**
@@ -48,7 +48,10 @@ export type SimEvent =
   | { type: 'playerDied'; soulsLost: number }
   | { type: 'playerRespawned' }
   | { type: 'areaEntered'; name: string; firstVisit: boolean }
-  | { type: 'itemGained'; item: string; count: number }
+  /** `tier` is set for a piece of gear. */
+  | { type: 'itemGained'; item: string; count: number; tier: TierId | null }
+  /** A piece of gear fell from an enemy (for its chime and beam). */
+  | { type: 'gearDropped'; item: string; tier: TierId; x: number; y: number }
   | { type: 'inventoryFull'; item: string }
   | { type: 'equipped'; item: string; slot: EquipSlot }
   | { type: 'unequipped'; item: string; slot: EquipSlot }

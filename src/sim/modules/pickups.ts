@@ -1,8 +1,8 @@
 import type { Entity } from '../../core/ecs';
-import { Body, Health, Magnetized, Pickup, Player, Sprite, type PickupKind } from '../components';
+import { Body, Health, Magnetized, Pickup, Player, Sprite, type Gear, type PickupKind } from '../components';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
-import { addItem, roomFor } from './items';
+import { addItem, addStack, roomFor } from './items';
 
 /** Ticks before a fresh drop can be collected, so it visibly pops out first. */
 const COLLECT_DELAY = 20;
@@ -19,12 +19,13 @@ export function dropPickup(
   x: number,
   y: number,
   item: string | null = null,
+  gear: Gear | null = null,
 ): void {
   const e = sim.ecs.create();
   const angle = sim.rng.range(0, Math.PI * 2);
   const scatter = sim.rng.range(2, 8);
   sim.ecs.add(e, Body, { x: x + Math.cos(angle) * scatter, y: y + Math.sin(angle) * scatter, w: 6, h: 6 });
-  sim.ecs.add(e, Pickup, { kind, amount, item, age: 0, z: 6, vz: 1.2 });
+  sim.ecs.add(e, Pickup, { kind, amount, item, gear, age: 0, z: 6, vz: 1.2 });
   sim.ecs.add(e, Sprite, { sheet: kind === 'item' ? 'items' : 'props' });
 }
 
@@ -45,9 +46,13 @@ function updatePickups(sim: Simulation): void {
     const reachable = live && Math.hypot(body.x - pb.x, body.y - pb.y) < COLLECT_RADIUS;
     if (reachable) {
       if (pickup.kind === 'item' && pickup.item !== null) {
-        const left = addItem(sim, p, pickup.item, pickup.amount);
+        const gear = pickup.gear;
+        const left = gear
+          ? Number(!addStack(sim, p, { item: pickup.item, count: 1, level: 0, gear }))
+          : addItem(sim, p, pickup.item, pickup.amount);
         const taken = pickup.amount - left;
-        if (taken > 0) sim.events.emit({ type: 'itemGained', item: pickup.item, count: taken });
+        if (taken > 0)
+          sim.events.emit({ type: 'itemGained', item: pickup.item, count: taken, tier: gear?.tier ?? null });
         if (left > 0) {
           pickup.amount = left;
           pickup.age = COLLECT_DELAY - FULL_RETRY;

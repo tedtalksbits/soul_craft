@@ -16,6 +16,7 @@ import {
   Health,
   Invulnerable,
   Motion,
+  Overshield,
   Player,
   Projectile,
   Sprite,
@@ -31,7 +32,7 @@ import { pressedSlot, refreshAbilities, giveStartingClass, startCast, updateCast
 import { applyDamage, rollDamage } from './combat';
 import { giveStartingAttributes } from './progression';
 import { interact } from './interaction';
-import { beginUse, finishUse, giveStartingKit, playerStats } from './items';
+import { beginUse, finishUse, giveStartingKit, playerStats, syncVitals } from './items';
 import { resetEnemies } from './streaming';
 import { strikeTiles } from './terrain';
 
@@ -68,6 +69,11 @@ export function spawnPlayer(sim: Simulation, x: number, y: number, playerClass?:
   giveStartingKit(sim, e);
   giveStartingClass(sim, e, playerClass);
   giveStartingAttributes(sim, e);
+  // The starting gear can raise max health and stamina; begin full.
+  syncVitals(sim, e);
+  const [health, stamina] = [ecs.need(e, Health), ecs.need(e, Stamina)];
+  health.hp = health.max;
+  stamina.value = stamina.max;
   return e;
 }
 
@@ -125,7 +131,7 @@ function updatePlayer(sim: Simulation): void {
     case 'free': {
       if (mx || my) facing.dir = dirFromVec(mx, my, facing.dir);
       // A super can quicken the walk (Ghost Run).
-      const speed = def.moveSpeed * (1 + (ecs.get(e, Empowered)?.speed ?? 0));
+      const speed = def.moveSpeed * (1 + (ecs.get(e, Empowered)?.speed ?? 0) + playerStats(sim, e).moveSpeed);
       motion.vx = mx * speed;
       motion.vy = my * speed;
       let act = input.pressed;
@@ -173,7 +179,10 @@ function updatePlayer(sim: Simulation): void {
       if (p.t === def.flask.healAt) {
         if (p.using !== null) finishUse(sim, e, p.using);
         else {
-          const healed = Math.min(health.max - health.hp, def.flask.heal);
+          const healed = Math.min(
+            health.max - health.hp,
+            Math.round(def.flask.heal * playerStats(sim, e).healing),
+          );
           health.hp += healed;
           sim.events.emit({ type: 'healed', amount: healed });
         }
@@ -225,7 +234,7 @@ function startRoll(
 ): void {
   const def = sim.content.player;
   [p.dirX, p.dirY] = mx || my ? normalize(mx, my) : DIR_VEC[facing.dir];
-  stamina.value -= def.roll.staminaCost;
+  stamina.value -= playerStats(sim, sim.player).rollStamina;
   stamina.delay = def.staminaRegenDelay;
   setState(p, 'roll');
   sim.events.emit({ type: 'roll' });
@@ -258,7 +267,12 @@ function strike(sim: Simulation, e: Entity, p: Player): void {
   for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
     if (p.struck.includes(target) || ecs.has(target, Dying) || !overlaps(box, bodyBox(tb))) continue;
     p.struck.push(target);
-    const roll = rollDamage(sim.rng, { ...def.attack, damage: stats.damage, critChance: stats.critChance });
+    const roll = rollDamage(sim.rng, {
+      ...def.attack,
+      damage: stats.damage,
+      critChance: stats.critChance,
+      critMultiplier: stats.critMultiplier,
+    });
     const result = applyDamage(sim, target, {
       ...roll,
       fromX: body.x,
@@ -385,8 +399,10 @@ const commands: SimCommand[] = [
       sim.state.cheats.god = false;
       sim.ecs.remove(e, Invulnerable);
       const body = sim.ecs.need(e, Body);
-      const hp = sim.ecs.need(e, Health).hp;
-      applyDamage(sim, e, { amount: hp, crit: false, fromX: body.x, fromY: body.y - 1, knockback: 0 });
+      // Enough to get through an overshield and the most Armor can absorb.
+      const soak = sim.ecs.need(e, Health).hp + (sim.ecs.get(e, Overshield)?.hp ?? 0);
+      const amount = Math.ceil(soak / (1 - sim.content.player.armor.cap)) + 1;
+      applyDamage(sim, e, { amount, crit: false, fromX: body.x, fromY: body.y - 1, knockback: 0 });
       sim.state.cheats.god = god;
     },
   },

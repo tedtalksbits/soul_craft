@@ -5,7 +5,7 @@
  */
 import { defineComponent, type Entity } from '../core/ecs';
 import type { Dir } from '../core/math';
-import type { AbilitySlot, StatId, StationId } from '../content/schemas';
+import type { AbilitySlot, StatId, StationId, TierId } from '../content/schemas';
 
 /** Collision box, centered on (x, y), in world pixels. */
 export interface Body {
@@ -201,11 +201,33 @@ export interface Overshield {
 }
 export const Overshield = defineComponent<Overshield>('overshield');
 
-/** One inventory slot: an item, how many, and (for weapons) its forge upgrade level. */
+/** A perk rolled onto one piece of gear. */
+export interface PerkRoll {
+  perk: string;
+  value: number;
+}
+
+/**
+ * What makes one piece of gear itself: its tier, the item level of the place it dropped, its rolled
+ * perks, and the seed its rolls came from (rerolls will advance only this item's seed, so reloading
+ * never fishes for a better result).
+ */
+export interface Gear {
+  tier: TierId;
+  ilvl: number;
+  seed: number;
+  perks: PerkRoll[];
+}
+
+/**
+ * One inventory slot: an item, how many, its forge upgrade level, and for gear, its rolls. Gear without
+ * `gear` is Common at item level 1 with no perks.
+ */
 export interface ItemStack {
   item: string;
   count: number;
   level: number;
+  gear?: Gear;
 }
 
 /** What the player carries. Order is the display order; capacity is `inventoryCapacity()` (base slots plus a rebuilt storehouse). */
@@ -214,12 +236,14 @@ export interface Inventory {
 }
 export const Inventory = defineComponent<Inventory>('inventory');
 
-export type EquipSlot = 'weapon' | 'armor' | 'ring0' | 'ring1';
+export type EquipSlot = 'weapon' | 'ring0' | 'ring1' | 'helmet' | 'chest' | 'legs';
 export interface Equipment {
   weapon: ItemStack | null;
-  armor: ItemStack | null;
   ring0: ItemStack | null;
   ring1: ItemStack | null;
+  helmet: ItemStack | null;
+  chest: ItemStack | null;
+  legs: ItemStack | null;
   /** Consumable used with the quick-use key; it stays in the inventory. */
   quick: string | null;
 }
@@ -320,6 +344,8 @@ export interface Pickup {
   amount: number;
   /** For `item` pickups: which item. */
   item: string | null;
+  /** For a piece of gear: its rolls. */
+  gear: Gear | null;
   age: number;
   /** Visual hop height; the sim tracks it so pickups land deterministically. */
   z: number;

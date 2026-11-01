@@ -29,6 +29,7 @@ import type { Simulation } from '../simulation';
 import { gainEnergy } from './energy';
 import { relicWanted } from './unlocks';
 import { playerStats } from './items';
+import { dropGear } from './gear';
 import { dropPickup } from './pickups';
 import { onHurt, onKill } from './modifiers';
 import { absorb } from './overshield';
@@ -224,10 +225,12 @@ export function killEnemy(sim: Simulation, e: Entity): void {
   ecs.remove(e, ContactDamage);
 
   const player = ecs.get(sim.player, Player);
-  if (player) player.souls += def.souls;
+  const souls = player ? Math.round(def.souls * playerStats(sim, sim.player).souls) : 0;
+  if (player) player.souls += souls;
   const spawned = ecs.get(e, Spawned);
   if (spawned) sim.state.killed[spawned.spawnId] = true;
   rollDrops(sim, def.drops, body.x, body.y);
+  if (def.gear && sim.rng.chance(def.gear.chance)) dropGear(sim, def.gear.table, body.x, body.y);
   if (def.boss) {
     // Felled for good: it never respawns, its fight ends and its callers go with it.
     sim.state.bossesDefeated[enemy.archetype] = true;
@@ -241,7 +244,7 @@ export function killEnemy(sim: Simulation, e: Entity): void {
     archetype: enemy.archetype,
     x: body.x,
     y: body.y,
-    souls: def.souls,
+    souls,
   });
 }
 

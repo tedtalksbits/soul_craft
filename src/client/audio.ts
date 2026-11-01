@@ -187,6 +187,15 @@ export class Audio {
         const p = this.chainPitch();
         return this.arp([659 * p, 988 * p], 50, 0.2, 0.04);
       }
+      case 'gearDropped':
+        // Rare and better ring out as they fall; a Legendary gets a heavier bell. Nothing else uses these.
+        if (e.tier === 'legendary') {
+          this.burst(0.4, 2400, 0.25, 'highpass');
+          return this.arp([392, 523, 659, 784, 1047, 1319], 110, 1.4, 0.07);
+        }
+        if (e.tier === 'noble') return this.arp([523, 659, 784, 1047], 90, 0.9, 0.06);
+        if (e.tier === 'rare') return this.arp([659, 880, 1175], 80, 0.6, 0.05);
+        return;
       case 'crafted':
         this.burst(0.12, 2600, 0.15, 'highpass');
         return this.arp([523, 784], 80, 0.35, 0.05);

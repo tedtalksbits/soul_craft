@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { Abilities, Attributes, Health, Inventory, Pickup, Player, Stamina } from '../../src/sim/components';
+import {
+  Abilities,
+  Attributes,
+  Equipment,
+  Health,
+  Inventory,
+  Pickup,
+  Player,
+  Stamina,
+} from '../../src/sim/components';
 import { inputFrame, type PlayerAction } from '../../src/sim/input';
 import { killEnemy } from '../../src/sim/modules/combat';
 import { gainEnergy } from '../../src/sim/modules/energy';
@@ -63,27 +72,53 @@ describe('leveling', () => {
 
   it('Vigor raises max health and Endurance max stamina', () => {
     const sim = resting();
+    const [hp, stamina] = [sim.ecs.need(sim.player, Health).max, sim.ecs.need(sim.player, Stamina).max];
     act(sim, { type: 'levelUp', attribute: 'vigor' });
     act(sim, { type: 'levelUp', attribute: 'endurance' });
-    expect(sim.ecs.need(sim.player, Health).max).toBe(content.player.maxHp + leveling.perLevel.vigor.maxHp);
-    expect(sim.ecs.need(sim.player, Stamina).max).toBe(
-      content.player.maxStamina + leveling.perLevel.endurance.maxStamina,
-    );
+    expect(sim.ecs.need(sim.player, Health).max).toBe(hp + leveling.perLevel.vigor.maxHp[0]);
+    expect(sim.ecs.need(sim.player, Stamina).max).toBe(stamina + leveling.perLevel.endurance.maxStamina[0]);
   });
 
-  it('Might raises sword damage; Attunement raises ability damage and super charge', () => {
+  it('Might raises weapon damage; Attunement raises ability damage and super charge', () => {
     const sim = resting();
     const sword = playerStats(sim, sim.player).damage;
     act(sim, { type: 'levelUp', attribute: 'might' });
-    expect(playerStats(sim, sim.player).damage).toBeCloseTo(sword * (1 + leveling.perLevel.might.damage));
+    expect(playerStats(sim, sim.player).damage).toBeCloseTo(sword * (1 + leveling.perLevel.might.damage[0]));
 
+    const power = abilityPower(sim);
     act(sim, { type: 'levelUp', attribute: 'attunement' });
-    expect(abilityPower(sim)).toBeCloseTo(1 + leveling.perLevel.attunement.abilityDamage);
+    expect(abilityPower(sim)).toBeCloseTo(power + leveling.perLevel.attunement.abilityDamage[0]);
     const a = sim.ecs.need(sim.player, Abilities);
     a.unlocked.super = true;
     a.energy = 0;
     gainEnergy(sim, 10);
-    expect(a.energy).toBeCloseTo(10 * (1 + leveling.perLevel.attunement.energy));
+    expect(a.energy).toBeCloseTo(10 * (1 + leveling.perLevel.attunement.energy[0]));
+  });
+
+  it('points past each soft cap give less, gear points included', () => {
+    const sim = newSim();
+    const [first, second] = leveling.softCaps;
+    const gains = leveling.perLevel.vigor.maxHp;
+    const maxHp = (points: number) => {
+      attrs(sim).vigor = points;
+      return playerStats(sim, sim.player).maxHp;
+    };
+    expect(maxHp(first) - maxHp(first - 1)).toBe(gains[0]);
+    expect(maxHp(first + 1) - maxHp(first)).toBe(gains[1]);
+    expect(maxHp(second + 1) - maxHp(second)).toBe(gains[2]);
+    // A helmet's +2 Vigor lands on the same breakpoints as 2 more levels would.
+    const eq = sim.ecs.need(sim.player, Equipment);
+    const helm = (perks: { perk: string; value: number }[]) => ({
+      item: 'iron_helm',
+      count: 1,
+      level: 0,
+      gear: { tier: 'standard' as const, ilvl: 1, seed: 1, perks },
+    });
+    eq.helmet = helm([]);
+    const leveled = maxHp(first + 2);
+    eq.helmet = helm([{ perk: 'vigor', value: 2 }]);
+    expect(maxHp(first)).toBe(leveled);
+    expect(playerStats(sim, sim.player).attributes.vigor).toBe(first + 2);
   });
 });
 
