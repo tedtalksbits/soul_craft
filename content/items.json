@@ -417,6 +417,110 @@
       }
     ]
   },
+  "ember_staff": {
+    "kind": "weapon",
+    "name": "Ember Staff",
+    "description": "Ashwood capped with a cage of iron. Strike with it, and it remembers the heat.",
+    "icon": "ember_staff",
+    "stack": 1,
+    "weapon": { "type": "staff", "damage": 7, "staminaCost": 13, "reach": 21, "width": 25, "knockback": 2.6 },
+    "upgrades": [
+      {
+        "damage": 1,
+        "souls": 110,
+        "items": [
+          { "item": "ashwood", "count": 4 },
+          { "item": "glowspore", "count": 1 }
+        ]
+      },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "glowspore", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "glowspore", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "glowspore", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "charred_rod": {
+    "kind": "weapon",
+    "name": "Charred Rod",
+    "description": "Black to the core, and still warm. It hits like a branch and burns like a brand.",
+    "icon": "ember_staff",
+    "stack": 1,
+    "weapon": { "type": "staff", "damage": 8, "staminaCost": 14, "reach": 21, "width": 25, "knockback": 2.8 },
+    "upgrades": [
+      {
+        "damage": 1,
+        "souls": 110,
+        "items": [
+          { "item": "ashwood", "count": 4 },
+          { "item": "glowspore", "count": 1 }
+        ]
+      },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "glowspore", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "glowspore", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "glowspore", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
   "ashen_hood": {
     "kind": "armor",
     "name": "Ashen Hood",
@@ -731,6 +835,64 @@
       "name": "Following Wind",
       "text": "A Perfect Shot makes your next roll cost no stamina.",
       "effect": { "type": "perfectRefund" }
+    }
+  },
+  "hearthwood": {
+    "kind": "weapon",
+    "name": "Hearthwood",
+    "description": "Cut from the tree that grew over the first village hearth. It keeps its warmth for you.",
+    "icon": "ember_staff",
+    "stack": 1,
+    "weapon": { "type": "staff", "damage": 8, "staminaCost": 13, "reach": 21, "width": 25, "knockback": 2.8 },
+    "upgrades": [
+      {
+        "damage": 1,
+        "souls": 110,
+        "items": [
+          { "item": "ashwood", "count": 4 },
+          { "item": "glowspore", "count": 1 }
+        ]
+      },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "glowspore", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "glowspore", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "glowspore", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "emberPower", "value": 0.03 }],
+    "power": {
+      "name": "Hearth",
+      "text": "Every Ember you spend heals you 6 HP.",
+      "effect": { "type": "emberHeal", "amount": 6 }
     }
   },
   "crown_of_the_unforgotten": {

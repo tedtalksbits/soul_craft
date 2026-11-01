@@ -270,6 +270,8 @@ export interface Swing {
   perfect?: boolean;
   /** The next roll costs no stamina (a Legendary's reward for a Perfect Shot). */
   freeRoll?: boolean;
+  /** Embers stored by an Ember staff's melee hits, spent by its fireballs. */
+  embers?: number;
 }
 export const Swing = defineComponent<Swing>('swing');
 
@@ -397,7 +399,7 @@ export interface Dying {
 }
 export const Dying = defineComponent<Dying>('dying');
 
-export type ProjectileKind = 'arrow' | 'knife';
+export type ProjectileKind = 'arrow' | 'knife' | 'fireball';
 export interface Projectile {
   kind: ProjectileKind;
   team: TeamId;
@@ -410,8 +412,11 @@ export interface Projectile {
   /** For the player's thrown knives: the ability that threw it, and how long a hit staggers. */
   ability: string | null;
   stagger: number;
-  /** A player's bow arrow: a Perfect Shot pierces, and nothing is hit twice. Absent on other projectiles. */
-  bow?: { perfect: boolean; hit: Entity[] };
+  /**
+   * A shot from the player's weapon (an arrow or a staff's fireball): a Perfect Shot or piercing fire flies
+   * on, a fireball may burst, and nothing is hit twice. Absent on other projectiles.
+   */
+  bow?: { perfect: boolean; hit: Entity[]; pierce?: boolean; explode?: number };
 }
 export const Projectile = defineComponent<Projectile>('projectile');
 

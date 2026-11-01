@@ -11,6 +11,7 @@ import type { PlayerAction } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { playerStats, syncVitals } from './items';
+import { emberAbilityBonus } from './weapons';
 import { unlockSlot } from './unlocks';
 
 /** A freshly spawned player: level 1, nothing spent. */
@@ -32,7 +33,7 @@ export function levelCost(sim: Simulation): number {
 
 /** How much stronger Attunement and gear make the player's abilities (1 = no bonus). */
 export function abilityPower(sim: Simulation): number {
-  return playerStats(sim, sim.player).abilityDamage;
+  return playerStats(sim, sim.player).abilityDamage + emberAbilityBonus(sim);
 }
 
 export type LevelCheck = { ok: true; cost: number } | { ok: false; reason: string };

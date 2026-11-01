@@ -37,7 +37,7 @@ import { applyDamage, rollDamage } from './combat';
 import { FULL_ENERGY, gainEnergy } from './energy';
 import { modifiedCooldown, onCast } from './modifiers';
 import { grantOvershield } from './overshield';
-import { spendMark } from './weapons';
+import { onAbilityUsed, spendMark } from './weapons';
 import { spawnProjectile } from './projectiles';
 import { clearStealth, spawnDecoy, veil } from './stealth';
 import { abilityPower } from './progression';
@@ -238,6 +238,7 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
     }
   }
   onCast(sim, slot);
+  onAbilityUsed(sim);
   sim.events.emit({ type: 'abilityUsed', ability, slot, x: body.x, y: body.y, tx, ty });
 }
 

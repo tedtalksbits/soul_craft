@@ -3,7 +3,8 @@
  * one teaches the rest. Tap for the light chain (its last hit is the finisher), hold for a charged
  * attack with a payoff at full charge, and attack out of a roll for a dash-strike. Each type adds one
  * signature rule: the sword's Flow, the spear's Tipper, the hammer's Break, the daggers' Flank and Bleed,
- * the bow's Pin and Perfect Shot. A bow's moves fire arrows instead of swinging; drawing it burns stamina.
+ * the bow's Pin and Perfect Shot, the staff's Embers. A bow's or staff's charged move fires a shot instead of
+ * swinging; drawing a bow burns stamina, and a staff's fireballs spend the Embers its melee hits store.
  *
  * The moves are data (`content/weapons.json`) multiplying the equipped weapon's own numbers. The player
  * controller owns the states; this module decides which move comes next, what it hits and how hard.
@@ -17,6 +18,7 @@ import {
   Ai,
   Ambush,
   Bleed,
+  Motion,
   Pinned,
   Projectile,
   Body,
@@ -315,6 +317,7 @@ export function strikeWith(sim: Simulation, e: Entity, p: Player): Body | null {
   const def = sim.content.player;
   const s = swingOf(sim);
   const sig = weaponType(sim).def.signature;
+  const totals = gearTotals(sim.content, ecs.get(e, Equipment));
   for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
     if (p.struck.includes(target) || ecs.has(target, Dying) || !overlaps(box, bodyBox(tb))) continue;
     if (
@@ -353,6 +356,9 @@ export function strikeWith(sim: Simulation, e: Entity, p: Player): Body | null {
       if (energy > 0) gainEnergy(sim, energy);
     }
     if (shape.mark) markFoe(sim, target);
+    if (sig.type === 'embers') storeEmber(sim, sig.max);
+    if (sig.type === 'embers' && totals.bonkKnockback > 0)
+      push(sim, target, body, numbers.knockback * totals.bonkKnockback);
     if (sig.type === 'flank') addBleed(sim, target, sig.bleed, numbers.damage, ambushed && roll.crit);
   }
   return null;
@@ -446,12 +452,22 @@ export function fireShot(sim: Simulation, e: Entity, p: Player): void {
   const body = sim.ecs.need(e, Body);
   const perfect = s.move === 'charged' && s.perfect === true && sig.type === 'pin';
   const numbers = moveNumbers(sim, move);
-  const damage = numbers.damage * (perfect ? 1 + sig.bonus : 1);
+  let damage = numbers.damage * (perfect ? 1 + sig.bonus : 1);
+  // A staff's fireball spends an Ember; with none, it is only a spark. A full set bursts, with the perk.
+  let explode = 0;
+  if (sig.type === 'embers') {
+    const embers = s.embers ?? 0;
+    if (embers === 0) damage *= sig.spark;
+    else {
+      if (embers >= sig.max && totals.fullEmberBlast > 0) explode = sig.explode;
+      spendEmber(sim);
+    }
+  }
   const angles = s.move === 'charged' && totals.splitShot > 0 ? [-0.2, 0, 0.2] : [0];
   const base = Math.atan2(p.dirY, p.dirX);
   for (const a of angles) {
     spawnProjectile(sim, {
-      kind: 'arrow',
+      kind: sig.type === 'embers' ? 'fireball' : 'arrow',
       team: 'player',
       x: body.x + p.dirX * 6,
       y: body.y + p.dirY * 6,
@@ -461,6 +477,8 @@ export function fireShot(sim: Simulation, e: Entity, p: Player): void {
       damage,
       life: Math.round(move.shot.range / move.shot.speed),
       perfect,
+      pierce: sig.type === 'embers' && totals.piercingFire > 0,
+      explode,
     });
   }
   if (perfect) {
@@ -520,7 +538,9 @@ function updateArrows(sim: Simulation): void {
       if (result !== 'hit') continue;
       sim.hitstop = Math.max(sim.hitstop, proj.bow.perfect ? 4 : 1);
       onWeaponHit(sim, target);
+      if (proj.bow.explode) burst(sim, body.x, body.y, proj.bow.explode, proj.damage * 0.6, proj.bow.hit);
       if (sig.type !== 'pin') {
+        if (proj.bow.pierce) continue;
         ecs.destroy(arrow);
         break;
       }
@@ -536,6 +556,88 @@ function updateArrows(sim: Simulation): void {
       break;
     }
   }
+}
+
+/** A fireball's burst: everything else within `radius` takes `damage`. */
+function burst(
+  sim: Simulation,
+  x: number,
+  y: number,
+  radius: number,
+  damage: number,
+  spared: Entity[],
+): void {
+  for (const [target, , tb] of sim.ecs.query(Enemy, Body, Health)) {
+    if (spared.includes(target) || sim.ecs.has(target, Dying)) continue;
+    if (Math.hypot(tb.x - x, tb.y - y) > radius + tb.w / 2) continue;
+    applyDamage(sim, target, {
+      amount: Math.max(1, Math.round(damage)),
+      crit: false,
+      fromX: x,
+      fromY: y,
+      knockback: 2,
+      unblockable: true,
+      charges: true,
+    });
+  }
+  sim.events.emit({ type: 'weaponRule', rule: 'emberBurst', x, y });
+}
+
+/** Shoves a foe away from the player (an Ember staff's bonk, with its perk). */
+function push(sim: Simulation, target: Entity, body: Body, strength: number): void {
+  const motion = sim.ecs.get(target, Motion);
+  const tb = sim.ecs.get(target, Body);
+  if (!motion || !tb) return;
+  const [nx, ny] = normalize(tb.x - body.x, tb.y - body.y);
+  motion.kx += nx * strength;
+  motion.ky += ny * strength;
+}
+
+/** How many Embers the staff holds. */
+export function embersHeld(sim: Simulation): number {
+  return sim.ecs.get(sim.player, Swing)?.embers ?? 0;
+}
+
+/** Stores an Ember, up to the staff's limit. */
+function storeEmber(sim: Simulation, max: number): void {
+  const s = swingOf(sim);
+  const before = s.embers ?? 0;
+  s.embers = Math.min(max, before + 1);
+  if (s.embers > before) sim.events.emit({ type: 'embers', count: s.embers });
+}
+
+/** Spends an Ember: a Legendary staff warms the player with it. */
+function spendEmber(sim: Simulation): void {
+  const s = swingOf(sim);
+  s.embers = Math.max(0, (s.embers ?? 0) - 1);
+  sim.events.emit({ type: 'embers', count: s.embers });
+  const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
+  const health = sim.ecs.need(sim.player, Health);
+  for (const fx of gearEffects(sim.content, sim.ecs.get(sim.player, Equipment), cls)) {
+    if (fx.type !== 'emberHeal' || health.hp <= 0) continue;
+    const amount = Math.min(health.max - health.hp, Math.round(fx.amount));
+    if (amount <= 0) continue;
+    health.hp += amount;
+    sim.events.emit({ type: 'healed', amount });
+  }
+}
+
+/**
+ * After the player uses an ability: with a staff, the Ashcaller (its affinity) and anyone with the perk
+ * for it store an Ember.
+ */
+export function onAbilityUsed(sim: Simulation): void {
+  const sig = weaponType(sim).def.signature;
+  if (sig.type !== 'embers') return;
+  const cls = sim.ecs.get(sim.player, Abilities)?.class;
+  const perk = gearTotals(sim.content, sim.ecs.get(sim.player, Equipment)).abilityEmbers > 0;
+  if (cls === 'ashcaller' || perk) storeEmber(sim, sig.max);
+}
+
+/** Extra ability damage from Embers held, with the perk for it. */
+export function emberAbilityBonus(sim: Simulation): number {
+  if (weaponType(sim).def.signature.type !== 'embers') return 0;
+  return embersHeld(sim) * gearTotals(sim.content, sim.ecs.get(sim.player, Equipment)).emberPower;
 }
 
 /** Tears every pin out of a foe, `each` damage apiece. */
@@ -632,6 +734,22 @@ function tickWeapons(sim: Simulation): void {
   for (const [e, mark] of sim.ecs.query(Marked)) if (--mark.ticks <= 0) sim.ecs.remove(e, Marked);
   for (const [e, bleed] of sim.ecs.query(Bleed)) if (--bleed.ticks <= 0) sim.ecs.remove(e, Bleed);
   for (const [e, pins] of sim.ecs.query(Pinned)) if (--pins.ticks <= 0) sim.ecs.remove(e, Pinned);
+  // Burning pins, with the bow perk: each lodged arrow scorches its foe once a second.
+  const burn = gearTotals(sim.content, sim.ecs.get(sim.player, Equipment)).pinBurn;
+  if (burn > 0 && sim.tick % TICK_RATE === 0) {
+    for (const [e, pins, tb] of sim.ecs.query(Pinned, Body)) {
+      if (sim.ecs.has(e, Dying)) continue;
+      applyDamage(sim, e, {
+        amount: Math.max(1, Math.round(burn * pins.count)),
+        crit: false,
+        fromX: tb.x,
+        fromY: tb.y,
+        knockback: 0,
+        unblockable: true,
+        charges: true,
+      });
+    }
+  }
 }
 
 export const weaponsModule: SimModule = {

@@ -18,7 +18,13 @@ import {
   type ProjectileKind,
 } from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
-import { chargeTicks, currentMove, inPerfectWindow, moveNumbers } from '../../sim/modules/weapons';
+import {
+  chargeTicks,
+  currentMove,
+  embersHeld,
+  inPerfectWindow,
+  moveNumbers,
+} from '../../sim/modules/weapons';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
 import { abilityPalette } from './class-palette';
@@ -28,7 +34,11 @@ import { PixelText } from './pixel-text';
 const MAX_PARTICLES = 700;
 const FRAME_MS = 1000 / 60;
 /** Which sprite sheet each projectile kind is fired from (its release pivots set the flight height). */
-const PROJECTILE_SHEET: Readonly<Record<ProjectileKind, string>> = { arrow: 'archer', knife: 'player' };
+const PROJECTILE_SHEET: Readonly<Record<ProjectileKind, string>> = {
+  arrow: 'archer',
+  knife: 'player',
+  fireball: 'player',
+};
 /** Shimmer color behind loot flying to the player. */
 const TRAIL_COLOR: Readonly<Record<PickupKind, number>> = {
   souls: 0xb8ccff,
@@ -189,6 +199,7 @@ export class Effects {
           flank: 0xffd0d0,
           bleed: 0xb0202a,
           perfect: 0xffffff,
+          emberBurst: 0xff9030,
           rip: 0xe8d8a8,
         };
         const color = COLORS[e.rule] ?? 0xd0a0ff;
@@ -376,6 +387,14 @@ export class Effects {
     const [px, py] = sheet?.def.pivots['swing'] ?? DEFAULT_SWING_PIVOT;
     const cx = Math.round(b.x + px);
     const cy = Math.round(b.y + b.h / 2 + py);
+    // Embers the staff holds hover over the player's head.
+    const embers = embersHeld(sim);
+    // Above the plume, dark-edged, so they read against the helmet's red.
+    for (let i = 0; i < embers; i++) {
+      const ex = cx - (embers - 1) * 2.5 + i * 5;
+      g.circle(ex, cy - 24, 2).fill({ color: 0x2a1408, alpha: 0.8 });
+      g.circle(ex, cy - 24, 1.3).fill({ color: 0xffc050 });
+    }
     if (p.state === 'charge') {
       const fill = Math.min(1, p.t / chargeTicks(sim));
       const pulse = fill >= 1 ? 0.6 + 0.4 * Math.sin(p.t / 4) : fill * 0.6;
@@ -452,6 +471,15 @@ export class Effects {
     for (const [, proj, body] of sim.ecs.query(Projectile, Body)) {
       const x = body.x;
       const y = body.y + this.flightHeight(proj);
+      if (proj.kind === 'fireball') {
+        // A coal with a smoky tail; one that will burst burns brighter.
+        const hot = (proj.bow?.explode ?? 0) > 0;
+        g.moveTo(x, y)
+          .lineTo(x - proj.vx * 3, y - proj.vy * 3)
+          .stroke({ width: 3, color: 0x6a3a20, alpha: 0.5 });
+        g.circle(x, y, hot ? 3.5 : 2.5).fill({ color: hot ? 0xfff0a0 : 0xffa040 });
+        continue;
+      }
       if (proj.kind === 'knife') {
         // A bright blade with a short smear behind it: thrown fast, it reads as a streak.
         g.moveTo(x, y)

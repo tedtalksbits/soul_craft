@@ -537,6 +537,9 @@ function checkGear(
     if (def.kind === 'ring' && def.innate.length === 0)
       problems.push(`items.json: ${id}: a ring needs an innate perk`);
     if (def.power) effect(`items.json: ${id}.power`, def.power.effect);
+    // A power's text is shown as written; only perk texts fill in {v}.
+    if (def.power?.text.includes('{v}'))
+      problems.push(`items.json: ${id}.power.text: write the number out; {v} is only filled in for perks`);
   }
   for (const [id, e] of Object.entries(c.enemies))
     if (e.gear && !(e.gear.table in loot.tables))

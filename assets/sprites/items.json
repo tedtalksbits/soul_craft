@@ -32,7 +32,8 @@
     "ashwood_spear": 25,
     "stone_maul": 26,
     "bone_daggers": 27,
-    "ashwood_bow": 28
+    "ashwood_bow": 28,
+    "ember_staff": 29
   },
   "animations": {}
 }

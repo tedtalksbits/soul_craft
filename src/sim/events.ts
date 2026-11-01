@@ -74,6 +74,8 @@ export type SimEvent =
   /** Weapon moves: a charge starting and filling, a type's rule landing (flow, tipper, crush, a spent mark), a slam's shockwave. */
   | { type: 'chargeStarted' }
   | { type: 'chargeFull' }
+  /** An Ember staff's store changed. */
+  | { type: 'embers'; count: number }
   | { type: 'weaponRule'; rule: string; x: number; y: number }
   | { type: 'shockwave'; x: number; y: number; radius: number }
   | { type: 'lastEmber' }

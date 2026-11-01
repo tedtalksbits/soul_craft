@@ -58,6 +58,8 @@ export class Audio {
           0.05,
           'triangle',
         );
+      case 'embers':
+        return this.tone([[440 + e.count * 110, 1]], 0.08, 0.04, 'triangle');
       case 'chargeFull':
         return this.arp([988, 1480], 45, 0.25, 0.05);
       case 'weaponRule':
@@ -75,6 +77,18 @@ export class Audio {
         if (e.rule === 'flow') return this.arp([1175, 1568, 2349], 40, 0.3, 0.05);
         if (e.rule === 'flank') return this.arp([1760, 1397], 30, 0.15, 0.05);
         if (e.rule === 'perfect') return this.arp([1319, 1976, 2637], 25, 0.35, 0.06);
+        if (e.rule === 'emberBurst') {
+          this.burst(0.4, 600, 0.35, 'lowpass');
+          return this.tone(
+            [
+              [80, 1],
+              [120, 0.5],
+            ],
+            0.4,
+            0.12,
+            'sawtooth',
+          );
+        }
         if (e.rule === 'rip') {
           this.burst(0.2, 1200, 0.25, 'bandpass', [500, 2000]);
           return this.tone([[130, 1]], 0.2, 0.1, 'triangle');

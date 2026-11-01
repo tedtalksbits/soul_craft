@@ -68,7 +68,7 @@ Every item has `kind`, `name`, `description`, `icon` (a frame name in `assets/sp
 - `key`: nothing else; carried until something spends it (a boss's Kindling, for a major project).
 - `weapon`: `weapon { type, damage, staminaCost, reach, width, knockback }` and `upgrades`, the forge steps in
   order, each `{ damage, souls, items }`, plus an optional `requires` (a restoration project that must be rebuilt
-  first: the last steps wait on the smithy). `type` (`sword`, `spear`, `hammer`, `daggers` or `bow`) picks its moves from
+  first: the last steps wait on the smithy). `type` (`sword`, `spear`, `hammer`, `daggers`, `bow` or `staff`) picks its moves from
   `weapons.json`, which multiply these numbers. Unarmed fights like a weak sword, on purpose.
 - `armor`: `armor { slot, value, weight }`: `helmet`, `chest` or `legs`; its Armor at item level 1, Common; and
   `cloth`, `leather` or `plate` (how it will look on the character).
@@ -90,14 +90,15 @@ plus optional `integer`, `fixed` (never scaled or spread), `class` (works only f
 the value. An `effect` is one of the class modifier effect types, so gear and modifiers share the same hooks;
 its numbers are written at strength 1 and the roll scales them (item level doesn't), and `{v}` shows its headline
 number. A weapon, armor piece or ring with a `power { name, text, effect }` is a Legendary base: it drops only as a
-Legendary, and its `innate` perk is the power's partner. An enemy drops gear with `gear { chance, table }`; its
+Legendary, and its `innate` perk is the power's partner. A power's `text` is shown as written (`{v}` is only
+filled in for perks). An enemy drops gear with `gear { chance, table }`; its
 item level is the biome's `itemLevel`. Validation insists every slot can roll the best tier's number of perks and
 has a base that can drop, and that class perks and effects name real classes and abilities.
 
 `weapons.json` gives each weapon type a light `chain` (tapped; the last move is the finisher, and
 `chainWindow` ticks after a move ends the next tap continues it), a `charged` move (held; full after
 `chargeTicks`, else `partial` damage and no payoff), a `dash` move (an attack within `dashWindow` ticks of a
-roll), a `signature` rule (`flow`, `tipper`, `break`, `flank` or `pin`) and the classes it has an `affinity` with. Each move sets
+roll), a `signature` rule (`flow`, `tipper`, `break`, `flank`, `pin` or `embers`) and the classes it has an `affinity` with. Each move sets
 multipliers for `damage`, `stamina`, `reach`, `width` and `knockback`, its timing (`duration`, `activeFrom`,
 `activeTo`), `hitstop`, `lunge`, `stagger`, `hyperArmor`, `around` (a full sweep), `through` (lunges through foes, untouchable), `shot` (fires an arrow instead of
 swinging; a negative `lunge` steps back), and how it is drawn (`arc`,

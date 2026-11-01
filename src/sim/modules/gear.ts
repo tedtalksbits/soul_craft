@@ -124,6 +124,8 @@ export function scaleEffect(fx: ModifierEffect, strength: number): ModifierEffec
     case 'vanishStrikes':
     case 'perfectRefund':
       return fx;
+    case 'emberHeal':
+      return { ...fx, amount: fx.amount * strength };
   }
 }
 
@@ -186,6 +188,8 @@ function headline(fx: ModifierEffect): string {
     case 'vanishStrikes':
     case 'perfectRefund':
       return '';
+    case 'emberHeal':
+      return String(Math.round(fx.amount));
   }
 }
 

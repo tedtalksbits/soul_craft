@@ -220,6 +220,8 @@ export const ModifierEffectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('vanishStrikes'), strikes: z.number().int().min(2) }),
   /** A Perfect Shot makes the next roll cost no stamina. */
   z.object({ type: z.literal('perfectRefund') }),
+  /** Each Ember spent heals the player `amount`. */
+  z.object({ type: z.literal('emberHeal'), amount: pos }),
   /**
    * Every `hits` weapon hits, each within `window` seconds of the last, set the ground under the last
    * one alight: a zone of `ability`'s look that burns for `damage` every `interval` ticks.
@@ -266,7 +268,7 @@ export type ModifiersDef = z.infer<typeof ModifiersSchema>;
 // ------------------------------------------------------------------ weapon types
 
 /** Weapon types. Any class can use any of them; each class fights a little better with its own. */
-export const WeaponTypeSchema = z.enum(['sword', 'spear', 'hammer', 'daggers', 'bow']);
+export const WeaponTypeSchema = z.enum(['sword', 'spear', 'hammer', 'daggers', 'bow', 'staff']);
 export type WeaponTypeId = z.infer<typeof WeaponTypeSchema>;
 
 /**
@@ -350,6 +352,12 @@ export const SignatureSchema = z.discriminatedUnion('type', [
    * `window` ticks and it is a Perfect Shot: `bonus` more damage, piercing, a stagger, and every pin
    * ripped out for `rip` times the shot's damage each.
    */
+  /**
+   * Ember staff: every melee hit stores an Ember (up to `max`). A charged shot is a fireball that spends
+   * one; with none stored it is a spark at `spark` of the damage. A fireball loosed with all `max` stored
+   * bursts for `explode` px around where it lands, with the perk for it.
+   */
+  z.object({ type: z.literal('embers'), max: z.number().int().min(1), spark: fraction, explode: pos }),
   z.object({
     type: z.literal('pin'),
     pins: z.number().int().min(1),
@@ -402,6 +410,7 @@ export const WeaponsSchema = z.object({
     hammer: WeaponTypeDefSchema,
     daggers: WeaponTypeDefSchema,
     bow: WeaponTypeDefSchema,
+    staff: WeaponTypeDefSchema,
   }),
 });
 export type WeaponsDef = z.infer<typeof WeaponsSchema>;
@@ -748,6 +757,12 @@ export const PerkStatSchema = z.enum([
   'splitShot',
   'bowKick',
   'freeDashShot',
+  'pinBurn',
+  'fullEmberBlast',
+  'abilityEmbers',
+  'bonkKnockback',
+  'piercingFire',
+  'emberPower',
 ]);
 export type PerkStat = z.infer<typeof PerkStatSchema>;
 

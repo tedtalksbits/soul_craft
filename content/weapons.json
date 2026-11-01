@@ -374,6 +374,78 @@
       "affinity": ["stalker", "ashcaller"],
       "drawDrain": 0.35,
       "chargePose": "cast_throw"
+    },
+    "staff": {
+      "name": "Ember Staff",
+      "chain": [
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 18,
+          "activeFrom": 5,
+          "activeTo": 10,
+          "hitstop": 3,
+          "lunge": 0.3,
+          "arc": "slash"
+        },
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 18,
+          "activeFrom": 5,
+          "activeTo": 10,
+          "hitstop": 3,
+          "lunge": 0.3,
+          "arc": "slash"
+        },
+        {
+          "damage": 1.2,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1.1,
+          "duration": 20,
+          "activeFrom": 6,
+          "activeTo": 11,
+          "hitstop": 4,
+          "stagger": 15,
+          "arc": "slam"
+        }
+      ],
+      "chainWindow": 14,
+      "charged": {
+        "damage": 2.3,
+        "stamina": 1,
+        "reach": 1,
+        "width": 1,
+        "duration": 16,
+        "activeFrom": 4,
+        "activeTo": 4,
+        "hitstop": 2,
+        "shot": { "speed": 3.5, "range": 180 },
+        "pose": "cast_throw",
+        "chargeTicks": 30,
+        "partial": 0.6,
+        "arc": "thrust"
+      },
+      "dash": {
+        "damage": 1.1,
+        "stamina": 1,
+        "reach": 1,
+        "width": 1,
+        "duration": 18,
+        "activeFrom": 3,
+        "activeTo": 9,
+        "hitstop": 3,
+        "around": true,
+        "arc": "sweep"
+      },
+      "dashWindow": 10,
+      "signature": { "type": "embers", "max": 4, "spark": 0.3, "explode": 28 },
+      "affinity": ["ashcaller"]
     }
   }
 }

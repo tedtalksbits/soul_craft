@@ -479,6 +479,19 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 3, the Ember staff, as built (2026-11-01).** Choices made while building it:
+
+- **Strike to cast:** every staff hit stores an Ember (up to 4, shown as coals over the player's head). The
+  charged attack is a fireball that spends one, at 2.3x the staff's melee damage (the table's 1.4 against 0.6);
+  with no Embers it is a spark at 30%. Fireballs reuse the bow's shot code.
+- **The Ashcaller's affinity** works as section 5 says: with a staff, every ability stores an Ember. Anyone else
+  gets that from a perk.
+- **Perks:** a fireball loosed with all four Embers bursts, abilities store Embers, bonks knock back harder,
+  fireballs pierce (Rare and up), and each Ember held adds ability damage.
+- **The bow's "pins burn"** came in with the staff's fire: each pin scorches its foe once a second.
+- **Hearthwood:** every Ember spent heals 6 HP.
+- **A power's text is shown as written**; validation now rejects a `{v}` in one, after I left one in Hearthwood's.
+
 **Phase 3, the bow, as built (2026-11-01).** Choices made while building it:
 
 - **Shots are moves.** A move with a `shot` fires an arrow on its first active tick instead of swinging, so the

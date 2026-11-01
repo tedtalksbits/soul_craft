@@ -210,14 +210,15 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    from Rare), no doubled perks, and five Legendary bases with hand-made powers: Cinderbrand, Crown of the
    Unforgotten, Pyreheart Cuirass, Ashwalker Greaves and Ring of the Last Ember. Weapon-type perk pools and the
    other Legendary weapons come with phase 3.
-3. **Weapon types (first half built):** every type taps a light chain with a finisher, holds for a charged
+3. **Weapon types (built):** every type taps a light chain with a finisher, holds for a charged
    attack (full charge has a payoff) and strikes out of a roll; hitstop, lunges, stagger and hyper armor per move,
    all in `weapons.json`. The sword (Flow), spear (Tipper, a 360° sweep) and hammer (Break: crushes, hyper armor,
    a full-charge shockwave) are in, with class affinity, type perks, the Ashwood Spear and Stone Maul, and two
    Legendaries (Oathspear, Gravebell). Twin daggers are in too: Flank crits from behind, Bleed that bursts at five
    stacks, a lunge-through charge, the Bone Daggers and Iron Dirks, and Twinfang. The bow is in: stamina is its only ammo, arrows pin, and a
    release in the Perfect window pierces and rips out every pin; the Ashwood Bow, Bone Recurve and Pale Wind.
-   Still to come: the Ember staff.
+   The Ember staff is in: melee hits store Embers (up to 4) that its charged fireball spends (a weak spark
+   with none), the Ember Staff and Charred Rod, and Hearthwood. All six weapon types are built.
 4. **Economy:** salvage, temper, upgrade and infuse, cleanse, coatings, tools, ranked projects, the Gambler, respec.
 5. **Wardens:** chests, signature items, Rekindle, pity and Marks, Heat, alternate kills.
 6. **Onboarding:** the Road Camp objective, with `kill` and `gather` goals.

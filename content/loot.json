@@ -185,6 +185,56 @@
       "slots": ["weapon"],
       "weaponTypes": ["bow"]
     },
+    "pinBurn": {
+      "text": "Pins burn their foe for {v} a second each",
+      "stat": "pinBurn",
+      "value": 1.5,
+      "integer": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "fullEmberBlast": {
+      "text": "A fireball loosed with every Ember bursts",
+      "stat": "fullEmberBlast",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["staff"]
+    },
+    "abilityEmbers": {
+      "text": "Your abilities store an Ember",
+      "stat": "abilityEmbers",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["staff"]
+    },
+    "bonkKnockback": {
+      "text": "Staff blows knock back {v} harder",
+      "stat": "bonkKnockback",
+      "value": 0.5,
+      "slots": ["weapon"],
+      "weaponTypes": ["staff"]
+    },
+    "piercingFire": {
+      "text": "Fireballs fly through foes",
+      "stat": "piercingFire",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "minTier": "rare",
+      "slots": ["weapon"],
+      "weaponTypes": ["staff"]
+    },
+    "emberPower": {
+      "text": "+{v} ability damage per Ember held",
+      "stat": "emberPower",
+      "value": 0.05,
+      "slots": ["weapon"],
+      "weaponTypes": ["staff"]
+    },
     "vigor": {
       "text": "+{v} Vigor",
       "stat": "vigor",
