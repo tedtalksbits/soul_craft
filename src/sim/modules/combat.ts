@@ -33,7 +33,8 @@ import { dropGear } from './gear';
 import { dropPickup } from './pickups';
 import { onHurt, onKill } from './modifiers';
 import { absorb } from './overshield';
-import { afterHurt, catchesKillingBlow, keepsFooting, onDodge } from './perks';
+import { afterHurt, catchesKillingBlow, keepsFooting, killBurst, onDodge, wardOff } from './perks';
+import { heatOf, isRefight, openChest, settleRefight } from './wardens';
 import { bleedBonus, hyperArmored, openFlow } from './weapons';
 import { takeAmbush, unveil } from './stealth';
 
@@ -50,6 +51,8 @@ export interface Hit {
   charges?: boolean;
   /** The ability dealing it, so damage numbers can show its class color. */
   ability?: string;
+  /** How much of its damage fills a Warden's poise (hammers 3, the rest 1). */
+  poise?: number;
 }
 
 export type HitResult = 'hit' | 'blocked' | 'ignored';
@@ -94,6 +97,8 @@ function damagePlayer(
     openFlow(sim);
     return 'ignored';
   }
+  // A ring of embers raised by a roll turns the blow aside and bursts.
+  if (wardOff(sim)) return 'blocked';
 
   // Armor and buffs absorb a fraction of every blow; something always gets through.
   const dealt = Math.max(1, Math.round(hit.amount * (1 - playerStats(sim, e).defense)));
@@ -161,6 +166,7 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
   if (ambush > 0) sim.events.emit({ type: 'ambushed', x: body.x, y: body.y, bonus: ambush });
 
   health.hp = Math.max(0, health.hp - amount);
+  if (boss && health.hp > 0) fillPoise(sim, e, boss, amount * (hit.poise ?? 1));
   // A blow that crosses a shield threshold stops there: the shield goes up instead.
   const shieldAt = def.brain.type === 'warden' && boss ? def.brain.shieldAt[boss.phase] : undefined;
   if (boss && shieldAt !== undefined && health.hp <= health.max * shieldAt) {
@@ -186,6 +192,8 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
   if (health.hp <= 0) {
     onKill(sim, body);
     killEnemy(sim, e);
+    // After the kill is recorded, so a burst that kills a neighbor can't set this one off again.
+    killBurst(sim, body);
   } else if (ai && !boss && ai.state !== 'stunned' && !ecs.has(e, Staggered)) {
     if (def.recoilTicks > 0) {
       ai.state = 'recoil';
@@ -193,6 +201,18 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
     } else if (ai.state === 'idle') ai.state = 'chase';
   }
   return 'hit';
+}
+
+/** A Warden's poise fills with damage while its shield is down; full, it staggers and empties. */
+function fillPoise(sim: Simulation, e: Entity, boss: Boss, amount: number): void {
+  const archetype = sim.ecs.need(e, Enemy).archetype;
+  const poise = sim.content.enemy(archetype).boss?.poise;
+  if (!poise || boss.shielded || sim.ecs.has(e, Staggered)) return;
+  boss.poise = (boss.poise ?? 0) + amount;
+  if (boss.poise < poise.max) return;
+  boss.poise = 0;
+  sim.ecs.add(e, Staggered, { ticks: poise.stagger });
+  sim.events.emit({ type: 'bossStaggered', boss: archetype });
 }
 
 /** Puts a boss's shield up: it falls back to channel, and every brazier goes out to be lit again. */
@@ -234,15 +254,19 @@ export function killEnemy(sim: Simulation, e: Entity): void {
   ecs.add(e, Dying, { t: 0 });
   ecs.remove(e, ContactDamage);
 
+  // A Warden refight gives only items (its chest), never souls or its story drops again.
+  const refight = def.boss !== undefined && isRefight(sim, enemy.archetype);
   const player = ecs.get(sim.player, Player);
-  const souls = player ? Math.round(def.souls * playerStats(sim, sim.player).souls) : 0;
+  const souls = player && !refight ? Math.round(def.souls * playerStats(sim, sim.player).souls) : 0;
   if (player) player.souls += souls;
   const spawned = ecs.get(e, Spawned);
   if (spawned) sim.state.killed[spawned.spawnId] = true;
-  rollDrops(sim, def.drops, body.x, body.y);
+  if (!refight) rollDrops(sim, def.drops, body.x, body.y);
   if (def.gear && sim.rng.chance(def.gear.chance)) dropGear(sim, def.gear.table, body.x, body.y);
   if (def.boss) {
-    // Felled for good: it never respawns, its fight ends and its callers go with it.
+    openChest(sim, e, enemy.archetype, !sim.state.bossesDefeated[enemy.archetype]);
+    settleRefight(sim, enemy.archetype, heatOf(sim, e));
+    // Felled for good: it never respawns (until rekindled), its fight ends and its callers go with it.
     sim.state.bossesDefeated[enemy.archetype] = true;
     sim.state.bossFight = null;
     for (const [m] of ecs.query(Minion)) if (!ecs.has(m, Dying)) killEnemy(sim, m);

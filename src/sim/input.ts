@@ -66,7 +66,11 @@ export type PlayerAction =
   /** Gives back every attribute point to spend again, for the souls of one level. Only at a bonfire. */
   | { type: 'respec' }
   /** Buys an unidentified piece for a slot from the Ember Gambler. Only at their shop. */
-  | { type: 'gamble'; slot: GearSlot };
+  | { type: 'gamble'; slot: GearSlot }
+  /** Brings a defeated Warden back to fight at a Heat (a Sigil per step above 1). Only at its bonfire. */
+  | { type: 'rekindle'; boss: string; heat: number }
+  /** Trades Warden Marks for the Warden's signature item. Only at its bonfire. */
+  | { type: 'buySignature'; boss: string };
 
 export interface InputFrame {
   /** Movement intent, each axis in [-1, 1]. */

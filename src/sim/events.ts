@@ -101,6 +101,13 @@ export type SimEvent =
   | { type: 'coatingEnded' }
   | { type: 'ranked'; project: string; rank: number }
   | { type: 'gambled'; item: string; tier: TierId }
+  /** Wardens: rekindled for a refight, a chest bursting open (did the signature come, do the embers stir), a charge baited onto a brazier, a Warden's poise broken. */
+  | { type: 'rekindled'; boss: string; heat: number }
+  | { type: 'wardenChest'; boss: string; signature: boolean; stirring: boolean; x: number; y: number }
+  | { type: 'brazierSlam'; x: number; y: number; count: number }
+  | { type: 'bossStaggered'; boss: string }
+  /** A ring of embers turned a blow aside (the Warden's Aegis). */
+  | { type: 'warded'; x: number; y: number }
   | { type: 'stationOpened'; station: StationId }
   /** An ability's effects landed. (x, y) is the caster; (tx, ty) where it was aimed. */
   | { type: 'abilityUsed'; ability: string; slot: AbilitySlot; x: number; y: number; tx: number; ty: number }

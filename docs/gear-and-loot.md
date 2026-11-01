@@ -479,6 +479,25 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 5, Wardens, as built (2026-11-01).** Choices made while building it:
+
+- **Refights give only items,** as the owner decided in the playtest answers: the chest (gear, materials, Warden
+  Marks, the signature roll), never the kill's souls or its story drops again. That drops section 8's "about 35%
+  of the first kill's souls" from the repeat chest.
+- **The chest bursts open where the Warden falls** and spills its loot, with a banner, a bell, and a higher bell
+  when the signature is in it. A chest to walk up to and open waits for art. "The embers stir…" shows once the next
+  chest's signature chance passes 30%.
+- **The Warden's bonfire** (the Keep Gate) gets a "The Warden" button while resting: Rekindle (free, or at Heat 2
+  and 3 for one or two Warden Sigils, forged for 150 souls, 3 bone shards and 2 iron scrap), the signature's odds,
+  and the 6-Mark trade. Heat 2 is open after the first kill; Heat 3 after clearing Heat 2.
+- **Heat 3's new attack** is a ring of ten embers thrown outward from every slam.
+- **The alternate kill** counts the Warden's charges that end on a brazier (the player baits it there); three in
+  one fight swap the signature for the Warden's Brand, a hammer whose kills burst into embers.
+- **The signature and its alternate never drop as ordinary Legendaries** (`drop: 0`); only the Warden's chest and
+  the Mark trade give them.
+- **Poise (the hammer's Break, from phase 3):** a Warden's poise fills with weapon damage while its shield is down,
+  three times faster from a hammer; full, it staggers for 2.5 s.
+
 **Phase 4, the rest, as built (2026-11-01).** Choices made while building it:
 
 - **Coatings** are alchemy-table consumables that coat the weapon for 90 s, one at a time: Fire Oil (hits set

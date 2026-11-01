@@ -116,7 +116,12 @@
     ],
     "recoilTicks": 0,
     "knockbackTaken": 0,
-    "boss": { "title": "Keeper of the Last Kindling", "arenaTiles": 11.5 },
+    "boss": {
+      "title": "Keeper of the Last Kindling",
+      "arenaTiles": 11.5,
+      "poise": { "max": 140, "stagger": 150 },
+      "warden": { "signature": "wardens_aegis", "alternate": { "item": "wardens_brand", "slams": 3 } }
+    },
     "brain": {
       "type": "warden",
       "slamRange": 30,

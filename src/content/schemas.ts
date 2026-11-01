@@ -220,6 +220,13 @@ export const ModifierEffectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('vanishStrikes'), strikes: z.number().int().min(2) }),
   /** A Perfect Shot makes the next roll cost no stamina. */
   z.object({ type: z.literal('perfectRefund') }),
+  /**
+   * For `window` seconds after a roll, the next blow that lands is blocked by a ring of embers that bursts
+   * outward for `damage` within `radius` (the Warden's Aegis).
+   */
+  z.object({ type: z.literal('rollWard'), window: pos, radius: pos, damage: pos }),
+  /** Every kill bursts into embers, `damage` to everything within `radius` of it. */
+  z.object({ type: z.literal('killBurst'), radius: pos, damage: pos }),
   /** Each Ember spent heals the player `amount`. */
   z.object({ type: z.literal('emberHeal'), amount: pos }),
   /**
@@ -917,6 +924,32 @@ export const LootSchema = z.object({
     levelsPerBand: z.number().int().min(1),
     odds: weighted(TierSchema),
   }),
+  /**
+   * A Warden's chest (docs/gear-and-loot.md, section 8): `items` pieces from `tiers` (the first kill's first
+   * piece is at least `firstFloor`), `materials`, `marks` Warden Marks, and a roll for the signature item
+   * that starts at `signature.chance`, rises by `step` with each miss and is sure by chest `sureBy`.
+   * `markPrice` Marks buy the signature outright. Heat (from Sigils) scales the Warden and the chest.
+   */
+  wardens: z.object({
+    items: z.number().int().min(1),
+    tiers: weighted(TierSchema),
+    firstFloor: TierSchema,
+    materials: z.array(ItemCountSchema),
+    marks: z.number().int().nonnegative(),
+    mark: z.string(),
+    signature: z.object({ chance: fraction, step: fraction, sureBy: z.number().int().min(1) }),
+    markPrice: z.number().int().min(1),
+    sigil: z.string(),
+    heat: z.object({
+      max: z.number().int().min(1),
+      /** Per step above 1: Warden health and damage, signature chance, tier weight moved up, and Marks from `marksFrom`. */
+      hp: nonneg,
+      damage: nonneg,
+      signature: fraction,
+      shift: nonneg,
+      marksFrom: z.number().int().min(1),
+    }),
+  }),
   /** Smithy work (docs/gear-and-loot.md, section 7). */
   smithy: z.object({
     /**
@@ -1076,7 +1109,27 @@ export const EnemySchema = z.object({
    * killed it never returns. The arena is the square `arenaTiles` from its spawn point to each side;
    * walking in starts the fight and the player cannot leave until it ends (the fog gate).
    */
-  boss: z.object({ title: z.string(), arenaTiles: pos }).optional(),
+  boss: z
+    .object({
+      title: z.string(),
+      arenaTiles: pos,
+      /**
+       * A Warden's poise: weapon damage fills it (hammers faster) while its shield is down; full, it
+       * staggers for `stagger` ticks and empties.
+       */
+      poise: z.object({ max: pos, stagger: ticks }).optional(),
+      /**
+       * A Warden's chest loot: its named `signature` Legendary, and the `alternate` it gives instead when its
+       * charge was baited onto the arena's braziers `slams` times in the fight.
+       */
+      warden: z
+        .object({
+          signature: z.string(),
+          alternate: z.object({ item: z.string(), slams: z.number().int().min(1) }),
+        })
+        .optional(),
+    })
+    .optional(),
   brain: BrainSchema,
 });
 export type EnemyDef = z.infer<typeof EnemySchema>;

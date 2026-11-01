@@ -139,14 +139,21 @@ export class Ui {
   /** The bonfire's own menu, shown while resting. Rebuilt only when it appears or the class changes. */
   restMenu(
     label: ClassLabel | null,
-    handlers: { travel(): void; levelUp(): void; abilities(): void; changeClass(): void },
+    handlers: {
+      travel(): void;
+      levelUp(): void;
+      abilities(): void;
+      changeClass(): void;
+      /** At a fallen Warden's bonfire: its screen (Rekindle, its signature). */
+      warden: (() => void) | null;
+    },
   ): void {
     if (!label) {
       this.restEl?.remove();
       this.restEl = null;
       return;
     }
-    const key = `${label.name}|${label.element}`;
+    const key = `${label.name}|${label.element}|${handlers.warden ? 'warden' : ''}`;
     if (this.restEl?.dataset.shown === key) return;
     this.restEl?.remove();
     this.restEl = h(
@@ -158,6 +165,9 @@ export class Ui {
       h('button', { onclick: () => handlers.levelUp() }, 'Level up'),
       h('button', { onclick: () => handlers.abilities() }, 'Abilities'),
       h('button', { onclick: () => handlers.changeClass() }, 'Change class'),
+      handlers.warden
+        ? h('button', { class: 'warden', onclick: () => handlers.warden?.() }, 'The Warden')
+        : '',
     );
     this.restEl.dataset.shown = key;
     this.root.append(this.restEl);
@@ -418,6 +428,7 @@ export class Ui {
       levelUp: () => undefined,
       abilities: () => undefined,
       changeClass: () => undefined,
+      warden: null,
     });
     this.clearHint();
   }

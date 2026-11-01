@@ -260,6 +260,30 @@ export class Audio {
         const p = this.chainPitch();
         return this.arp([659 * p, 988 * p], 50, 0.2, 0.04);
       }
+      case 'wardenChest':
+        // A deep chest bell, and a high one over it when the signature is inside.
+        this.burst(0.5, 900, 0.3, 'lowpass');
+        this.arp([196, 262, 392], 140, 1.4, 0.07);
+        if (e.signature) this.arp([1047, 1319, 1568, 2093], 90, 1.2, 0.06);
+        return;
+      case 'warded':
+        this.burst(0.3, 1400, 0.3, 'bandpass', [600, 2400]);
+        return this.arp([784, 1175], 40, 0.3, 0.06);
+      case 'bossStaggered':
+        return this.tone(
+          [
+            [60, 1],
+            [90, 0.6],
+          ],
+          0.6,
+          0.2,
+          'triangle',
+        );
+      case 'brazierSlam':
+        this.burst(0.3, 800, 0.3, 'lowpass');
+        return this.arp([294, 440], 80, 0.5, 0.05);
+      case 'rekindled':
+        return this.arp([131, 196, 262], 160, 1.2, 0.06);
       case 'gambled':
         // A coin's clink, then the tier's own chime for anything good.
         this.arp([1568, 2093], 35, 0.2, 0.04);

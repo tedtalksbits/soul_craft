@@ -15,6 +15,12 @@ export interface SimState {
   spawnEpoch: number;
   /** Gear drops in a row below the pity tier (`loot.json → pity`); the next one past the limit is better. */
   lootPity: number;
+  /** Wardens rekindled for a refight, at their Heat. Absent in saves from before it (as are the next two). */
+  rekindled?: Record<string, number>;
+  /** The highest Heat cleared per Warden. */
+  heatCleared?: Record<string, number>;
+  /** Chests in a row without the signature item, per Warden. */
+  signaturePity?: Record<string, number>;
   /** Ranks a rebuilt project has risen past I (2 means rank III). Absent in saves from before it. */
   projectRanks?: Record<string, number>;
   /** Tiers whose gear is salvaged the moment it is picked up. Absent in saves from before it. */

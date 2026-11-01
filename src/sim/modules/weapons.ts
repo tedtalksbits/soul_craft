@@ -346,6 +346,8 @@ export function strikeWith(sim: Simulation, e: Entity, p: Player): Body | null {
       fromY: body.y,
       knockback: numbers.knockback * shape.knockback,
       charges: true,
+      // The hammer's Break: it fills a Warden's poise three times faster.
+      poise: sig.type === 'break' ? 3 : 1,
     });
     if (result === 'blocked') return tb;
     if (result !== 'hit') continue;

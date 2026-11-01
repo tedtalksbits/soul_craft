@@ -7,10 +7,22 @@
 import type { BrainDef, EnemyDef } from '../../content/schemas';
 import type { Entity } from '../../core/ecs';
 import { dirFromVec } from '../../core/math';
-import type { Ai, Body, ContactDamage, Enemy, Facing, Motion } from '../components';
+import {
+  Body,
+  Brazier,
+  type Ai,
+  type ContactDamage,
+  type Enemy,
+  type Facing,
+  type Motion,
+} from '../components';
 import type { Simulation } from '../simulation';
 import { applyDamage } from './combat';
 import { spawnProjectile } from './projectiles';
+import { countBrazierSlam, heatDamage, heatOf } from './wardens';
+
+/** How close (px) a Warden's charge must end to a brazier to count as baited onto it. */
+const BRAZIER_BAIT = 16;
 
 export interface BrainContext {
   sim: Simulation;
@@ -261,7 +273,7 @@ const shieldKnight: Brain<'shieldKnight'> = (c, b) => {
 const warden: Brain<'warden'> = (c, b) => {
   const { ai, sim, enemy } = c;
   const fighting = sim.state.bossFight?.boss === enemy.archetype;
-  c.contact.amount = c.def.contactDamage;
+  c.contact.amount = Math.round(c.def.contactDamage * heatDamage(sim, c.e));
   if (!fighting) {
     c.contact.amount = 0;
     setAi(ai, 'dormant');
@@ -286,9 +298,25 @@ const warden: Brain<'warden'> = (c, b) => {
       facePlayer(c);
       if (ai.t >= b.slamWindupTicks) {
         sim.events.emit({ type: 'bossSlam', x: c.body.x, y: c.body.y, radius: b.slamRadius });
+        // At the highest Heat the slam also throws a ring of embers outward.
+        if (heatOf(sim, c.e) >= sim.content.loot.wardens.heat.max)
+          for (let i = 0; i < 10; i++) {
+            const a = (i / 10) * Math.PI * 2;
+            spawnProjectile(sim, {
+              kind: 'fireball',
+              team: 'enemy',
+              x: c.body.x,
+              y: c.body.y,
+              dirX: Math.cos(a),
+              dirY: Math.sin(a),
+              speed: 1.8,
+              damage: Math.round(b.slamDamage * 0.4 * heatDamage(sim, c.e)),
+              life: 90,
+            });
+          }
         if (c.dist <= b.slamRadius)
           applyDamage(sim, sim.player, {
-            amount: b.slamDamage,
+            amount: Math.round(b.slamDamage * heatDamage(sim, c.e)),
             crit: false,
             fromX: c.body.x,
             fromY: c.body.y,
@@ -313,11 +341,14 @@ const warden: Brain<'warden'> = (c, b) => {
     case 'charge': {
       c.motion.vx = ai.dirX * b.chargeSpeed;
       c.motion.vy = ai.dirY * b.chargeSpeed;
-      c.contact.amount = b.chargeDamage;
+      c.contact.amount = Math.round(b.chargeDamage * heatDamage(sim, c.e));
       const slammed = c.motion.hitWall && ai.t > 1;
       if (slammed || ai.t >= b.chargeTicks) {
         setAi(ai, 'recover');
         if (slammed) sim.events.emit({ type: 'wallSlam', x: c.body.x, y: c.body.y });
+        // Baited onto a brazier: it counts toward the alternate kill.
+        for (const [, , bb] of sim.ecs.query(Brazier, Body))
+          if (Math.hypot(bb.x - c.body.x, bb.y - c.body.y) <= BRAZIER_BAIT) countBrazierSlam(sim, c.e);
       }
       return;
     }

@@ -55,6 +55,13 @@
     "icon": "warden_mark",
     "stack": 99
   },
+  "warden_sigil": {
+    "kind": "material",
+    "name": "Warden Sigil",
+    "description": "An iron seal with a Warden’s mark burned in. Spent at a Warden’s bonfire, it rekindles a fiercer fight, and a richer chest.",
+    "icon": "warden_sigil",
+    "stack": 10
+  },
   "iron_axe": {
     "kind": "tool",
     "name": "Iron Axe",
@@ -1148,6 +1155,101 @@
       "name": "Hearth",
       "text": "Every Ember you spend heals you 6 HP.",
       "effect": { "type": "emberHeal", "amount": 6 }
+    }
+  },
+  "wardens_aegis": {
+    "kind": "armor",
+    "name": "The Warden’s Aegis",
+    "description": "The Ashen Warden’s breastplate, still banked with its embers. It remembers how to guard.",
+    "icon": "iron_mail",
+    "stack": 1,
+    "drop": 0,
+    "armor": { "slot": "chest", "value": 8, "weight": "plate" },
+    "upgrades": [
+      {
+        "armor": 2,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 3,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 3,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "maxHp", "value": 12 }],
+    "power": {
+      "name": "Ring of Embers",
+      "text": "After a roll, the next blow that lands on you is turned aside by a ring of embers that bursts outward.",
+      "effect": { "type": "rollWard", "window": 1.5, "radius": 36, "damage": 18 }
+    }
+  },
+  "wardens_brand": {
+    "kind": "weapon",
+    "name": "The Warden’s Brand",
+    "description": "The Warden’s own maul, cracked where it met the braziers. Every blow still smolders.",
+    "icon": "stone_maul",
+    "stack": 1,
+    "drop": 0,
+    "weapon": { "type": "hammer", "damage": 26, "staminaCost": 26, "reach": 17, "width": 24, "knockback": 5 },
+    "upgrades": [
+      { "damage": 4, "souls": 200, "items": [{ "item": "stone", "count": 6 }] },
+      {
+        "damage": 4,
+        "souls": 320,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "iron_scrap", "count": 4 }
+        ]
+      },
+      {
+        "damage": 5,
+        "souls": 480,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 6,
+        "souls": 660,
+        "items": [
+          { "item": "stone", "count": 12 },
+          { "item": "iron_scrap", "count": 8 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "crushDamage", "value": 0.15 }],
+    "power": {
+      "name": "Pyre",
+      "text": "Every kill bursts into embers, burning everything close by.",
+      "effect": { "type": "killBurst", "radius": 40, "damage": 14 }
     }
   },
   "crown_of_the_unforgotten": {

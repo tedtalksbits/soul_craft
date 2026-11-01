@@ -187,6 +187,24 @@ export class Effects {
       case 'swing':
         this.slash = { ageMs: 0, dirX: e.dirX, dirY: e.dirY };
         return;
+      case 'wardenChest':
+        this.burst(e.x, e.y, {
+          count: 40,
+          color: e.signature ? 0xffd27a : 0xe8b070,
+          speed: 2.4,
+          size: 2,
+          life: 50,
+          z: 10,
+          vz: 1.4,
+        });
+        this.shake = Math.min(9, this.shake + 4);
+        return;
+      case 'warded':
+        this.burst(e.x, e.y, { count: 24, color: 0xff9a30, speed: 2.6, size: 2, life: 26, z: 6, vz: 0.4 });
+        return;
+      case 'brazierSlam':
+        this.burst(e.x, e.y, { count: 18, color: 0xffb050, speed: 1.8, size: 2, life: 30, z: 4, vz: 1 });
+        return;
       case 'shockwave':
         this.burst(e.x, e.y, { count: 28, color: 0xc8b48a, speed: 2.2, size: 2, life: 30, z: 2, vz: 0.6 });
         this.shake = Math.min(9, this.shake + 5);

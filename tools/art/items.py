@@ -589,6 +589,24 @@ ICONS['steel_pickaxe'] = [
     "................",
     "................",
 ]
+ICONS['warden_sigil'] = [
+    "................",
+    "................",
+    ".....iiiiii.....",
+    "....iIIIIIIi....",
+    "...iI6hhhh6Ii...",
+    "...iIhHooHhIi...",
+    "...iIhOooOhIi...",
+    "...iIhooOohIi...",
+    "...iIhHooHhIi...",
+    "...iI6hhhh6Ii...",
+    "....iIIIIIIi....",
+    ".....i6666i.....",
+    "................",
+    "................",
+    "................",
+    "................",
+]
 ICONS['bone_cleaver'] = [
     "................",
     "................",
@@ -739,7 +757,7 @@ ORDER = ['ashwood', 'fungal_cap', 'glowspore', 'iron_scrap', 'bone_shard', 'slim
          'ring_vigor', 'ring_breath', 'bandage', 'potion_ember', 'potion_stone', 'potion_breath',
          'stone', 'kindling', 'relic_oath', 'relic_sovereign',
          'ashen_hood', 'iron_helm', 'wanderers_wraps', 'iron_greaves', 'ashwood_spear', 'stone_maul', 'bone_daggers', 'ashwood_bow', 'ember_staff', 'warden_mark',
-         'fire_oil', 'bleeding_oil', 'wardens_bane', 'iron_axe', 'iron_pickaxe', 'steel_axe', 'steel_pickaxe']
+         'fire_oil', 'bleeding_oil', 'wardens_bane', 'iron_axe', 'iron_pickaxe', 'steel_axe', 'steel_pickaxe', 'warden_sigil']
 
 # ---------------------------------------------------------------- shading and outline
 def paint(rows):

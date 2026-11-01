@@ -226,7 +226,12 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    Warden's Bane, 90 s); an axe and a pickaxe in two tiers (fewer swings, more yield, and richer finds like iron
    from rock); ranks II and III for the well, storehouse, palisade and lamps (III needs a Warden Mark); and the Ember
    Gambler, who opens shop with the storehouse's rank II.
-5. **Wardens:** chests, signature items, Rekindle, pity and Marks, Heat, alternate kills.
+5. **Wardens (built):** a chest every time a Warden falls (the first kill keeps its story drops and adds a Noble
+   or better); the Ashen Warden's signature, the Warden's Aegis (a ring of embers after a roll), with pity (12%,
+   +6% a miss, sure by the 8th chest) and 6 Warden Marks to buy it; Rekindle from the Warden's bonfire (refights
+   give only items); Heat 2 and 3 with Warden Sigils (tougher, richer, and a ring of embers from the slam at Heat
+   3); the alternate kill (bait its charge onto the braziers three times for the Warden's Brand); and a poise
+   meter hammers fill three times faster.
 6. **Onboarding:** the Road Camp objective, with `kill` and `gather` goals.
 7. **Art:** weapon and armor layers on the character, item icons, beams and chimes.
 

@@ -30,7 +30,7 @@ import { applyDamage } from './combat';
 import { giveStartingAttributes } from './progression';
 import { interact } from './interaction';
 import { beginUse, finishUse, flaskCapacity, giveStartingKit, playerStats, syncVitals } from './items';
-import { onRest } from './perks';
+import { onRest, onRollEnded } from './perks';
 import {
   attackBox as weaponAttackBox,
   chargeTicks,
@@ -206,6 +206,7 @@ function updatePlayer(sim: Simulation): void {
       if (p.t >= def.roll.duration) {
         setState(p, 'free');
         rollEnded(sim);
+        onRollEnded(sim);
       }
       break;
     }

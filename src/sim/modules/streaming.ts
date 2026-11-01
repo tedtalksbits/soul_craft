@@ -20,6 +20,7 @@ import {
 import { CHUNK, LOAD_RADIUS, TILE, UNLOAD_RADIUS } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
+import { isRefight, kindleHeat } from './wardens';
 import { chunkOf, type Chunk } from '../world/chunk-world';
 import type { SpawnPoint } from '../world/generator';
 import { spawnEnemy } from './enemies';
@@ -82,12 +83,12 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
     case 'enemy':
       if (
         sim.state.killed[sp.id] ||
-        sim.state.bossesDefeated[ent.archetype] ||
+        (sim.state.bossesDefeated[ent.archetype] && !isRefight(sim, ent.archetype)) ||
         inVillageWard(sim, sp) ||
         nearCheckpoint(sim, sp)
       )
         return;
-      spawnEnemy(sim, ent.archetype, sp.x, sp.y, spawned);
+      kindleHeat(sim, spawnEnemy(sim, ent.archetype, sp.x, sp.y, spawned), ent.archetype);
       return;
     case 'bonfire': {
       const e = ecs.create();

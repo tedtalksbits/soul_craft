@@ -30,6 +30,7 @@ import { iconElement, tintedIcon } from './ui/icons';
 import { InventoryScreen } from './ui/inventory';
 import { LevelScreen } from './ui/level';
 import { RebuildScreen } from './ui/rebuild';
+import { WardenScreen, wardenBonfire } from './ui/warden';
 import { Ui, type ClassLabel } from './ui/ui';
 
 /** Autosave this often while playing, in addition to every bonfire rest. */
@@ -51,6 +52,7 @@ export class App {
   readonly inventory: InventoryScreen;
   readonly level: LevelScreen;
   readonly rebuild: RebuildScreen;
+  readonly warden: WardenScreen;
   readonly audio = new Audio();
   /** Per-device settings: controls, display, audio, tutorial hints. */
   readonly settings = new SettingsStore();
@@ -93,6 +95,10 @@ export class App {
       act: (action) => this.input.queueAction(action),
       icon: (item) => this.itemIcon(item),
     });
+    this.warden = new WardenScreen(uiRoot, {
+      sim: () => this.sim,
+      act: (action) => this.input.queueAction(action),
+    });
     this.loop = new FixedLoop(
       () => this.tick(),
       (dt) => this.frame(dt),
@@ -120,6 +126,9 @@ export class App {
         } else if (this.rebuild.isOpen && e.code === 'Escape') {
           e.preventDefault();
           this.rebuild.close();
+        } else if (this.warden.isOpen && e.code === 'Escape') {
+          e.preventDefault();
+          this.warden.close();
         } else if (this.inventory.isOpen && (e.code === 'Escape' || pack)) {
           e.preventDefault();
           this.inventory.close();
@@ -382,6 +391,7 @@ export class App {
     this.inventory.close();
     this.level.close();
     this.rebuild.close();
+    this.warden.close();
     this.ui.hideScreen();
     this.ui.resetHud();
     this.renderer.attach(sim);
@@ -444,7 +454,7 @@ export class App {
 
   /** A panel (pack, level-up, rebuild) is open: it takes game input and holds the world still. */
   private get panelOpen(): boolean {
-    return this.inventory.isOpen || this.level.isOpen || this.rebuild.isOpen;
+    return this.inventory.isOpen || this.level.isOpen || this.rebuild.isOpen || this.warden.isOpen;
   }
 
   // ------------------------------------------------------------------ per tick / frame
@@ -473,6 +483,7 @@ export class App {
     this.inventory.refresh();
     this.level.refresh();
     this.rebuild.refresh();
+    this.warden.refresh();
     // Hints wait while a menu is open; they would cover it.
     if (!this.panelOpen) this.tutorial.update(sim);
     if (this.slot && sim.tick - this.lastSaveTick >= AUTOSAVE_INTERVAL_TICKS) void this.save();
@@ -558,6 +569,25 @@ export class App {
         return this.ui.toast(`${this.content.item(e.item).name}: your weapon is coated for ${e.seconds}s`);
       case 'coatingEnded':
         return this.ui.toast('The coating on your weapon has worn off.');
+      case 'wardenChest': {
+        this.ui.banner("THE WARDEN'S CHEST", 'good');
+        const name = this.content.enemies[e.boss]?.boss?.warden;
+        if (e.signature && name) return this.ui.toast('Something burns brighter among the spoils.', 3200);
+        if (e.stirring) return this.ui.toast('The embers stir…', 3000);
+        return;
+      }
+      case 'rekindled':
+        return this.ui.toast(
+          e.heat > 1 ? `The Warden stirs in its keep, at Heat ${e.heat}.` : 'The Warden stirs in its keep.',
+          3000,
+        );
+      case 'bossStaggered':
+        return this.ui.toast('The Warden staggers!', 1600);
+      case 'brazierSlam':
+        return this.ui.toast(
+          e.count >= 3 ? 'The braziers flare. Something has changed.' : 'The brazier flares.',
+          2000,
+        );
       case 'gambled':
         return this.ui.toast(
           `The Gambler hands over: ${this.content.loot.tiers[e.tier].name} ${this.content.item(e.item).name}`,
@@ -653,6 +683,7 @@ export class App {
       levelUp: () => this.level.open(),
       abilities: () => this.inventory.open('abilities'),
       changeClass: () => this.changeClass(),
+      warden: resting && wardenBonfire(sim) ? () => this.warden.open() : null,
     });
     // The held AoE's landing preview (hold to aim, release to throw).
     this.renderer.abilityFx.aimPreview = free ? this.input.aimPreview : undefined;

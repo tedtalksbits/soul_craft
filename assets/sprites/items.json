@@ -41,7 +41,8 @@
     "iron_axe": 34,
     "iron_pickaxe": 35,
     "steel_axe": 36,
-    "steel_pickaxe": 37
+    "steel_pickaxe": 37,
+    "warden_sigil": 38
   },
   "animations": {}
 }

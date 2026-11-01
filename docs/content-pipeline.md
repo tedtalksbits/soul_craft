@@ -107,6 +107,12 @@ swinging; a negative `lunge` steps back), and how it is drawn (`arc`,
 `minCharge` and `chargeMove` apply to every type. A perk with `weaponTypes` rolls only on
 weapons of those types.
 
+A boss's `boss` block can add `poise { max, stagger }` (weapon damage fills it while the shield is down, hammers
+three times faster; full, the boss staggers) and `warden { signature, alternate { item, slams } }`: its named
+Legendary, and the one it gives instead when its charge was baited onto the arena's braziers `slams` times.
+`loot.json → wardens` sets the chest (pieces, tier odds, the first kill's tier floor, materials, Marks), the
+signature's pity, the Marks that buy it outright, the Sigil item, and what each step of Heat adds.
+
 `restoration.json` projects can have `ranks`: rank II, III and so on, each `{ description, cost, effects }`, raised
 at the site like the first rebuild and adding to the effects before them. The `gambler` effect opens the Ember
 Gambler's shop at the site; `loot.json → gambler` sets the price per level band, the levels in a band, and the

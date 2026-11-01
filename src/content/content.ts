@@ -553,6 +553,17 @@ function checkGear(
   for (const [id, def] of Object.entries(c.items))
     if (def.kind === 'armor')
       for (const u of def.upgrades) for (const c2 of u.items) known(`(items.json) ${id}.upgrades`, c2.item);
+  known('wardens.mark', loot.wardens.mark);
+  known('wardens.sigil', loot.wardens.sigil);
+  for (const m of loot.wardens.materials) known('wardens.materials', m.item);
+  for (const [id, e] of Object.entries(c.enemies)) {
+    const warden = e.boss?.warden;
+    if (!warden) continue;
+    for (const item of [warden.signature, warden.alternate.item]) {
+      const def = c.items[item];
+      if (!def || !gearSlotOf(def)) problems.push(`enemies.json: ${id}.boss.warden: "${item}" is not gear`);
+    }
+  }
   for (const [id, e] of Object.entries(c.enemies))
     if (e.gear && !(e.gear.table in loot.tables))
       problems.push(`enemies.json: ${id}.gear: unknown table "${e.gear.table}"`);

@@ -247,6 +247,8 @@ export interface PerkState {
   emberSpent: boolean;
   /** The tick the roll whose stamina was already given back began on. */
   refundedRoll: number;
+  /** Ticks left on a ring of embers raised by a roll (the Warden's Aegis). Absent in saves from before it. */
+  ward?: number;
 }
 export const PerkState = defineComponent<PerkState>('perkState');
 
@@ -385,6 +387,12 @@ export interface Boss {
   shielded: boolean;
   /** Ticks until the next add is called while shielded. */
   addTimer: number;
+  /** A rekindled Warden's Heat (absent means 1). */
+  heat?: number;
+  /** Times its charge was baited onto a brazier this fight (the alternate kill). */
+  brazierSlams?: number;
+  /** Poise taken so far; full, it staggers. */
+  poise?: number;
 }
 export const Boss = defineComponent<Boss>('boss');
 

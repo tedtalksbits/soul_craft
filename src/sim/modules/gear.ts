@@ -127,6 +127,9 @@ export function scaleEffect(fx: ModifierEffect, strength: number): ModifierEffec
       return fx;
     case 'emberHeal':
       return { ...fx, amount: fx.amount * strength };
+    case 'rollWard':
+    case 'killBurst':
+      return { ...fx, damage: fx.damage * strength };
   }
 }
 
@@ -191,6 +194,9 @@ function headline(fx: ModifierEffect): string {
       return '';
     case 'emberHeal':
       return String(Math.round(fx.amount));
+    case 'rollWard':
+    case 'killBurst':
+      return String(Math.round(fx.damage));
   }
 }
 

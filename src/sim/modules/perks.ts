@@ -2,10 +2,12 @@
  * The effects only gear brings: chest and leg perks and the Legendary powers (a shield after resting,
  * keeping your footing, the Last Ember, a refund for rolling through a blow, a burning streak, charging
  * the super by standing still). Combat, the player controller and resting call the hooks here at their
- * moment; the effects themselves come from `activeEffects`, which also serves class modifiers.
+ * moment; the effects themselves come from `activeEffects`, which also serves class modifiers. The Warden
+ * Legendaries add a ring of embers after a roll and a burst from every kill.
  */
 import type { Entity } from '../../core/ecs';
-import { Body, Motion, PerkState, Player, Stamina, Zone, type Health } from '../components';
+import { Body, Dying, Enemy, Health, Motion, PerkState, Player, Stamina, Zone } from '../components';
+import { applyDamage } from './combat';
 import { TICK_RATE } from '../constants';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
@@ -118,9 +120,48 @@ export function onWeaponHit(sim: Simulation, target: Entity): void {
   }
 }
 
+/** As a roll ends: a ring of embers rises for a moment, ready to turn aside the next blow. */
+export function onRollEnded(sim: Simulation): void {
+  const wards = activeEffects(sim, 'rollWard');
+  if (wards.length === 0) return;
+  perkState(sim).ward = Math.round(Math.max(...wards.map((fx) => fx.window)) * TICK_RATE);
+}
+
+/** Whether a ring of embers takes this blow: it bursts outward, burning what is close. */
+export function wardOff(sim: Simulation): boolean {
+  const s = sim.ecs.get(sim.player, PerkState);
+  if (!s?.ward) return false;
+  s.ward = 0;
+  const pb = sim.ecs.need(sim.player, Body);
+  for (const fx of activeEffects(sim, 'rollWard')) burnAround(sim, pb.x, pb.y, fx.radius, fx.damage);
+  sim.events.emit({ type: 'warded', x: pb.x, y: pb.y });
+  return true;
+}
+
+/** After a kill: kills burst into embers, with the Legendary for it. */
+export function killBurst(sim: Simulation, at: Body): void {
+  for (const fx of activeEffects(sim, 'killBurst')) burnAround(sim, at.x, at.y, fx.radius, fx.damage);
+}
+
+function burnAround(sim: Simulation, x: number, y: number, radius: number, damage: number): void {
+  for (const [target, , tb] of sim.ecs.query(Enemy, Body, Health)) {
+    if (sim.ecs.has(target, Dying) || Math.hypot(tb.x - x, tb.y - y) > radius + tb.w / 2) continue;
+    applyDamage(sim, target, {
+      amount: Math.max(1, Math.round(damage)),
+      crit: false,
+      fromX: x,
+      fromY: y,
+      knockback: 2.5,
+      unblockable: true,
+      charges: true,
+    });
+  }
+}
+
 function tickPerks(sim: Simulation): void {
   const s = sim.ecs.get(sim.player, PerkState);
   if (s) {
+    if ((s.ward ?? 0) > 0) s.ward = (s.ward ?? 0) - 1;
     for (const type of Object.keys(s.cooldowns)) if ((s.cooldowns[type] ?? 0) > 0) s.cooldowns[type]!--;
     if (s.streakTicks > 0 && --s.streakTicks === 0) s.streak = 0;
   }

@@ -37,6 +37,26 @@
       ["legendary", 1]
     ]
   },
+  "wardens": {
+    "items": 2,
+    "tiers": [
+      ["rare", 60],
+      ["noble", 32],
+      ["legendary", 8]
+    ],
+    "firstFloor": "noble",
+    "materials": [
+      { "item": "iron_scrap", "count": 4 },
+      { "item": "bone_shard", "count": 3 },
+      { "item": "stone", "count": 4 }
+    ],
+    "marks": 1,
+    "mark": "warden_mark",
+    "signature": { "chance": 0.12, "step": 0.06, "sureBy": 8 },
+    "markPrice": 6,
+    "sigil": "warden_sigil",
+    "heat": { "max": 3, "hp": 0.35, "damage": 0.2, "signature": 0.04, "shift": 6, "marksFrom": 2 }
+  },
   "smithy": {
     "salvage": {
       "yields": {
