@@ -20,6 +20,7 @@ import { Effects } from './effects';
 import { EntityLayer } from './entity-layer';
 import { AbilityFx } from './ability-fx';
 import { Beacons } from './beacons';
+import { LootMarks } from './loot-marks';
 import { BossFx } from './boss-fx';
 import { Hud } from './hud';
 import { VIEW_H, VIEW_W, viewFor } from './view-size';
@@ -49,6 +50,7 @@ export class GameRenderer {
   readonly hud: Hud;
   private readonly lighting = new Lighting(VIEW_W, VIEW_H);
   private readonly beacons = new Beacons();
+  private readonly lootMarks: LootMarks;
   private sim: Simulation | null = null;
 
   private constructor(
@@ -58,6 +60,7 @@ export class GameRenderer {
   ) {
     this.chunks = new ChunkLayer(assets);
     this.entities = new EntityLayer(assets);
+    this.lootMarks = new LootMarks(assets);
     this.effects = new Effects(assets);
     this.abilityFx = new AbilityFx(this.effects, assets);
     this.bossFx = new BossFx(this.effects);
@@ -77,6 +80,7 @@ export class GameRenderer {
       this.lighting.root,
       this.overDark,
       this.beacons.root,
+      this.lootMarks.root,
       this.debugScreen,
       this.hud.root,
     );
@@ -118,6 +122,7 @@ export class GameRenderer {
     this.hud.root.visible = sim !== null;
     this.lighting.root.visible = sim !== null;
     this.beacons.root.visible = sim !== null;
+    this.lootMarks.root.visible = sim !== null;
     if (sim) this.snapCamera(sim);
   }
 
@@ -169,6 +174,7 @@ export class GameRenderer {
         this.effects.hurtFlash,
       );
       this.beacons.update(sim, cam, this.view, dtMs);
+      this.lootMarks.update(sim, cam, this.view, dtMs);
       this.hud.update(sim, dtMs);
     }
     beforeDraw?.();

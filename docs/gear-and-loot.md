@@ -479,6 +479,20 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 7, first half, as built (2026-11-01).** Icons and drop feel:
+
+- **Every gear base has its own icon,** drawn in the items generator like the rest: Iron Dirks, Bone Recurve,
+  Charred Rod, the seven class Legendaries and the Ring of the Last Ember, and the Warden's Aegis and Brand. The
+  Legendaries keep their base's silhouette in their own materials (an ember blade for Cinderbrand, a blackened maul
+  with glowing cracks for the Brand), so the slot still reads at a glance.
+- **Beams:** a thin pillar in the tier's color over every Noble and Legendary piece on the ground, the Legendary's
+  taller, brighter and quicker to pulse. They are drawn over the darkness, like the bonfire beams, which stay wider
+  and warm so the two are never confused.
+- **The minimap pip** is a small plus in the tier's color on the compass bar, the only map the HUD has.
+- **Ground labels:** gear within 72 px shows its name in the pixel font, in its tier's color; a pile stacks its
+  labels so none overlap.
+- **Chimes** were already in from phase 2 (Rare, Noble, the Legendary bell, the Greater star).
+
 **Phase 6, onboarding, as built (2026-11-01).** Choices made while building it:
 
 - **The Road Camp sits about 40 tiles west of the village,** its road on the row the village's west road leaves by.

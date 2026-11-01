@@ -237,7 +237,10 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    helmet), and gather 20 fungal caps, which she turns into your first 5 Field Bandages before sending you to rest.
    New `kill`, `gather` and `all` goals, objective rewards, and a "New gear" card and toast when picked-up gear
    would raise Power.
-7. **Art:** weapon and armor layers on the character, item icons, beams and chimes.
+7. **Art:** weapon and armor layers on the character, item icons, beams and chimes. _First half built:_ every gear
+   base has its own icon (15 new, the Legendaries and the Warden's pieces among them), and Noble and Legendary
+   drops raise a beam in their tier's color with a pip on the compass; gear near the player shows its name in its
+   tier's color. The chimes were already in. Still to come: the weapon and armor layers on the character.
 
 ### Milestone 5: Life sim, in service of combat
 

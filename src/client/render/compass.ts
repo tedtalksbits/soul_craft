@@ -6,11 +6,12 @@
  * the same way the world map reads.
  */
 import { Container, Graphics } from 'pixi.js';
-import { Abilities, Body } from '../../sim/components';
+import { Abilities, Body, Pickup } from '../../sim/components';
 import { TILE } from '../../sim/constants';
 import type { Simulation } from '../../sim/simulation';
 import type { Assets } from '../assets';
 import { classPalette } from './class-palette';
+import { beamed, tierColor } from './loot-marks';
 import { PixelText } from './pixel-text';
 
 /** Bar width in game pixels: 360° across it. */
@@ -72,7 +73,10 @@ export class Compass {
     }
   }
 
-  /** What the bar points at: the nearest lit bonfire, the village, the pin and where you died. */
+  /**
+   * What the bar points at: the nearest lit bonfire, the village, the pin, where you died, and a pip for every
+   * Noble or Legendary piece lying nearby (the ones with a beam).
+   */
   private marks(sim: Simulation, pb: Body): Mark[] {
     const marks: Mark[] = [];
     let nearest: { x: number; y: number; d: number } | null = null;
@@ -88,6 +92,13 @@ export class Compass {
       const n = nearest;
       marks.push({ x: n.x, y: n.y, draw: (g, x, y) => flame(g, x, y) });
     }
+    for (const [, pickup, body] of sim.ecs.query(Pickup, Body)) {
+      const tier = pickup.gear?.tier;
+      if (tier && beamed(tier)) {
+        const color = tierColor(sim, tier);
+        marks.push({ x: body.x, y: body.y, draw: (g, x, y) => pip(g, x, y, color) });
+      }
+    }
     const death = sim.state.lastDeath;
     if (death) marks.push({ x: death.x, y: death.y, draw: (g, x, y) => cross(g, x, y) });
     const pin = sim.state.pin;
@@ -102,6 +113,12 @@ export class Compass {
 
 function diamond(g: Graphics, x: number, y: number, color: number): void {
   g.poly([x, y - 3, x + 3, y, x, y + 3, x - 3, y]).fill(color);
+}
+
+function pip(g: Graphics, x: number, y: number, color: number): void {
+  // A small plus, so it is never mistaken for the village's diamond or the bonfire's flame.
+  g.rect(x - 1, y, 3, 1).fill(color);
+  g.rect(x, y - 1, 1, 3).fill(color);
 }
 
 function flame(g: Graphics, x: number, y: number): void {

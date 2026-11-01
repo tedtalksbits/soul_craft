@@ -48,6 +48,8 @@ MATERIALS = {
     'breath':  ('qQ)', ('#d0f6ff', '#6ec8e8', '#3a8aae', '#1d4c62')),
     'oath':    ('fF+', ('#fffcec', '#fff0b4', '#e6c266', '#9a7a30')),   # the Oath Ember's pale gold flame
     'crimson': ('hH=', ('#ff9a7a', '#dc4a32', '#9e2c1e', '#5a1410')),   # the Sovereign Ember's crimson flame
+    'bronze':  ('nN~', ('#e8c48a', '#b88a4c', '#7e5a2c', '#4a3216')),   # Gravebell's bell
+    'black':   ('dD-', ('#6a6670', '#46434c', '#2c2a31', '#18171b')),   # blackened iron and charred wood
 }
 
 def hx(h):
@@ -666,7 +668,7 @@ def ring(band, gem):
                       (7, 3, gem.upper()), (8, 3, gem), (6, 4, gem.upper()), (7, 4, gem.upper()),
                       (8, 4, gem), (9, 4, gem), (7, 5, gem), (8, 5, gem), (7, 6, gem), (8, 6, gem)]:
         g[y][x] = c
-    shadow = {'y': '!', 'i': '6', 'v': '$', 'u': '%'}
+    shadow = {'y': '!', 'i': '6', 'v': '$', 'u': '%', 'o': '*', 'b': '8'}
     g[6][8] = shadow[gem]
     g[5][8] = shadow[gem]
     return [''.join(r) for r in g]
@@ -675,6 +677,176 @@ ICONS['chipped_sword'] = sword(tip_row=2, guard='y', chipped=True)
 ICONS['iron_sword'] = sword(tip_row=1, guard='i', chipped=False)
 ICONS['ring_vigor'] = ring('y', 'v')     # gold band, ruby
 ICONS['ring_breath'] = ring('i', 'u')    # iron band, azure stone
+
+# ---------------------------------------------------------------- the rest of the gear bases
+def grid(art):
+    """An icon from a block of text: rows left-aligned and padded with '.' to 16, then centered vertically."""
+    lines = [ln.rstrip() for ln in art.strip('\n').split('\n')]
+    assert len(lines) <= S and all(len(ln) <= S for ln in lines), 'icons are 16 x 16'
+    top = (S - len(lines)) // 2
+    rows = ['.' * S] * top + [ln.ljust(S, '.').replace(' ', '.') for ln in lines]
+    return rows + ['.' * S] * (S - len(rows))
+
+def recolor(rows, mapping, extra=()):
+    """Another base's shape in new materials, plus a few pixels of its own (x, y, char)."""
+    g = [[mapping.get(c, c) for c in r] for r in rows]
+    for x, y, c in extra:
+        g[y][x] = c
+    return [''.join(r) for r in g]
+
+ICONS['iron_dirks'] = grid("""
+....I......I
+...Ii6....Ii6
+...Ii6....Ii6
+...Ii6....Ii6
+...Ii6....Ii6
+...Ii6....Ii6
+...Ii6....Ii6
+..yYyy!..yYyy!
+....l0....l0
+....L0....L0
+....l0....l0
+...yY!....yY!
+""")
+ICONS['bone_recurve'] = grid("""
+........bb
+.......bB8w
+......bB..w
+.....bB...w
+.....b8...w
+....bB....w
+....b8....w
+....l0....w
+....l0....w
+....bB....w
+....b8....w
+.....bB...w
+.....b8...w
+......bB..w
+.......bB8w
+........bb
+""")
+ICONS['charred_rod'] = grid("""
+...........o
+..........oOo
+.........dO*d
+........dD*d
+.......dDd-
+......dDo-
+.....dD-
+....dDo-
+...dD-
+..dDo-
+.dD-
+.d-
+""")
+ICONS['cinderbrand'] = recolor(ICONS['iron_sword'], {'I': 'O', 'i': 'o', '6': '*', 'l': 'l', 'L': 'L'},
+                               [(3, 8, 'Y'), (4, 9, 'Y'), (5, 10, 'y'), (6, 11, 'y'), (7, 12, 'y'),
+                                (1, 13, 'y'), (2, 13, 'Y'), (1, 14, '!'), (2, 14, '!'),
+                                (11, 1, 'O'), (9, 3, 'o'), (13, 6, 'O')])
+ICONS['oathspear'] = recolor(ICONS['ashwood_spear'], {'a': 'k', 'A': 'K', '1': '2'},
+                             [(9, 5, 'F'), (10, 5, 'f'), (9, 6, 'f'), (8, 6, '+')])
+ICONS['gravebell'] = grid("""
+.......nn
+......nNNn
+.....nNNnn~
+.....nNnnn~
+....nNnnnnn~
+....nnnnnnn~
+...n~~~~~~~~n
+.......d-
+.......dD
+.......dD
+.......dD
+.......dD
+.......dD
+......-dd-
+""")
+ICONS['twinfang'] = grid("""
+..b..........b
+..Bb........bB
+...B8......8B
+...Bb8....8bB
+....B8....8B
+....Bb8..8bB
+.....B8..8B
+.....h8..8h
+.....l0..l0
+.....L0..L0
+.....l0..l0
+....yy....yy
+""")
+ICONS['pale_wind'] = grid("""
+......xx
+.....xX.u
+....xX..u..q
+...xX...u...qq
+...x&...u
+..xX....u.q
+..l0....u..qqq
+..l0....u
+..xX....u...q
+...x&...u
+...xX...u.qq
+....xX..u
+.....xX.u
+......xx
+""")
+ICONS['hearthwood'] = grid("""
+..........gg
+.........gGg5
+.......gg.a.g
+.......5.aA1
+........aoO1
+.......aA*1
+......aA1
+.....aA1
+....aA1
+...aA1
+..aA1
+.aA1
+.a1
+""")
+ICONS['wardens_aegis'] = grid("""
+.....ii..ii
+...iiIIiiIIii
+..iIIiiyyiiii6
+..iIiiyoOyiii6
+..iIiiyO*yii66
+..iiIiiyyiii6
+...iIiiiiiii6
+...iIiiiiii66
+...iiIiiiii6
+...ii6666666
+....666666
+""")
+ICONS['wardens_brand'] = recolor(ICONS['stone_maul'], {'t': 'd', 'T': 'D', '(': '-', 'a': 'd', 'A': 'D', '1': '-'},
+                                 [(5, 2, 'o'), (6, 3, 'O'), (7, 3, '*'), (8, 4, 'o'), (9, 4, '*'), (6, 5, '*')])
+ICONS['crown_of_the_unforgotten'] = grid("""
+..d..d....d..d
+..dD.dD..dD.dD
+..dDddDddDDddD-
+..dDDdDDdDDdDD-
+..dFddddfddddF-
+..dDdddddddddd-
+...------------
+""")
+ICONS['pyreheart_cuirass'] = grid("""
+....rr....rr
+...rRRiiiiRRr
+..rRiIiiiiii7
+..rIiIhhhiii7
+..rIiHhHhhi67
+..riIihhhhi67
+...iIiihhii6
+...iIiiihi66
+...riIiiii67
+....r6666667
+.....777777
+""")
+ICONS['ashwalker_greaves'] = recolor(ICONS['iron_greaves'], {'i': 't', 'I': 'T', '6': '(', 'l': 'w', '0': '^'},
+                                     [(2, 13, 'o'), (6, 13, '*'), (9, 13, 'o'), (13, 13, '*')])
+ICONS['ring_last_ember'] = ring('b', 'o')    # bone band, a cinder
 
 ICONS['stone'] = [   # a rough quarried block, chipped on the upper left
     "................",
@@ -757,7 +929,10 @@ ORDER = ['ashwood', 'fungal_cap', 'glowspore', 'iron_scrap', 'bone_shard', 'slim
          'ring_vigor', 'ring_breath', 'bandage', 'potion_ember', 'potion_stone', 'potion_breath',
          'stone', 'kindling', 'relic_oath', 'relic_sovereign',
          'ashen_hood', 'iron_helm', 'wanderers_wraps', 'iron_greaves', 'ashwood_spear', 'stone_maul', 'bone_daggers', 'ashwood_bow', 'ember_staff', 'warden_mark',
-         'fire_oil', 'bleeding_oil', 'wardens_bane', 'iron_axe', 'iron_pickaxe', 'steel_axe', 'steel_pickaxe', 'warden_sigil']
+         'fire_oil', 'bleeding_oil', 'wardens_bane', 'iron_axe', 'iron_pickaxe', 'steel_axe', 'steel_pickaxe', 'warden_sigil',
+         'iron_dirks', 'bone_recurve', 'charred_rod', 'cinderbrand', 'oathspear', 'gravebell', 'twinfang', 'pale_wind',
+         'hearthwood', 'wardens_aegis', 'wardens_brand', 'crown_of_the_unforgotten', 'pyreheart_cuirass',
+         'ashwalker_greaves', 'ring_last_ember']
 
 # ---------------------------------------------------------------- shading and outline
 def paint(rows):

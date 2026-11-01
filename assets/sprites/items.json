@@ -42,7 +42,22 @@
     "iron_pickaxe": 35,
     "steel_axe": 36,
     "steel_pickaxe": 37,
-    "warden_sigil": 38
+    "warden_sigil": 38,
+    "iron_dirks": 39,
+    "bone_recurve": 40,
+    "charred_rod": 41,
+    "cinderbrand": 42,
+    "oathspear": 43,
+    "gravebell": 44,
+    "twinfang": 45,
+    "pale_wind": 46,
+    "hearthwood": 47,
+    "wardens_aegis": 48,
+    "wardens_brand": 49,
+    "crown_of_the_unforgotten": 50,
+    "pyreheart_cuirass": 51,
+    "ashwalker_greaves": 52,
+    "ring_last_ember": 53
   },
   "animations": {}
 }
