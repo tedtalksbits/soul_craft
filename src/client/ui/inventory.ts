@@ -1,10 +1,11 @@
 /**
- * The inventory and crafting screen. It reads sim state directly but never
- * changes it: every button queues a PlayerAction for the next tick, and the
- * screen redraws when the state it shows changes. The game keeps running
- * underneath (no pause, as in the Souls games); only movement input is held.
+ * The inventory, equipment and crafting screen. It reads sim state directly but
+ * never changes it: every button queues a PlayerAction for the next tick, and the
+ * screen redraws when the state it shows changes. While it is open the world holds
+ * still (`InputFrame.menu`).
  */
-import { ABILITY_SLOTS, STATIONS, type ItemDef, type StationId } from '../../content/schemas';
+import { gearSlotOf } from '../../content/content';
+import { ABILITY_SLOTS, ATTRIBUTES, STATIONS, type ItemDef, type StationId } from '../../content/schemas';
 import {
   Abilities,
   Attributes,
@@ -21,14 +22,31 @@ import { canChoose, versionsOf } from '../../sim/modules/variants';
 import { canWear, modifierSlots, modifiersOf, wornModifiers } from '../../sim/modules/modifiers';
 import { playerLevel } from '../../sim/modules/progression';
 import { unlockHint } from '../../sim/modules/unlocks';
-import type { PlayerAction } from '../../sim/input';
+import type { GearTarget, PlayerAction } from '../../sim/input';
+import { AUTO_SALVAGE_TIERS } from '../../sim/modules/smithy';
 import { canCraft, canUpgrade, nextUpgrade, stationNearby } from '../../sim/modules/crafting';
-import { countItem, EQUIP_SLOTS, playerStats } from '../../sim/modules/items';
+import {
+  gearOf,
+  armorValue,
+  legendaryPower,
+  perkLines,
+  perkText,
+  weaponNumbers,
+} from '../../sim/modules/gear';
+import {
+  compareGear,
+  countItem,
+  playerPower,
+  playerStats,
+  type Comparison,
+  type GearSummary,
+} from '../../sim/modules/items';
 import { inventoryCapacity } from '../../sim/modules/restored-effects';
 import type { Simulation } from '../../sim/simulation';
 import { TICK_RATE } from '../../sim/constants';
 import { primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
+import { gearWork } from './smithy-panel';
 
 export interface InventoryHost {
   sim(): Simulation | null;
@@ -49,24 +67,33 @@ const SLOT_NAMES = { aoe: 'AoE ability', class: 'Class ability', super: 'Super' 
 
 const SLOT_LABELS: Readonly<Record<EquipSlot, string>> = {
   weapon: 'Weapon',
-  armor: 'Armor',
   ring0: 'Ring',
   ring1: 'Ring',
+  helmet: 'Helmet',
+  chest: 'Chest',
+  legs: 'Legs',
 };
+
+const ATTRIBUTE_NAMES = { vigor: 'Vigor', endurance: 'Endurance', might: 'Might', attunement: 'Attunement' };
 
 const STAT_LABELS = {
   damage: 'damage',
-  defense: 'defense',
+  defense: 'damage taken',
   staminaRegen: 'stamina regen',
   maxHp: 'max HP',
 } as const;
+
+/** What is selected: a pack slot, or a piece of equipped gear. */
+type Selection = { pack: number } | { slot: EquipSlot };
 
 export class InventoryScreen {
   private el: HTMLElement | null = null;
   private tab: Tab = 'items';
   /** The station this screen was opened at; filters the crafting list. */
   private station: StationId | null = null;
-  private selected: number | null = null;
+  private selected: Selection | null = null;
+  /** A Noble or Legendary salvage waiting on its second press. */
+  private confirmSalvage = false;
   private shown = '';
 
   constructor(
@@ -127,6 +154,10 @@ export class InventoryScreen {
       sim.ecs.get(e, Buffs)?.active.map((b) => b.stat),
       stationNearby(sim, 'forge'),
       stationNearby(sim, 'alchemy'),
+      sim.ecs.get(e, Player)?.state === 'sit',
+      sim.state.restored,
+      sim.state.autoSalvage,
+      this.confirmSalvage,
       this.tab === 'abilities' ? abilityStatus(sim) : null,
       this.tab === 'abilities' ? variantSignature(sim) : null,
       this.host.bindings(),
@@ -169,16 +200,29 @@ export class InventoryScreen {
     const eq = sim.ecs.need(e, Equipment);
     const stacks = sim.ecs.need(e, Inventory).stacks;
     const slots = inventoryCapacity(sim);
+    const picked = this.selected;
 
-    const equipped = EQUIP_SLOTS.map((slot) => {
+    const slotRow = (slot: EquipSlot) => {
       const stack = eq[slot];
-      return this.cell(
-        sim,
-        stack,
-        SLOT_LABELS[slot],
-        stack ? () => this.host.act({ type: 'unequip', slot }) : null,
+      const on = picked !== null && 'slot' in picked && picked.slot === slot;
+      const row = h(
+        'button',
+        {
+          class: on ? 'slot selected' : 'slot',
+          disabled: stack === null,
+          onclick: () => this.select(on ? null : { slot }),
+        },
+        this.cell(sim, stack, null, null),
+        h(
+          'div',
+          { class: 'what' },
+          h('div', { class: 'label' }, SLOT_LABELS[slot]),
+          stack ? this.gearName(sim, stack) : h('div', { class: 'name none' }, 'Empty'),
+          stack ? h('div', { class: 'main' }, mainLine(sim, stack)) : '',
+        ),
       );
-    });
+      return row;
+    };
     const quickCount = eq.quick ? countItem(sim.ecs.need(e, Inventory), eq.quick) : 0;
     const quick = this.cell(
       sim,
@@ -189,35 +233,57 @@ export class InventoryScreen {
 
     const grid = Array.from({ length: slots }, (_, i) => {
       const stack = stacks[i] ?? null;
-      const cell = this.cell(sim, stack, null, () => {
-        this.selected = stack && this.selected !== i ? i : null;
-        this.refresh(true);
-      });
-      if (i === this.selected) cell.classList.add('selected');
+      const on = picked !== null && 'pack' in picked && picked.pack === i;
+      const cell = this.cell(sim, stack, null, () => this.select(stack && !on ? { pack: i } : null));
+      if (on) cell.classList.add('selected');
+      const compared = stack ? compareGear(sim, i) : null;
+      if (compared && compared.after.power < compared.now.power)
+        cell.append(h('span', { class: 'worse', title: 'Lowers your Power' }, '↓'));
       return cell;
     });
 
     const stats = playerStats(sim, e);
     const attrs = sim.ecs.get(e, Attributes);
+    const capped = stats.defense >= sim.content.player.armor.cap;
     const statRows: [string, string][] = [
       ['Level', attrs ? String(playerLevel(attrs)) : '1'],
-      ['Damage', String(Math.round(stats.damage))],
-      ['Defense', `${Math.round(stats.defense * 100)}%`],
+      ['Attack', String(Math.round(stats.damage))],
+      [
+        'Armor',
+        `${stats.armor} (${Math.round(stats.defense * 100)}% less damage${capped ? ', capped' : ''})`,
+      ],
       ['Max HP', String(stats.maxHp)],
+      ['Max stamina', String(stats.maxStamina)],
       ['Stamina regen', `${Math.round(stats.staminaRegen * TICK_RATE)}/s`],
+      ...ATTRIBUTES.map((id): [string, string] => {
+        const own = attrs?.[id] ?? 0;
+        const extra = stats.attributes[id] - own;
+        return [
+          ATTRIBUTE_NAMES[id],
+          extra > 0 ? `${stats.attributes[id]} (${own} +${extra} gear)` : String(own),
+        ];
+      }),
     ];
 
-    const selected = this.selected === null ? undefined : stacks[this.selected];
     return h(
       'div',
       { class: 'body items' },
       h(
         'div',
         { class: 'col gear' },
-        h('h2', {}, 'Equipped'),
-        h('div', { class: 'equip' }, ...equipped, quick),
-        h('p', { class: 'hint' }, 'Click equipped gear to take it off.'),
-        h('h2', {}, 'Stats'),
+        h(
+          'div',
+          { class: 'paperdoll' },
+          h('div', { class: 'side' }, ...(['weapon', 'ring0', 'ring1'] as const).map(slotRow)),
+          h(
+            'div',
+            { class: 'power' },
+            h('div', { class: 'label' }, 'Power'),
+            h('div', { class: 'value' }, String(playerPower(sim))),
+            quick,
+          ),
+          h('div', { class: 'side' }, ...(['helmet', 'chest', 'legs'] as const).map(slotRow)),
+        ),
         h('dl', {}, ...statRows.flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])),
       ),
       h(
@@ -225,24 +291,52 @@ export class InventoryScreen {
         { class: 'col' },
         h('h2', {}, `Pack ${stacks.length}/${slots}`),
         h('div', { class: 'grid' }, ...grid),
+        this.packTools(sim),
       ),
-      h(
-        'div',
-        { class: 'col detail' },
-        selected && this.selected !== null
-          ? this.detail(sim, selected, this.selected)
-          : h('p', { class: 'hint' }, 'Select an item.'),
-      ),
+      h('div', { class: 'col detail' }, this.selectedDetail(sim)),
     );
+  }
+
+  private select(selection: Selection | null): void {
+    this.selected = selection;
+    this.confirmSalvage = false;
+    this.refresh(true);
+  }
+
+  private selectedDetail(sim: Simulation): HTMLElement {
+    const picked = this.selected;
+    if (picked && 'slot' in picked) {
+      const stack = sim.ecs.need(sim.player, Equipment)[picked.slot];
+      if (stack)
+        return this.gearDetail(
+          sim,
+          stack,
+          [h('button', { onclick: () => this.host.act({ type: 'unequip', slot: picked.slot }) }, 'Unequip')],
+          null,
+          this.work(sim, { slot: picked.slot }, stack),
+        );
+    }
+    const index = picked && 'pack' in picked ? picked.pack : null;
+    const stack = index === null ? undefined : sim.ecs.need(sim.player, Inventory).stacks[index];
+    if (index === null || !stack) return h('p', { class: 'hint' }, 'Select an item or a piece of your gear.');
+    return this.detail(sim, stack, index);
   }
 
   private detail(sim: Simulation, stack: ItemStack, index: number): HTMLElement {
     const def = sim.content.item(stack.item);
+    if (gearSlotOf(def)) {
+      const comparison = compareGear(sim, index);
+      return this.gearDetail(
+        sim,
+        stack,
+        [h('button', { onclick: () => this.host.act({ type: 'equip', index }) }, 'Equip')],
+        comparison,
+        this.work(sim, { pack: index }, stack),
+      );
+    }
     const quick = sim.ecs.need(sim.player, Equipment).quick;
     const buttons: HTMLElement[] = [];
-    if (def.kind === 'weapon' || def.kind === 'armor' || def.kind === 'ring') {
-      buttons.push(h('button', { onclick: () => this.host.act({ type: 'equip', index }) }, 'Equip'));
-    } else if (def.kind === 'consumable') {
+    if (def.kind === 'consumable') {
       buttons.push(h('button', { onclick: () => this.host.act({ type: 'use', item: stack.item }) }, 'Use'));
       buttons.push(
         quick === stack.item
@@ -263,9 +357,177 @@ export class InventoryScreen {
       {},
       h('div', { class: 'title' }, this.host.icon(stack.item), h('h2', {}, itemName(def, stack.level))),
       h('p', {}, def.description),
-      h('ul', { class: 'facts' }, ...facts(def, stack.level).map((f) => h('li', {}, f))),
+      h('ul', { class: 'facts' }, ...facts(def).map((f) => h('li', {}, f))),
       h('div', { class: 'actions' }, ...buttons),
     );
+  }
+
+  /**
+   * A piece of gear: its tier, item level and numbers, every perk, and (for a pack item) how wearing
+   * it would change things, worked out by trying it on in the sim.
+   */
+  private gearDetail(
+    sim: Simulation,
+    stack: ItemStack,
+    buttons: HTMLElement[],
+    comparison: Comparison | null = null,
+    work: HTMLElement | null = null,
+  ): HTMLElement {
+    const def = sim.content.item(stack.item);
+    const gear = gearOf(stack);
+    const tier = sim.content.loot.tiers[gear.tier];
+    const slot = gearSlotOf(def);
+    const lines = perkLines(sim.content, stack);
+    const old = comparison?.replaces ? perkLines(sim.content, comparison.replaces) : [];
+    const playing = sim.ecs.get(sim.player, Abilities)?.class;
+    const perkRow = (line: (typeof lines)[number], change: string) => {
+      const classes = ['perk', change, line.drawback ? 'drawback' : '', line.greater ? 'greater' : ''];
+      // A class perk for another class does nothing while you play this one.
+      if (line.cls !== undefined && line.cls !== playing) classes.push('idle');
+      return h(
+        'li',
+        { class: classes.filter(Boolean).join(' ') },
+        line.greater
+          ? h('span', { class: 'star', title: 'Greater: stronger than its tier allows' }, '★ ')
+          : '',
+        perkText(sim.content, line),
+        line.innate ? h('span', { class: 'tag' }, ' innate') : '',
+        line.cls !== undefined
+          ? h('span', { class: 'tag' }, ` ${sim.content.playerClass(line.cls).name}`)
+          : '',
+      );
+    };
+    const power = legendaryPower(sim.content, stack);
+    const gained = (perk: string) => comparison !== null && !old.some((o) => o.perk === perk);
+    const panel = h(
+      'div',
+      { class: 'gear-detail' },
+      h('div', { class: 'title' }, this.cell(sim, stack, null, null), this.gearName(sim, stack)),
+      h(
+        'div',
+        { class: 'tierline' },
+        `${gear.blighted ? 'Blighted ' : ''}${tier.name} ${slot ? capitalize(slot) : ''} · Item level ${gear.ilvl}`,
+      ),
+      comparison ? this.comparisonTable(sim, comparison) : '',
+      power
+        ? h(
+            'div',
+            { class: 'power-line' },
+            h('div', { class: 'pname' }, power.name),
+            h('div', {}, power.text),
+          )
+        : '',
+      h('ul', { class: 'facts' }, ...gearFacts(sim, stack).map((f) => h('li', {}, f))),
+      lines.length > 0 || old.length > 0
+        ? h(
+            'ul',
+            { class: 'perks' },
+            ...lines.map((line) => perkRow(line, gained(line.perk) && !line.drawback ? 'gain' : '')),
+            ...old.filter((o) => !lines.some((l) => l.perk === o.perk)).map((line) => perkRow(line, 'lose')),
+          )
+        : h('p', { class: 'hint' }, 'No perks.'),
+      h('p', { class: 'flavor' }, def.description),
+      h('div', { class: 'actions' }, ...buttons),
+      work ?? '',
+    );
+    panel.style.setProperty('--tier', tier.color);
+    return panel;
+  }
+
+  /** "Power +12 ▲" and the rest: the real change from wearing it, worse or better. */
+  private comparisonTable(sim: Simulation, c: Comparison): HTMLElement {
+    const replaced = c.replaces ? sim.content.item(c.replaces.item).name : null;
+    const row = (
+      label: string,
+      now: number,
+      after: number,
+      format: (n: number) => string,
+      lowerIsBetter = false,
+    ) => {
+      const diff = after - now;
+      const better = lowerIsBetter ? diff < 0 : diff > 0;
+      const cls = Math.abs(diff) < 1e-9 ? 'same' : better ? 'up' : 'down';
+      const mark =
+        cls === 'same' ? '–' : `${diff > 0 ? '+' : '−'}${format(Math.abs(diff))} ${better ? '▲' : '▼'}`;
+      return [h('dt', {}, label), h('dd', { class: cls }, mark)];
+    };
+    const pct = (n: number) => `${Math.round(n * 100)}%`;
+    const whole = (n: number) => String(Math.round(n));
+    const taken = (s: GearSummary) => 1 - s.defense;
+    return h(
+      'div',
+      { class: 'compare' },
+      h(
+        'div',
+        { class: 'against' },
+        replaced ? `Compared with ${replaced}` : `Your ${SLOT_LABELS[c.slot].toLowerCase()} slot is empty`,
+      ),
+      h(
+        'dl',
+        {},
+        ...row('Power', c.now.power, c.after.power, whole),
+        ...row('Attack', c.now.damage, c.after.damage, whole),
+        ...row('Armor', c.now.armor, c.after.armor, whole),
+        ...row('Damage taken', taken(c.now), taken(c.after), pct, true),
+        ...row('Max HP', c.now.maxHp, c.after.maxHp, whole),
+        ...row('Max stamina', c.now.maxStamina, c.after.maxStamina, whole),
+      ),
+    );
+  }
+
+  /** The smithy's buttons for a piece of gear, wired to this screen. */
+  private work(sim: Simulation, target: GearTarget, stack: ItemStack): HTMLElement {
+    return gearWork(sim, target, stack, {
+      act: (action) => this.host.act(action),
+      confirming: this.confirmSalvage,
+      confirm: (on) => {
+        this.confirmSalvage = on;
+        this.refresh(true);
+      },
+    });
+  }
+
+  /** Under the pack: salvage everything marked junk, and which tiers salvage themselves on pickup. */
+  private packTools(sim: Simulation): HTMLElement {
+    const stacks = sim.ecs.need(sim.player, Inventory).stacks;
+    const junk = stacks.filter((s) => s.junk && !s.locked).length;
+    const can = stationNearby(sim, 'forge') || sim.ecs.need(sim.player, Player).state === 'sit';
+    const auto = sim.state.autoSalvage ?? [];
+    return h(
+      'div',
+      { class: 'pack-tools' },
+      h(
+        'button',
+        {
+          class: 'work',
+          disabled: !can || junk === 0,
+          title: can ? '' : 'salvage at the forge or a bonfire',
+          onclick: () => this.host.act({ type: 'salvageJunk' }),
+        },
+        `Salvage junk (${junk})`,
+      ),
+      h('span', { class: 'hint' }, 'Auto-salvage:'),
+      ...AUTO_SALVAGE_TIERS.map((tier) => {
+        const on = auto.includes(tier);
+        return h(
+          'button',
+          {
+            class: on ? 'work toggle on' : 'work toggle',
+            onclick: () => this.host.act({ type: 'autoSalvage', tier, on: !on }),
+          },
+          `${on ? '☑' : '☐'} ${sim.content.loot.tiers[tier].name}`,
+        );
+      }),
+    );
+  }
+
+  /** An item's name in its tier's color, with its upgrade level. */
+  private gearName(sim: Simulation, stack: ItemStack): HTMLElement {
+    const def = sim.content.item(stack.item);
+    const tier = gearSlotOf(def) ? sim.content.loot.tiers[gearOf(stack).tier] : null;
+    const name = h('div', { class: 'name' }, itemName(def, stack.level));
+    if (tier) name.style.color = tier.color;
+    return name;
   }
 
   private cell(
@@ -280,9 +542,16 @@ export class InventoryScreen {
       const def = sim.content.item(stack.item);
       cell.title = itemName(def, stack.level);
       cell.append(this.host.icon(stack.item));
+      if (gearSlotOf(def)) {
+        const tier = gearOf(stack).tier;
+        cell.classList.add('tiered', `tier-${tier}`);
+        cell.style.setProperty('--tier', sim.content.loot.tiers[tier].color);
+      }
       if (stack.count > 1 || def.kind === 'consumable')
         cell.append(h('span', { class: 'count' }, String(stack.count)));
       if (stack.level > 0) cell.append(h('span', { class: 'level' }, `+${stack.level}`));
+      if (stack.locked) cell.append(h('span', { class: 'mark', title: 'Locked' }, '🔒'));
+      else if (stack.junk) cell.append(h('span', { class: 'mark junk', title: 'Junk' }, '✕'));
     }
     if (label) cell.append(h('span', { class: 'label' }, label));
     return cell;
@@ -568,8 +837,37 @@ export function itemName(def: ItemDef, level: number): string {
   return level > 0 ? `${def.name} +${level}` : def.name;
 }
 
-/** One-line facts about an item, for the detail panel. */
-function facts(def: ItemDef, level: number): string[] {
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** The headline number under a piece of gear's name on the paper doll. */
+function mainLine(sim: Simulation, stack: ItemStack): string {
+  const weapon = weaponNumbers(sim.content, stack);
+  if (weapon) return `${weapon.damage} attack`;
+  const armor = armorValue(sim.content, stack);
+  if (armor > 0) return `${armor} armor`;
+  const first = perkLines(sim.content, stack)[0];
+  return first ? perkText(sim.content, first) : '';
+}
+
+/** A piece of gear's own numbers, before perks. */
+function gearFacts(sim: Simulation, stack: ItemStack): string[] {
+  const def = sim.content.item(stack.item);
+  const weapon = weaponNumbers(sim.content, stack);
+  if (weapon && def.kind === 'weapon')
+    return [
+      `Damage ${weapon.damage}`,
+      `Stamina per swing ${weapon.staminaCost}`,
+      `Reach ${weapon.reach}`,
+      `Upgrades ${stack.level}/${def.upgrades.length}`,
+    ];
+  const armor = armorValue(sim.content, stack);
+  return armor > 0 ? [`Armor ${armor}`] : [];
+}
+
+/** One-line facts about anything that is not gear, for the detail panel. */
+function facts(def: ItemDef): string[] {
   switch (def.kind) {
     case 'key':
       return ['Kept for restoring the village'];
@@ -577,19 +875,6 @@ function facts(def: ItemDef, level: number): string[] {
       return [`Bring it to Maren to awaken your ${def.unlocks === 'class' ? 'class ability' : 'super'}`];
     case 'material':
       return ['Crafting material', `Stacks to ${def.stack}`];
-    case 'weapon': {
-      const bonus = def.upgrades.slice(0, level).reduce((n, u) => n + u.damage, 0);
-      return [
-        `Damage ${def.weapon.damage + bonus}`,
-        `Stamina per swing ${def.weapon.staminaCost}`,
-        `Reach ${def.weapon.reach}`,
-        `Upgrades ${level}/${def.upgrades.length}`,
-      ];
-    }
-    case 'armor':
-      return [`Absorbs ${Math.round(def.armor.defense * 100)}% of damage`];
-    case 'ring':
-      return [statLine(def.ring.stat, def.ring.amount)];
     case 'consumable':
       return def.effect.type === 'heal'
         ? [`Restores ${def.effect.amount} HP`, `Stacks to ${def.stack}`]
@@ -597,12 +882,16 @@ function facts(def: ItemDef, level: number): string[] {
             `${statLine(def.effect.stat, def.effect.amount)} for ${def.effect.seconds}s`,
             `Stacks to ${def.stack}`,
           ];
+    default:
+      return [];
   }
 }
 
 function statLine(stat: keyof typeof STAT_LABELS, amount: number): string {
-  return stat === 'maxHp'
-    ? `+${amount} ${STAT_LABELS[stat]}`
+  if (stat === 'maxHp') return `+${amount} ${STAT_LABELS[stat]}`;
+  // A defense buff lowers damage taken; the rest raise their stat.
+  return stat === 'defense'
+    ? `−${Math.round(amount * 100)}% ${STAT_LABELS[stat]}`
     : `+${Math.round(amount * 100)}% ${STAT_LABELS[stat]}`;
 }
 

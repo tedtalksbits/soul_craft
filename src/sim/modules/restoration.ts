@@ -123,6 +123,6 @@ const commands: SimCommand[] = [
 
 export const restorationModule: SimModule = {
   id: 'restoration',
-  systems: [{ phase: 'control', run: processActions }],
+  systems: [{ phase: 'control', run: processActions, menu: true }],
   commands,
 };

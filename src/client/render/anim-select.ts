@@ -23,13 +23,14 @@ import {
   Torch,
 } from '../../sim/components';
 import { TICK_RATE } from '../../sim/constants';
+import { currentMove, weaponType } from '../../sim/modules/weapons';
 import type { Simulation } from '../../sim/simulation';
 import { dir8FromVec, resolveDir8, type Dir8 } from './facing';
 
 const TICK_MS = 1000 / TICK_RATE;
 
 /** Player states whose animation plays once, in step with the state's own timer. */
-const PLAYER_TIMED = new Set(['attack', 'roll', 'hurt', 'drink', 'sit', 'dead', 'cast']);
+const PLAYER_TIMED = new Set(['attack', 'charge', 'roll', 'hurt', 'drink', 'sit', 'dead', 'cast']);
 /** Enemy AI states that are timed actions rather than open-ended behavior. */
 const ENEMY_TIMED = new Set([
   'windup',
@@ -112,6 +113,8 @@ export function selectAnim(
   const dying = ecs.get(e, Dying);
   if (player) {
     pose = player.state === 'free' ? (moving ? 'walk' : 'idle') : player.state;
+    if (player.state === 'attack') pose = currentMove(sim).pose;
+    if (player.state === 'charge') pose = weaponType(sim).def.chargePose;
     if (player.state === 'cast') {
       const c = castPose(sim, e, player.t);
       if (c) {
@@ -121,7 +124,12 @@ export function selectAnim(
     }
     if (PLAYER_TIMED.has(player.state)) elapsedMs = player.t * TICK_MS;
     // Swings, rolls and casts face where they go (the aim may be any angle), not the drift of motion.
-    if (player.state === 'attack' || player.state === 'roll' || player.state === 'cast')
+    if (
+      player.state === 'attack' ||
+      player.state === 'charge' ||
+      player.state === 'roll' ||
+      player.state === 'cast'
+    )
       dir8 = dir8FromVec(player.dirX, player.dirY);
   } else if (ai && ecs.has(e, Enemy)) {
     if (dying) {

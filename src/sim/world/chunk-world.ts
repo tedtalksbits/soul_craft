@@ -49,7 +49,7 @@ export class ChunkWorld {
     const key = chunkKey(cx, cy);
     const existing = this.chunks.get(key);
     if (existing) return existing;
-    const chunk: Chunk = { ...this.gen.generate(cx, cy), key, version: 0 };
+    const chunk: Chunk = { ...this.gen.generate(cx, cy, this.state.spawnEpoch), key, version: 0 };
     this.applyOverrides(chunk);
     this.chunks.set(key, chunk);
     return chunk;
@@ -64,10 +64,20 @@ export class ChunkWorld {
     this.content = content;
     this.gen = new WorldGenerator(this.state.seed, content);
     for (const old of [...this.chunks.values()]) {
-      const fresh: Chunk = { ...this.gen.generate(old.cx, old.cy), key: old.key, version: old.version + 1 };
+      const fresh: Chunk = {
+        ...this.gen.generate(old.cx, old.cy, this.state.spawnEpoch),
+        key: old.key,
+        version: old.version + 1,
+      };
       this.applyOverrides(fresh);
       this.chunks.set(old.key, fresh);
     }
+  }
+
+  /** After `SimState.spawnEpoch` changes: loaded chunks take their new spawn points. Tiles are untouched. */
+  rerollSpawns(): void {
+    for (const chunk of this.chunks.values())
+      chunk.spawns = this.gen.generate(chunk.cx, chunk.cy, this.state.spawnEpoch).spawns;
   }
 
   /** Tile id at a tile coordinate, or -1 if that chunk is not loaded. */

@@ -48,13 +48,20 @@
     "icon": "slime_gel",
     "stack": 99
   },
+  "warden_mark": {
+    "kind": "material",
+    "name": "Warden Mark",
+    "description": "A shard of a Warden’s ember, still warm. Salvaged Legendaries give one up; the best work wants them.",
+    "icon": "warden_mark",
+    "stack": 99
+  },
   "chipped_sword": {
     "kind": "weapon",
     "name": "Chipped Sword",
     "description": "The Firekeeper's old blade. It remembers how to cut.",
     "icon": "chipped_sword",
     "stack": 1,
-    "weapon": { "damage": 12, "staminaCost": 14, "reach": 16, "width": 18, "knockback": 3 },
+    "weapon": { "type": "sword", "damage": 12, "staminaCost": 14, "reach": 16, "width": 18, "knockback": 3 },
     "upgrades": [
       { "damage": 2, "souls": 40, "items": [{ "item": "iron_scrap", "count": 2 }] },
       { "damage": 2, "souls": 80, "items": [{ "item": "iron_scrap", "count": 4 }] },
@@ -77,15 +84,23 @@
         ],
         "requires": "smithy"
       }
-    ]
+    ],
+    "drop": 0
   },
   "iron_sword": {
     "kind": "weapon",
     "name": "Iron Sword",
-    "description": "Hammered from scrap at a village forge. Heavier, truer.",
+    "description": "Plain, heavy and true. The Hollow carried these once.",
     "icon": "iron_sword",
     "stack": 1,
-    "weapon": { "damage": 16, "staminaCost": 16, "reach": 17, "width": 18, "knockback": 3.4 },
+    "weapon": {
+      "type": "sword",
+      "damage": 16,
+      "staminaCost": 16,
+      "reach": 17,
+      "width": 18,
+      "knockback": 3.4
+    },
     "upgrades": [
       { "damage": 3, "souls": 120, "items": [{ "item": "iron_scrap", "count": 4 }] },
       { "damage": 3, "souls": 200, "items": [{ "item": "iron_scrap", "count": 6 }] },
@@ -120,10 +135,17 @@
   "bone_cleaver": {
     "kind": "weapon",
     "name": "Bone Cleaver",
-    "description": "A brutal edge of fused bone on an ashwood haft. Hits hard, tires the arm.",
+    "description": "A slab of fused bone on an ashwood haft. Slow to lift, worse to be under.",
     "icon": "bone_cleaver",
     "stack": 1,
-    "weapon": { "damage": 22, "staminaCost": 24, "reach": 15, "width": 22, "knockback": 4.5 },
+    "weapon": {
+      "type": "hammer",
+      "damage": 22,
+      "staminaCost": 24,
+      "reach": 17,
+      "width": 23,
+      "knockback": 4.5
+    },
     "upgrades": [
       { "damage": 4, "souls": 200, "items": [{ "item": "bone_shard", "count": 4 }] },
       { "damage": 4, "souls": 320, "items": [{ "item": "bone_shard", "count": 6 }] },
@@ -147,13 +169,498 @@
       }
     ]
   },
+  "ashwood_spear": {
+    "kind": "weapon",
+    "name": "Ashwood Spear",
+    "description": "A long gray haft with a leaf of iron on the end. Keep them at its length.",
+    "icon": "ashwood_spear",
+    "stack": 1,
+    "weapon": { "type": "spear", "damage": 11, "staminaCost": 13, "reach": 26, "width": 8, "knockback": 3 },
+    "upgrades": [
+      { "damage": 2, "souls": 120, "items": [{ "item": "iron_scrap", "count": 4 }] },
+      { "damage": 2, "souls": 200, "items": [{ "item": "iron_scrap", "count": 6 }] },
+      {
+        "damage": 3,
+        "souls": 320,
+        "items": [
+          { "item": "iron_scrap", "count": 8 },
+          { "item": "ashwood", "count": 4 }
+        ]
+      },
+      {
+        "damage": 3,
+        "souls": 460,
+        "items": [
+          { "item": "iron_scrap", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 4,
+        "souls": 640,
+        "items": [
+          { "item": "iron_scrap", "count": 12 },
+          { "item": "bone_shard", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "stone_maul": {
+    "kind": "weapon",
+    "name": "Stone Maul",
+    "description": "A boulder lashed to a beam. It ends arguments, and it is slow about it.",
+    "icon": "stone_maul",
+    "stack": 1,
+    "weapon": { "type": "hammer", "damage": 24, "staminaCost": 26, "reach": 16, "width": 24, "knockback": 5 },
+    "upgrades": [
+      { "damage": 4, "souls": 200, "items": [{ "item": "stone", "count": 6 }] },
+      {
+        "damage": 4,
+        "souls": 320,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "iron_scrap", "count": 4 }
+        ]
+      },
+      {
+        "damage": 5,
+        "souls": 480,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 6,
+        "souls": 660,
+        "items": [
+          { "item": "stone", "count": 12 },
+          { "item": "iron_scrap", "count": 8 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "bone_daggers": {
+    "kind": "weapon",
+    "name": "Bone Daggers",
+    "description": "Two shards of the same bone, ground thin. Quiet, quick and very close.",
+    "icon": "bone_daggers",
+    "stack": 1,
+    "weapon": {
+      "type": "daggers",
+      "damage": 5,
+      "staminaCost": 6,
+      "reach": 11,
+      "width": 14,
+      "knockback": 0.3
+    },
+    "upgrades": [
+      { "damage": 1, "souls": 100, "items": [{ "item": "bone_shard", "count": 3 }] },
+      { "damage": 1, "souls": 180, "items": [{ "item": "bone_shard", "count": 5 }] },
+      {
+        "damage": 2,
+        "souls": 300,
+        "items": [
+          { "item": "bone_shard", "count": 6 },
+          { "item": "iron_scrap", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 440,
+        "items": [
+          { "item": "bone_shard", "count": 8 },
+          { "item": "stone", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 620,
+        "items": [
+          { "item": "bone_shard", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "iron_dirks": {
+    "kind": "weapon",
+    "name": "Iron Dirks",
+    "description": "A matched pair from a Hollow captain’s belt. Heavier than they look.",
+    "icon": "bone_daggers",
+    "stack": 1,
+    "weapon": {
+      "type": "daggers",
+      "damage": 6,
+      "staminaCost": 7,
+      "reach": 12,
+      "width": 14,
+      "knockback": 0.4
+    },
+    "upgrades": [
+      { "damage": 1, "souls": 100, "items": [{ "item": "bone_shard", "count": 3 }] },
+      { "damage": 1, "souls": 180, "items": [{ "item": "bone_shard", "count": 5 }] },
+      {
+        "damage": 2,
+        "souls": 300,
+        "items": [
+          { "item": "bone_shard", "count": 6 },
+          { "item": "iron_scrap", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 440,
+        "items": [
+          { "item": "bone_shard", "count": 8 },
+          { "item": "stone", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 620,
+        "items": [
+          { "item": "bone_shard", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "ashwood_bow": {
+    "kind": "weapon",
+    "name": "Ashwood Bow",
+    "description": "A plain stave of gray wood. It asks for patience and pays for it.",
+    "icon": "ashwood_bow",
+    "stack": 1,
+    "weapon": { "type": "bow", "damage": 6, "staminaCost": 9, "reach": 16, "width": 6, "knockback": 1 },
+    "upgrades": [
+      { "damage": 1, "souls": 110, "items": [{ "item": "ashwood", "count": 4 }] },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "bone_shard", "count": 4 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "bone_shard", "count": 8 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "bone_recurve": {
+    "kind": "weapon",
+    "name": "Bone Recurve",
+    "description": "Horn and bone, glued and bound. It bites harder than its size.",
+    "icon": "ashwood_bow",
+    "stack": 1,
+    "weapon": { "type": "bow", "damage": 7, "staminaCost": 10, "reach": 16, "width": 6, "knockback": 1.2 },
+    "upgrades": [
+      { "damage": 1, "souls": 110, "items": [{ "item": "ashwood", "count": 4 }] },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "bone_shard", "count": 4 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "bone_shard", "count": 8 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "ember_staff": {
+    "kind": "weapon",
+    "name": "Ember Staff",
+    "description": "Ashwood capped with a cage of iron. Strike with it, and it remembers the heat.",
+    "icon": "ember_staff",
+    "stack": 1,
+    "weapon": { "type": "staff", "damage": 7, "staminaCost": 13, "reach": 21, "width": 25, "knockback": 2.6 },
+    "upgrades": [
+      {
+        "damage": 1,
+        "souls": 110,
+        "items": [
+          { "item": "ashwood", "count": 4 },
+          { "item": "glowspore", "count": 1 }
+        ]
+      },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "glowspore", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "glowspore", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "glowspore", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "charred_rod": {
+    "kind": "weapon",
+    "name": "Charred Rod",
+    "description": "Black to the core, and still warm. It hits like a branch and burns like a brand.",
+    "icon": "ember_staff",
+    "stack": 1,
+    "weapon": { "type": "staff", "damage": 8, "staminaCost": 14, "reach": 21, "width": 25, "knockback": 2.8 },
+    "upgrades": [
+      {
+        "damage": 1,
+        "souls": 110,
+        "items": [
+          { "item": "ashwood", "count": 4 },
+          { "item": "glowspore", "count": 1 }
+        ]
+      },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "glowspore", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "glowspore", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "glowspore", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "ashen_hood": {
+    "kind": "armor",
+    "name": "Ashen Hood",
+    "description": "Ash-gray wool, cut loose. It keeps the cold out and the mind clear.",
+    "icon": "ashen_hood",
+    "stack": 1,
+    "armor": { "slot": "helmet", "value": 2, "weight": "cloth" },
+    "innate": [{ "perk": "abilityDamage", "value": 0.05 }],
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "iron_helm": {
+    "kind": "armor",
+    "name": "Iron Helm",
+    "description": "A dented pot of a helm. It rings when struck, and holds.",
+    "icon": "iron_helm",
+    "stack": 1,
+    "armor": { "slot": "helmet", "value": 4, "weight": "plate" },
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
   "padded_jacket": {
     "kind": "armor",
     "name": "Padded Jacket",
-    "description": "Layers of fungal fibre bound with gel. Takes the edge off a blow.",
+    "description": "Layers of fungal fiber bound with gel. Takes the edge off a blow.",
     "icon": "padded_jacket",
     "stack": 1,
-    "armor": { "defense": 0.1 }
+    "armor": { "slot": "chest", "value": 4, "weight": "cloth" },
+    "innate": [{ "perk": "maxHp", "value": 10 }],
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "iron_mail": {
     "kind": "armor",
@@ -161,23 +668,618 @@
     "description": "Scrap rings, patiently riveted. Heavy, but it holds.",
     "icon": "iron_mail",
     "stack": 1,
-    "armor": { "defense": 0.22 }
+    "armor": { "slot": "chest", "value": 7, "weight": "plate" },
+    "upgrades": [
+      {
+        "armor": 2,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 3,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 3,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "wanderers_wraps": {
+    "kind": "armor",
+    "name": "Wanderer's Wraps",
+    "description": "Bound shins and soft boots, made for long roads and quick feet.",
+    "icon": "wanderers_wraps",
+    "stack": 1,
+    "armor": { "slot": "legs", "value": 2, "weight": "cloth" },
+    "innate": [{ "perk": "rollStamina", "value": 0.08 }],
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "iron_greaves": {
+    "kind": "armor",
+    "name": "Iron Greaves",
+    "description": "Plates strapped over the knee. Every step is a decision.",
+    "icon": "iron_greaves",
+    "stack": 1,
+    "armor": { "slot": "legs", "value": 4, "weight": "plate" },
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
   },
   "ring_of_vigor": {
     "kind": "ring",
     "name": "Ring of Vigor",
-    "description": "A bone band set with a glowing spore. Raises maximum health.",
+    "description": "A bone band set with a glowing spore.",
     "icon": "ring_vigor",
     "stack": 1,
-    "ring": { "stat": "maxHp", "amount": 20 }
+    "innate": [{ "perk": "maxHp", "value": 15 }]
   },
   "ring_of_breath": {
     "kind": "ring",
     "name": "Ring of Breath",
-    "description": "Cool to the touch. Stamina returns faster.",
+    "description": "Cool to the touch. Breathing comes easier.",
     "icon": "ring_breath",
     "stack": 1,
-    "ring": { "stat": "staminaRegen", "amount": 0.3 }
+    "innate": [{ "perk": "staminaRegen", "value": 0.2 }]
+  },
+  "cinderbrand": {
+    "kind": "weapon",
+    "name": "Cinderbrand",
+    "description": "A blade quenched in a dying bonfire. It still remembers the heat.",
+    "icon": "iron_sword",
+    "stack": 1,
+    "weapon": {
+      "type": "sword",
+      "damage": 17,
+      "staminaCost": 15,
+      "reach": 17,
+      "width": 19,
+      "knockback": 3.4
+    },
+    "upgrades": [
+      { "damage": 3, "souls": 120, "items": [{ "item": "iron_scrap", "count": 4 }] },
+      { "damage": 3, "souls": 200, "items": [{ "item": "iron_scrap", "count": 6 }] },
+      {
+        "damage": 4,
+        "souls": 320,
+        "items": [
+          { "item": "iron_scrap", "count": 8 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "damage": 4,
+        "souls": 460,
+        "items": [
+          { "item": "iron_scrap", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 5,
+        "souls": 640,
+        "items": [
+          { "item": "iron_scrap", "count": 12 },
+          { "item": "bone_shard", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "critChance", "value": 0.05 }],
+    "power": {
+      "name": "Kindled Edge",
+      "text": "Every third hit in a row sets the ground under the foe alight.",
+      "effect": {
+        "type": "streakBurst",
+        "hits": 3,
+        "window": 1.5,
+        "ability": "fire_pot",
+        "radius": 18,
+        "damage": 5,
+        "duration": 180,
+        "interval": 30
+      }
+    }
+  },
+  "oathspear": {
+    "kind": "weapon",
+    "name": "Oathspear",
+    "description": "A knight’s spear, its pennant long burned away. It still finds what it was sworn against.",
+    "icon": "ashwood_spear",
+    "stack": 1,
+    "weapon": { "type": "spear", "damage": 12, "staminaCost": 13, "reach": 28, "width": 8, "knockback": 3.2 },
+    "upgrades": [
+      { "damage": 2, "souls": 120, "items": [{ "item": "iron_scrap", "count": 4 }] },
+      { "damage": 2, "souls": 200, "items": [{ "item": "iron_scrap", "count": 6 }] },
+      {
+        "damage": 3,
+        "souls": 320,
+        "items": [
+          { "item": "iron_scrap", "count": 8 },
+          { "item": "ashwood", "count": 4 }
+        ]
+      },
+      {
+        "damage": 3,
+        "souls": 460,
+        "items": [
+          { "item": "iron_scrap", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 4,
+        "souls": 640,
+        "items": [
+          { "item": "iron_scrap", "count": 12 },
+          { "item": "bone_shard", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "tipperDamage", "value": 0.15 }],
+    "power": {
+      "name": "Sworn Mark",
+      "text": "Tipper hits mark a foe. Your next ability to hit a marked foe staggers it outright.",
+      "effect": { "type": "tipperMark", "seconds": 5, "stagger": 90 }
+    }
+  },
+  "gravebell": {
+    "kind": "weapon",
+    "name": "Gravebell",
+    "description": "A bronze bell on a haft of black iron. Its toll calls the dead to hear it.",
+    "icon": "stone_maul",
+    "stack": 1,
+    "weapon": { "type": "hammer", "damage": 25, "staminaCost": 26, "reach": 17, "width": 24, "knockback": 5 },
+    "upgrades": [
+      { "damage": 4, "souls": 200, "items": [{ "item": "stone", "count": 6 }] },
+      {
+        "damage": 4,
+        "souls": 320,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "iron_scrap", "count": 4 }
+        ]
+      },
+      {
+        "damage": 5,
+        "souls": 480,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 6,
+        "souls": 660,
+        "items": [
+          { "item": "stone", "count": 12 },
+          { "item": "iron_scrap", "count": 8 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "stagger", "value": 0.2 }],
+    "power": {
+      "name": "Toll",
+      "text": "A full-charge slam rings out, pulling nearby foes in before the shockwave.",
+      "effect": { "type": "slamPull", "radius": 64 }
+    }
+  },
+  "twinfang": {
+    "kind": "weapon",
+    "name": "Twinfang",
+    "description": "Two blades that were once one fang. Each remembers where the other struck.",
+    "icon": "bone_daggers",
+    "stack": 1,
+    "weapon": {
+      "type": "daggers",
+      "damage": 6,
+      "staminaCost": 6,
+      "reach": 12,
+      "width": 14,
+      "knockback": 0.3
+    },
+    "upgrades": [
+      { "damage": 1, "souls": 100, "items": [{ "item": "bone_shard", "count": 3 }] },
+      { "damage": 1, "souls": 180, "items": [{ "item": "bone_shard", "count": 5 }] },
+      {
+        "damage": 2,
+        "souls": 300,
+        "items": [
+          { "item": "bone_shard", "count": 6 },
+          { "item": "iron_scrap", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 440,
+        "items": [
+          { "item": "bone_shard", "count": 8 },
+          { "item": "stone", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 620,
+        "items": [
+          { "item": "bone_shard", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "flankDamage", "value": 0.15 }],
+    "power": {
+      "name": "Second Bite",
+      "text": "Vanish lasts until you have struck twice, and both strikes are ambushes.",
+      "effect": { "type": "vanishStrikes", "strikes": 2 }
+    }
+  },
+  "pale_wind": {
+    "kind": "weapon",
+    "name": "Pale Wind",
+    "description": "Its string hums before you draw it, as if it already knows where to aim.",
+    "icon": "ashwood_bow",
+    "stack": 1,
+    "weapon": { "type": "bow", "damage": 7, "staminaCost": 9, "reach": 16, "width": 6, "knockback": 1.2 },
+    "upgrades": [
+      { "damage": 1, "souls": 110, "items": [{ "item": "ashwood", "count": 4 }] },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "bone_shard", "count": 4 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "bone_shard", "count": 8 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "pinDamage", "value": 0.15 }],
+    "power": {
+      "name": "Following Wind",
+      "text": "A Perfect Shot makes your next roll cost no stamina.",
+      "effect": { "type": "perfectRefund" }
+    }
+  },
+  "hearthwood": {
+    "kind": "weapon",
+    "name": "Hearthwood",
+    "description": "Cut from the tree that grew over the first village hearth. It keeps its warmth for you.",
+    "icon": "ember_staff",
+    "stack": 1,
+    "weapon": { "type": "staff", "damage": 8, "staminaCost": 13, "reach": 21, "width": 25, "knockback": 2.8 },
+    "upgrades": [
+      {
+        "damage": 1,
+        "souls": 110,
+        "items": [
+          { "item": "ashwood", "count": 4 },
+          { "item": "glowspore", "count": 1 }
+        ]
+      },
+      {
+        "damage": 1,
+        "souls": 190,
+        "items": [
+          { "item": "ashwood", "count": 6 },
+          { "item": "glowspore", "count": 2 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 310,
+        "items": [
+          { "item": "ashwood", "count": 8 },
+          { "item": "glowspore", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 450,
+        "items": [
+          { "item": "ashwood", "count": 10 },
+          { "item": "stone", "count": 6 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 630,
+        "items": [
+          { "item": "ashwood", "count": 12 },
+          { "item": "glowspore", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "emberPower", "value": 0.03 }],
+    "power": {
+      "name": "Hearth",
+      "text": "Every Ember you spend heals you 6 HP.",
+      "effect": { "type": "emberHeal", "amount": 6 }
+    }
+  },
+  "crown_of_the_unforgotten": {
+    "kind": "armor",
+    "name": "Crown of the Unforgotten",
+    "description": "A circlet of blackened iron. Wearing it, you hear the names of the fallen.",
+    "icon": "iron_helm",
+    "stack": 1,
+    "armor": { "slot": "helmet", "value": 3, "weight": "plate" },
+    "innate": [{ "perk": "attunement", "value": 1 }],
+    "power": {
+      "name": "Vigil",
+      "text": "Your super charges while you stand still.",
+      "effect": { "type": "stillEnergy", "perSecond": 3 }
+    },
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "pyreheart_cuirass": {
+    "kind": "armor",
+    "name": "Pyreheart Cuirass",
+    "description": "Its breastplate is warm to the touch, and warmer when you bleed.",
+    "icon": "iron_mail",
+    "stack": 1,
+    "armor": { "slot": "chest", "value": 6, "weight": "plate" },
+    "innate": [{ "perk": "maxHp", "value": 10 }],
+    "power": {
+      "name": "Last Coal",
+      "text": "Falling below a third of your health wraps you in 40 overshield, once every 30 seconds.",
+      "effect": { "type": "lowHealthShield", "below": 0.33, "amount": 40, "seconds": 6, "cooldown": 30 }
+    },
+    "upgrades": [
+      {
+        "armor": 2,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 3,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 3,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "ashwalker_greaves": {
+    "kind": "armor",
+    "name": "Ashwalker Greaves",
+    "description": "Light as ash, and they leave none behind.",
+    "icon": "iron_greaves",
+    "stack": 1,
+    "armor": { "slot": "legs", "value": 3, "weight": "leather" },
+    "innate": [{ "perk": "rollStamina", "value": 0.08 }],
+    "power": {
+      "name": "Ashwalk",
+      "text": "Rolling through a blow gives back the roll’s stamina.",
+      "effect": { "type": "dodgeRefund" }
+    },
+    "upgrades": [
+      {
+        "armor": 1,
+        "souls": 60,
+        "items": [
+          { "item": "stone", "count": 3 },
+          { "item": "bone_shard", "count": 1 }
+        ]
+      },
+      {
+        "armor": 1,
+        "souls": 120,
+        "items": [
+          { "item": "stone", "count": 5 },
+          { "item": "bone_shard", "count": 2 }
+        ]
+      },
+      {
+        "armor": 2,
+        "souls": 220,
+        "items": [
+          { "item": "stone", "count": 8 },
+          { "item": "bone_shard", "count": 3 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "armor": 2,
+        "souls": 360,
+        "items": [
+          { "item": "stone", "count": 10 },
+          { "item": "bone_shard", "count": 5 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "ring_of_the_last_ember": {
+    "kind": "ring",
+    "name": "Ring of the Last Ember",
+    "description": "A cinder set in bone. It flares once, and only once, between rests.",
+    "icon": "ring_vigor",
+    "stack": 1,
+    "innate": [{ "perk": "healing", "value": 0.15 }],
+    "power": {
+      "name": "The Last Ember",
+      "text": "Once per rest, a killing blow leaves you at 1 HP with full stamina.",
+      "effect": { "type": "lastEmber" }
+    }
   },
   "field_bandage": {
     "kind": "consumable",

@@ -45,6 +45,8 @@ export class Simulation {
   readonly world: ChunkWorld;
   readonly modules: readonly SimModule[];
   private readonly systems: readonly System[];
+  /** The systems that apply menu actions: all that runs while a menu holds the world still. */
+  private readonly menuSystems: readonly System[];
   private carriedPresses: number;
 
   private constructor(
@@ -58,9 +60,11 @@ export class Simulation {
     this.hitstop = opts.hitstop;
     this.carriedPresses = opts.carriedPresses;
     this.modules = opts.modules;
-    this.systems = PHASES.flatMap((phase) =>
-      opts.modules.flatMap((m) => (m.systems ?? []).filter((s) => s.phase === phase).map((s) => s.run)),
+    const ordered = PHASES.flatMap((phase) =>
+      opts.modules.flatMap((m) => (m.systems ?? []).filter((s) => s.phase === phase)),
     );
+    this.systems = ordered.map((s) => s.run);
+    this.menuSystems = ordered.filter((s) => s.menu === true).map((s) => s.run);
     this.world = new ChunkWorld(state, content);
   }
 
@@ -113,6 +117,12 @@ export class Simulation {
     return sim;
   }
 
+  /** Whether the player is seated at a bonfire. */
+  get resting(): boolean {
+    const e = this.ecs.first(Player);
+    return e !== undefined && this.ecs.get(e, Player)?.state === 'sit';
+  }
+
   get player(): Entity {
     const e = this.ecs.first(Player);
     if (e === undefined) throw new Error('The player entity is missing');
@@ -132,7 +142,10 @@ export class Simulation {
     }
     this.input = this.carriedPresses ? { ...input, pressed: input.pressed | this.carriedPresses } : input;
     this.carriedPresses = 0;
-    for (const system of this.systems) system(this);
+    // An open menu, and resting at a bonfire (itself a menu), hold the world still: no enemy moves, no arrow
+    // flies, nothing lands a blow. Only the systems that apply menu actions run.
+    const held = this.input.menu === true || this.resting;
+    for (const system of held ? this.menuSystems : this.systems) system(this);
     this.ecs.flush();
   }
 

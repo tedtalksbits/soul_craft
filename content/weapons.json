@@ -1,0 +1,451 @@
+{
+  "affinityBonus": 0.12,
+  "minCharge": 8,
+  "chargeMove": 0.4,
+  "types": {
+    "sword": {
+      "name": "Sword",
+      "chain": [
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 16,
+          "activeFrom": 3,
+          "activeTo": 9,
+          "hitstop": 3,
+          "lunge": 0.5,
+          "arc": "slash"
+        },
+        {
+          "damage": 1,
+          "stamina": 0.9,
+          "reach": 1,
+          "width": 1,
+          "duration": 16,
+          "activeFrom": 3,
+          "activeTo": 9,
+          "hitstop": 3,
+          "lunge": 0.5,
+          "arc": "slash"
+        },
+        {
+          "damage": 1.4,
+          "stamina": 1.1,
+          "reach": 1.35,
+          "width": 0.55,
+          "duration": 22,
+          "activeFrom": 5,
+          "activeTo": 10,
+          "hitstop": 5,
+          "lunge": 1.3,
+          "knockback": 1.5,
+          "arc": "thrust"
+        }
+      ],
+      "chainWindow": 14,
+      "charged": {
+        "damage": 2,
+        "stamina": 1.6,
+        "reach": 1.5,
+        "width": 0.6,
+        "duration": 24,
+        "activeFrom": 4,
+        "activeTo": 12,
+        "hitstop": 6,
+        "lunge": 3.2,
+        "knockback": 2,
+        "pose": "cast_charge",
+        "chargeTicks": 36,
+        "partial": 0.6,
+        "arc": "thrust"
+      },
+      "dash": {
+        "damage": 1.3,
+        "stamina": 0.8,
+        "reach": 1.1,
+        "width": 1.2,
+        "duration": 18,
+        "activeFrom": 2,
+        "activeTo": 8,
+        "hitstop": 4,
+        "lunge": 2.2,
+        "arc": "slash"
+      },
+      "dashWindow": 10,
+      "signature": { "type": "flow", "window": 12 },
+      "affinity": ["vanguard", "stalker", "ashcaller"]
+    },
+    "spear": {
+      "name": "Spear",
+      "chain": [
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 18,
+          "activeFrom": 4,
+          "activeTo": 9,
+          "hitstop": 3,
+          "lunge": 0.4,
+          "arc": "thrust"
+        },
+        {
+          "damage": 1.1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 18,
+          "activeFrom": 4,
+          "activeTo": 9,
+          "hitstop": 3,
+          "lunge": 0.8,
+          "arc": "thrust"
+        }
+      ],
+      "chainWindow": 14,
+      "charged": {
+        "damage": 1.6,
+        "stamina": 1.8,
+        "reach": 0.75,
+        "width": 1,
+        "duration": 28,
+        "activeFrom": 8,
+        "activeTo": 14,
+        "hitstop": 5,
+        "knockback": 2.5,
+        "around": true,
+        "pose": "cast_slam",
+        "chargeTicks": 40,
+        "partial": 0.6,
+        "arc": "sweep"
+      },
+      "dash": {
+        "damage": 1.5,
+        "stamina": 0.9,
+        "reach": 1.15,
+        "width": 1,
+        "duration": 22,
+        "activeFrom": 3,
+        "activeTo": 10,
+        "hitstop": 4,
+        "lunge": 3,
+        "arc": "thrust"
+      },
+      "dashWindow": 10,
+      "signature": {
+        "type": "tipper",
+        "outer": 0.34,
+        "bonus": 0.4,
+        "knockback": 1.6,
+        "close": 1.8,
+        "midAttack": 0.3
+      },
+      "affinity": ["vanguard"]
+    },
+    "hammer": {
+      "name": "Hammer",
+      "chain": [
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 34,
+          "activeFrom": 14,
+          "activeTo": 19,
+          "hitstop": 7,
+          "lunge": 0.3,
+          "stagger": 20,
+          "hyperArmor": true,
+          "arc": "slam"
+        },
+        {
+          "damage": 1.15,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1.1,
+          "duration": 38,
+          "activeFrom": 16,
+          "activeTo": 21,
+          "hitstop": 8,
+          "lunge": 0.3,
+          "stagger": 30,
+          "hyperArmor": true,
+          "arc": "slam"
+        }
+      ],
+      "chainWindow": 16,
+      "charged": {
+        "damage": 2,
+        "stamina": 1.5,
+        "reach": 1,
+        "width": 1.1,
+        "duration": 34,
+        "activeFrom": 10,
+        "activeTo": 14,
+        "hitstop": 9,
+        "stagger": 50,
+        "hyperArmor": true,
+        "pose": "cast_slam",
+        "chargeTicks": 50,
+        "partial": 0.6,
+        "arc": "slam"
+      },
+      "dash": {
+        "damage": 1.2,
+        "stamina": 0.9,
+        "reach": 1,
+        "width": 1.2,
+        "duration": 28,
+        "activeFrom": 12,
+        "activeTo": 16,
+        "hitstop": 6,
+        "lunge": 1.5,
+        "stagger": 25,
+        "hyperArmor": true,
+        "arc": "slam"
+      },
+      "dashWindow": 10,
+      "signature": { "type": "break", "shockwave": { "radius": 36, "damage": 0.6, "stagger": 40 } },
+      "affinity": ["vanguard"]
+    },
+    "daggers": {
+      "name": "Twin Daggers",
+      "chain": [
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 9,
+          "activeFrom": 2,
+          "activeTo": 5,
+          "hitstop": 1,
+          "lunge": 0.4,
+          "arc": "slash"
+        },
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 9,
+          "activeFrom": 2,
+          "activeTo": 5,
+          "hitstop": 1,
+          "lunge": 0.4,
+          "arc": "slash"
+        },
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 9,
+          "activeFrom": 2,
+          "activeTo": 5,
+          "hitstop": 1,
+          "lunge": 0.4,
+          "arc": "slash"
+        },
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 9,
+          "activeFrom": 2,
+          "activeTo": 5,
+          "hitstop": 1,
+          "lunge": 0.4,
+          "arc": "slash"
+        },
+        {
+          "damage": 1.6,
+          "stamina": 1.2,
+          "reach": 1.1,
+          "width": 0.8,
+          "duration": 12,
+          "activeFrom": 3,
+          "activeTo": 7,
+          "hitstop": 2,
+          "lunge": 0.8,
+          "arc": "thrust"
+        }
+      ],
+      "chainWindow": 10,
+      "charged": {
+        "damage": 2.2,
+        "stamina": 2,
+        "reach": 1.2,
+        "width": 1.4,
+        "duration": 20,
+        "activeFrom": 3,
+        "activeTo": 12,
+        "hitstop": 3,
+        "lunge": 4,
+        "through": true,
+        "pose": "cast_charge",
+        "chargeTicks": 24,
+        "partial": 0.6,
+        "arc": "thrust"
+      },
+      "dash": {
+        "damage": 1.3,
+        "stamina": 1,
+        "reach": 1.1,
+        "width": 1,
+        "duration": 14,
+        "activeFrom": 2,
+        "activeTo": 8,
+        "hitstop": 2,
+        "around": true,
+        "arc": "sweep"
+      },
+      "dashWindow": 10,
+      "signature": {
+        "type": "flank",
+        "behind": 0.25,
+        "bonus": 0.5,
+        "bleed": { "stacks": 5, "ticks": 180, "damage": 1.5, "stagger": 30 }
+      },
+      "affinity": ["stalker"]
+    },
+    "bow": {
+      "name": "Bow",
+      "chain": [
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 14,
+          "activeFrom": 4,
+          "activeTo": 4,
+          "hitstop": 1,
+          "shot": { "speed": 4.5, "range": 200 },
+          "arc": "thrust",
+          "pose": "cast_throw"
+        }
+      ],
+      "chainWindow": 0,
+      "charged": {
+        "damage": 2.4,
+        "stamina": 1.2,
+        "reach": 1,
+        "width": 1,
+        "duration": 14,
+        "activeFrom": 3,
+        "activeTo": 3,
+        "hitstop": 3,
+        "chargeTicks": 36,
+        "partial": 0.5,
+        "shot": { "speed": 6, "range": 260 },
+        "arc": "thrust",
+        "pose": "cast_throw"
+      },
+      "dash": {
+        "damage": 1.2,
+        "stamina": 1,
+        "reach": 1,
+        "width": 1,
+        "duration": 18,
+        "activeFrom": 8,
+        "activeTo": 8,
+        "hitstop": 1,
+        "lunge": -2.2,
+        "shot": { "speed": 4.5, "range": 200 },
+        "arc": "thrust",
+        "pose": "cast_throw"
+      },
+      "dashWindow": 10,
+      "signature": {
+        "type": "pin",
+        "pins": 5,
+        "ticks": 360,
+        "window": 6,
+        "bonus": 0.6,
+        "stagger": 40,
+        "rip": 0.5
+      },
+      "affinity": ["stalker", "ashcaller"],
+      "drawDrain": 0.35,
+      "chargePose": "cast_throw"
+    },
+    "staff": {
+      "name": "Ember Staff",
+      "chain": [
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 18,
+          "activeFrom": 5,
+          "activeTo": 10,
+          "hitstop": 3,
+          "lunge": 0.3,
+          "arc": "slash"
+        },
+        {
+          "damage": 1,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 18,
+          "activeFrom": 5,
+          "activeTo": 10,
+          "hitstop": 3,
+          "lunge": 0.3,
+          "arc": "slash"
+        },
+        {
+          "damage": 1.2,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1.1,
+          "duration": 20,
+          "activeFrom": 6,
+          "activeTo": 11,
+          "hitstop": 4,
+          "stagger": 15,
+          "arc": "slam"
+        }
+      ],
+      "chainWindow": 14,
+      "charged": {
+        "damage": 2.3,
+        "stamina": 1,
+        "reach": 1,
+        "width": 1,
+        "duration": 16,
+        "activeFrom": 4,
+        "activeTo": 4,
+        "hitstop": 2,
+        "shot": { "speed": 3.5, "range": 180 },
+        "pose": "cast_throw",
+        "chargeTicks": 30,
+        "partial": 0.6,
+        "arc": "thrust"
+      },
+      "dash": {
+        "damage": 1.1,
+        "stamina": 1,
+        "reach": 1,
+        "width": 1,
+        "duration": 18,
+        "activeFrom": 3,
+        "activeTo": 9,
+        "hitstop": 3,
+        "around": true,
+        "arc": "sweep"
+      },
+      "dashWindow": 10,
+      "signature": { "type": "embers", "max": 4, "spark": 0.3, "explode": 28 },
+      "affinity": ["ashcaller"]
+    }
+  }
+}

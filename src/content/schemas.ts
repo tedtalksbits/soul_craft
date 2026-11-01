@@ -13,6 +13,8 @@ const fraction = z.number().min(0).max(1);
 const range = z.tuple([z.number(), z.number()]).refine(([a, b]) => a <= b, 'range min must be <= max');
 const size = z.object({ w: pos, h: pos });
 const weighted = <T extends z.ZodType>(item: T) => z.array(z.tuple([item, pos])).min(1);
+/** Per-point gains below, between and past the attribute soft caps. */
+const gains = z.tuple([nonneg, nonneg, nonneg]);
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'expected a #rrggbb color');
 
 // ------------------------------------------------------------------ classes & abilities
@@ -192,6 +194,48 @@ export const ModifierEffectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('castShield'), slot: AbilitySlotSchema, amount: pos, seconds: pos }),
   /** The first blow out of hiding (Vanish) deals `bonus` more on top of the ability's own. */
   z.object({ type: z.literal('ambush'), bonus: pos }),
+  /** Resting at a bonfire leaves `amount` overshield for `seconds`. */
+  z.object({ type: z.literal('restShield'), amount: pos, seconds: pos }),
+  /** A blow that would make the player flinch doesn't, at most once every `seconds`. */
+  z.object({ type: z.literal('poise'), seconds: pos }),
+  /** Once per rest, a killing blow leaves the player at 1 HP with full stamina instead. */
+  z.object({ type: z.literal('lastEmber') }),
+  /** The super charges by `perSecond` while the player stands still. */
+  z.object({ type: z.literal('stillEnergy'), perSecond: pos }),
+  /** Dropping below `below` of max health gives `amount` overshield for `seconds`, at most once every `cooldown` seconds. */
+  z.object({
+    type: z.literal('lowHealthShield'),
+    below: fraction,
+    amount: pos,
+    seconds: pos,
+    cooldown: pos,
+  }),
+  /** Rolling through a blow (its i-frames taking the hit) gives back the roll's stamina, once per roll. */
+  z.object({ type: z.literal('dodgeRefund') }),
+  /** Spear tipper hits mark the foe for `seconds`; the next ability hit on a marked foe staggers it for `stagger`. */
+  z.object({ type: z.literal('tipperMark'), seconds: pos, stagger: ticks }),
+  /** A full-charge hammer slam first pulls foes within `radius` toward where it lands. */
+  z.object({ type: z.literal('slamPull'), radius: pos }),
+  /** Vanish lasts through this many strikes instead of breaking on the first; each one is an ambush. */
+  z.object({ type: z.literal('vanishStrikes'), strikes: z.number().int().min(2) }),
+  /** A Perfect Shot makes the next roll cost no stamina. */
+  z.object({ type: z.literal('perfectRefund') }),
+  /** Each Ember spent heals the player `amount`. */
+  z.object({ type: z.literal('emberHeal'), amount: pos }),
+  /**
+   * Every `hits` weapon hits, each within `window` seconds of the last, set the ground under the last
+   * one alight: a zone of `ability`'s look that burns for `damage` every `interval` ticks.
+   */
+  z.object({
+    type: z.literal('streakBurst'),
+    hits: z.number().int().min(2),
+    window: pos,
+    ability: z.string(),
+    radius: pos,
+    damage: pos,
+    duration: ticks,
+    interval: ticks,
+  }),
 ]);
 export type ModifierEffect = z.infer<typeof ModifierEffectSchema>;
 
@@ -221,6 +265,156 @@ export const ModifiersSchema = z.object({
 });
 export type ModifiersDef = z.infer<typeof ModifiersSchema>;
 
+// ------------------------------------------------------------------ weapon types
+
+/** Weapon types. Any class can use any of them; each class fights a little better with its own. */
+export const WeaponTypeSchema = z.enum(['sword', 'spear', 'hammer', 'daggers', 'bow', 'staff']);
+export type WeaponTypeId = z.infer<typeof WeaponTypeSchema>;
+
+/**
+ * One attack in a weapon type's move set. Damage, stamina, reach, width and knockback multiply the
+ * weapon's own numbers; the timing is in ticks.
+ */
+export const MoveSchema = z
+  .object({
+    damage: pos,
+    stamina: nonneg,
+    reach: pos,
+    width: pos,
+    knockback: nonneg.default(1),
+    duration: ticks,
+    activeFrom: ticks,
+    activeTo: ticks,
+    /** Frames the world freezes when it lands: what makes a heavy hit feel heavy. */
+    hitstop: ticks,
+    /** Speed (px per tick) from the start of the move until its last active tick: forward, or back if negative. */
+    lunge: z.number().default(0),
+    /** Ticks it staggers what it hits (bosses shrug it off). */
+    stagger: ticks.default(0),
+    /** Blows taken during it (until its last active tick) don't make the player flinch. */
+    hyperArmor: z.boolean().default(false),
+    /** Hits everything within `reach` all around, instead of a box in front. */
+    around: z.boolean().default(false),
+    /** Lunges through foes instead of stopping short, untouchable until its last active tick. */
+    through: z.boolean().default(false),
+    /**
+     * Fires an arrow on its first active tick instead of swinging: flying `speed` px per tick for at most
+     * `range` px. Reach and width don't apply.
+     */
+    shot: z.object({ speed: pos, range: pos }).optional(),
+    /** How the swing is drawn, and the body pose it uses. */
+    arc: z.enum(['slash', 'thrust', 'sweep', 'slam']),
+    pose: z.string().default('attack'),
+  })
+  .refine(
+    (m) => m.activeFrom <= m.activeTo && m.activeTo < m.duration,
+    'active window must sit inside the move',
+  );
+export type MoveDef = z.infer<typeof MoveSchema>;
+
+/** What makes a weapon type itself, on top of its moves. */
+export const SignatureSchema = z.discriminatedUnion('type', [
+  /**
+   * Sword: a light hit or dash-strike within `window` ticks of a roll that took a blow crits and refunds
+   * the roll's stamina.
+   */
+  z.object({ type: z.literal('flow'), window: ticks }),
+  /**
+   * Spear: hits in the outer `outer` of reach do `bonus` more with `knockback` times the shove; hits
+   * up close shove the foe out with `close` times the knockback. Foes mid-attack take `midAttack` more.
+   */
+  z.object({
+    type: z.literal('tipper'),
+    outer: fraction,
+    bonus: nonneg,
+    knockback: pos,
+    close: pos,
+    midAttack: nonneg,
+  }),
+  /**
+   * Hammer: a hit on a staggered foe crits (a crush). A full-charge slam sends out a shockwave of
+   * `radius` doing `damage` times the weapon's damage and staggering for `stagger`, hit or miss.
+   */
+  z.object({ type: z.literal('break'), shockwave: z.object({ radius: pos, damage: pos, stagger: ticks }) }),
+  /**
+   * Daggers: a hit from behind (more than `behind` turned away) crits for `bonus` more. Every hit adds a
+   * Bleed stack, lasting `ticks` from the last; at `stacks` they burst for `damage` times the weapon's
+   * damage and stagger for `stagger`.
+   */
+  z.object({
+    type: z.literal('flank'),
+    behind: fraction,
+    bonus: nonneg,
+    bleed: z.object({ stacks: z.number().int().min(1), ticks: ticks, damage: pos, stagger: ticks }),
+  }),
+  /**
+   * Bow: arrows lodge in a foe (up to `pins`, each lasting `ticks`). Let go of a full draw within
+   * `window` ticks and it is a Perfect Shot: `bonus` more damage, piercing, a stagger, and every pin
+   * ripped out for `rip` times the shot's damage each.
+   */
+  /**
+   * Ember staff: every melee hit stores an Ember (up to `max`). A charged shot is a fireball that spends
+   * one; with none stored it is a spark at `spark` of the damage. A fireball loosed with all `max` stored
+   * bursts for `explode` px around where it lands, with the perk for it.
+   */
+  z.object({ type: z.literal('embers'), max: z.number().int().min(1), spark: fraction, explode: pos }),
+  z.object({
+    type: z.literal('pin'),
+    pins: z.number().int().min(1),
+    ticks: ticks,
+    window: ticks,
+    bonus: nonneg,
+    stagger: ticks,
+    rip: nonneg,
+  }),
+]);
+
+export const WeaponTypeDefSchema = z.object({
+  name: z.string(),
+  /** The light chain, tapped; the last is the finisher. */
+  chain: z.array(MoveSchema).min(1),
+  /** Ticks after a light attack ends that the next tap still continues the chain. */
+  chainWindow: ticks,
+  /**
+   * Held: charging for `chargeTicks` makes it full, with its payoff (hyper armor, a shockwave). Let go
+   * earlier, after the tap window, and it lands at `partial` of its damage, without the payoff.
+   */
+  charged: MoveSchema.and(z.object({ chargeTicks: z.number().int().min(1), partial: fraction })),
+  /** An attack during a roll, or within `dashWindow` ticks after one. */
+  dash: MoveSchema,
+  dashWindow: ticks,
+  signature: SignatureSchema,
+  /** Classes that fight better with it (by `affinityBonus` more damage). */
+  affinity: z.array(z.string()).default([]),
+  /** Stamina a held charge burns every tick (a drawn bow); out of stamina, it lets go. */
+  drawDrain: nonneg.default(0),
+  /** The body pose while charging. */
+  chargePose: z.string().default('cast_raise'),
+});
+export type WeaponTypeDef = z.infer<typeof WeaponTypeDefSchema>;
+
+/** `weapons.json`: every weapon type's moves and rules. */
+export const WeaponsSchema = z.object({
+  /** Extra damage for a class using a weapon type it has an affinity with. */
+  affinityBonus: nonneg,
+  /**
+   * A held attack becomes a charge once held past the light attack's first active tick; let go
+   * before `minCharge` ticks of charging and it is the light attack after all.
+   */
+  minCharge: ticks,
+  /** Speed while charging, as a fraction of walking. */
+  chargeMove: fraction,
+  types: z.object({
+    sword: WeaponTypeDefSchema,
+    spear: WeaponTypeDefSchema,
+    hammer: WeaponTypeDefSchema,
+    daggers: WeaponTypeDefSchema,
+    bow: WeaponTypeDefSchema,
+    staff: WeaponTypeDefSchema,
+  }),
+});
+export type WeaponsDef = z.infer<typeof WeaponsSchema>;
+
 // ------------------------------------------------------------------ items & crafting
 
 /** Crafting stations placed in the world. Recipes with `station: null` can be crafted anywhere. */
@@ -244,6 +438,28 @@ const itemBase = {
 export const StatSchema = z.enum(['damage', 'defense', 'staminaRegen', 'maxHp']);
 export type StatId = z.infer<typeof StatSchema>;
 
+export const ArmorSlotSchema = z.enum(['helmet', 'chest', 'legs']);
+export type ArmorSlot = z.infer<typeof ArmorSlotSchema>;
+
+/** A perk on a piece of gear: which one (`loot.json → perks`) and how strong. */
+export const PerkRollSchema = z.object({ perk: z.string(), value: pos });
+
+/** What every piece of gear has on top of its kind's numbers. */
+const gearBase = {
+  /**
+   * Fixed perks every copy carries, at item level 1, Common strength (tier and item level scale them
+   * like base stats). A ring's whole power is here.
+   */
+  innate: z.array(PerkRollSchema).default([]),
+  /** How often this base is picked when gear drops, relative to the others of its slot. 0 = never drops. */
+  drop: nonneg.default(1),
+  /**
+   * Makes this a Legendary base: it only ever drops as a Legendary, carrying this hand-made power (and its
+   * `innate` perk as the power's partner) on top of the tier's rolled perks.
+   */
+  power: z.object({ name: z.string(), text: z.string(), effect: ModifierEffectSchema }).optional(),
+};
+
 export const ItemSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('material'), ...itemBase }),
   /** A story item (a boss's Kindling): kept in the pack, spent only by restoration projects. */
@@ -263,7 +479,16 @@ export const ItemSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('weapon'),
     ...itemBase,
-    weapon: z.object({ damage: pos, staminaCost: nonneg, reach: pos, width: pos, knockback: nonneg }),
+    ...gearBase,
+    /** Base numbers at item level 1, Common; tier and item level scale `damage`. Its type gives its moves. */
+    weapon: z.object({
+      type: WeaponTypeSchema,
+      damage: pos,
+      staminaCost: nonneg,
+      reach: pos,
+      width: pos,
+      knockback: nonneg,
+    }),
     /** Forge upgrades, in order: each adds `damage` and costs souls plus items. */
     upgrades: z
       .array(
@@ -280,13 +505,26 @@ export const ItemSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('armor'),
     ...itemBase,
-    armor: z.object({ defense: z.number().min(0).max(0.9) }),
+    ...gearBase,
+    /**
+     * Which body slot it goes in, its Armor at item level 1, Common (tier and item level scale it),
+     * and how heavy it looks on the character.
+     */
+    armor: z.object({ slot: ArmorSlotSchema, value: pos, weight: z.enum(['cloth', 'leather', 'plate']) }),
+    /** Forge upgrades, in order: each adds `armor` and costs souls plus items. */
+    upgrades: z
+      .array(
+        z.object({
+          armor: pos,
+          souls: z.number().int().nonnegative(),
+          items: z.array(ItemCountSchema),
+          requires: z.string().optional(),
+        }),
+      )
+      .default([]),
   }),
-  z.object({
-    kind: z.literal('ring'),
-    ...itemBase,
-    ring: z.object({ stat: StatSchema, amount: pos }),
-  }),
+  /** A ring's power is its innate perk. */
+  z.object({ kind: z.literal('ring'), ...itemBase, ...gearBase }),
   z.object({
     kind: z.literal('consumable'),
     ...itemBase,
@@ -328,6 +566,8 @@ export const RestorationEffectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('light'), radius: pos }),
   /** Unlocks forge upgrade steps that name this project in `requires`: the smithy. */
   z.object({ type: z.literal('forgeSteps') }),
+  /** The smith tempers perks and cleanses blight at the forge. */
+  z.object({ type: z.literal('smithWork') }),
 ]);
 export type RestorationEffect = z.infer<typeof RestorationEffectSchema>;
 
@@ -435,14 +675,14 @@ export const PlayerSchema = z.object({
   exploration: z.object({ revealRadius: pos }),
   /** How many different stacks the player can carry. */
   inventorySlots: z.number().int().min(1),
-  /** A new game starts as this class, with this weapon equipped and these items carried. */
   /**
-   * A new game starts as this class, with this weapon and these items. Only the AoE ability
+   * A new game starts as this class, wearing this gear and carrying these items. Only the AoE ability
    * is known at first unless `unlocked` says otherwise; relics unlock the rest.
    */
   start: z.object({
     class: z.string(),
-    weapon: z.string(),
+    /** Gear worn from the start, all Common at item level 1. */
+    gear: z.array(z.string()).min(1),
     items: z.array(ItemCountSchema).default([]),
     unlocked: z.object({ class: z.boolean(), super: z.boolean() }).default({ class: false, super: false }),
   }),
@@ -452,23 +692,212 @@ export const PlayerSchema = z.object({
    */
   leveling: z.object({
     cost: z.object({ base: pos, growth: z.number().min(1) }),
+    /**
+     * Attribute points past each breakpoint give less (points from gear count too): each `perLevel`
+     * entry is the gain per point below the first breakpoint, between the two, and past the second.
+     */
+    softCaps: z.tuple([z.number().int().min(1), z.number().int().min(1)]),
     perLevel: z.object({
       /** Max health per point. */
-      vigor: z.object({ maxHp: nonneg }),
+      vigor: z.object({ maxHp: gains }),
       /** Max stamina per point. */
-      endurance: z.object({ maxStamina: nonneg }),
-      /** Sword damage per point, as a fraction (0.05 = +5%). */
-      might: z.object({ damage: nonneg }),
+      endurance: z.object({ maxStamina: gains }),
+      /** Weapon damage per point, as a fraction (0.05 = +5%). */
+      might: z.object({ damage: gains }),
       /** Ability damage and super charge rate per point, as fractions. */
-      attunement: z.object({ abilityDamage: nonneg, energy: nonneg }),
+      attunement: z.object({ abilityDamage: gains, energy: gains }),
     }),
   }),
+  /**
+   * Armor's curve: a hit is cut to `k / (k + Armor)`, so every point is worth the same extra effective
+   * health. Damage reduction from everything together never passes `cap`.
+   */
+  armor: z.object({ k: pos, cap: fraction }),
   /** Super energy, 0-100. Full charges the super; sword and ability hits fill it, the super's own hits don't. */
   energy: z.object({ perDamage: nonneg, perKill: nonneg, perSecond: nonneg }),
 });
 export type PlayerDef = z.infer<typeof PlayerSchema>;
 
 // ------------------------------------------------------------------ loot
+
+/** Gear tiers, worst to best. Order matters: pity compares tiers by it. */
+export const TierSchema = z.enum(['common', 'standard', 'rare', 'noble', 'legendary']);
+export type TierId = z.infer<typeof TierSchema>;
+export const TIERS: readonly TierId[] = TierSchema.options;
+
+/** Every gear slot a perk can roll on. */
+export const GearSlotSchema = z.enum(['weapon', 'helmet', 'chest', 'legs', 'ring']);
+export type GearSlot = z.infer<typeof GearSlotSchema>;
+
+/** What a perk changes. Fractions (0.08 = +8%) except the point stats (HP, stamina, Armor, attributes). */
+export const PerkStatSchema = z.enum([
+  'damage',
+  'critChance',
+  'critDamage',
+  'attackStamina',
+  'souls',
+  'maxHp',
+  'maxStamina',
+  'armor',
+  'staminaRegen',
+  'rollStamina',
+  'moveSpeed',
+  'healing',
+  'abilityDamage',
+  'vigor',
+  'endurance',
+  'might',
+  'attunement',
+  'energyGain',
+  'rollIframes',
+  'rollDistance',
+  'flaskCharges',
+  'reach',
+  'chargeSpeed',
+  'stagger',
+  'finisherDamage',
+  'midAttackDamage',
+  'tipperDamage',
+  'crushDamage',
+  'flowEnergy',
+  'flankDamage',
+  'bleedStamina',
+  'bleedVulnerability',
+  'freeFifth',
+  'ambushBleed',
+  'perfectWindow',
+  'pinDamage',
+  'splitShot',
+  'bowKick',
+  'freeDashShot',
+  'pinBurn',
+  'fullEmberBlast',
+  'abilityEmbers',
+  'bonkKnockback',
+  'piercingFire',
+  'emberPower',
+]);
+export type PerkStat = z.infer<typeof PerkStatSchema>;
+
+/**
+ * A perk changes a stat, or adds an effect of the kinds class modifiers use (a heal on kill, a shorter
+ * cooldown, a shield on cast), so gear and modifiers share one set of hooks.
+ */
+export const PerkSchema = z
+  .object({
+    /**
+     * Shown on the item; `{v}` becomes the value. For a stat that is a percentage for fractions; for an
+     * effect, its headline number (seconds, HP, a percentage) at the rolled strength.
+     */
+    text: z.string(),
+    stat: PerkStatSchema.optional(),
+    effect: ModifierEffectSchema.optional(),
+    /**
+     * For a stat, its strength at item level 1 on a Common-strength roll (tier and item level scale it).
+     * An effect's numbers are written at strength 1; tier strength and the roll scale them, item level doesn't.
+     */
+    value: pos.default(1),
+    /** Rounded to a whole number (and at least 1): points, never fractions. */
+    integer: z.boolean().default(false),
+    /** Never scaled or spread: always exactly `value` (a whole extra flask charge). */
+    fixed: z.boolean().default(false),
+    /** Slots it can roll on. */
+    slots: z.array(GearSlotSchema).min(1),
+    /** Only rolls on weapons of these types (a perk that changes a type's own moves). */
+    weaponTypes: z.array(WeaponTypeSchema).optional(),
+    /** A class perk: it works only while playing this class, and smart loot favors the class you play. */
+    class: z.string().optional(),
+    /** Only rolls on this tier or better. */
+    minTier: TierSchema.optional(),
+    /** A Blighted item's drawback: it takes its stat away, and only rolls as one. */
+    drawback: z.boolean().default(false),
+  })
+  .refine(
+    (p) => (p.stat === undefined) !== (p.effect === undefined),
+    'a perk has a stat or an effect, not both',
+  )
+  .refine((p) => !p.drawback || p.stat !== undefined, 'a drawback takes a stat away');
+export type PerkDef = z.infer<typeof PerkSchema>;
+
+const TierDefSchema = z.object({
+  name: z.string(),
+  color,
+  /** Perks rolled when it drops. */
+  perks: z.number().int().nonnegative(),
+  /** Multiplies base stats (damage, Armor, innate perks). */
+  stats: pos,
+  /** Multiplies rolled perk values. */
+  perkStrength: pos,
+});
+
+/** `loot.json`: tiers, perks and the drop tables enemies name. */
+export const LootSchema = z.object({
+  tiers: z.object({
+    common: TierDefSchema,
+    standard: TierDefSchema,
+    rare: TierDefSchema,
+    noble: TierDefSchema,
+    legendary: TierDefSchema,
+  }),
+  /** Base stats and perks grow by this fraction per item level above 1. */
+  itemLevelGrowth: nonneg,
+  /** Rolled perk values land within this fraction either side of their target. */
+  perkSpread: fraction,
+  /**
+   * After `after` drops in a row below `tier`, the next drop is `tier` or better. The count is kept
+   * in the save.
+   */
+  pity: z.object({ after: z.number().int().min(1), tier: TierSchema }),
+  /** Named tier odds that enemies' `gear.table` refers to. */
+  tables: z.record(z.string(), weighted(TierSchema)),
+  /** On this tier or better, each rolled perk has `chance` of being Greater: `factor` times as strong. */
+  greater: z.object({ tier: TierSchema, chance: fraction, factor: pos }),
+  /**
+   * A drop of this tier or better has `chance` of being Blighted: one drawback perk, and every other
+   * rolled perk `factor` times as strong.
+   */
+  blight: z.object({ tier: TierSchema, chance: fraction, factor: pos }),
+  /** Of the class perks that roll, about this share are for the class being played. */
+  smartLoot: fraction,
+  /** Smithy work (docs/gear-and-loot.md, section 7). */
+  smithy: z.object({
+    /**
+     * Salvage: per tier, how many of each of the slot's three materials, plus (for a Legendary) one `mark`.
+     * It never pays souls.
+     */
+    salvage: z.object({
+      yields: z.object({
+        common: z.tuple([nonneg, nonneg, nonneg]),
+        standard: z.tuple([nonneg, nonneg, nonneg]),
+        rare: z.tuple([nonneg, nonneg, nonneg]),
+        noble: z.tuple([nonneg, nonneg, nonneg]),
+        legendary: z.tuple([nonneg, nonneg, nonneg]),
+      }),
+      materials: z.object({
+        weapon: z.tuple([z.string(), z.string(), z.string()]),
+        armor: z.tuple([z.string(), z.string(), z.string()]),
+        ring: z.tuple([z.string(), z.string(), z.string()]),
+      }),
+      mark: z.string(),
+    }),
+    /**
+     * Tempering one perk: the base cost times the tier's factor, rising by `growth` with each temper of the
+     * same item, to at most `cap` times.
+     */
+    temper: z.object({
+      souls: z.number().int().nonnegative(),
+      items: z.array(ItemCountSchema),
+      tiers: z.object({ standard: pos, rare: pos, noble: pos, legendary: pos }),
+      growth: nonneg,
+      cap: pos,
+    }),
+    cleanse: z.object({ souls: z.number().int().nonnegative(), items: z.array(ItemCountSchema) }),
+    /** Infusing costs this share of the materials and souls the old item's upgrades took. */
+    infuse: fraction,
+  }),
+  perks: z.record(z.string(), PerkSchema),
+});
+export type LootDef = z.infer<typeof LootSchema>;
 
 /** A pickup that may spawn when something dies or a tile is cut. */
 export const DropSchema = z
@@ -579,6 +1008,8 @@ export const EnemySchema = z.object({
   souls: z.number().int().nonnegative(),
   /** Pickups scattered on death. */
   drops: z.array(DropSchema).default([]),
+  /** The chance it drops a piece of gear, and which `loot.json` table rolls its tier. */
+  gear: z.object({ chance: fraction, table: z.string() }).optional(),
   recoilTicks: ticks,
   /** Multiplier on knockback received. 0 = immovable. */
   knockbackTaken: nonneg,
@@ -636,6 +1067,8 @@ export const TilesSchema = z.array(TileSchema).min(1);
 
 export const BiomeSchema = z.object({
   name: z.string(),
+  /** The item level of gear that drops here. */
+  itemLevel: z.number().int().min(1),
   ground: weighted(z.string()),
   scatter: z
     .array(z.object({ tile: z.string(), scale: pos, threshold: fraction, chance: fraction }))
@@ -670,6 +1103,11 @@ export const WorldSchema = z.object({
    * forced within twice that radius so every seed starts somewhere readable.
    */
   origin: z.object({ prefab: z.string(), safeRadius: nonneg, biome: z.string().optional() }),
+  /**
+   * Wild enemies never rise within this many tiles of the bonfire the player rests or respawns at, so a rest
+   * never wakes a fight on screen. (Their spots are reshuffled at every rest; see `SimState.spawnEpoch`.)
+   */
+  restClearance: nonneg,
   regions: z.object({ sizeChunks: z.number().int().min(1), prefabs: weighted(z.string().nullable()) }),
   /**
    * Set pieces every world has, in the same place: each takes over its region (x, y in regions, the

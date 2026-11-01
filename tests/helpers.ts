@@ -1,10 +1,11 @@
 /** Shared fixtures for headless simulation tests. */
 import type { Entity } from '../src/core/ecs';
 import type { Dir } from '../src/core/math';
-import { Body, Facing } from '../src/sim/components';
+import { Body, Equipment, Facing, Health } from '../src/sim/components';
 import type { SimEvent } from '../src/sim/events';
 import { inputFrame, NO_INPUT, type ActionName, type InputFrame } from '../src/sim/input';
 import { spawnEnemy } from '../src/sim/modules/enemies';
+import { syncVitals } from '../src/sim/modules/items';
 import { Simulation } from '../src/sim/simulation';
 import { loadContent } from '../scripts/lib/load-content';
 
@@ -12,6 +13,15 @@ export const content = loadContent();
 
 export function newSim(seed = 1): Simulation {
   return Simulation.create({ seed, content });
+}
+
+/** Takes off the starting armor, for tests that count damage without Armor's cut. */
+export function unarmored(sim: Simulation): Simulation {
+  Object.assign(sim.ecs.need(sim.player, Equipment), { helmet: null, chest: null, legs: null });
+  syncVitals(sim, sim.player);
+  const health = sim.ecs.need(sim.player, Health);
+  health.hp = health.max;
+  return sim;
 }
 
 /** Steps `ticks` times with the same input and returns every event emitted. */

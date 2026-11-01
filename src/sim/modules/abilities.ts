@@ -37,6 +37,7 @@ import { applyDamage, rollDamage } from './combat';
 import { FULL_ENERGY, gainEnergy } from './energy';
 import { modifiedCooldown, onCast } from './modifiers';
 import { grantOvershield } from './overshield';
+import { onAbilityUsed, spendMark } from './weapons';
 import { spawnProjectile } from './projectiles';
 import { clearStealth, spawnDecoy, veil } from './stealth';
 import { abilityPower } from './progression';
@@ -237,6 +238,7 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
     }
   }
   onCast(sim, slot);
+  onAbilityUsed(sim);
   sim.events.emit({ type: 'abilityUsed', ability, slot, x: body.x, y: body.y, tx, ty });
 }
 
@@ -360,6 +362,7 @@ function abilityDamage(sim: Simulation, target: Entity, fromX: number, fromY: nu
     ability: hit.ability,
   });
   if (result === 'hit' && hit.stagger > 0) stagger(sim, target, hit.stagger);
+  if (result === 'hit') spendMark(sim, target);
   return result;
 }
 
@@ -423,7 +426,8 @@ function tickAreas(sim: Simulation): void {
     if (since >= zone.duration) ecs.destroy(e);
   }
   for (const [e, proj, body] of ecs.query(Projectile, Body)) {
-    if (proj.team !== 'player') continue;
+    // Bow arrows are the weapons module's.
+    if (proj.team !== 'player' || proj.bow) continue;
     const point = { x: body.x - 1, y: body.y - 1, w: 2, h: 2 };
     for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
       if (ecs.has(target, Dying) || !overlaps(point, bodyBox(tb))) continue;
@@ -529,7 +533,7 @@ const commands: SimCommand[] = [
 export const abilitiesModule: SimModule = {
   id: 'abilities',
   systems: [
-    { phase: 'control', run: processActions },
+    { phase: 'control', run: processActions, menu: true },
     { phase: 'cleanup', run: tickAbilities },
     { phase: 'combat', run: tickAreas },
   ],

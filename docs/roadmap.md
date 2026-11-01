@@ -4,12 +4,12 @@ Where Soul Craft is going, how far it has got, and what is still undecided. Read
 feature: it says what the feature is for and what it must not grow into. Update it when a milestone lands or a
 decision is made (decisions with lasting technical weight also get an ADR in `docs/adr/`).
 
-Last updated: 2026-10-29, after Milestone 3's foundation.
+Last updated: 2026-10-31, after the gear and loot design.
 
 ## Vision
 
-**A top-down Soulslike action RPG where you fight with elemental class powers, forge your gear from what you
-gather, and explore a world that is different every time the flame wakes.**
+**A top-down Soulslike action RPG where you fight with elemental class powers, hunt your gear from the creatures
+and Wardens of a world that is different every time the flame wakes, and forge it into something greater.**
 
 **Premise.** The land is forgetting itself, and Ashen Village is nearly gone. Maren, the last person who remembers
 it, remembered you back. You were forgotten long ago, so the forgetting has nothing to take from you: you can carry
@@ -24,7 +24,8 @@ Pillars, in priority order:
    tells, losing souls on death), with Destiny-style class abilities on top. Every other system feeds combat.
 2. **A world worth exploring.** A seeded, chunk-streamed overworld with handmade set pieces (villages, shrines,
    boss arenas). Comparable feel: _Tunic_, _Death's Door_, _Hyper Light Drifter_.
-3. **Gather and craft.** Materials from enemies and the land become gear, upgrades and potions.
+3. **Hunt and forge.** Weapons and armor drop from enemies and Wardens with random tiers and perks; materials from
+   enemies and the land become upgrades, potions, tools and a restored village (`docs/gear-and-loot.md`).
 4. **Life sim in service of combat.** Fishing, farming and pets exist to feed the fight (materials, buff food, a
    companion), not as a second game. No seasons, relationships or day/night planned.
 
@@ -73,7 +74,9 @@ These need an answer before the milestones that depend on them.
    of combat. No seasons, relationships or free-form building.
 4. **Terrain art.** PixelLab's top-down tilesets blend terrains at their edges, which needs neighbor-aware tile
    choice in the chunk renderer first. Alternatively, the art agent could make tiles from source like the rest.
-5. **Item quality and perks.** Deferred in Milestone 2 (ADR 0009) until there is loot worth rolling.
+5. ~~**Item quality and perks.**~~ **Decided (2026-10-31):** gear is looted, not crafted, in five tiers with
+   rolled perks, six weapon types, and Warden chests with signature items. The full design and its decisions are in
+   [`docs/gear-and-loot.md`](gear-and-loot.md).
 6. **Co-op.** "Maybe later". The deterministic sim keeps it possible; nothing is planned.
 
 ## Planned
@@ -186,6 +189,44 @@ Base versions are free, variants cost souls, the best come from Wardens.
    Warden.
 5. **Art and tuning (under way):** every variant has its own icon (PixelLab, `docs/ICON_ART.md`). A first
    number pass toned down Pyre, Bastion's shield and Iron Will and raised Meteor; the rest waits on a playtest.
+
+### Next: Gear and loot (decided, not built)
+
+Playtest feedback shifted gear from crafting to loot. The design, its research and the owner's decisions are in
+[`docs/gear-and-loot.md`](gear-and-loot.md). Phases, in order:
+
+0. **Bonfire and saves (built):** resting and every panel hold the world still (`InputFrame.menu`); no resting
+   or changing gear while an enemy is after you; wild enemies come back somewhere new at each rest and never
+   within `world.restClearance` tiles of the bonfire; saves before version 14 are refused with a "start a new
+   game" message.
+1. **Gear foundation (built):** weapon, two rings, helmet, chest and legs; every piece of gear carries its tier,
+   item level, rolled perks and roll seed; `loot.json` holds tiers, a first pool of 17 stat perks and the drop
+   tables; Armor on the k = 60 curve with a 75% cap; soft-capped attributes; Power; the paper-doll equipment
+   screen with try-on comparisons, tier borders and a "worse" badge; enemy drops by biome item level, with pity;
+   forge gear recipes removed; a new game starts in Common sword, hood, jacket and wraps.
+2. **Perks (built):** effect perks that share the class modifiers' hooks (kill heals, cooldowns, a rest
+   shield, poise), class perks on rings with smart loot, Greater perks (Noble and up, 1 in 20, ×1.5), Blighted
+   drops (Rare and up, 4%, a drawback and ×1.4), tier floors (an extra flask charge from Noble, extra roll i-frames
+   from Rare), no doubled perks, and five Legendary bases with hand-made powers: Cinderbrand, Crown of the
+   Unforgotten, Pyreheart Cuirass, Ashwalker Greaves and Ring of the Last Ember. Weapon-type perk pools and the
+   other Legendary weapons come with phase 3.
+3. **Weapon types (built):** every type taps a light chain with a finisher, holds for a charged
+   attack (full charge has a payoff) and strikes out of a roll; hitstop, lunges, stagger and hyper armor per move,
+   all in `weapons.json`. The sword (Flow), spear (Tipper, a 360° sweep) and hammer (Break: crushes, hyper armor,
+   a full-charge shockwave) are in, with class affinity, type perks, the Ashwood Spear and Stone Maul, and two
+   Legendaries (Oathspear, Gravebell). Twin daggers are in too: Flank crits from behind, Bleed that bursts at five
+   stacks, a lunge-through charge, the Bone Daggers and Iron Dirks, and Twinfang. The bow is in: stamina is its only ammo, arrows pin, and a
+   release in the Perfect window pierces and rips out every pin; the Ashwood Bow, Bone Recurve and Pale Wind.
+   The Ember staff is in: melee hits store Embers (up to 4) that its charged fireball spends (a weak spark
+   with none), the Ember Staff and Charred Rod, and Hearthwood. All six weapon types are built.
+4. **Economy (first half built):** salvage (at the forge or a bonfire; materials by tier, a Warden Mark from a
+   Legendary, never souls) with locking, junk marks, "salvage junk" and auto-salvage for Common and Standard;
+   armor upgrades; infusing an old piece's upgrades onto a new one; tempering a perk and cleansing blight (the
+   smith, once the smithy is rebuilt); respec at a bonfire. Still to come: coatings, tools, ranked projects and the
+   Gambler.
+5. **Wardens:** chests, signature items, Rekindle, pity and Marks, Heat, alternate kills.
+6. **Onboarding:** the Road Camp objective, with `kill` and `gather` goals.
+7. **Art:** weapon and armor layers on the character, item icons, beams and chimes.
 
 ### Milestone 5: Life sim, in service of combat
 

@@ -23,6 +23,8 @@ export class InputCapture {
   /** The player's key bindings (from settings). */
   bindings: Bindings = DEFAULT_BINDINGS;
   private readonly held = new Set<string>();
+  /** The left mouse button is down: a held attack. */
+  private mouseHeld = false;
   private pressed = 0;
   private aim: { x: number; y: number } | null = null;
   /** Where the mouse last was over the game, in client pixels; null until it moves there. */
@@ -61,6 +63,7 @@ export class InputCapture {
     });
     addEventListener('blur', () => {
       this.held.clear();
+      this.mouseHeld = false;
       this.aiming = false;
       this.pointer = null;
     });
@@ -69,7 +72,12 @@ export class InputCapture {
       if (e.button === 2) this.aiming = false; // right-click cancels a held throw
       if (!this.enabled || e.button !== 0) return;
       this.pressed |= Action.attack;
+      this.mouseHeld = true;
       this.aim = this.toWorld(e.clientX, e.clientY);
+    });
+    // Released anywhere, so a charge let go off the canvas still swings.
+    addEventListener('mouseup', (e) => {
+      if (e.button === 0) this.mouseHeld = false;
     });
     target.addEventListener('contextmenu', (e) => e.preventDefault());
   }
@@ -101,6 +109,11 @@ export class InputCapture {
     const on = (b: Binding) => this.enabled && this.bindings[b].some((k) => this.held.has(k));
     let held = 0;
     for (const a of ACTIONS) if (on(a)) held |= Action[a];
+    if (this.enabled && this.mouseHeld) {
+      held |= Action.attack;
+      // A charge aims where the cursor is.
+      if (this.pointer) this.aim ??= this.toWorld(this.pointer.x, this.pointer.y);
+    }
     const frame: InputFrame = {
       moveX: (on('right') ? 1 : 0) - (on('left') ? 1 : 0),
       moveY: (on('down') ? 1 : 0) - (on('up') ? 1 : 0),
@@ -118,6 +131,7 @@ export class InputCapture {
   /** Forget everything, e.g. when a menu opens mid-press. */
   reset(): void {
     this.held.clear();
+    this.mouseHeld = false;
     this.pressed = 0;
     this.aim = null;
     this.actions = [];

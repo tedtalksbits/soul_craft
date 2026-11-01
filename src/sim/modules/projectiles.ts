@@ -26,6 +26,10 @@ export function spawnProjectile(
     /** For the player's knives: the ability that threw it and how long its hit staggers. */
     ability?: string;
     stagger?: number;
+    /** A shot from the player's weapon: whether it was a Perfect Shot, flies through foes, or bursts. */
+    perfect?: boolean;
+    pierce?: boolean;
+    explode?: number;
   },
 ): void {
   const e = sim.ecs.create();
@@ -40,6 +44,16 @@ export function spawnProjectile(
     blockable: true,
     ability: p.ability ?? null,
     stagger: p.stagger ?? 0,
+    ...(p.perfect !== undefined
+      ? {
+          bow: {
+            perfect: p.perfect,
+            hit: [],
+            ...(p.pierce ? { pierce: true } : {}),
+            ...(p.explode ? { explode: p.explode } : {}),
+          },
+        }
+      : {}),
   });
 }
 

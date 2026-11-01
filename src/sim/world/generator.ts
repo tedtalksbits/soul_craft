@@ -24,6 +24,8 @@ export interface SpawnPoint {
   x: number;
   y: number;
   entity: PrefabEntityDef;
+  /** A wild enemy scattered by the biome (not placed by a prefab): reshuffled every rest. */
+  wild?: boolean;
 }
 
 export interface Area {
@@ -240,7 +242,8 @@ export class WorldGenerator {
     throw new Error('origin prefab has no playerSpawn');
   }
 
-  generate(cx: number, cy: number): ChunkData {
+  /** `epoch` picks where wild enemies rise (see `SimState.spawnEpoch`); terrain and prefabs ignore it. */
+  generate(cx: number, cy: number, epoch = 0): ChunkData {
     const c = this.content;
     const ox = cx * CHUNK;
     const oy = cy * CHUNK;
@@ -279,19 +282,20 @@ export class WorldGenerator {
       }
     }
 
-    this.addEnemySpawns(cx, cy, tiles, placements, spawns);
+    this.addEnemySpawns(cx, cy, epoch, tiles, placements, spawns);
     return { cx, cy, tiles, spawns, areas };
   }
 
   private addEnemySpawns(
     cx: number,
     cy: number,
+    epoch: number,
     tiles: Uint16Array,
     placements: readonly PrefabPlacement[],
     out: SpawnPoint[],
   ): void {
     const c = this.content;
-    const rng = new Rng(hash32(this.seeds.spawns, cx, cy));
+    const rng = new Rng(hash32(this.seeds.spawns, cx, cy, epoch));
     const ox = cx * CHUNK;
     const oy = cy * CHUNK;
     const biome = c.biomes[this.biomeAt(ox + CHUNK / 2, oy + CHUNK / 2)];
@@ -308,12 +312,14 @@ export class WorldGenerator {
         const tx = ox + lx;
         const ty = oy + ly;
         if (c.tile(tiles[ly * CHUNK + lx] ?? 0).solid) continue;
-        if (Math.hypot(tx, ty) < c.world.origin.safeRadius || nearPrefab(tx, ty)) continue;
+        // Measured from the tile's center, where the enemy stands, so none rises just inside the radius.
+        if (Math.hypot(tx + 0.5, ty + 0.5) < c.world.origin.safeRadius || nearPrefab(tx, ty)) continue;
         const local = c.biomes[this.biomeAt(tx, ty)] ?? biome;
         out.push({
           id: `${chunkKey(cx, cy)}#${i}`,
           ...tileCenter(tx, ty),
           entity: { kind: 'enemy', archetype: rng.weighted(local.spawns.table) },
+          wild: true,
         });
         break;
       }

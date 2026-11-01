@@ -43,7 +43,80 @@ export class Audio {
   handle(e: SimEvent): void {
     switch (e.type) {
       case 'swing':
+        // Heavier moves whoosh lower and longer.
+        if (e.arc === 'slam') return this.burst(0.3, 500, 0.32, 'bandpass', [180, 900]);
+        if (e.arc === 'sweep') return this.burst(0.26, 900, 0.28, 'bandpass', [400, 1800]);
+        if (e.arc === 'thrust') return this.burst(0.1, 1800, 0.2, 'bandpass', [1200, 3400]);
         return this.burst(0.14, 1300, 0.22, 'bandpass', [700, 2800]);
+      case 'chargeStarted':
+        return this.tone(
+          [
+            [146, 1],
+            [220, 0.4],
+          ],
+          0.25,
+          0.05,
+          'triangle',
+        );
+      case 'embers':
+        return this.tone([[440 + e.count * 110, 1]], 0.08, 0.04, 'triangle');
+      case 'chargeFull':
+        return this.arp([988, 1480], 45, 0.25, 0.05);
+      case 'weaponRule':
+        if (e.rule === 'tipper') return this.arp([1568, 2093], 30, 0.18, 0.05);
+        if (e.rule === 'crush')
+          return this.tone(
+            [
+              [70, 1],
+              [140, 0.5],
+            ],
+            0.3,
+            0.16,
+            'triangle',
+          );
+        if (e.rule === 'flow') return this.arp([1175, 1568, 2349], 40, 0.3, 0.05);
+        if (e.rule === 'flank') return this.arp([1760, 1397], 30, 0.15, 0.05);
+        if (e.rule === 'perfect') return this.arp([1319, 1976, 2637], 25, 0.35, 0.06);
+        if (e.rule === 'emberBurst') {
+          this.burst(0.4, 600, 0.35, 'lowpass');
+          return this.tone(
+            [
+              [80, 1],
+              [120, 0.5],
+            ],
+            0.4,
+            0.12,
+            'sawtooth',
+          );
+        }
+        if (e.rule === 'rip') {
+          this.burst(0.2, 1200, 0.25, 'bandpass', [500, 2000]);
+          return this.tone([[130, 1]], 0.2, 0.1, 'triangle');
+        }
+        if (e.rule === 'bleed') {
+          this.burst(0.25, 700, 0.3, 'lowpass');
+          return this.tone(
+            [
+              [98, 1],
+              [104, 0.6],
+            ],
+            0.35,
+            0.12,
+            'sawtooth',
+          );
+        }
+        return this.burst(0.2, 1600, 0.2, 'highpass');
+      case 'shockwave':
+        this.burst(0.5, 300, 0.45, 'lowpass');
+        return this.tone(
+          [
+            [55, 1],
+            [82, 0.5],
+          ],
+          0.6,
+          0.18,
+          'sine',
+        );
       case 'damaged':
         if (e.isPlayer) {
           this.burst(0.22, 450, 0.5, 'lowpass');
@@ -187,6 +260,44 @@ export class Audio {
         const p = this.chainPitch();
         return this.arp([659 * p, 988 * p], 50, 0.2, 0.04);
       }
+      case 'gearDropped':
+        // Rare and better ring out as they fall; a Legendary gets a heavier bell. A Greater perk adds its
+        // own high star, and a Blighted item a sour low note. Nothing else uses these.
+        if (e.greater) this.arp([2093, 2637, 3136], 60, 0.5, 0.035);
+        if (e.blighted)
+          this.tone(
+            [
+              [110, 1],
+              [117, 0.8],
+            ],
+            0.9,
+            0.08,
+            'sawtooth',
+          );
+        if (e.tier === 'legendary') {
+          this.burst(0.4, 2400, 0.25, 'highpass');
+          return this.arp([392, 523, 659, 784, 1047, 1319], 110, 1.4, 0.07);
+        }
+        if (e.tier === 'noble') return this.arp([523, 659, 784, 1047], 90, 0.9, 0.06);
+        if (e.tier === 'rare') return this.arp([659, 880, 1175], 80, 0.6, 0.05);
+        return;
+      case 'lastEmber':
+        this.burst(0.5, 900, 0.3, 'lowpass');
+        return this.arp([262, 392, 523, 784], 120, 1.2, 0.07);
+      case 'keptFooting':
+        return this.tone(
+          [
+            [90, 1],
+            [180, 0.4],
+          ],
+          0.18,
+          0.12,
+          'triangle',
+        );
+      case 'dodged':
+        return this.arp([880, 1320], 40, 0.2, 0.04);
+      case 'streakBurst':
+        return this.burst(0.35, 1400, 0.22, 'lowpass');
       case 'crafted':
         this.burst(0.12, 2600, 0.15, 'highpass');
         return this.arp([523, 784], 80, 0.35, 0.05);

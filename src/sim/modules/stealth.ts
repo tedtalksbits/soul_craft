@@ -4,11 +4,11 @@
  * to go after; combat asks {@link takeAmbush} for the bonus.
  */
 import type { EnemyDef } from '../../content/schemas';
-import { Ambush, Body, Decoy, Facing, Player, Sprite, Veiled } from '../components';
+import { Ai, Ambush, Body, Decoy, Dying, Enemy, Facing, Player, Sprite, Veiled } from '../components';
 import { TICK_RATE } from '../constants';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
-import { ambushBonus } from './modifiers';
+import { activeEffects, ambushBonus } from './modifiers';
 
 /** How close an enemy must be to notice a veiled player anyway: close enough to touch. */
 const VEIL_REVEAL = 18;
@@ -26,7 +26,13 @@ export function spawnDecoy(sim: Simulation, x: number, y: number, seconds: numbe
 export function veil(sim: Simulation, seconds: number, bonus: number): void {
   const ticks = Math.round(seconds * TICK_RATE);
   sim.ecs.remove(sim.player, Ambush);
-  sim.ecs.add(sim.player, Veiled, { ticks, bonus: bonus + ambushBonus(sim), armed: false });
+  const strikes = Math.max(1, ...activeEffects(sim, 'vanishStrikes').map((fx) => fx.strikes));
+  sim.ecs.add(sim.player, Veiled, {
+    ticks,
+    bonus: bonus + ambushBonus(sim),
+    armed: false,
+    ...(strikes > 1 ? { strikesLeft: strikes } : {}),
+  });
   sim.events.emit({ type: 'veiled', seconds });
 }
 
@@ -74,6 +80,19 @@ export function enemyTarget(sim: Simulation, def: EnemyDef, body: Body): Target 
   return { x: pb.x, y: pb.y, sees: !dead && !hidden && dist < def.aggroRange };
 }
 
+/**
+ * Whether anything is after the player: a living enemy, awake, that can see them. Resting and changing gear wait
+ * until it is not, so a bonfire or the pack is never an escape from a fight.
+ */
+export function pursued(sim: Simulation): boolean {
+  for (const [e, enemy, ai, body] of sim.ecs.query(Enemy, Ai, Body)) {
+    if (sim.ecs.has(e, Dying) || ai.state === 'dormant') continue;
+    const def = sim.content.enemies[enemy.archetype];
+    if (def && enemyTarget(sim, def, body).sees) return true;
+  }
+  return false;
+}
+
 function tick(sim: Simulation): void {
   const { ecs } = sim;
   for (const [e, decoy] of ecs.query(Decoy)) {
@@ -87,7 +106,12 @@ function tick(sim: Simulation): void {
   const veiled = ecs.get(p, Veiled);
   if (player && veiled) {
     const striking = player.state === 'attack' || player.state === 'cast';
-    if (veiled.armed && striking) {
+    if (veiled.armed && striking && (veiled.strikesLeft ?? 1) > 1) {
+      // A veil that lasts through more strikes: this one is an ambush, and the veil holds.
+      veiled.strikesLeft = (veiled.strikesLeft ?? 1) - 1;
+      veiled.armed = false;
+      ecs.add(p, Ambush, { ticks: AMBUSH_TICKS, bonus: veiled.bonus });
+    } else if (veiled.armed && striking) {
       ecs.remove(p, Veiled);
       ecs.add(p, Ambush, { ticks: AMBUSH_TICKS, bonus: veiled.bonus });
       sim.events.emit({ type: 'unveiled' });

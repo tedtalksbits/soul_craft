@@ -72,11 +72,12 @@
       ],
       "souls": 400
     },
-    "effects": [{ "type": "forgeSteps" }],
+    "effects": [{ "type": "forgeSteps" }, { "type": "smithWork" }],
     "sprite": { "ruin": "smithy_ruin", "restored": "smithy" },
     "restoredLines": [
       "SMITH: The fire's back, and so am I. Bring your blade to the forge.",
-      "SMITH: I can take it past what that old anvil managed. Two more tempers, if you've the iron for it."
+      "SMITH: I can take it past what that old anvil managed. Two more tempers, if you've the iron for it.",
+      "SMITH: And bring me what you find out there. I can reroll a perk, or burn the blight off a cursed piece."
     ]
   }
 }

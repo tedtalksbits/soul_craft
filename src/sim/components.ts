@@ -5,7 +5,7 @@
  */
 import { defineComponent, type Entity } from '../core/ecs';
 import type { Dir } from '../core/math';
-import type { AbilitySlot, StatId, StationId } from '../content/schemas';
+import type { AbilitySlot, StatId, StationId, TierId } from '../content/schemas';
 
 /** Collision box, centered on (x, y), in world pixels. */
 export interface Body {
@@ -57,7 +57,8 @@ export interface Invulnerable {
 }
 export const Invulnerable = defineComponent<Invulnerable>('invulnerable');
 
-export type PlayerStateName = 'free' | 'attack' | 'roll' | 'hurt' | 'drink' | 'sit' | 'dead' | 'cast';
+export type PlayerStateName =
+  'free' | 'attack' | 'charge' | 'roll' | 'hurt' | 'drink' | 'sit' | 'dead' | 'cast';
 export interface Player {
   state: PlayerStateName;
   /** Ticks spent in the current state. */
@@ -106,6 +107,8 @@ export interface Attributes {
   endurance: number;
   might: number;
   attunement: number;
+  /** Levels given back by a respec, to be spent again for free. Absent in saves from before it. */
+  unspent?: number;
 }
 export const Attributes = defineComponent<Attributes>('attributes');
 
@@ -181,6 +184,8 @@ export interface Veiled {
   ticks: number;
   bonus: number;
   armed: boolean;
+  /** Strikes the veil still lasts through (a Legendary's); absent means it breaks on the first. */
+  strikesLeft?: number;
 }
 export const Veiled = defineComponent<Veiled>('veiled');
 
@@ -201,11 +206,115 @@ export interface Overshield {
 }
 export const Overshield = defineComponent<Overshield>('overshield');
 
-/** One inventory slot: an item, how many, and (for weapons) its forge upgrade level. */
+/** A perk rolled onto one piece of gear. */
+export interface PerkRoll {
+  perk: string;
+  value: number;
+  /** Rolled Greater: stronger than the tier usually allows, and marked with a star. */
+  greater?: true;
+}
+
+/**
+ * What makes one piece of gear itself: its tier, the item level of the place it dropped, its rolled
+ * perks, and the seed its rolls came from (rerolls will advance only this item's seed, so reloading
+ * never fishes for a better result).
+ */
+export interface Gear {
+  tier: TierId;
+  ilvl: number;
+  seed: number;
+  perks: PerkRoll[];
+  /** One of `perks` is a drawback, and the rest rolled stronger for it. */
+  blighted?: true;
+  /** Times tempered, and the perk (by index) every temper after the first must reroll. */
+  tempers?: number;
+  tempered?: number;
+  /** A temper waiting on the player's choice: the perk being rerolled, and the two new perks offered. */
+  offer?: { perk: number; rolls: PerkRoll[] };
+}
+
+/**
+ * Timers and counters behind gear perks and Legendary powers, on the player. Added the first time one
+ * is needed, so a save from before it still loads.
+ */
+export interface PerkState {
+  /** Ticks until each once-in-a-while effect (by effect type) works again. */
+  cooldowns: Record<string, number>;
+  /** Weapon hits in the current streak, and ticks left before it lapses. */
+  streak: number;
+  streakTicks: number;
+  /** A Last Ember already spent since the last rest. */
+  emberSpent: boolean;
+  /** The tick the roll whose stamina was already given back began on. */
+  refundedRoll: number;
+}
+export const PerkState = defineComponent<PerkState>('perkState');
+
+/**
+ * The player's weapon moves: which move is under way, the chain, the charge, and the windows the
+ * weapon types' rules open. Added the first time the player attacks, so older saves still load.
+ */
+export interface Swing {
+  /** A step of the light chain, the charged attack, or the dash-strike out of a roll. */
+  move: 'chain' | 'charged' | 'dash';
+  step: number;
+  /** How full the charge was when it was let go, 0..1. Full (1) brings its payoff. */
+  charge: number;
+  /** Ticks left in which a tap continues the chain, and the step it continues with. */
+  comboTicks: number;
+  nextStep: number;
+  /** The tick the last roll ended on, for dash-strikes. */
+  rollEndedAt: number;
+  /** Flow (sword): until this tick, a light hit crits and refunds a roll's stamina. */
+  flowUntil: number;
+  /** This move's shockwave has gone out. */
+  shockwave: boolean;
+  /** The attack button has been held since the move began (a tap held long enough becomes a charge). */
+  held: boolean;
+  /** Swings made, for perks that act on every so many. Absent in saves from before it. */
+  swings?: number;
+  /** The charged shot under way was let go in the Perfect window. */
+  perfect?: boolean;
+  /** The next roll costs no stamina (a Legendary's reward for a Perfect Shot). */
+  freeRoll?: boolean;
+  /** Embers stored by an Ember staff's melee hits, spent by its fireballs. */
+  embers?: number;
+}
+export const Swing = defineComponent<Swing>('swing');
+
+/** Marked by a sworn spear's tipper: the next ability hit staggers it for `stagger` ticks. */
+export interface Marked {
+  ticks: number;
+  stagger: number;
+}
+export const Marked = defineComponent<Marked>('marked');
+
+/** Bow arrows lodged in an enemy, and ticks until the last falls out. */
+export interface Pinned {
+  count: number;
+  ticks: number;
+}
+export const Pinned = defineComponent<Pinned>('pinned');
+
+/** Dagger Bleed on an enemy: `stacks` so far, lapsing `ticks` after the last hit added one. */
+export interface Bleed {
+  stacks: number;
+  ticks: number;
+}
+export const Bleed = defineComponent<Bleed>('bleed');
+
+/**
+ * One inventory slot: an item, how many, its forge upgrade level, and for gear, its rolls. Gear without
+ * `gear` is Common at item level 1 with no perks.
+ */
 export interface ItemStack {
   item: string;
   count: number;
   level: number;
+  gear?: Gear;
+  /** Kept out of bulk salvage, or marked to go in it. */
+  locked?: true;
+  junk?: true;
 }
 
 /** What the player carries. Order is the display order; capacity is `inventoryCapacity()` (base slots plus a rebuilt storehouse). */
@@ -214,12 +323,14 @@ export interface Inventory {
 }
 export const Inventory = defineComponent<Inventory>('inventory');
 
-export type EquipSlot = 'weapon' | 'armor' | 'ring0' | 'ring1';
+export type EquipSlot = 'weapon' | 'ring0' | 'ring1' | 'helmet' | 'chest' | 'legs';
 export interface Equipment {
   weapon: ItemStack | null;
-  armor: ItemStack | null;
   ring0: ItemStack | null;
   ring1: ItemStack | null;
+  helmet: ItemStack | null;
+  chest: ItemStack | null;
+  legs: ItemStack | null;
   /** Consumable used with the quick-use key; it stays in the inventory. */
   quick: string | null;
 }
@@ -298,7 +409,7 @@ export interface Dying {
 }
 export const Dying = defineComponent<Dying>('dying');
 
-export type ProjectileKind = 'arrow' | 'knife';
+export type ProjectileKind = 'arrow' | 'knife' | 'fireball';
 export interface Projectile {
   kind: ProjectileKind;
   team: TeamId;
@@ -311,6 +422,11 @@ export interface Projectile {
   /** For the player's thrown knives: the ability that threw it, and how long a hit staggers. */
   ability: string | null;
   stagger: number;
+  /**
+   * A shot from the player's weapon (an arrow or a staff's fireball): a Perfect Shot or piercing fire flies
+   * on, a fireball may burst, and nothing is hit twice. Absent on other projectiles.
+   */
+  bow?: { perfect: boolean; hit: Entity[]; pierce?: boolean; explode?: number };
 }
 export const Projectile = defineComponent<Projectile>('projectile');
 
@@ -320,6 +436,8 @@ export interface Pickup {
   amount: number;
   /** For `item` pickups: which item. */
   item: string | null;
+  /** For a piece of gear: its rolls. */
+  gear: Gear | null;
   age: number;
   /** Visual hop height; the sim tracks it so pickups land deterministically. */
   z: number;

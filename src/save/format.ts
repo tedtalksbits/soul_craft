@@ -12,7 +12,7 @@ import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 15;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -59,219 +59,28 @@ export interface SaveFile {
 
 export class SaveError extends Error {}
 
+/** A save from before {@link OLDEST_SAVE_VERSION}: readable, but the game it holds no longer exists. */
+export class OldSaveError extends SaveError {
+  constructor() {
+    super("This save is from an older version of the game and can't be loaded. Start a new game.");
+  }
+}
+
+/**
+ * The oldest save this build loads. The gear and loot rework (versions 14 and 15) replaced crafted gear, and every save
+ * before it was a playtest, so older saves are refused rather than migrated. Raise it only for a change that
+ * old games cannot survive; prefer a migration.
+ */
+export const OLDEST_SAVE_VERSION = 15;
+
 /** Upgrades a version-n save object to version n+1. Pure: must not mutate its input. */
 export type Migration = (save: Record<string, unknown>) => Record<string, unknown>;
 
 /**
- * `MIGRATIONS[n]` upgrades a version-n file to n+1. Never edit a shipped
+ * `MIGRATIONS[n]` upgrades a version-n file to n+1, for n from OLDEST_SAVE_VERSION up. Never edit a shipped
  * migration; add a new one.
  */
-export const MIGRATIONS: Readonly<Record<number, Migration>> = {
-  /** v1 -> v2: trees and mushrooms became multi-hit; SimState gained `tileDamage`. */
-  1: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const state = asRecord(snapshot['state']);
-    return { ...save, snapshot: { ...snapshot, state: { tileDamage: {}, ...state } } };
-  },
-  /**
-   * v2 -> v3: items and crafting. The player gains an inventory (empty), equipment (the
-   * starting Chipped Sword), buffs and `using`; pickups gain `item`.
-   */
-  2: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const ecs = asRecord(snapshot['ecs']);
-    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
-    const playerRow = components['player']?.[0];
-    if (!playerRow) throw new SaveError('save has no player');
-    const [player, value] = playerRow;
-    return {
-      ...save,
-      snapshot: {
-        ...snapshot,
-        ecs: {
-          ...ecs,
-          components: {
-            ...components,
-            player: [[player, { ...asRecord(value), using: null }]],
-            inventory: [[player, { stacks: [] }]],
-            equipment: [
-              [
-                player,
-                {
-                  weapon: { item: 'chipped_sword', count: 1, level: 0 },
-                  armor: null,
-                  ring0: null,
-                  ring1: null,
-                  quick: null,
-                },
-              ],
-            ],
-            buffs: [[player, { active: [] }]],
-            pickup: (components['pickup'] ?? []).map(([e, p]) => [e, { ...asRecord(p), item: null }]),
-          },
-        },
-      },
-    };
-  },
-  /** v3 -> v4: classes. The player becomes a Vanguard with every ability ready and no super energy. */
-  3: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const ecs = asRecord(snapshot['ecs']);
-    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
-    const playerRow = components['player']?.[0];
-    if (!playerRow) throw new SaveError('save has no player');
-    const abilities = { class: 'vanguard', cooldowns: { aoe: 0, class: 0 }, energy: 0, casting: null };
-    return {
-      ...save,
-      snapshot: {
-        ...snapshot,
-        ecs: { ...ecs, components: { ...components, abilities: [[playerRow[0], abilities]] } },
-      },
-    };
-  },
-  /**
-   * v4 -> v5: leveling and ability unlocks. Older saves keep every ability they already had
-   * (both slots unlocked) and start leveling from level 1.
-   */
-  4: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const ecs = asRecord(snapshot['ecs']);
-    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
-    const playerRow = components['player']?.[0];
-    if (!playerRow) throw new SaveError('save has no player');
-    const abilities = (components['abilities'] ?? []).map(([e, a]) => [
-      e,
-      { ...asRecord(a), unlocked: { class: true, super: true } },
-    ]);
-    return {
-      ...save,
-      snapshot: {
-        ...snapshot,
-        ecs: {
-          ...ecs,
-          components: {
-            ...components,
-            abilities,
-            attributes: [[playerRow[0], { vigor: 0, endurance: 0, might: 0, attunement: 0 }]],
-          },
-        },
-      },
-    };
-  },
-  /**
-   * v5 -> v6: bonfire travel. SimState gains `bonfires`, the registry of lit bonfires to travel to.
-   * It starts empty and fills itself as lit bonfires load, so nothing needs reconstructing here.
-   */
-  5: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const state = asRecord(snapshot['state']);
-    return { ...save, snapshot: { ...snapshot, state: { bonfires: {}, ...state } } };
-  },
-  /**
-   * v6 -> v7: the world map. SimState gains `explored` (fog of war), `landmarks`, `lastDeath` and
-   * `pin`. Old saves start with an unexplored map; it fills in as the player moves.
-   */
-  6: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const state = asRecord(snapshot['state']);
-    const map = { explored: {}, landmarks: {}, lastDeath: null, pin: null };
-    return { ...save, snapshot: { ...snapshot, state: { ...map, ...state } } };
-  },
-  /**
-   * v7 -> v8: village restoration and bosses. SimState gained `restored`, `bossesDefeated` and
-   * `bossFight`.
-   */
-  7: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const state = asRecord(snapshot['state']);
-    const added = { restored: {}, bossesDefeated: {}, bossFight: null };
-    return { ...save, snapshot: { ...snapshot, state: { ...added, ...state } } };
-  },
-  /**
-   * v8 -> v9: objectives. SimState gains `objectives`. Older saves took relics on pickup, so what
-   * they already have counts as done: the class ability is the oath, the super the keep, and a
-   * rebuilt smithy the forge. Anything left is offered by Maren as usual.
-   */
-  8: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const state = asRecord(snapshot['state']);
-    const ecs = asRecord(snapshot['ecs']);
-    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
-    const abilities = components['abilities']?.[0]?.[1];
-    const unlocked = abilities ? asRecord(asRecord(abilities)['unlocked']) : {};
-    const restored = state['restored'] ? asRecord(state['restored']) : {};
-    const done: Record<string, true> = {};
-    if (unlocked['class'] === true) done['oath'] = true;
-    if (unlocked['super'] === true) done['keep'] = true;
-    if (restored['smithy'] === true) done['forge'] = true;
-    return { ...save, snapshot: { ...snapshot, state: { ...state, objectives: { active: null, done } } } };
-  },
-  /** v9 -> v10: ability variants. Abilities gain `learned` and `chosen`; old saves use the bases. */
-  9: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const ecs = asRecord(snapshot['ecs']);
-    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
-    const abilities = (components['abilities'] ?? []).map(([e, a]) => [
-      e,
-      { learned: {}, chosen: {}, ...asRecord(a) },
-    ]);
-    return {
-      ...save,
-      snapshot: { ...snapshot, ecs: { ...ecs, components: { ...components, abilities } } },
-    };
-  },
-  /** v10 -> v11: zones can heal and shield. Zones already burning in an old save do neither. */
-  10: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const ecs = asRecord(snapshot['ecs']);
-    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
-    const zone = (components['zone'] ?? []).map(([e, z]) => [e, { heal: 0, shield: null, ...asRecord(z) }]);
-    return {
-      ...save,
-      snapshot: { ...snapshot, ecs: { ...ecs, components: { ...components, zone } } },
-    };
-  },
-  /** v11 -> v12: charges can latch onto enemies. Charges in flight in an old save are on the ground. */
-  11: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const ecs = asRecord(snapshot['ecs']);
-    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
-    const blast = (components['blast'] ?? []).map(([e, b]) => [e, { stuck: null, ...asRecord(b) }]);
-    return {
-      ...save,
-      snapshot: { ...snapshot, ecs: { ...ecs, components: { ...components, blast } } },
-    };
-  },
-  // Class modifiers, moving auras, a super's speed bonus and the player's thrown knives.
-  12: (save) => {
-    const snapshot = asRecord(save['snapshot']);
-    const ecs = asRecord(snapshot['ecs']);
-    const components = asRecord(ecs['components']) as Record<string, [number, unknown][]>;
-    const fill = (name: string, defaults: Record<string, unknown>) =>
-      (components[name] ?? []).map(([e, c]) => [e, { ...defaults, ...asRecord(c) }]);
-    return {
-      ...save,
-      snapshot: {
-        ...snapshot,
-        ecs: {
-          ...ecs,
-          components: {
-            ...components,
-            abilities: fill('abilities', { modifiers: {} }),
-            empowered: fill('empowered', { speed: 0 }),
-            zone: fill('zone', { follow: false }),
-            projectile: fill('projectile', { ability: null, stagger: 0 }),
-          },
-        },
-      },
-    };
-  },
-};
-
-function asRecord(value: unknown): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null) throw new SaveError('save is missing its snapshot state');
-  return value as Record<string, unknown>;
-}
+export const MIGRATIONS: Readonly<Record<number, Migration>> = {};
 
 /** The level for the slot list, or undefined for a player without attributes. */
 function playerLevelOf(sim: Simulation): number | undefined {
@@ -303,6 +112,7 @@ export function parseSave(
   raw: unknown,
   migrations: Readonly<Record<number, Migration>> = MIGRATIONS,
   target: number = SAVE_VERSION,
+  oldest: number = OLDEST_SAVE_VERSION,
 ): SaveFile {
   if (typeof raw !== 'object' || raw === null) throw new SaveError('save is not an object');
   let save = raw as Record<string, unknown>;
@@ -311,6 +121,7 @@ export function parseSave(
   if (typeof version !== 'number') throw new SaveError('save has no version');
   if (version > target)
     throw new SaveError(`save is from a newer version (${version}); this build reads up to ${target}`);
+  if (version < oldest) throw new OldSaveError();
   while (version < target) {
     const step = migrations[version];
     if (!step) throw new SaveError(`no migration from save version ${version}`);

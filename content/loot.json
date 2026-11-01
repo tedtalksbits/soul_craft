@@ -1,0 +1,457 @@
+{
+  "tiers": {
+    "common": { "name": "Common", "color": "#d9d4c7", "perks": 0, "stats": 1, "perkStrength": 1 },
+    "standard": { "name": "Standard", "color": "#6fd35a", "perks": 1, "stats": 1.15, "perkStrength": 1 },
+    "rare": { "name": "Rare", "color": "#58a6ff", "perks": 2, "stats": 1.3, "perkStrength": 1.1 },
+    "noble": { "name": "Noble", "color": "#b67cff", "perks": 3, "stats": 1.5, "perkStrength": 1.2 },
+    "legendary": { "name": "Legendary", "color": "#ffb340", "perks": 3, "stats": 1.75, "perkStrength": 1.3 }
+  },
+  "itemLevelGrowth": 0.25,
+  "perkSpread": 0.15,
+  "pity": { "after": 40, "tier": "noble" },
+  "tables": {
+    "regular": [
+      ["common", 58],
+      ["standard", 27],
+      ["rare", 11],
+      ["noble", 3.5],
+      ["legendary", 0.5]
+    ],
+    "elite": [
+      ["standard", 55],
+      ["rare", 32],
+      ["noble", 11],
+      ["legendary", 2]
+    ]
+  },
+  "greater": { "tier": "noble", "chance": 0.05, "factor": 1.5 },
+  "blight": { "tier": "rare", "chance": 0.04, "factor": 1.4 },
+  "smartLoot": 0.85,
+  "smithy": {
+    "salvage": {
+      "yields": {
+        "common": [1, 0, 0],
+        "standard": [2, 0, 0],
+        "rare": [3, 1, 0],
+        "noble": [4, 2, 1],
+        "legendary": [6, 3, 0]
+      },
+      "materials": {
+        "weapon": ["iron_scrap", "bone_shard", "glowspore"],
+        "armor": ["stone", "bone_shard", "glowspore"],
+        "ring": ["bone_shard", "glowspore", "slime_gel"]
+      },
+      "mark": "warden_mark"
+    },
+    "temper": {
+      "souls": 40,
+      "items": [{ "item": "bone_shard", "count": 2 }],
+      "tiers": { "standard": 1, "rare": 1, "noble": 2, "legendary": 3 },
+      "growth": 0.5,
+      "cap": 4
+    },
+    "cleanse": { "souls": 200, "items": [{ "item": "glowspore", "count": 3 }] },
+    "infuse": 0.25
+  },
+  "perks": {
+    "damage": { "text": "+{v} damage", "stat": "damage", "value": 0.08, "slots": ["weapon"] },
+    "critChance": {
+      "text": "+{v} critical chance",
+      "stat": "critChance",
+      "value": 0.05,
+      "slots": ["weapon"]
+    },
+    "critDamage": { "text": "+{v} critical damage", "stat": "critDamage", "value": 0.2, "slots": ["weapon"] },
+    "attackStamina": {
+      "text": "Swings cost {v} less stamina",
+      "stat": "attackStamina",
+      "value": 0.1,
+      "slots": ["weapon"]
+    },
+    "souls": { "text": "+{v} souls from kills", "stat": "souls", "value": 0.1, "slots": ["weapon", "ring"] },
+    "finisherDamage": {
+      "text": "Chain finishers deal {v} more",
+      "stat": "finisherDamage",
+      "value": 0.3,
+      "slots": ["weapon"],
+      "weaponTypes": ["sword"]
+    },
+    "midAttackDamage": {
+      "text": "+{v} damage to foes mid-attack",
+      "stat": "midAttackDamage",
+      "value": 0.25,
+      "slots": ["weapon"],
+      "weaponTypes": ["sword", "hammer"]
+    },
+    "flowEnergy": {
+      "text": "Flow crits give {v} super energy",
+      "stat": "flowEnergy",
+      "value": 8,
+      "integer": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["sword"]
+    },
+    "tipperDamage": {
+      "text": "Tipper hits deal {v} more",
+      "stat": "tipperDamage",
+      "value": 0.25,
+      "slots": ["weapon"],
+      "weaponTypes": ["spear"]
+    },
+    "reach": {
+      "text": "+{v} reach",
+      "stat": "reach",
+      "value": 0.12,
+      "slots": ["weapon"],
+      "weaponTypes": ["spear", "sword"]
+    },
+    "chargeSpeed": {
+      "text": "Charged attacks are ready {v} sooner",
+      "stat": "chargeSpeed",
+      "value": 0.2,
+      "slots": ["weapon"],
+      "weaponTypes": ["sword", "spear", "hammer"]
+    },
+    "stagger": {
+      "text": "Hits stagger {v} longer",
+      "stat": "stagger",
+      "value": 0.3,
+      "slots": ["weapon"],
+      "weaponTypes": ["hammer", "spear"]
+    },
+    "crushDamage": {
+      "text": "Crushes deal {v} more",
+      "stat": "crushDamage",
+      "value": 0.3,
+      "slots": ["weapon"],
+      "weaponTypes": ["hammer"]
+    },
+    "flankDamage": {
+      "text": "Flank crits deal {v} more",
+      "stat": "flankDamage",
+      "value": 0.25,
+      "slots": ["weapon"],
+      "weaponTypes": ["daggers"]
+    },
+    "bleedStamina": {
+      "text": "Bleed bursts restore {v} stamina",
+      "stat": "bleedStamina",
+      "value": 15,
+      "integer": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["daggers"]
+    },
+    "bleedVulnerability": {
+      "text": "Bleeding foes take {v} more from everything",
+      "stat": "bleedVulnerability",
+      "value": 0.1,
+      "slots": ["weapon"],
+      "weaponTypes": ["daggers"]
+    },
+    "freeFifth": {
+      "text": "Every fifth swing costs no stamina",
+      "stat": "freeFifth",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["daggers"]
+    },
+    "ambushBleed": {
+      "text": "A crit out of hiding bursts a full Bleed",
+      "stat": "ambushBleed",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "minTier": "rare",
+      "slots": ["weapon"],
+      "weaponTypes": ["daggers"]
+    },
+    "perfectWindow": {
+      "text": "The Perfect window is {v} ticks longer",
+      "stat": "perfectWindow",
+      "value": 3,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "pinDamage": {
+      "text": "Ripped pins deal {v} more",
+      "stat": "pinDamage",
+      "value": 0.3,
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "splitShot": {
+      "text": "Charged shots split in three",
+      "stat": "splitShot",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "minTier": "rare",
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "bowKick": {
+      "text": "A quick shot up close kicks the foe away",
+      "stat": "bowKick",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "freeDashShot": {
+      "text": "Shots out of a roll cost no stamina",
+      "stat": "freeDashShot",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "pinBurn": {
+      "text": "Pins burn their foe for {v} a second each",
+      "stat": "pinBurn",
+      "value": 1.5,
+      "integer": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["bow"]
+    },
+    "fullEmberBlast": {
+      "text": "A fireball loosed with every Ember bursts",
+      "stat": "fullEmberBlast",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["staff"]
+    },
+    "abilityEmbers": {
+      "text": "Your abilities store an Ember",
+      "stat": "abilityEmbers",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["staff"]
+    },
+    "bonkKnockback": {
+      "text": "Staff blows knock back {v} harder",
+      "stat": "bonkKnockback",
+      "value": 0.5,
+      "slots": ["weapon"],
+      "weaponTypes": ["staff"]
+    },
+    "piercingFire": {
+      "text": "Fireballs fly through foes",
+      "stat": "piercingFire",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "minTier": "rare",
+      "slots": ["weapon"],
+      "weaponTypes": ["staff"]
+    },
+    "emberPower": {
+      "text": "+{v} ability damage per Ember held",
+      "stat": "emberPower",
+      "value": 0.05,
+      "slots": ["weapon"],
+      "weaponTypes": ["staff"]
+    },
+    "vigor": {
+      "text": "+{v} Vigor",
+      "stat": "vigor",
+      "value": 1.6,
+      "integer": true,
+      "slots": ["helmet", "chest", "ring"]
+    },
+    "endurance": {
+      "text": "+{v} Endurance",
+      "stat": "endurance",
+      "value": 1.6,
+      "integer": true,
+      "slots": ["helmet", "chest", "ring"]
+    },
+    "might": {
+      "text": "+{v} Might",
+      "stat": "might",
+      "value": 1.6,
+      "integer": true,
+      "slots": ["helmet", "ring"]
+    },
+    "attunement": {
+      "text": "+{v} Attunement",
+      "stat": "attunement",
+      "value": 1.6,
+      "integer": true,
+      "slots": ["helmet", "ring"]
+    },
+    "abilityDamage": {
+      "text": "+{v} ability damage",
+      "stat": "abilityDamage",
+      "value": 0.08,
+      "slots": ["helmet"]
+    },
+    "armor": { "text": "+{v} Armor", "stat": "armor", "value": 3, "integer": true, "slots": ["chest"] },
+    "maxHp": {
+      "text": "+{v} max HP",
+      "stat": "maxHp",
+      "value": 12,
+      "integer": true,
+      "slots": ["chest", "ring"]
+    },
+    "maxStamina": {
+      "text": "+{v} max stamina",
+      "stat": "maxStamina",
+      "value": 10,
+      "integer": true,
+      "slots": ["legs"]
+    },
+    "staminaRegen": { "text": "+{v} stamina regen", "stat": "staminaRegen", "value": 0.1, "slots": ["legs"] },
+    "rollStamina": {
+      "text": "Rolls cost {v} less stamina",
+      "stat": "rollStamina",
+      "value": 0.12,
+      "slots": ["legs"]
+    },
+    "moveSpeed": { "text": "+{v} move speed", "stat": "moveSpeed", "value": 0.05, "slots": ["legs"] },
+    "healing": {
+      "text": "+{v} healing from flasks and bandages",
+      "stat": "healing",
+      "value": 0.15,
+      "slots": ["ring"]
+    },
+    "killHeal": {
+      "text": "Kills heal {v} HP",
+      "effect": { "type": "kill", "where": "any", "heal": 4 },
+      "slots": ["weapon"]
+    },
+    "classCooldown": {
+      "text": "Your class ability is ready {v} sooner",
+      "effect": { "type": "cooldown", "slot": "class", "factor": 0.88 },
+      "slots": ["helmet"]
+    },
+    "aoeCooldown": {
+      "text": "Your AoE ability is ready {v} sooner",
+      "effect": { "type": "cooldown", "slot": "aoe", "factor": 0.88 },
+      "slots": ["helmet"]
+    },
+    "energyGain": { "text": "+{v} super charge", "stat": "energyGain", "value": 0.1, "slots": ["helmet"] },
+    "restShield": {
+      "text": "Resting leaves you {v} overshield",
+      "effect": { "type": "restShield", "amount": 20, "seconds": 30 },
+      "slots": ["chest"]
+    },
+    "poise": {
+      "text": "Once every {v} s, a blow that would make you flinch doesn’t",
+      "effect": { "type": "poise", "seconds": 12 },
+      "slots": ["chest"]
+    },
+    "rollIframes": {
+      "text": "+{v} i-frames on rolls",
+      "stat": "rollIframes",
+      "value": 2,
+      "integer": true,
+      "fixed": true,
+      "minTier": "rare",
+      "slots": ["legs"]
+    },
+    "rollDistance": { "text": "+{v} roll distance", "stat": "rollDistance", "value": 0.1, "slots": ["legs"] },
+    "flaskCharges": {
+      "text": "+{v} flask charge",
+      "stat": "flaskCharges",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "minTier": "noble",
+      "slots": ["ring"]
+    },
+    "chargeShield": {
+      "text": "Shield Charge leaves you {v} overshield",
+      "effect": { "type": "castShield", "slot": "class", "amount": 15, "seconds": 4 },
+      "slots": ["ring"],
+      "class": "vanguard"
+    },
+    "slamCooldown": {
+      "text": "Ground Slam is ready {v} sooner",
+      "effect": { "type": "cooldown", "slot": "aoe", "factor": 0.85 },
+      "slots": ["ring"],
+      "class": "vanguard"
+    },
+    "ironWill": {
+      "text": "Every 10 damage you take gives {v} super energy",
+      "effect": { "type": "hurt", "energy": 0.15 },
+      "slots": ["ring"],
+      "class": "vanguard"
+    },
+    "ambush": {
+      "text": "Blows out of hiding land {v} harder",
+      "effect": { "type": "ambush", "bonus": 0.25 },
+      "slots": ["ring"],
+      "class": "stalker"
+    },
+    "stepOnKill": {
+      "text": "Kills bring Shadowstep back {v} s sooner",
+      "effect": { "type": "kill", "where": "any", "cooldown": { "slot": "class", "seconds": 1 } },
+      "slots": ["ring"],
+      "class": "stalker"
+    },
+    "bombCooldown": {
+      "text": "Ash Bomb is ready {v} sooner",
+      "effect": { "type": "cooldown", "slot": "aoe", "factor": 0.85 },
+      "slots": ["ring"],
+      "class": "stalker"
+    },
+    "kindling": {
+      "text": "Kills in your fire take {v} s off Fire Pot",
+      "effect": { "type": "kill", "where": "zone", "cooldown": { "slot": "aoe", "seconds": 1.5 } },
+      "slots": ["ring"],
+      "class": "ashcaller"
+    },
+    "repelCooldown": {
+      "text": "Repel is ready {v} sooner",
+      "effect": { "type": "cooldown", "slot": "class", "factor": 0.85 },
+      "slots": ["ring"],
+      "class": "ashcaller"
+    },
+    "emberHeart": {
+      "text": "Kills give {v} super energy",
+      "effect": { "type": "kill", "where": "any", "energy": 3 },
+      "slots": ["ring"],
+      "class": "ashcaller"
+    },
+    "frail": {
+      "text": "−{v} max HP",
+      "stat": "maxHp",
+      "value": 10,
+      "integer": true,
+      "drawback": true,
+      "slots": ["weapon", "helmet", "chest", "legs", "ring"]
+    },
+    "winded": {
+      "text": "−{v} stamina regen",
+      "stat": "staminaRegen",
+      "value": 0.1,
+      "drawback": true,
+      "slots": ["weapon", "helmet", "chest", "legs", "ring"]
+    },
+    "brittle": {
+      "text": "−{v} Armor",
+      "stat": "armor",
+      "value": 3,
+      "integer": true,
+      "drawback": true,
+      "slots": ["weapon", "helmet", "chest", "legs", "ring"]
+    },
+    "leaden": {
+      "text": "Rolls cost {v} more stamina",
+      "stat": "rollStamina",
+      "value": 0.1,
+      "drawback": true,
+      "slots": ["weapon", "helmet", "chest", "legs", "ring"]
+    }
+  }
+}

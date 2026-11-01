@@ -88,6 +88,8 @@ body {
 }
 .toast {
   top: 15%;
+  /* Above the pack and other panels: refusals ("enemies nearby") arrive while one is open. */
+  z-index: 10;
 }
 
 .area {
@@ -360,7 +362,7 @@ kbd {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(56em, calc(100% - 32px));
+  width: min(60em, calc(100% - 32px));
   max-height: calc(100% - 32px);
   display: flex;
   flex-direction: column;
@@ -413,10 +415,19 @@ kbd {
   color: var(--dim);
   font-size: 0.85em;
 }
+/* Equipment on the left; the pack, and below it whatever is selected, on the right. */
 .inventory .items {
   display: grid;
-  grid-template-columns: auto auto 1fr;
-  gap: 1.2em;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 1em 0.8em;
+}
+.inventory .items .gear {
+  grid-row: span 2;
+}
+.inventory .items .detail {
+  grid-column: 2;
+  max-width: 24em;
 }
 .inventory .equip,
 .inventory .grid {
@@ -472,8 +483,273 @@ kbd {
   color: var(--dim);
   white-space: nowrap;
 }
-.inventory .gear .equip {
-  margin-bottom: 2em;
+/* The equipment paper doll: weapon and rings left, armor right, Power between. */
+.inventory .paperdoll {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.6em;
+  margin-bottom: 1em;
+}
+.inventory .paperdoll .side {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.inventory .slot {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  width: 10.5em;
+  padding: 2px 4px 2px 2px;
+  text-align: left;
+  border: 1px solid transparent;
+}
+.inventory .slot.selected {
+  border-color: var(--edge);
+  background: rgba(214, 190, 140, 0.08);
+}
+.inventory .slot:not(:disabled):hover {
+  background: rgba(214, 190, 140, 0.06);
+}
+.inventory .slot:disabled {
+  cursor: default;
+}
+.inventory .slot .what {
+  min-width: 0;
+  line-height: 1.15;
+}
+.inventory .slot .label {
+  font-size: 0.65em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.inventory .slot .name {
+  font-size: 0.85em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.inventory .slot .name.none {
+  color: var(--dim);
+  opacity: 0.6;
+}
+.inventory .slot .main {
+  font-size: 0.75em;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.inventory .power {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2em;
+  min-width: 5em;
+}
+.inventory .power .label {
+  font-family: var(--display);
+  letter-spacing: 0.15em;
+  font-size: 0.75em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+.inventory .power .value {
+  font-family: var(--display);
+  font-size: 2em;
+  color: var(--ember);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 0.6em;
+}
+.inventory .power .cell .label {
+  top: calc(100% + 6px);
+}
+
+/* Tier borders. Each tier has its own shape as well as its color, so color is never the only cue. */
+.inventory .cell.tiered::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  pointer-events: none;
+  border: 1px solid var(--tier);
+}
+.inventory .cell.tier-standard::after {
+  border-width: 2px;
+}
+.inventory .cell.tier-rare::after {
+  border: 3px double var(--tier);
+}
+.inventory .cell.tier-noble::after {
+  border-width: 2px;
+  outline: 1px solid var(--tier);
+  outline-offset: 2px;
+}
+.inventory .cell.tier-legendary::after {
+  border-width: 3px;
+  outline: 1px solid var(--tier);
+  outline-offset: 2px;
+  box-shadow: 0 0 8px var(--tier);
+}
+.inventory .cell .worse {
+  position: absolute;
+  right: -7px;
+  top: -9px;
+  font-size: 0.8em;
+  color: #e07060;
+  text-shadow: 0 0 3px #000;
+}
+
+/* Gear details and the comparison. */
+.inventory .gear-detail .title .cell {
+  flex: none;
+}
+.inventory .gear-detail .title .name {
+  font-family: var(--display);
+  font-size: 1.05em;
+}
+.inventory .tierline {
+  color: var(--tier);
+  font-size: 0.8em;
+  margin: 0.2em 0 0.5em;
+}
+.inventory .compare {
+  margin: 0 0 0.6em;
+  padding: 0.4em 0.5em;
+  border: 1px solid rgba(214, 190, 140, 0.2);
+}
+.inventory .compare .against {
+  color: var(--dim);
+  font-size: 0.8em;
+  margin-bottom: 0.2em;
+}
+.inventory dd.up {
+  color: #8fd47a;
+}
+.inventory dd.down {
+  color: #e07060;
+}
+.inventory dd.same {
+  color: var(--dim);
+}
+.inventory .perks {
+  list-style: none;
+  margin: 0.4em 0;
+}
+.inventory .perk::before {
+  content: '◆ ';
+  color: var(--tier);
+  font-size: 0.7em;
+}
+.inventory .perk.gain {
+  color: #8fd47a;
+}
+.inventory .perk.gain::before {
+  content: '▲ ';
+  color: inherit;
+  font-size: 1em;
+}
+.inventory .perk.lose {
+  color: #e07060;
+  text-decoration: line-through;
+}
+.inventory .perk.lose::before {
+  content: '▼ ';
+  color: inherit;
+  font-size: 1em;
+}
+.inventory .perk.drawback {
+  color: #d9826f;
+}
+.inventory .perk.drawback::before {
+  content: '✖ ';
+  color: inherit;
+}
+.inventory .perk.idle {
+  opacity: 0.5;
+}
+.inventory .perk .star {
+  color: #ffd76a;
+  text-shadow: 0 0 4px rgba(255, 200, 80, 0.6);
+}
+.inventory .power-line {
+  margin: 0.2em 0 0.5em;
+  padding: 0.35em 0.5em;
+  border-left: 2px solid var(--tier);
+  background: rgba(255, 179, 64, 0.07);
+  font-size: 0.9em;
+}
+.inventory .power-line .pname {
+  font-family: var(--display);
+  color: var(--tier);
+  letter-spacing: 0.06em;
+}
+.inventory .perk .tag {
+  color: var(--dim);
+  font-size: 0.75em;
+}
+.level-screen .respec {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.8em;
+  margin: 0.6em 0 0.3em;
+}
+
+/* Smithy work in the details panel, and the pack's salvage tools. */
+.inventory .smithy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 0.6em;
+  padding-top: 0.5em;
+  border-top: 1px solid rgba(214, 190, 140, 0.2);
+}
+.inventory .smithy .marks,
+.inventory .pack-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.inventory .pack-tools {
+  margin-top: 0.6em;
+}
+.inventory .work {
+  font-size: 0.8em;
+  text-align: left;
+  padding: 0.15em 0.5em;
+}
+.inventory .work.danger {
+  color: #e07060;
+}
+.inventory .work.gain {
+  color: #8fd47a;
+}
+.inventory .work.toggle.on {
+  color: var(--ember);
+}
+.inventory .offer {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0.3em;
+  border: 1px solid var(--tier);
+}
+.inventory .cell .mark {
+  position: absolute;
+  left: -7px;
+  bottom: -9px;
+  font-size: 0.7em;
+  text-shadow: 0 0 3px #000;
+}
+.inventory .cell .mark.junk {
+  color: #e07060;
+}
+.inventory .flavor {
+  color: var(--dim);
+  font-style: italic;
+  font-size: 0.85em;
+  margin: 0.4em 0 0.6em;
 }
 .inventory dl {
   display: grid;
@@ -569,6 +845,11 @@ kbd {
 @media (max-width: 720px) {
   .inventory .items {
     grid-template-columns: 1fr;
+  }
+  .inventory .items .gear,
+  .inventory .items .detail {
+    grid-row: auto;
+    grid-column: auto;
   }
 }
 

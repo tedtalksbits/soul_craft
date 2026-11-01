@@ -20,6 +20,9 @@ import { streamingModule } from './streaming';
 import { travelModule } from './travel';
 import { modifiersModule } from './modifiers';
 import { variantsModule } from './variants';
+import { perksModule } from './perks';
+import { weaponsModule } from './weapons';
+import { smithyModule } from './smithy';
 
 /**
  * Every simulation feature, in registration order. Within a phase, systems
@@ -30,12 +33,15 @@ export const SIM_MODULES: readonly SimModule[] = [
   // Menu actions (equip, use, craft) apply before the player acts this tick.
   itemsModule,
   craftingModule,
+  smithyModule,
   restorationModule,
   abilitiesModule,
   overshieldModule,
   progressionModule,
   variantsModule,
   modifiersModule,
+  perksModule,
+  weaponsModule,
   playerModule,
   stealthModule,
   enemiesModule,

@@ -11,7 +11,7 @@ import type { PlayerAction } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { addItem, countItem, removeItem, roomFor } from './items';
-import { projectName } from './restoration';
+import { canUpgradeGear, nextGearUpgrade, upgradeGear } from './smithy';
 
 /** How far from a station the player may still use it, in multiples of the interact range. */
 const STATION_REACH = 2;
@@ -31,8 +31,10 @@ export function stationNearby(sim: Simulation, station: StationId): boolean {
 export function canCraft(sim: Simulation, recipeId: string, opts: { ignoreStation?: boolean } = {}): Check {
   const recipe = sim.content.recipes[recipeId];
   if (!recipe) return fail('no such recipe');
-  if (recipe.station && !opts.ignoreStation && !stationNearby(sim, recipe.station))
-    return fail(`needs a ${STATIONS[recipe.station].toLowerCase()}`);
+  if (recipe.station && !opts.ignoreStation && !stationNearby(sim, recipe.station)) {
+    const station = STATIONS[recipe.station].toLowerCase();
+    return fail(`needs ${/^[aeiou]/.test(station) ? 'an' : 'a'} ${station}`);
+  }
   const e = sim.player;
   if (sim.ecs.need(e, Player).souls < recipe.souls) return fail('not enough souls');
   const inv = sim.ecs.need(e, Inventory);
@@ -65,51 +67,18 @@ export function craft(sim: Simulation, recipeId: string, opts: { ignoreStation?:
   return true;
 }
 
-/** The equipped weapon's next forge upgrade, or null when maxed or unarmed. */
+/** The worn weapon's next forge upgrade, or null when maxed or unarmed (the smithy's, for the weapon slot). */
 export function nextUpgrade(sim: Simulation) {
-  const weapon = sim.ecs.need(sim.player, Equipment).weapon;
-  const def = weapon ? sim.content.items[weapon.item] : undefined;
-  if (!weapon || def?.kind !== 'weapon') return null;
-  const step = def.upgrades[weapon.level];
-  return step ? { item: weapon.item, level: weapon.level + 1, ...step } : null;
+  const next = nextGearUpgrade(sim, { slot: 'weapon' });
+  return next ? { ...next, damage: next.gain } : null;
 }
 
 export function canUpgrade(sim: Simulation, opts: { ignoreStation?: boolean } = {}): Check {
-  const next = nextUpgrade(sim);
-  if (!next) return fail('cannot be upgraded further');
-  if (!opts.ignoreStation && !stationNearby(sim, 'forge')) return fail('needs a forge');
-  // The last steps need a master's hand: they wait on a rebuilt project (the smithy).
-  if (next.requires && !sim.state.restored[next.requires])
-    return fail(`needs ${projectName(sim, next.requires)} rebuilt`);
-  const e = sim.player;
-  if (sim.ecs.need(e, Player).souls < next.souls) return fail('not enough souls');
-  const inv = sim.ecs.need(e, Inventory);
-  for (const input of next.items) {
-    if (countItem(inv, input.item) < input.count)
-      return fail(`needs ${input.count} ${sim.content.item(input.item).name}`);
-  }
-  return { ok: true };
+  return canUpgradeGear(sim, { slot: 'weapon' }, opts);
 }
 
 export function upgradeWeapon(sim: Simulation, opts: { ignoreStation?: boolean } = {}): boolean {
-  const check = canUpgrade(sim, opts);
-  const next = nextUpgrade(sim);
-  if (!check.ok || !next) {
-    sim.events.emit({
-      type: 'craftFailed',
-      recipe: 'upgrade',
-      reason: check.ok ? 'cannot upgrade' : check.reason,
-    });
-    return false;
-  }
-  const e = sim.player;
-  const inv = sim.ecs.need(e, Inventory);
-  for (const input of next.items) removeItem(inv, input.item, input.count);
-  sim.ecs.need(e, Player).souls -= next.souls;
-  const weapon = sim.ecs.need(e, Equipment).weapon!;
-  weapon.level = next.level;
-  sim.events.emit({ type: 'upgraded', item: weapon.item, level: weapon.level });
-  return true;
+  return upgradeGear(sim, { slot: 'weapon' }, opts);
 }
 
 function applyAction(sim: Simulation, action: PlayerAction): void {
@@ -150,6 +119,6 @@ const commands: SimCommand[] = [
 
 export const craftingModule: SimModule = {
   id: 'crafting',
-  systems: [{ phase: 'control', run: processActions }],
+  systems: [{ phase: 'control', run: processActions, menu: true }],
   commands,
 };

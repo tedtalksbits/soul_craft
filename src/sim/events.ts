@@ -1,5 +1,5 @@
 import type { Entity } from '../core/ecs';
-import type { AbilitySlot, AttributeId, StatId, StationId } from '../content/schemas';
+import type { AbilitySlot, AttributeId, ItemCount, StatId, StationId, TierId } from '../content/schemas';
 import type { EquipSlot, PickupKind } from './components';
 
 /**
@@ -23,7 +23,15 @@ export type SimEvent =
     }
   | { type: 'blocked'; x: number; y: number }
   | { type: 'killed'; target: Entity; archetype: string; x: number; y: number; souls: number }
-  | { type: 'swing'; x: number; y: number; dirX: number; dirY: number }
+  /** A weapon move starting, and how it is drawn. */
+  | {
+      type: 'swing';
+      x: number;
+      y: number;
+      dirX: number;
+      dirY: number;
+      arc: 'slash' | 'thrust' | 'sweep' | 'slam';
+    }
   | { type: 'roll' }
   | { type: 'healed'; amount: number }
   | { type: 'flaskEmpty' }
@@ -36,6 +44,8 @@ export type SimEvent =
   | { type: 'wallSlam'; x: number; y: number }
   | { type: 'bonfireLit'; id: string; name: string }
   | { type: 'rested'; id: string; name: string }
+  /** The player tried to rest with an enemy after them (see `pursued`). */
+  | { type: 'restRefused' }
   | { type: 'read'; lines: string[] }
   /** Someone spoke to the player: `name` says `lines`, in order. */
   | { type: 'spoke'; npc: string; name: string; lines: string[] }
@@ -46,15 +56,46 @@ export type SimEvent =
   | { type: 'playerDied'; soulsLost: number }
   | { type: 'playerRespawned' }
   | { type: 'areaEntered'; name: string; firstVisit: boolean }
-  | { type: 'itemGained'; item: string; count: number }
+  /** `tier` is set for a piece of gear. */
+  | { type: 'itemGained'; item: string; count: number; tier: TierId | null }
+  /** A piece of gear fell from an enemy (for its chime and beam). */
+  | {
+      type: 'gearDropped';
+      item: string;
+      tier: TierId;
+      greater: boolean;
+      blighted: boolean;
+      x: number;
+      y: number;
+    }
   | { type: 'inventoryFull'; item: string }
+  /** Gear perks and powers at work: a flinch shrugged off, the Last Ember catching a killing blow, a roll's stamina refunded, a burning streak. */
+  | { type: 'keptFooting' }
+  /** Weapon moves: a charge starting and filling, a type's rule landing (flow, tipper, crush, a spent mark), a slam's shockwave. */
+  | { type: 'chargeStarted' }
+  | { type: 'chargeFull' }
+  /** An Ember staff's store changed. */
+  | { type: 'embers'; count: number }
+  | { type: 'weaponRule'; rule: string; x: number; y: number }
+  | { type: 'shockwave'; x: number; y: number; radius: number }
+  | { type: 'lastEmber' }
+  | { type: 'dodged' }
+  | { type: 'streakBurst'; x: number; y: number }
   | { type: 'equipped'; item: string; slot: EquipSlot }
   | { type: 'unequipped'; item: string; slot: EquipSlot }
+  /** Gear can't change with an enemy after the player. */
+  | { type: 'gearLocked' }
   | { type: 'buffStarted'; stat: StatId; item: string; seconds: number }
   | { type: 'buffEnded'; stat: StatId }
   | { type: 'crafted'; recipe: string; item: string; count: number }
   | { type: 'craftFailed'; recipe: string; reason: string }
   | { type: 'upgraded'; item: string; level: number }
+  /** Smithy work done: gear broken into materials, upgrades moved, a perk tempered, blight burned off, attributes reset. */
+  | { type: 'salvaged'; item: string; tier: TierId; materials: ItemCount[] }
+  | { type: 'infused'; from: string; to: string; level: number }
+  | { type: 'tempered'; item: string }
+  | { type: 'cleansed'; item: string }
+  | { type: 'respecced'; points: number }
   | { type: 'stationOpened'; station: StationId }
   /** An ability's effects landed. (x, y) is the caster; (tx, ty) where it was aimed. */
   | { type: 'abilityUsed'; ability: string; slot: AbilitySlot; x: number; y: number; tx: number; ty: number }

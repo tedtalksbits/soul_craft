@@ -31,6 +31,8 @@ export function effectText(fx: RestorationEffect): string {
       return 'Lamplight on the village road at night';
     case 'forgeSteps':
       return 'The smith returns: forge upgrades beyond the old limit';
+    case 'smithWork':
+      return 'The smith tempers perks and cleanses blight';
   }
 }
 

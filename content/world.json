@@ -19,6 +19,7 @@
     { "biome": "meadow" }
   ],
   "origin": { "prefab": "ashen_village", "safeRadius": 28, "biome": "meadow" },
+  "restClearance": 14,
   "regions": {
     "sizeChunks": 3,
     "prefabs": [

@@ -12,7 +12,10 @@ import { TILE } from '../constants';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { refreshAbilities } from './abilities';
+import { flaskCapacity } from './items';
+import { onRest } from './perks';
 import { talkTo } from './objectives';
+import { pursued } from './stealth';
 import { resetEnemies } from './streaming';
 
 export type Interaction =
@@ -73,8 +76,14 @@ export function findInteraction(sim: Simulation): Interaction | null {
 export function interact(sim: Simulation): void {
   const target = findInteraction(sim);
   if (!target || target.kind === 'leave') return;
-  if (target.kind === 'bonfire') restAt(sim, target.entity);
-  else if (target.kind === 'station')
+  if (target.kind === 'bonfire') {
+    // A bonfire lights in any company, but no one rests with an enemy at their back.
+    if (!pursued(sim)) restAt(sim, target.entity);
+    else {
+      lightBonfire(sim, target.entity);
+      sim.events.emit({ type: 'restRefused' });
+    }
+  } else if (target.kind === 'station')
     sim.events.emit({ type: 'stationOpened', station: sim.ecs.need(target.entity, Station).station });
   else if (target.kind === 'npc') talkTo(sim, target.entity);
   else if (target.kind === 'project') {
@@ -111,27 +120,33 @@ export function signText(sim: Simulation, line: string, at: { x: number; y: numb
   return line.replace('{village}', where);
 }
 
-/** Lights (if needed) and rests at a bonfire: heal, refill, set checkpoint, respawn enemies. */
-export function restAt(sim: Simulation, bonfireEntity: Entity): void {
-  const { ecs } = sim;
-  const bonfire = ecs.need(bonfireEntity, Bonfire);
-  const at = ecs.need(bonfireEntity, Body);
+/** Lights a bonfire if it is not yet, and makes it the checkpoint. */
+function lightBonfire(sim: Simulation, bonfireEntity: Entity): Bonfire {
+  const bonfire = sim.ecs.need(bonfireEntity, Bonfire);
+  const at = sim.ecs.need(bonfireEntity, Body);
   if (!sim.state.litBonfires[bonfire.id]) {
     sim.state.litBonfires[bonfire.id] = true;
     sim.events.emit({ type: 'bonfireLit', id: bonfire.id, name: bonfire.name });
   }
   sim.state.checkpoint = { id: bonfire.id, x: at.x, y: at.y };
+  return bonfire;
+}
 
+/** Lights (if needed) and rests at a bonfire: heal, refill, set checkpoint, respawn enemies. */
+export function restAt(sim: Simulation, bonfireEntity: Entity): void {
+  const { ecs } = sim;
+  const bonfire = lightBonfire(sim, bonfireEntity);
   const e = sim.player;
   const p = ecs.need(e, Player);
   const health = ecs.need(e, Health);
   const stamina = ecs.need(e, Stamina);
   health.hp = health.max;
   stamina.value = stamina.max;
-  p.flasks = p.maxFlasks;
+  p.flasks = flaskCapacity(sim);
   p.state = 'sit';
   p.t = 0;
   refreshAbilities(sim);
+  onRest(sim);
   resetEnemies(sim);
   sim.events.emit({ type: 'rested', id: bonfire.id, name: bonfire.name });
 }

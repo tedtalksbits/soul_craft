@@ -24,7 +24,17 @@
     "stone": 17,
     "kindling": 18,
     "relic_oath": 19,
-    "relic_sovereign": 20
+    "relic_sovereign": 20,
+    "ashen_hood": 21,
+    "iron_helm": 22,
+    "wanderers_wraps": 23,
+    "iron_greaves": 24,
+    "ashwood_spear": 25,
+    "stone_maul": 26,
+    "bone_daggers": 27,
+    "ashwood_bow": 28,
+    "ember_staff": 29,
+    "warden_mark": 30
   },
   "animations": {}
 }

@@ -1,6 +1,7 @@
 {
   "meadow": {
     "name": "Ashen Meadows",
+    "itemLevel": 1,
     "ground": [
       ["grass", 92],
       ["flowers", 4]
@@ -22,6 +23,7 @@
   },
   "fungal_wilds": {
     "name": "The Fungal Wilds",
+    "itemLevel": 2,
     "ground": [["moss", 1]],
     "scatter": [
       { "tile": "fungal_tree", "scale": 0.15, "threshold": 0.55, "chance": 0.75 },
@@ -40,6 +42,7 @@
   },
   "ashen_hills": {
     "name": "Ashen Hills",
+    "itemLevel": 3,
     "ground": [["ash", 1]],
     "scatter": [
       { "tile": "rock", "scale": 0.25, "threshold": 0.6, "chance": 0.7 },
@@ -57,6 +60,7 @@
   },
   "pale_graveyard": {
     "name": "Pale Graveyard",
+    "itemLevel": 4,
     "ground": [["pale", 1]],
     "scatter": [
       { "tile": "grave", "scale": 0.4, "threshold": 0.55, "chance": 0.5 },
@@ -75,6 +79,7 @@
   },
   "sunken_ruins": {
     "name": "Sunken Ruins",
+    "itemLevel": 5,
     "ground": [
       ["grass", 60],
       ["flagstone", 30]

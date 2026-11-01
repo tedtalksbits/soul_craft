@@ -2,10 +2,21 @@
  * Persistent world-level state that is not attached to any entity. Plain data,
  * saved verbatim inside snapshots. Records stand in for sets so it stays JSON.
  */
+import type { TierId } from '../content/schemas';
+
 export interface SimState {
   seed: number;
   /** Spawn ids of enemies killed since the last rest. */
   killed: Record<string, true>;
+  /**
+   * Rolled at every rest and respawn: where (and which) wild enemies rise. Kept in the state so a chunk that
+   * reloads between rests puts its enemies back where they were.
+   */
+  spawnEpoch: number;
+  /** Gear drops in a row below the pity tier (`loot.json → pity`); the next one past the limit is better. */
+  lootPity: number;
+  /** Tiers whose gear is salvaged the moment it is picked up. Absent in saves from before it. */
+  autoSalvage?: TierId[];
   litBonfires: Record<string, true>;
   /**
    * Every lit bonfire's name and position, kept even when its chunk is unloaded, so the player can
@@ -79,6 +90,8 @@ export function initialState(seed: number): SimState {
   return {
     seed,
     killed: {},
+    spawnEpoch: 0,
+    lootPity: 0,
     litBonfires: {},
     bonfires: {},
     checkpoint: null,

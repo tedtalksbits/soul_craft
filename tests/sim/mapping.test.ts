@@ -5,7 +5,7 @@ import { inputFrame } from '../../src/sim/input';
 import { applyDamage } from '../../src/sim/modules/combat';
 import { isExplored } from '../../src/sim/modules/mapping';
 import type { Simulation } from '../../src/sim/simulation';
-import { content, newSim, run } from '../helpers';
+import { content, newSim, run, unarmored } from '../helpers';
 
 const playerTile = (sim: Simulation) => {
   const pb = sim.ecs.need(sim.player, Body);
@@ -66,7 +66,7 @@ describe('world map', () => {
   });
 
   it('remembers where the player died', () => {
-    const sim = newSim();
+    const sim = unarmored(newSim());
     const pb = sim.ecs.need(sim.player, Body);
     const where = { x: pb.x, y: pb.y };
     const hp = sim.ecs.need(sim.player, Health).hp;

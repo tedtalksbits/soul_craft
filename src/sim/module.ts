@@ -10,6 +10,16 @@ export type Phase = (typeof PHASES)[number];
 
 export type System = (sim: Simulation) => void;
 
+/**
+ * A system and when it runs. `menu` systems also run while a menu holds the world still (an open
+ * panel, or resting at a bonfire): they apply the menu's actions. Everything else waits.
+ */
+export interface SystemDef {
+  readonly phase: Phase;
+  readonly run: System;
+  readonly menu?: boolean;
+}
+
 /** What a simulation-level console command can touch. */
 export interface SimContext {
   readonly sim: Simulation;
@@ -23,6 +33,6 @@ export type SimCommand = CommandDef<SimContext>;
  */
 export interface SimModule {
   readonly id: string;
-  readonly systems?: readonly { readonly phase: Phase; readonly run: System }[];
+  readonly systems?: readonly SystemDef[];
   readonly commands?: readonly SimCommand[];
 }

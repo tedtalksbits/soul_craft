@@ -121,7 +121,7 @@ function processActions(sim: Simulation): void {
 export const mappingModule: SimModule = {
   id: 'mapping',
   systems: [
-    { phase: 'control', run: processActions },
+    { phase: 'control', run: processActions, menu: true },
     { phase: 'cleanup', run: explore },
   ],
 };
