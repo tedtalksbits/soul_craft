@@ -99,8 +99,8 @@ const commands: SimCommand[] = [
 export const travelModule: SimModule = {
   id: 'travel',
   systems: [
-    { phase: 'world', run: registerLitBonfires },
-    { phase: 'control', run: processActions },
+    { phase: 'world', run: registerLitBonfires, menu: true },
+    { phase: 'control', run: processActions, menu: true },
   ],
   commands,
 };

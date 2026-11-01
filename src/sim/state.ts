@@ -6,6 +6,11 @@ export interface SimState {
   seed: number;
   /** Spawn ids of enemies killed since the last rest. */
   killed: Record<string, true>;
+  /**
+   * Rolled at every rest and respawn: where (and which) wild enemies rise. Kept in the state so a chunk that
+   * reloads between rests puts its enemies back where they were.
+   */
+  spawnEpoch: number;
   litBonfires: Record<string, true>;
   /**
    * Every lit bonfire's name and position, kept even when its chunk is unloaded, so the player can
@@ -79,6 +84,7 @@ export function initialState(seed: number): SimState {
   return {
     seed,
     killed: {},
+    spawnEpoch: 0,
     litBonfires: {},
     bonfires: {},
     checkpoint: null,

@@ -100,6 +100,6 @@ const commands: SimCommand[] = [
 
 export const progressionModule: SimModule = {
   id: 'progression',
-  systems: [{ phase: 'control', run: processActions }],
+  systems: [{ phase: 'control', run: processActions, menu: true }],
   commands,
 };

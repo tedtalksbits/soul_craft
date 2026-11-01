@@ -150,6 +150,6 @@ const commands: SimCommand[] = [
 
 export const craftingModule: SimModule = {
   id: 'crafting',
-  systems: [{ phase: 'control', run: processActions }],
+  systems: [{ phase: 'control', run: processActions, menu: true }],
   commands,
 };

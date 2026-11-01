@@ -80,7 +80,12 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
   const ent = sp.entity;
   switch (ent.kind) {
     case 'enemy':
-      if (sim.state.killed[sp.id] || sim.state.bossesDefeated[ent.archetype] || inVillageWard(sim, sp))
+      if (
+        sim.state.killed[sp.id] ||
+        sim.state.bossesDefeated[ent.archetype] ||
+        inVillageWard(sim, sp) ||
+        nearCheckpoint(sim, sp)
+      )
         return;
       spawnEnemy(sim, ent.archetype, sp.x, sp.y, spawned);
       return;
@@ -145,16 +150,29 @@ function spawnPoint(sim: Simulation, chunk: string, sp: SpawnPoint): void {
   }
 }
 
+/** Whether a wild enemy would rise too close to the bonfire the player rests and respawns at. */
+function nearCheckpoint(sim: Simulation, sp: SpawnPoint): boolean {
+  const at = sim.state.checkpoint;
+  if (!sp.wild || !at) return false;
+  return Math.hypot(sp.x - at.x, sp.y - at.y) < sim.content.world.restClearance * TILE;
+}
+
 /** Whether a rebuilt palisade keeps enemies from rising at this spawn point. */
 function inVillageWard(sim: Simulation, sp: SpawnPoint): boolean {
   const radius = villageWardTiles(sim);
   return radius > 0 && Math.hypot(sp.x, sp.y) < radius * TILE;
 }
 
-/** Souls-style reset: every enemy returns, including ones killed since the last rest. */
+/**
+ * Souls-style reset at a rest or respawn: every enemy returns, including ones killed since the last rest. Wild
+ * enemies come back somewhere new (a fresh spawn epoch), never near the bonfire, so no rest farms the same pack
+ * in the same spot.
+ */
 export function resetEnemies(sim: Simulation): void {
   const { ecs } = sim;
   sim.state.killed = {};
+  sim.state.spawnEpoch = sim.rng.int(1, 0x7fffffff);
+  sim.world.rerollSpawns();
   for (const [e] of ecs.query(Enemy)) ecs.destroy(e);
   for (const chunk of sim.world.loaded) {
     for (const sp of chunk.spawns) if (sp.entity.kind === 'enemy') spawnPoint(sim, chunk.key, sp);

@@ -349,11 +349,11 @@ export class Ui {
           ),
         );
       } else {
-        if (s.error) label.append(h('div', { class: 'error' }, `Unreadable save: ${s.error}`));
+        if (s.old) label.append(h('div', { class: 'error' }, s.error));
+        else if (s.error) label.append(h('div', { class: 'error' }, `Unreadable save: ${s.error}`));
         else label.append(h('div', { class: 'meta' }, 'Empty'));
-        buttons.push(
-          h('button', { onclick: () => handlers.newGame(s.slot) }, s.error ? 'Overwrite' : 'New game'),
-        );
+        const action = s.error && !s.old ? 'Overwrite' : 'New game';
+        buttons.push(h('button', { onclick: () => handlers.newGame(s.slot) }, action));
       }
       return h('div', { class: 'slot' }, label, ...buttons);
     });

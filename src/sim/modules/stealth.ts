@@ -4,7 +4,7 @@
  * to go after; combat asks {@link takeAmbush} for the bonus.
  */
 import type { EnemyDef } from '../../content/schemas';
-import { Ambush, Body, Decoy, Facing, Player, Sprite, Veiled } from '../components';
+import { Ai, Ambush, Body, Decoy, Dying, Enemy, Facing, Player, Sprite, Veiled } from '../components';
 import { TICK_RATE } from '../constants';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
@@ -72,6 +72,19 @@ export function enemyTarget(sim: Simulation, def: EnemyDef, body: Body): Target 
   const dead = ecs.need(sim.player, Player).state === 'dead';
   const hidden = ecs.has(sim.player, Veiled) && dist > VEIL_REVEAL;
   return { x: pb.x, y: pb.y, sees: !dead && !hidden && dist < def.aggroRange };
+}
+
+/**
+ * Whether anything is after the player: a living enemy, awake, that can see them. Resting and changing gear wait
+ * until it is not, so a bonfire or the pack is never an escape from a fight.
+ */
+export function pursued(sim: Simulation): boolean {
+  for (const [e, enemy, ai, body] of sim.ecs.query(Enemy, Ai, Body)) {
+    if (sim.ecs.has(e, Dying) || ai.state === 'dormant') continue;
+    const def = sim.content.enemies[enemy.archetype];
+    if (def && enemyTarget(sim, def, body).sees) return true;
+  }
+  return false;
 }
 
 function tick(sim: Simulation): void {

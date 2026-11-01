@@ -1,4 +1,12 @@
-import { MIGRATIONS, parseSave, SaveError, type Migration, type SaveFile, type SaveMeta } from './format';
+import {
+  MIGRATIONS,
+  OldSaveError,
+  parseSave,
+  SaveError,
+  type Migration,
+  type SaveFile,
+  type SaveMeta,
+} from './format';
 import type { KeyValueStore } from './store';
 
 export const SAVE_SLOTS = ['1', '2', '3'] as const;
@@ -9,6 +17,8 @@ export interface SlotInfo {
   meta: SaveMeta | null;
   /** Set when the slot holds data that could not be read (even from its backup). */
   error?: string;
+  /** The slot holds a save from an older version of the game, which can't be loaded. */
+  old?: boolean;
 }
 
 export interface LoadResult {
@@ -38,7 +48,8 @@ export class SaveManager {
           const loaded = await this.load(slot);
           return { slot, meta: loaded?.save.meta ?? null };
         } catch (err) {
-          return { slot, meta: null, error: err instanceof Error ? err.message : String(err) };
+          const error = err instanceof Error ? err.message : String(err);
+          return { slot, meta: null, error, ...(err instanceof OldSaveError ? { old: true } : {}) };
         }
       }),
     );

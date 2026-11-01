@@ -88,6 +88,8 @@ body {
 }
 .toast {
   top: 15%;
+  /* Above the pack and other panels: refusals ("enemies nearby") arrive while one is open. */
+  z-index: 10;
 }
 
 .area {

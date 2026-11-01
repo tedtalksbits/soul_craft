@@ -661,6 +661,11 @@ export const WorldSchema = z.object({
    * forced within twice that radius so every seed starts somewhere readable.
    */
   origin: z.object({ prefab: z.string(), safeRadius: nonneg, biome: z.string().optional() }),
+  /**
+   * Wild enemies never rise within this many tiles of the bonfire the player rests or respawns at, so a rest
+   * never wakes a fight on screen. (Their spots are reshuffled at every rest; see `SimState.spawnEpoch`.)
+   */
+  restClearance: nonneg,
   regions: z.object({ sizeChunks: z.number().int().min(1), prefabs: weighted(z.string().nullable()) }),
   /**
    * Set pieces every world has, in the same place: each takes over its region (x, y in regions, the

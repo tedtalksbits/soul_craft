@@ -62,6 +62,8 @@ export interface InputFrame {
   held: number;
   /** Menu actions issued this tick, applied in order. */
   actions?: readonly PlayerAction[];
+  /** A menu is open: the world holds still, and only menu actions apply (see Simulation.step). */
+  menu?: boolean;
 }
 
 export const NO_INPUT: InputFrame = Object.freeze({ moveX: 0, moveY: 0, aim: null, pressed: 0, held: 0 });
@@ -75,6 +77,7 @@ export function inputFrame(opts: {
   press?: readonly ActionName[];
   aim?: { x: number; y: number };
   actions?: readonly PlayerAction[];
+  menu?: boolean;
 }): InputFrame {
   const mask = (opts.press ?? []).reduce((m, a) => m | Action[a], 0);
   return {
@@ -84,5 +87,6 @@ export function inputFrame(opts: {
     pressed: mask,
     held: mask,
     ...(opts.actions ? { actions: opts.actions } : {}),
+    ...(opts.menu ? { menu: true } : {}),
   };
 }

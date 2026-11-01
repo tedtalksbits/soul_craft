@@ -93,6 +93,9 @@ function updatePlayer(sim: Simulation): void {
   const def = sim.content.player;
   const e = sim.player;
   const p = ecs.need(e, Player);
+  // A menu opened mid-fight freezes the player with the world; only resting (a menu itself) needs this system,
+  // to stand up again.
+  if (input.menu === true && p.state !== 'sit') return;
   const motion = ecs.need(e, Motion);
   const facing = ecs.need(e, Facing);
   const stamina = ecs.need(e, Stamina);
@@ -417,6 +420,6 @@ const commands: SimCommand[] = [
 
 export const playerModule: SimModule = {
   id: 'player',
-  systems: [{ phase: 'control', run: updatePlayer }],
+  systems: [{ phase: 'control', run: updatePlayer, menu: true }],
   commands,
 };

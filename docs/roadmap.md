@@ -195,8 +195,10 @@ Base versions are free, variants cost souls, the best come from Wardens.
 Playtest feedback shifted gear from crafting to loot. The design, its research and the owner's decisions are in
 [`docs/gear-and-loot.md`](gear-and-loot.md). Phases, in order:
 
-0. **Bonfire and saves:** menus pause the game, no resting while enemies are chasing you, respawns random and away
-   from the bonfire, and old saves refused with a "start a new game" message.
+0. **Bonfire and saves (built):** resting and every panel hold the world still (`InputFrame.menu`); no resting
+   or changing gear while an enemy is after you; wild enemies come back somewhere new at each rest and never
+   within `world.restClearance` tiles of the bonfire; saves before version 14 are refused with a "start a new
+   game" message.
 1. **Gear foundation:** weapon, two rings, helmet, chest and legs; item instances with tier, item level, perks and
    a roll seed; the armor curve; Power; the new equipment screen with comparison; enemy drops; forge gear recipes
    removed.

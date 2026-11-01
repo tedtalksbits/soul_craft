@@ -38,17 +38,13 @@ change:
    never edited once shipped, and run in sequence.
 3. Add a test that migrates a fixture of the old version (`tests/save/save.test.ts` shows the pattern).
 
-Migrations so far:
+**Old saves.** `OLDEST_SAVE_VERSION` is the oldest save this build loads. The gear and loot rework (version 14)
+replaced crafted gear, and every earlier save was a playtest, so it was raised to 14 and the migrations from
+versions 1 to 13 were deleted. A save older than that is refused with "This save is from an older version of
+the game and can't be loaded. Start a new game." (`OldSaveError`), and its slot on the title screen offers
+New game. Raise it again only for a change old games can't survive; otherwise write a migration.
 
-| From | To  | Change                                                                                                                |
-| ---- | --- | --------------------------------------------------------------------------------------------------------------------- |
-| 1    | 2   | `SimState.tileDamage` added (multi-hit trees and mushrooms)                                                           |
-| 2    | 3   | Items: the player gains `inventory`, `equipment` (the Chipped Sword), `buffs` and `Player.using`; pickups gain `item` |
-| 3    | 4   | Classes: the player gains `abilities` (class Vanguard, abilities ready, no super energy)                              |
-| 4    | 5   | Leveling and unlocks: the player gains `attributes` (all 0) and `abilities.unlocked` (both true, so nothing is lost)  |
-| 5    | 6   | Bonfire travel: `SimState.bonfires`, the registry of lit bonfires (starts empty, fills as lit bonfires load)          |
-| 6    | 7   | World map: `SimState.explored` (fog of war), `landmarks`, `lastDeath` and `pin` (all start empty)                     |
-| 7    | 8   | Restoration and bosses: `SimState.restored`, `bossesDefeated` (both empty) and `bossFight` (none)                     |
+No migrations are live yet.
 
 Adding a new optional component needs no migration: old saves simply don't have it. Content changes need
 none either: restore drops entities whose archetype no longer exists, and tile overrides referring to

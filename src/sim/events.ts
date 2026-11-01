@@ -36,6 +36,8 @@ export type SimEvent =
   | { type: 'wallSlam'; x: number; y: number }
   | { type: 'bonfireLit'; id: string; name: string }
   | { type: 'rested'; id: string; name: string }
+  /** The player tried to rest with an enemy after them (see `pursued`). */
+  | { type: 'restRefused' }
   | { type: 'read'; lines: string[] }
   /** Someone spoke to the player: `name` says `lines`, in order. */
   | { type: 'spoke'; npc: string; name: string; lines: string[] }
@@ -50,6 +52,8 @@ export type SimEvent =
   | { type: 'inventoryFull'; item: string }
   | { type: 'equipped'; item: string; slot: EquipSlot }
   | { type: 'unequipped'; item: string; slot: EquipSlot }
+  /** Gear can't change with an enemy after the player. */
+  | { type: 'gearLocked' }
   | { type: 'buffStarted'; stat: StatId; item: string; seconds: number }
   | { type: 'buffEnded'; stat: StatId }
   | { type: 'crafted'; recipe: string; item: string; count: number }

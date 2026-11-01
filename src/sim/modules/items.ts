@@ -26,6 +26,7 @@ import type { PlayerAction } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { inventoryCapacity } from './restored-effects';
+import { pursued } from './stealth';
 
 /** What the player's swing and body amount to once gear and buffs are applied. */
 export interface PlayerStats {
@@ -265,6 +266,11 @@ function setQuick(sim: Simulation, item: string | null): void {
 }
 
 function applyAction(sim: Simulation, action: PlayerAction): void {
+  // The pack pauses the game, so swapping gear mid-fight would be free; it waits until nothing is after you.
+  if ((action.type === 'equip' || action.type === 'unequip') && pursued(sim)) {
+    sim.events.emit({ type: 'gearLocked' });
+    return;
+  }
   switch (action.type) {
     case 'equip':
       equip(sim, action.index);
@@ -354,7 +360,7 @@ const commands: SimCommand[] = [
 export const itemsModule: SimModule = {
   id: 'items',
   systems: [
-    { phase: 'control', run: processActions },
+    { phase: 'control', run: processActions, menu: true },
     { phase: 'cleanup', run: tickBuffs },
   ],
   commands,

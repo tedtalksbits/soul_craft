@@ -4,7 +4,7 @@
  * layer only moves input in and events out.
  */
 import type { Content } from '../content/content';
-import { createSave, type SaveFile } from '../save/format';
+import { createSave, OldSaveError, type SaveFile } from '../save/format';
 import { IndexedDbStore } from '../save/indexeddb-store';
 import { SaveManager, type SaveSlot } from '../save/save-manager';
 import { SnapshotLibrary } from '../save/snapshot-library';
@@ -340,7 +340,12 @@ export class App {
       this.loadSave(loaded.save, slot);
       if (loaded.fromBackup) this.ui.toast('The latest save was damaged; restored the previous one.', 4000);
     } catch (err) {
-      this.ui.toast(`Could not load slot ${slot}: ${err instanceof Error ? err.message : String(err)}`, 5000);
+      if (err instanceof OldSaveError) this.ui.toast(err.message, 5000);
+      else
+        this.ui.toast(
+          `Could not load slot ${slot}: ${err instanceof Error ? err.message : String(err)}`,
+          5000,
+        );
     }
   }
 
@@ -437,7 +442,7 @@ export class App {
     };
   }
 
-  /** A non-blocking panel (pack, level-up, rebuild) is open: it takes game input, the world runs on. */
+  /** A panel (pack, level-up, rebuild) is open: it takes game input and holds the world still. */
   private get panelOpen(): boolean {
     return this.inventory.isOpen || this.level.isOpen || this.rebuild.isOpen;
   }
@@ -446,12 +451,14 @@ export class App {
 
   private tick(): void {
     const sim = this.sim;
-    // The inventory, level and rebuild screens hold game input but not the game: the world keeps moving.
+    // The inventory, level and rebuild screens take game input and pause the world: the sim applies their
+    // actions but nothing else moves (InputFrame.menu).
     if (this.panelOpen) this.inputHolds.add('menu');
     else this.inputHolds.delete('menu');
     this.input.enabled = !this.ui.blocking && this.inputHolds.size === 0;
     if (!sim || this.ui.blocking) return;
-    sim.step(this.input.consume());
+    const frame = this.input.consume();
+    sim.step(this.panelOpen ? { ...frame, menu: true } : frame);
     const events = sim.events.drain();
     if (events.length > 0) {
       this.renderer.handle(events);
@@ -486,6 +493,10 @@ export class App {
       case 'rested':
         void this.save().then((saved) => saved && this.ui.toast(`Rested at ${e.name}. Progress saved.`));
         return;
+      case 'restRefused':
+        return this.ui.toast("You can't rest with enemies nearby.");
+      case 'gearLocked':
+        return this.ui.toast("You can't change gear with enemies nearby.");
       case 'flaskEmpty':
         return this.ui.toast('The flask is empty. Rest at a bonfire.');
       case 'abilityUnlocked': {

@@ -172,6 +172,6 @@ const commands: SimCommand[] = [
 
 export const modifiersModule: SimModule = {
   id: 'modifiers',
-  systems: [{ phase: 'control', run: processActions }],
+  systems: [{ phase: 'control', run: processActions, menu: true }],
   commands,
 };

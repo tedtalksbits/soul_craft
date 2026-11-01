@@ -529,7 +529,7 @@ const commands: SimCommand[] = [
 export const abilitiesModule: SimModule = {
   id: 'abilities',
   systems: [
-    { phase: 'control', run: processActions },
+    { phase: 'control', run: processActions, menu: true },
     { phase: 'cleanup', run: tickAbilities },
     { phase: 'combat', run: tickAreas },
   ],
