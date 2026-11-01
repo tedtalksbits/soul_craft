@@ -237,6 +237,96 @@
       }
     ]
   },
+  "bone_daggers": {
+    "kind": "weapon",
+    "name": "Bone Daggers",
+    "description": "Two shards of the same bone, ground thin. Quiet, quick and very close.",
+    "icon": "bone_daggers",
+    "stack": 1,
+    "weapon": {
+      "type": "daggers",
+      "damage": 5,
+      "staminaCost": 6,
+      "reach": 11,
+      "width": 14,
+      "knockback": 0.3
+    },
+    "upgrades": [
+      { "damage": 1, "souls": 100, "items": [{ "item": "bone_shard", "count": 3 }] },
+      { "damage": 1, "souls": 180, "items": [{ "item": "bone_shard", "count": 5 }] },
+      {
+        "damage": 2,
+        "souls": 300,
+        "items": [
+          { "item": "bone_shard", "count": 6 },
+          { "item": "iron_scrap", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 440,
+        "items": [
+          { "item": "bone_shard", "count": 8 },
+          { "item": "stone", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 620,
+        "items": [
+          { "item": "bone_shard", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
+  "iron_dirks": {
+    "kind": "weapon",
+    "name": "Iron Dirks",
+    "description": "A matched pair from a Hollow captain’s belt. Heavier than they look.",
+    "icon": "bone_daggers",
+    "stack": 1,
+    "weapon": {
+      "type": "daggers",
+      "damage": 6,
+      "staminaCost": 7,
+      "reach": 12,
+      "width": 14,
+      "knockback": 0.4
+    },
+    "upgrades": [
+      { "damage": 1, "souls": 100, "items": [{ "item": "bone_shard", "count": 3 }] },
+      { "damage": 1, "souls": 180, "items": [{ "item": "bone_shard", "count": 5 }] },
+      {
+        "damage": 2,
+        "souls": 300,
+        "items": [
+          { "item": "bone_shard", "count": 6 },
+          { "item": "iron_scrap", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 440,
+        "items": [
+          { "item": "bone_shard", "count": 8 },
+          { "item": "stone", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 620,
+        "items": [
+          { "item": "bone_shard", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ]
+  },
   "ashen_hood": {
     "kind": "armor",
     "name": "Ashen Hood",
@@ -449,6 +539,57 @@
       "name": "Toll",
       "text": "A full-charge slam rings out, pulling nearby foes in before the shockwave.",
       "effect": { "type": "slamPull", "radius": 64 }
+    }
+  },
+  "twinfang": {
+    "kind": "weapon",
+    "name": "Twinfang",
+    "description": "Two blades that were once one fang. Each remembers where the other struck.",
+    "icon": "bone_daggers",
+    "stack": 1,
+    "weapon": {
+      "type": "daggers",
+      "damage": 6,
+      "staminaCost": 6,
+      "reach": 12,
+      "width": 14,
+      "knockback": 0.3
+    },
+    "upgrades": [
+      { "damage": 1, "souls": 100, "items": [{ "item": "bone_shard", "count": 3 }] },
+      { "damage": 1, "souls": 180, "items": [{ "item": "bone_shard", "count": 5 }] },
+      {
+        "damage": 2,
+        "souls": 300,
+        "items": [
+          { "item": "bone_shard", "count": 6 },
+          { "item": "iron_scrap", "count": 3 }
+        ]
+      },
+      {
+        "damage": 2,
+        "souls": 440,
+        "items": [
+          { "item": "bone_shard", "count": 8 },
+          { "item": "stone", "count": 4 }
+        ],
+        "requires": "smithy"
+      },
+      {
+        "damage": 3,
+        "souls": 620,
+        "items": [
+          { "item": "bone_shard", "count": 10 },
+          { "item": "iron_scrap", "count": 6 }
+        ],
+        "requires": "smithy"
+      }
+    ],
+    "innate": [{ "perk": "flankDamage", "value": 0.15 }],
+    "power": {
+      "name": "Second Bite",
+      "text": "Vanish lasts until you have struck twice, and both strikes are ambushes.",
+      "effect": { "type": "vanishStrikes", "strikes": 2 }
     }
   },
   "crown_of_the_unforgotten": {

@@ -216,6 +216,8 @@ export const ModifierEffectSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('tipperMark'), seconds: pos, stagger: ticks }),
   /** A full-charge hammer slam first pulls foes within `radius` toward where it lands. */
   z.object({ type: z.literal('slamPull'), radius: pos }),
+  /** Vanish lasts through this many strikes instead of breaking on the first; each one is an ambush. */
+  z.object({ type: z.literal('vanishStrikes'), strikes: z.number().int().min(2) }),
   /**
    * Every `hits` weapon hits, each within `window` seconds of the last, set the ground under the last
    * one alight: a zone of `ability`'s look that burns for `damage` every `interval` ticks.
@@ -262,7 +264,7 @@ export type ModifiersDef = z.infer<typeof ModifiersSchema>;
 // ------------------------------------------------------------------ weapon types
 
 /** Weapon types. Any class can use any of them; each class fights a little better with its own. */
-export const WeaponTypeSchema = z.enum(['sword', 'spear', 'hammer']);
+export const WeaponTypeSchema = z.enum(['sword', 'spear', 'hammer', 'daggers']);
 export type WeaponTypeId = z.infer<typeof WeaponTypeSchema>;
 
 /**
@@ -289,6 +291,8 @@ export const MoveSchema = z
     hyperArmor: z.boolean().default(false),
     /** Hits everything within `reach` all around, instead of a box in front. */
     around: z.boolean().default(false),
+    /** Lunges through foes instead of stopping short, untouchable until its last active tick. */
+    through: z.boolean().default(false),
     /** How the swing is drawn, and the body pose it uses. */
     arc: z.enum(['slash', 'thrust', 'sweep', 'slam']),
     pose: z.string().default('attack'),
@@ -323,6 +327,17 @@ export const SignatureSchema = z.discriminatedUnion('type', [
    * `radius` doing `damage` times the weapon's damage and staggering for `stagger`, hit or miss.
    */
   z.object({ type: z.literal('break'), shockwave: z.object({ radius: pos, damage: pos, stagger: ticks }) }),
+  /**
+   * Daggers: a hit from behind (more than `behind` turned away) crits for `bonus` more. Every hit adds a
+   * Bleed stack, lasting `ticks` from the last; at `stacks` they burst for `damage` times the weapon's
+   * damage and stagger for `stagger`.
+   */
+  z.object({
+    type: z.literal('flank'),
+    behind: fraction,
+    bonus: nonneg,
+    bleed: z.object({ stacks: z.number().int().min(1), ticks: ticks, damage: pos, stagger: ticks }),
+  }),
 ]);
 
 export const WeaponTypeDefSchema = z.object({
@@ -356,7 +371,12 @@ export const WeaponsSchema = z.object({
   minCharge: ticks,
   /** Speed while charging, as a fraction of walking. */
   chargeMove: fraction,
-  types: z.object({ sword: WeaponTypeDefSchema, spear: WeaponTypeDefSchema, hammer: WeaponTypeDefSchema }),
+  types: z.object({
+    sword: WeaponTypeDefSchema,
+    spear: WeaponTypeDefSchema,
+    hammer: WeaponTypeDefSchema,
+    daggers: WeaponTypeDefSchema,
+  }),
 });
 export type WeaponsDef = z.infer<typeof WeaponsSchema>;
 
@@ -692,6 +712,11 @@ export const PerkStatSchema = z.enum([
   'tipperDamage',
   'crushDamage',
   'flowEnergy',
+  'flankDamage',
+  'bleedStamina',
+  'bleedVulnerability',
+  'freeFifth',
+  'ambushBleed',
 ]);
 export type PerkStat = z.infer<typeof PerkStatSchema>;
 

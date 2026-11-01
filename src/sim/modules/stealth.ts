@@ -8,7 +8,7 @@ import { Ai, Ambush, Body, Decoy, Dying, Enemy, Facing, Player, Sprite, Veiled }
 import { TICK_RATE } from '../constants';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
-import { ambushBonus } from './modifiers';
+import { activeEffects, ambushBonus } from './modifiers';
 
 /** How close an enemy must be to notice a veiled player anyway: close enough to touch. */
 const VEIL_REVEAL = 18;
@@ -26,7 +26,13 @@ export function spawnDecoy(sim: Simulation, x: number, y: number, seconds: numbe
 export function veil(sim: Simulation, seconds: number, bonus: number): void {
   const ticks = Math.round(seconds * TICK_RATE);
   sim.ecs.remove(sim.player, Ambush);
-  sim.ecs.add(sim.player, Veiled, { ticks, bonus: bonus + ambushBonus(sim), armed: false });
+  const strikes = Math.max(1, ...activeEffects(sim, 'vanishStrikes').map((fx) => fx.strikes));
+  sim.ecs.add(sim.player, Veiled, {
+    ticks,
+    bonus: bonus + ambushBonus(sim),
+    armed: false,
+    ...(strikes > 1 ? { strikesLeft: strikes } : {}),
+  });
   sim.events.emit({ type: 'veiled', seconds });
 }
 
@@ -100,7 +106,12 @@ function tick(sim: Simulation): void {
   const veiled = ecs.get(p, Veiled);
   if (player && veiled) {
     const striking = player.state === 'attack' || player.state === 'cast';
-    if (veiled.armed && striking) {
+    if (veiled.armed && striking && (veiled.strikesLeft ?? 1) > 1) {
+      // A veil that lasts through more strikes: this one is an ambush, and the veil holds.
+      veiled.strikesLeft = (veiled.strikesLeft ?? 1) - 1;
+      veiled.armed = false;
+      ecs.add(p, Ambush, { ticks: AMBUSH_TICKS, bonus: veiled.bonus });
+    } else if (veiled.armed && striking) {
       ecs.remove(p, Veiled);
       ecs.add(p, Ambush, { ticks: AMBUSH_TICKS, bonus: veiled.bonus });
       sim.events.emit({ type: 'unveiled' });

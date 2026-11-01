@@ -34,7 +34,7 @@ import { dropPickup } from './pickups';
 import { onHurt, onKill } from './modifiers';
 import { absorb } from './overshield';
 import { afterHurt, catchesKillingBlow, keepsFooting, onDodge } from './perks';
-import { hyperArmored, openFlow } from './weapons';
+import { bleedBonus, hyperArmored, openFlow } from './weapons';
 import { takeAmbush, unveil } from './stealth';
 
 export interface Hit {
@@ -157,7 +157,7 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
     sim.events.emit({ type: 'blocked', x: body.x, y: body.y - 4 });
     return 'blocked';
   }
-  const amount = Math.round(hit.amount * (1 + ambush));
+  const amount = Math.round(hit.amount * (1 + ambush + bleedBonus(sim, e)));
   if (ambush > 0) sim.events.emit({ type: 'ambushed', x: body.x, y: body.y, bonus: ambush });
 
   health.hp = Math.max(0, health.hp - amount);

@@ -100,6 +100,47 @@
       "slots": ["weapon"],
       "weaponTypes": ["hammer"]
     },
+    "flankDamage": {
+      "text": "Flank crits deal {v} more",
+      "stat": "flankDamage",
+      "value": 0.25,
+      "slots": ["weapon"],
+      "weaponTypes": ["daggers"]
+    },
+    "bleedStamina": {
+      "text": "Bleed bursts restore {v} stamina",
+      "stat": "bleedStamina",
+      "value": 15,
+      "integer": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["daggers"]
+    },
+    "bleedVulnerability": {
+      "text": "Bleeding foes take {v} more from everything",
+      "stat": "bleedVulnerability",
+      "value": 0.1,
+      "slots": ["weapon"],
+      "weaponTypes": ["daggers"]
+    },
+    "freeFifth": {
+      "text": "Every fifth swing costs no stamina",
+      "stat": "freeFifth",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "slots": ["weapon"],
+      "weaponTypes": ["daggers"]
+    },
+    "ambushBleed": {
+      "text": "A crit out of hiding bursts a full Bleed",
+      "stat": "ambushBleed",
+      "value": 1,
+      "integer": true,
+      "fixed": true,
+      "minTier": "rare",
+      "slots": ["weapon"],
+      "weaponTypes": ["daggers"]
+    },
     "vigor": {
       "text": "+{v} Vigor",
       "stat": "vigor",

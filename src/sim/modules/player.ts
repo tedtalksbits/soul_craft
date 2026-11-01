@@ -43,6 +43,8 @@ import {
   rollEnded,
   slamShockwave,
   strikeWith,
+  swingCost,
+  throughGrace,
   swingOf,
 } from './weapons';
 import { resetEnemies } from './streaming';
@@ -159,6 +161,7 @@ function updatePlayer(sim: Simulation): void {
         sim.events.emit({ type: 'chargeStarted' });
         break;
       }
+      throughGrace(sim, e, p);
       if (p.t <= move.activeTo && move.lunge > 0 && !lungeBlocked(sim, p)) {
         motion.vx = p.dirX * move.lunge;
         motion.vy = p.dirY * move.lunge;
@@ -259,7 +262,7 @@ function emitSwing(sim: Simulation, e: Entity, p: Player): void {
 function startAttack(sim: Simulation, e: Entity, p: Player, facing: Facing, stamina: Stamina): void {
   aimMove(sim, e, p, facing);
   chooseMove(sim);
-  stamina.value -= moveNumbers(sim).staminaCost;
+  stamina.value -= swingCost(sim);
   stamina.delay = sim.content.player.staminaRegenDelay;
   p.struck = [];
   setState(p, 'attack');

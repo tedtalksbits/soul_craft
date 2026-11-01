@@ -73,6 +73,19 @@ export class Audio {
             'triangle',
           );
         if (e.rule === 'flow') return this.arp([1175, 1568, 2349], 40, 0.3, 0.05);
+        if (e.rule === 'flank') return this.arp([1760, 1397], 30, 0.15, 0.05);
+        if (e.rule === 'bleed') {
+          this.burst(0.25, 700, 0.3, 'lowpass');
+          return this.tone(
+            [
+              [98, 1],
+              [104, 0.6],
+            ],
+            0.35,
+            0.12,
+            'sawtooth',
+          );
+        }
         return this.burst(0.2, 1600, 0.2, 'highpass');
       case 'shockwave':
         this.burst(0.5, 300, 0.45, 'lowpass');

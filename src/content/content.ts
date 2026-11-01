@@ -514,8 +514,8 @@ function checkGear(
     if (perk.class !== undefined && !(perk.class in c.classes))
       problems.push(`loot.json: perks.${id}: unknown class "${perk.class}"`);
     if (perk.effect) effect(`loot.json: perks.${id}`, perk.effect);
-    if (!perk.text.includes('{v}') && !perk.effect)
-      problems.push(`loot.json: perks.${id}: a stat perk's text needs {v}`);
+    if (!perk.text.includes('{v}') && !perk.effect && !perk.fixed)
+      problems.push(`loot.json: perks.${id}: a stat perk's text needs {v} (unless it is fixed)`);
   }
   const mostPerks = Math.max(...TIERS.map((t) => loot.tiers[t].perks));
   for (const slot of ['weapon', 'helmet', 'chest', 'legs', 'ring'] as const) {

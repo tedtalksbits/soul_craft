@@ -2,20 +2,25 @@
  * Weapon types (docs/gear-and-loot.md, section 5): every type follows the same input rules, so learning
  * one teaches the rest. Tap for the light chain (its last hit is the finisher), hold for a charged
  * attack with a payoff at full charge, and attack out of a roll for a dash-strike. Each type adds one
- * signature rule: the sword's Flow, the spear's Tipper, the hammer's Break.
+ * signature rule: the sword's Flow, the spear's Tipper, the hammer's Break, the daggers' Flank and Bleed.
  *
  * The moves are data (`content/weapons.json`) multiplying the equipped weapon's own numbers. The player
  * controller owns the states; this module decides which move comes next, what it hits and how hard.
  */
 import type { MoveDef, WeaponTypeDef, WeaponTypeId } from '../../content/schemas';
 import type { Box } from '../../core/math';
-import { normalize, overlaps } from '../../core/math';
+import { DIR_VEC, normalize, overlaps } from '../../core/math';
 import type { Entity } from '../../core/ecs';
 import {
   Abilities,
   Ai,
+  Ambush,
+  Bleed,
   Body,
+  Decoy,
   Dying,
+  Facing,
+  Invulnerable,
   Enemy,
   Equipment,
   Health,
@@ -164,6 +169,7 @@ export function moveNumbers(sim: Simulation, move: MoveDef = currentMove(sim)): 
  * carries the player onto its body (and its contact damage).
  */
 export function lungeBlocked(sim: Simulation, p: Player): boolean {
+  if (currentMove(sim).through) return false;
   const body = sim.ecs.need(sim.player, Body);
   for (const [target, , tb] of sim.ecs.query(Enemy, Body)) {
     if (sim.ecs.has(target, Dying)) continue;
@@ -217,6 +223,15 @@ export function openFlow(sim: Simulation): void {
   swingOf(sim).flowUntil = sim.tick + left + def.signature.window;
 }
 
+/** Whether the player stands behind a foe: more than `turned` away from where it faces. */
+function fromBehind(sim: Simulation, target: Entity, tb: Body, body: Body, turned: number): boolean {
+  const dir = sim.ecs.get(target, Facing)?.dir;
+  if (!dir) return false;
+  const [fx, fy] = DIR_VEC[dir];
+  const [nx, ny] = normalize(body.x - tb.x, body.y - tb.y);
+  return fx * nx + fy * ny < -turned;
+}
+
 /** What one weapon hit does on top of the swing's own numbers: the type's signature rule and type perks. */
 function shapeHit(
   sim: Simulation,
@@ -257,6 +272,16 @@ function shapeHit(
     crit = true;
     bonus += totals.crushDamage;
     kind = 'crush';
+  } else if (sig.type === 'flank') {
+    // A Stalker's tricks (out of Vanish, or with a decoy drawing eyes away) count as being behind.
+    const cls = sim.ecs.get(sim.player, Abilities)?.class;
+    const trick =
+      cls === 'stalker' && (sim.ecs.has(sim.player, Ambush) || [...sim.ecs.query(Decoy)].length > 0);
+    if (trick || fromBehind(sim, target, tb, body, sig.behind)) {
+      crit = true;
+      bonus += sig.bonus + totals.flankDamage;
+      kind = 'flank';
+    }
   }
   return { bonus, crit, knockback, mark, kind };
 }
@@ -275,6 +300,7 @@ export function strikeWith(sim: Simulation, e: Entity, p: Player): Body | null {
   const body = ecs.need(e, Body);
   const def = sim.content.player;
   const s = swingOf(sim);
+  const sig = weaponType(sim).def.signature;
   for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
     if (p.struck.includes(target) || ecs.has(target, Dying) || !overlaps(box, bodyBox(tb))) continue;
     if (
@@ -283,6 +309,7 @@ export function strikeWith(sim: Simulation, e: Entity, p: Player): Body | null {
     )
       continue;
     p.struck.push(target);
+    const ambushed = ecs.has(e, Ambush);
     const shape = shapeHit(sim, target, tb, body, p, move);
     const roll = rollDamage(sim.rng, {
       ...def.attack,
@@ -312,8 +339,70 @@ export function strikeWith(sim: Simulation, e: Entity, p: Player): Body | null {
       if (energy > 0) gainEnergy(sim, energy);
     }
     if (shape.mark) markFoe(sim, target);
+    if (sig.type === 'flank') addBleed(sim, target, sig.bleed, numbers.damage, ambushed && roll.crit);
   }
   return null;
+}
+
+/**
+ * A dagger hit adds a Bleed stack (a crit out of hiding fills them all, with the right perk); a full
+ * set bursts for a heavy unblockable hit and a stagger.
+ */
+function addBleed(
+  sim: Simulation,
+  target: Entity,
+  bleed: { stacks: number; ticks: number; damage: number; stagger: number },
+  damage: number,
+  ambushCrit: boolean,
+): void {
+  if (!sim.ecs.isAlive(target) || sim.ecs.has(target, Dying)) return;
+  const totals = gearTotals(sim.content, sim.ecs.get(sim.player, Equipment));
+  const b = sim.ecs.get(target, Bleed) ?? sim.ecs.add(target, Bleed, { stacks: 0, ticks: 0 });
+  b.stacks = ambushCrit && totals.ambushBleed > 0 ? bleed.stacks : b.stacks + 1;
+  b.ticks = bleed.ticks;
+  if (b.stacks < bleed.stacks) return;
+  sim.ecs.remove(target, Bleed);
+  const tb = sim.ecs.need(target, Body);
+  const result = applyDamage(sim, target, {
+    amount: Math.max(1, Math.round(damage * bleed.damage)),
+    crit: false,
+    fromX: tb.x,
+    fromY: tb.y,
+    knockback: 0,
+    unblockable: true,
+    charges: true,
+  });
+  if (result === 'hit') stagger(sim, target, bleed.stagger);
+  if (totals.bleedStamina > 0) {
+    const stamina = sim.ecs.need(sim.player, Stamina);
+    stamina.value = Math.min(stamina.max, stamina.value + totals.bleedStamina);
+  }
+  sim.events.emit({ type: 'weaponRule', rule: 'bleed', x: tb.x, y: tb.y });
+}
+
+/** Extra damage a bleeding foe takes from everything, with the perk for it. */
+export function bleedBonus(sim: Simulation, target: Entity): number {
+  if (!sim.ecs.has(target, Bleed)) return 0;
+  return gearTotals(sim.content, sim.ecs.get(sim.player, Equipment)).bleedVulnerability;
+}
+
+/** A move that lunges through foes leaves the player untouchable until it has passed. */
+export function throughGrace(sim: Simulation, e: Entity, p: Player): void {
+  const move = currentMove(sim);
+  if (!move.through || p.t !== 1) return;
+  const ticks = move.activeTo;
+  const inv = sim.ecs.get(e, Invulnerable);
+  if (!inv) sim.ecs.add(e, Invulnerable, { ticks });
+  else inv.ticks = Math.max(inv.ticks, ticks);
+}
+
+/** What the swing starting now costs: every fifth is free with the perk for it. */
+export function swingCost(sim: Simulation): number {
+  const s = swingOf(sim);
+  s.swings = (s.swings ?? 0) + 1;
+  const free =
+    gearTotals(sim.content, sim.ecs.get(sim.player, Equipment)).freeFifth > 0 && s.swings % 5 === 0;
+  return free ? 0 : moveNumbers(sim).staminaCost;
 }
 
 /** A sworn spear's tipper marks the foe; the next ability hit on it staggers it outright. */
@@ -390,6 +479,7 @@ function tickWeapons(sim: Simulation): void {
   const s = sim.ecs.get(sim.player, Swing);
   if (s && s.comboTicks > 0) s.comboTicks--;
   for (const [e, mark] of sim.ecs.query(Marked)) if (--mark.ticks <= 0) sim.ecs.remove(e, Marked);
+  for (const [e, bleed] of sim.ecs.query(Bleed)) if (--bleed.ticks <= 0) sim.ecs.remove(e, Bleed);
 }
 
 export const weaponsModule: SimModule = {

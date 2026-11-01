@@ -182,6 +182,8 @@ export interface Veiled {
   ticks: number;
   bonus: number;
   armed: boolean;
+  /** Strikes the veil still lasts through (a Legendary's); absent means it breaks on the first. */
+  strikesLeft?: number;
 }
 export const Veiled = defineComponent<Veiled>('veiled');
 
@@ -262,6 +264,8 @@ export interface Swing {
   shockwave: boolean;
   /** The attack button has been held since the move began (a tap held long enough becomes a charge). */
   held: boolean;
+  /** Swings made, for perks that act on every so many. Absent in saves from before it. */
+  swings?: number;
 }
 export const Swing = defineComponent<Swing>('swing');
 
@@ -271,6 +275,13 @@ export interface Marked {
   stagger: number;
 }
 export const Marked = defineComponent<Marked>('marked');
+
+/** Dagger Bleed on an enemy: `stacks` so far, lapsing `ticks` after the last hit added one. */
+export interface Bleed {
+  stacks: number;
+  ticks: number;
+}
+export const Bleed = defineComponent<Bleed>('bleed');
 
 /**
  * One inventory slot: an item, how many, its forge upgrade level, and for gear, its rolls. Gear without

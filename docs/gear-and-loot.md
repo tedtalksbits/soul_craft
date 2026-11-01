@@ -479,6 +479,20 @@ for each base, and the beams.
 | **6. Onboarding**        | The Road Camp objective, `kill` and `gather` goal types, and Grub                                                                                                               | 1                      |
 | **7. Art**               | Weapon and armor layers, item icons, beams and chimes                                                                                                                           | 3 for weapons          |
 
+**Phase 3, twin daggers, as built (2026-11-01).** Choices made while building them:
+
+- **Flank** reads which way a foe faces: from more than a quarter turn behind, a hit crits for +50%. For the
+  Stalker, a hit out of Vanish or while a False Step decoy is out counts as a Flank wherever they stand (the class
+  affinity in section 5).
+- **Bleed** adds a stack per hit, lasting 3 s from the last; five burst for 1.5x the weapon's damage, unblockable,
+  and a half-second stagger.
+- **The charged lunge goes through foes** (a new `through` move flag): it ignores the stop-short rule and leaves the
+  player untouchable until it has passed, so it ends behind the target, ready to Flank. That covered the design's
+  "lunge ends behind the target" perk, so a "Flank crits deal more" perk took its place.
+- **Perks:** Flank damage, Bleed bursts restore stamina, bleeding foes take more from everything, every fifth swing
+  is free, and (Rare and up) a crit out of hiding bursts a full Bleed.
+- **Twinfang:** Vanish lasts through two strikes, and both are ambushes.
+
 **Phase 3, first half, as built (2026-11-01).** The combat rework plus sword, spear and hammer. Choices made
 while building it:
 

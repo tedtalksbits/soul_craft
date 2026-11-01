@@ -181,16 +181,16 @@ export class Effects {
         this.shake = Math.min(9, this.shake + 5);
         return;
       case 'weaponRule': {
-        const color =
-          e.rule === 'tipper'
-            ? 0xbfe8ff
-            : e.rule === 'crush'
-              ? 0xe8b070
-              : e.rule === 'flow'
-                ? 0xfff0a0
-                : 0xd0a0ff;
+        const COLORS: Record<string, number> = {
+          tipper: 0xbfe8ff,
+          crush: 0xe8b070,
+          flow: 0xfff0a0,
+          flank: 0xffd0d0,
+          bleed: 0xb0202a,
+        };
+        const color = COLORS[e.rule] ?? 0xd0a0ff;
         this.burst(e.x, e.y, { count: 10, color, speed: 1.6, size: 2, life: 22, z: 6, vz: 0.8 });
-        if (e.rule === 'crush') this.shake = Math.min(8, this.shake + 3);
+        if (e.rule === 'crush' || e.rule === 'bleed') this.shake = Math.min(8, this.shake + 3);
         return;
       }
       case 'bonfireLit':

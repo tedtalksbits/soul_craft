@@ -214,7 +214,9 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    attack (full charge has a payoff) and strikes out of a roll; hitstop, lunges, stagger and hyper armor per move,
    all in `weapons.json`. The sword (Flow), spear (Tipper, a 360° sweep) and hammer (Break: crushes, hyper armor,
    a full-charge shockwave) are in, with class affinity, type perks, the Ashwood Spear and Stone Maul, and two
-   Legendaries (Oathspear, Gravebell). Still to come: daggers, then the bow and the Ember staff.
+   Legendaries (Oathspear, Gravebell). Twin daggers are in too: Flank crits from behind, Bleed that bursts at five
+   stacks, a lunge-through charge, the Bone Daggers and Iron Dirks, and Twinfang. Still to come: the bow and the
+   Ember staff.
 4. **Economy:** salvage, temper, upgrade and infuse, cleanse, coatings, tools, ranked projects, the Gambler, respec.
 5. **Wardens:** chests, signature items, Rekindle, pity and Marks, Heat, alternate kills.
 6. **Onboarding:** the Road Camp objective, with `kill` and `gather` goals.
