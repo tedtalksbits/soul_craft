@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Ai, Body, Facing, Motion } from '../../src/sim/components';
-import { newSim, run, spawnNear } from '../helpers';
+import { content, newSim, run, spawnNear } from '../helpers';
 
 describe('chasing enemies', () => {
   it.each(['hollow', 'knight'])(
@@ -25,6 +25,30 @@ describe('chasing enemies', () => {
       expect(Math.abs(eb.x - pb.x)).toBeGreaterThan(5);
     },
   );
+});
+
+describe('packs', () => {
+  it('take turns: only one melee foe winds up or strikes at a time', () => {
+    const sim = newSim();
+    sim.state.cheats.god = true;
+    const pack = [
+      spawnNear(sim, 'hollow', 20, 0),
+      spawnNear(sim, 'hollow', -20, 0),
+      spawnNear(sim, 'hollow', 0, 20),
+    ];
+    for (const e of pack) sim.ecs.need(e, Ai).cooldown = 0;
+    let most = 0;
+    let attacks = 0;
+    for (let i = 0; i < 300; i++) {
+      run(sim, 1);
+      const states = pack.map((e) => sim.ecs.need(e, Ai).state);
+      most = Math.max(most, states.filter((s) => s === 'windup' || s === 'lunge').length);
+      attacks += states.filter((s) => s === 'lunge').length;
+    }
+    expect(most).toBe(content.world.packs.attackers);
+    // They still fight: turns, not a standoff.
+    expect(attacks).toBeGreaterThan(0);
+  });
 });
 
 describe('archer', () => {

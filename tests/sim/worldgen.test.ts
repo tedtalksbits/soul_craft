@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHUNK } from '../../src/sim/constants';
+import { CHUNK, TILE } from '../../src/sim/constants';
 import { WorldGenerator } from '../../src/sim/world/generator';
 import { content } from '../helpers';
 
@@ -38,6 +38,27 @@ describe('WorldGenerator', () => {
     const r = content.world.origin.safeRadius - 1;
     for (let y = -r; y <= r; y += 3)
       for (let x = -r; x <= r; x += 3) if (Math.hypot(x, y) < r) expect(gen.terrainAt(x, y)).not.toBe(water);
+  });
+
+  it('raises wild enemies in packs, each gathered round its leader', () => {
+    const gen = new WorldGenerator(7, content);
+    const { spread } = content.world.packs;
+    const packs = new Map<string, { x: number; y: number }[]>();
+    for (let cx = -6; cx <= 6; cx++)
+      for (let cy = -6; cy <= 6; cy++)
+        for (const sp of gen.generate(cx, cy).spawns) {
+          if (!sp.wild) continue;
+          const id = sp.id.slice(0, sp.id.lastIndexOf('.'));
+          packs.set(id, [...(packs.get(id) ?? []), { x: sp.x, y: sp.y }]);
+        }
+    const sizes = [...packs.values()].map((p) => p.length);
+    expect(Math.max(...sizes)).toBeGreaterThanOrEqual(3);
+    expect(sizes.reduce((a, b) => a + b, 0) / sizes.length).toBeGreaterThan(1.8);
+    for (const [leader, ...rest] of packs.values())
+      for (const m of rest) {
+        expect(Math.abs(m.x - leader!.x)).toBeLessThanOrEqual(spread * TILE);
+        expect(Math.abs(m.y - leader!.y)).toBeLessThanOrEqual(spread * TILE);
+      }
   });
 
   it('keeps enemy spawns away from the origin', () => {

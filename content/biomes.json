@@ -14,10 +14,11 @@
     "darkness": 0.1,
     "ambient": "ash",
     "spawns": {
-      "perChunk": 2.2,
-      "table": [
-        ["hollow", 3],
-        ["slime", 1]
+      "perChunk": 2.5,
+      "packs": [
+        [{ "hollow": [2, 3] }, 3],
+        [{ "hollow": [1, 1], "slime": [2, 3] }, 1],
+        [{ "hollow": [1, 1] }, 1]
       ]
     }
   },
@@ -33,10 +34,10 @@
     "darkness": 0.42,
     "ambient": "spores",
     "spawns": {
-      "perChunk": 3,
-      "table": [
-        ["slime", 5],
-        ["hollow", 1]
+      "perChunk": 2.5,
+      "packs": [
+        [{ "slime": [3, 4] }, 4],
+        [{ "hollow": [1, 2], "slime": [1, 2] }, 1]
       ]
     }
   },
@@ -51,10 +52,11 @@
     "darkness": 0.15,
     "ambient": "ash",
     "spawns": {
-      "perChunk": 2,
-      "table": [
-        ["hollow", 2],
-        ["archer", 1]
+      "perChunk": 2.2,
+      "packs": [
+        [{ "hollow": [2, 3] }, 2],
+        [{ "archer": [1, 1], "hollow": [2, 2] }, 2],
+        [{ "archer": [2, 2] }, 1]
       ]
     }
   },
@@ -70,10 +72,10 @@
     "ambient": "mist",
     "spawns": {
       "perChunk": 2.5,
-      "table": [
-        ["archer", 2],
-        ["hollow", 2],
-        ["knight", 0.4]
+      "packs": [
+        [{ "archer": [1, 2], "hollow": [1, 2] }, 2],
+        [{ "hollow": [2, 3] }, 2],
+        [{ "knight": [1, 1] }, 0.6]
       ]
     }
   },
@@ -93,10 +95,10 @@
     "ambient": "mist",
     "spawns": {
       "perChunk": 2.5,
-      "table": [
-        ["hollow", 3],
-        ["archer", 1],
-        ["knight", 0.5]
+      "packs": [
+        [{ "hollow": [2, 3] }, 3],
+        [{ "archer": [1, 1], "hollow": [2, 2] }, 1],
+        [{ "knight": [1, 1], "hollow": [1, 1] }, 0.5]
       ]
     }
   }

@@ -244,6 +244,21 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    weapon of each of the six types in hand, trims and legs in the tier's color, and an ember glint for a
    Legendary ring.
 
+### Next: Power, the stash and the character screen (proposed)
+
+The next round of gear work: Power from 10 to 1000 printed on every item, drops a little above the best you own,
+cheap infusion, dismantling anywhere, pockets and a stash, a Destiny-style slot flyout, and more enemies. The
+proposal and its open questions are in [`docs/power-and-stash.md`](power-and-stash.md). Phases, in order:
+
+1. **More enemies (built):** wild enemies rise in packs (2 to 4, from each biome's pack table), about 2.5 × as
+   many as before; a melee attack token (`world.packs.attackers`, 1) makes a pack take turns, the rest holding
+   their ground; the Hollow Camp comes up twice as often, and the new Ash Nest (slimes and Hollows round an Ash
+   Mother, an elite that always drops gear); gear chance per kill cut (Hollow and archer 8% → 5%, slime 3% → 2%).
+2. **Power** (waits on the open questions).
+3. **Pockets, bag, materials and stash.**
+4. **The character screen.**
+5. **Dismantle and infuse.**
+
 ### Milestone 5: Life sim, in service of combat
 
 Each part opens through the restoration thread: a Kindling clears the fields or brings back the villager who

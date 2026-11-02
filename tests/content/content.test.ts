@@ -54,6 +54,36 @@ describe('gear content', () => {
   });
 });
 
+describe('pack content', () => {
+  it('rejects an empty pack, an unknown enemy and a count that runs backwards', () => {
+    const files = { ...readContentFiles() } as Record<string, unknown>;
+    const biomes = files['biomes.json'] as Record<string, { spawns: object }>;
+    files['biomes.json'] = {
+      ...biomes,
+      meadow: {
+        ...biomes['meadow'],
+        spawns: {
+          perChunk: 1,
+          packs: [
+            [{}, 1],
+            [{ nope: [1, 1] }, 1],
+            [{ hollow: [3, 2] }, 1],
+          ],
+        },
+      },
+    };
+    try {
+      buildContent(files);
+      expect.unreachable();
+    } catch (err) {
+      const text = (err as ContentError).problems.join('\n');
+      expect(text).toMatch(/biomes\.json: meadow\.spawns: an empty pack/);
+      expect(text).toMatch(/biomes\.json: meadow\.spawns: unknown enemy "nope"/);
+      expect(text).toMatch(/hollow count \[3, 2\] runs backwards/);
+    }
+  });
+});
+
 describe('perk content', () => {
   it('rejects a class perk for a class that does not exist, and a power naming an unknown ability', () => {
     const files = { ...readContentFiles() } as Record<string, unknown>;

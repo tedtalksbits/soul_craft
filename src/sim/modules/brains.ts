@@ -7,15 +7,7 @@
 import type { BrainDef, EnemyDef } from '../../content/schemas';
 import type { Entity } from '../../core/ecs';
 import { dirFromVec } from '../../core/math';
-import {
-  Body,
-  Brazier,
-  type Ai,
-  type ContactDamage,
-  type Enemy,
-  type Facing,
-  type Motion,
-} from '../components';
+import { Ai, Body, Brazier, Dying, Enemy, type ContactDamage, type Facing, type Motion } from '../components';
 import type { Simulation } from '../simulation';
 import { applyDamage } from './combat';
 import { spawnProjectile } from './projectiles';
@@ -84,6 +76,30 @@ function closeIn(c: BrainContext): void {
   const touching = (c.body.w + c.sim.content.player.body.w) / 2;
   if (c.dist > touching) moveToward(c, c.def.speed);
   else facePlayer(c);
+}
+
+/** States in which a melee foe is committed to a blow: it holds one of the pack's attack tokens. */
+const STRIKING: ReadonlySet<string> = new Set(['windup', 'lunge', 'charge']);
+
+/**
+ * Whether this foe may start a melee attack: fewer than `world.packs.attackers` others are already winding up or
+ * striking. Without it a pack of three lunges on the same tick, which no roll can answer.
+ */
+function attackToken(c: BrainContext): boolean {
+  const { ecs } = c.sim;
+  let striking = 0;
+  for (const [e, enemy, ai] of ecs.query(Enemy, Ai)) {
+    if (e === c.e || !STRIKING.has(ai.state) || ecs.has(e, Dying)) continue;
+    const type = c.sim.content.enemies[enemy.archetype]?.brain.type;
+    if (type === 'lunger' || type === 'shieldKnight') striking++;
+  }
+  return striking < c.sim.content.world.packs.attackers;
+}
+
+/** In range but waiting its turn: it holds its ground, facing the player, instead of crowding in. */
+function holdOff(c: BrainContext): void {
+  c.ai.state = 'chase';
+  facePlayer(c);
 }
 
 function facePlayer(c: BrainContext): void {
@@ -167,8 +183,10 @@ const lunger: Brain<'lunger'> = (c, b) => {
       if (!c.sees) {
         ai.state = 'idle';
         wander(c);
-      } else if (c.dist < b.range && ai.cooldown <= 0) setAi(ai, 'windup');
-      else {
+      } else if (c.dist < b.range && ai.cooldown <= 0) {
+        if (attackToken(c)) setAi(ai, 'windup');
+        else holdOff(c);
+      } else {
         ai.state = 'chase';
         closeIn(c);
       }
@@ -256,8 +274,10 @@ const shieldKnight: Brain<'shieldKnight'> = (c, b) => {
       if (!c.sees) {
         ai.state = 'idle';
         wander(c);
-      } else if (ai.cooldown <= 0 && c.dist < b.chargeRange) setAi(ai, 'windup');
-      else {
+      } else if (ai.cooldown <= 0 && c.dist < b.chargeRange) {
+        if (attackToken(c)) setAi(ai, 'windup');
+        else holdOff(c);
+      } else {
         ai.state = 'chase';
         closeIn(c);
       }

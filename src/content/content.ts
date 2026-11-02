@@ -408,7 +408,13 @@ function checkReferences(
   for (const [id, b] of Object.entries(c.biomes)) {
     for (const [g] of b.ground) tile(`biomes.json: ${id}.ground`, g);
     for (const s of b.scatter) tile(`biomes.json: ${id}.scatter`, s.tile);
-    for (const [e] of b.spawns.table) enemy(`biomes.json: ${id}.spawns`, e);
+    for (const [pack] of b.spawns.packs) {
+      if (Object.keys(pack).length === 0) problems.push(`biomes.json: ${id}.spawns: an empty pack`);
+      for (const [e, [min, max]] of Object.entries(pack)) {
+        enemy(`biomes.json: ${id}.spawns`, e);
+        if (min > max) problems.push(`biomes.json: ${id}.spawns: ${e} count [${min}, ${max}] runs backwards`);
+      }
+    }
   }
 
   const w = c.world;

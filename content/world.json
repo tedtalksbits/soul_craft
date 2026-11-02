@@ -20,12 +20,14 @@
   ],
   "origin": { "prefab": "ashen_village", "safeRadius": 28, "biome": "meadow" },
   "restClearance": 14,
+  "packs": { "spread": 3, "attackers": 1 },
   "regions": {
     "sizeChunks": 3,
     "prefabs": [
       ["wayshrine", 3],
       ["knight_shrine", 1],
-      ["hollow_camp", 2],
+      ["hollow_camp", 4],
+      ["ash_nest", 2],
       [null, 2]
     ]
   },

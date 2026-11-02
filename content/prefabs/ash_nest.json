@@ -1,0 +1,30 @@
+{
+  "name": "Ash Nest",
+  "marker": "camp",
+  "biomes": ["fungal_wilds", "meadow", "pale_graveyard"],
+  "legend": {
+    "f": { "tile": "fungal_tree" },
+    "G": { "tile": "giant_shroom" },
+    "r": { "tile": "rock" },
+    ".": { "tile": "ash" },
+    "m": { "tile": "moss" },
+    "s": { "tile": "ash", "entity": { "kind": "enemy", "archetype": "slime" } },
+    "h": { "tile": "ash", "entity": { "kind": "enemy", "archetype": "hollow" } },
+    "M": { "tile": "ash", "entity": { "kind": "enemy", "archetype": "ash_mother" } }
+  },
+  "rows": [
+    "    f  G  f    ",
+    "  f mm...mm f  ",
+    " G m.......m G ",
+    "  m..s...s..m  ",
+    " f...........f ",
+    " m..h.....h..m ",
+    "  ...s.M.s...  ",
+    " m..h.......m  ",
+    " f...........f ",
+    "  m..s...s..m  ",
+    " G m.......m G ",
+    "  f mm...mm r  ",
+    "    f  r  f    "
+  ]
+}

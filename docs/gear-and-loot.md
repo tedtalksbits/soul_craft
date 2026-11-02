@@ -306,8 +306,8 @@ perk. For example:
 
 | Source                   | Chance of gear                 | Common / Standard / Rare / Noble / Legendary |
 | ------------------------ | ------------------------------ | -------------------------------------------- |
-| Fodder (slime)           | 3%                             | 58 / 27 / 11 / 3.5 / 0.5                     |
-| Regular (hollow, archer) | 8%                             | 58 / 27 / 11 / 3.5 / 0.5                     |
+| Fodder (slime)           | 2% (3% before packs)           | 58 / 27 / 11 / 3.5 / 0.5                     |
+| Regular (hollow, archer) | 5% (8% before packs)           | 58 / 27 / 11 / 3.5 / 0.5                     |
 | Elite (knight)           | 100%, and it visibly wields it | 0 / 55 / 32 / 11 / 2                         |
 | Warden chest             | Always (section 8)             | Rare or better                               |
 

@@ -12,10 +12,30 @@
       { "kind": "ember", "chance": 0.15, "amount": [12, 12] },
       { "kind": "item", "item": "slime_gel", "chance": 0.5, "amount": [1, 2] }
     ],
-    "gear": { "chance": 0.03, "table": "regular" },
+    "gear": { "chance": 0.02, "table": "regular" },
     "recoilTicks": 14,
     "knockbackTaken": 1,
     "brain": { "type": "hopper", "crouchTicks": 6, "hopSpeed": 2.2, "hopTicks": 18, "hopCooldown": [50, 80] }
+  },
+  "ash_mother": {
+    "name": "Ash Mother",
+    "sprite": "slime",
+    "look": { "scale": 2, "tint": "#9a9088" },
+    "body": { "w": 20, "h": 16 },
+    "hp": 140,
+    "speed": 0.5,
+    "aggroRange": 100,
+    "contactDamage": 12,
+    "souls": 70,
+    "drops": [
+      { "kind": "ember", "chance": 1, "amount": [15, 15] },
+      { "kind": "item", "item": "slime_gel", "chance": 1, "amount": [3, 5] },
+      { "kind": "item", "item": "glowspore", "chance": 0.5, "amount": [1, 2] }
+    ],
+    "gear": { "chance": 1, "table": "elite" },
+    "recoilTicks": 0,
+    "knockbackTaken": 0.4,
+    "brain": { "type": "hopper", "crouchTicks": 14, "hopSpeed": 2.4, "hopTicks": 22, "hopCooldown": [60, 90] }
   },
   "hollow": {
     "name": "Hollow",
@@ -31,7 +51,7 @@
       { "kind": "item", "item": "iron_scrap", "chance": 0.4, "amount": [1, 1] },
       { "kind": "item", "item": "bone_shard", "chance": 0.15, "amount": [1, 1] }
     ],
-    "gear": { "chance": 0.08, "table": "regular" },
+    "gear": { "chance": 0.05, "table": "regular" },
     "recoilTicks": 16,
     "knockbackTaken": 1,
     "brain": {
@@ -57,7 +77,7 @@
       { "kind": "ember", "chance": 0.2, "amount": [15, 15] },
       { "kind": "item", "item": "bone_shard", "chance": 0.5, "amount": [1, 2] }
     ],
-    "gear": { "chance": 0.08, "table": "regular" },
+    "gear": { "chance": 0.05, "table": "regular" },
     "recoilTicks": 14,
     "knockbackTaken": 1,
     "brain": {

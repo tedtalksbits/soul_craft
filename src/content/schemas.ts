@@ -1214,7 +1214,14 @@ export const BiomeSchema = z.object({
     .default([]),
   darkness: fraction,
   ambient: z.enum(['none', 'ash', 'spores', 'mist']),
-  spawns: z.object({ perChunk: nonneg, table: weighted(z.string()) }),
+  /**
+   * Wild enemies come in packs: `perChunk` packs per chunk on average, each picked from `packs` by weight. A pack
+   * names how many of each archetype rise together ([min, max]); the first is the leader, the rest gather round.
+   */
+  spawns: z.object({
+    perChunk: nonneg,
+    packs: weighted(z.record(z.string(), z.tuple([ticks, ticks]))),
+  }),
 });
 export type BiomeDef = z.infer<typeof BiomeSchema>;
 export const BiomesSchema = z.record(z.string(), BiomeSchema);
@@ -1247,6 +1254,11 @@ export const WorldSchema = z.object({
    * never wakes a fight on screen. (Their spots are reshuffled at every rest; see `SimState.spawnEpoch`.)
    */
   restClearance: nonneg,
+  /**
+   * Packs: members rise within `spread` tiles of their leader. At most `attackers` melee foes wind up or strike at
+   * the player at once (the attack token), so a pack of three takes turns instead of lunging on the same tick.
+   */
+  packs: z.object({ spread: z.number().int().min(1), attackers: z.number().int().min(1) }),
   regions: z.object({ sizeChunks: z.number().int().min(1), prefabs: weighted(z.string().nullable()) }),
   /**
    * Set pieces every world has, in the same place: each takes over its region (x, y in regions, the

@@ -302,25 +302,47 @@ export class WorldGenerator {
     if (!biome) return;
     const perChunk = biome.spawns.perChunk;
     const count = Math.floor(perChunk) + (rng.chance(perChunk % 1) ? 1 : 0);
+    const { spread } = c.world.packs;
     const nearPrefab = (tx: number, ty: number) =>
       placements.some((p) => tx >= p.x0 - 3 && tx < p.x0 + p.w + 3 && ty >= p.y0 - 3 && ty < p.y0 + p.h + 3);
+    // Open ground in this chunk, clear of the village and of set pieces (which bring their own enemies).
+    const open = (lx: number, ly: number) => {
+      if (lx < 1 || ly < 1 || lx > CHUNK - 2 || ly > CHUNK - 2) return false;
+      if (c.tile(tiles[ly * CHUNK + lx] ?? 0).solid) return false;
+      const tx = ox + lx;
+      const ty = oy + ly;
+      // Measured from the tile's center, where the enemy stands, so none rises just inside the radius.
+      return Math.hypot(tx + 0.5, ty + 0.5) >= c.world.origin.safeRadius && !nearPrefab(tx, ty);
+    };
 
     for (let i = 0; i < count; i++) {
       for (let attempt = 0; attempt < 12; attempt++) {
         const lx = rng.int(1, CHUNK - 2);
         const ly = rng.int(1, CHUNK - 2);
-        const tx = ox + lx;
-        const ty = oy + ly;
-        if (c.tile(tiles[ly * CHUNK + lx] ?? 0).solid) continue;
-        // Measured from the tile's center, where the enemy stands, so none rises just inside the radius.
-        if (Math.hypot(tx + 0.5, ty + 0.5) < c.world.origin.safeRadius || nearPrefab(tx, ty)) continue;
-        const local = c.biomes[this.biomeAt(tx, ty)] ?? biome;
-        out.push({
-          id: `${chunkKey(cx, cy)}#${i}`,
-          ...tileCenter(tx, ty),
-          entity: { kind: 'enemy', archetype: rng.weighted(local.spawns.table) },
-          wild: true,
-        });
+        if (!open(lx, ly)) continue;
+        const local = c.biomes[this.biomeAt(ox + lx, oy + ly)] ?? biome;
+        const pack = rng.weighted(local.spawns.packs);
+        // The leader stands on the spot; the rest gather round it, each where there is room.
+        const members = Object.entries(pack).flatMap(([archetype, [min, max]]) =>
+          Array.from({ length: rng.int(min, max) }, () => archetype),
+        );
+        for (const [j, archetype] of members.entries()) {
+          let [mx, my] = [lx, ly];
+          for (let tries = 0; j > 0 && tries < 8; tries++) {
+            const nx = lx + rng.int(-spread, spread);
+            const ny = ly + rng.int(-spread, spread);
+            if (open(nx, ny)) {
+              [mx, my] = [nx, ny];
+              break;
+            }
+          }
+          out.push({
+            id: `${chunkKey(cx, cy)}#${i}.${j}`,
+            ...tileCenter(ox + mx, oy + my),
+            entity: { kind: 'enemy', archetype },
+            wild: true,
+          });
+        }
         break;
       }
     }
