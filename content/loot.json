@@ -6,7 +6,12 @@
     "noble": { "name": "Noble", "color": "#b67cff", "perks": 3, "stats": 1.5, "perkStrength": 1.2 },
     "legendary": { "name": "Legendary", "color": "#ffb340", "perks": 3, "stats": 1.75, "perkStrength": 1.3 }
   },
-  "itemLevelGrowth": 0.25,
+  "power": {
+    "start": 10,
+    "max": 1000,
+    "offsets": { "wild": [0, 4], "elite": [3, 8], "boss": [6, 10], "warden": [10, 15], "gambler": [0, 4] },
+    "wardenHeadroom": 100
+  },
   "perkSpread": 0.15,
   "pity": { "after": 40, "tier": "noble" },
   "tables": {
@@ -29,7 +34,6 @@
   "smartLoot": 0.85,
   "gambler": {
     "souls": 250,
-    "levelsPerBand": 8,
     "odds": [
       ["standard", 68],
       ["rare", 25],
@@ -55,7 +59,15 @@
     "signature": { "chance": 0.12, "step": 0.06, "sureBy": 8 },
     "markPrice": 6,
     "sigil": "warden_sigil",
-    "heat": { "max": 3, "hp": 0.35, "damage": 0.2, "signature": 0.04, "shift": 6, "marksFrom": 2 }
+    "heat": {
+      "max": 3,
+      "hp": 0.35,
+      "damage": 0.2,
+      "signature": 0.04,
+      "shift": 6,
+      "marksFrom": 2,
+      "power": 100
+    }
   },
   "smithy": {
     "salvage": {

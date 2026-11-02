@@ -8,7 +8,8 @@ import { GearSlotSchema, type RestorationEffect } from '../../content/schemas';
 import { Inventory, Player } from '../../sim/components';
 import type { PlayerAction } from '../../sim/input';
 import { countItem } from '../../sim/modules/items';
-import { canGamble, gambleItemLevel, gamblePrice, hasGambler } from '../../sim/modules/gambler';
+import { canGamble, gamblePrice, hasGambler } from '../../sim/modules/gambler';
+import { maxPower } from '../../sim/modules/power';
 import { canRebuild, nextStage, siteNearby } from '../../sim/modules/restoration';
 import { projectRank } from '../../sim/modules/restored-effects';
 import type { Simulation } from '../../sim/simulation';
@@ -151,7 +152,7 @@ export class RebuildScreen {
       h(
         'p',
         { class: 'description' },
-        `"Pick a slot, any slot. ${price} souls and it's yours, sight unseen." Item level ${gambleItemLevel(sim)}. Odds: ${odds
+        `"Pick a slot, any slot. ${price} souls and it's yours, sight unseen." Power about ${maxPower(sim)}. Odds: ${odds
           .map(([t, w]) => `${sim.content.loot.tiers[t].name} ${Math.round((w / total) * 100)}%`)
           .join(', ')}.`,
       ),

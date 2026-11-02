@@ -344,9 +344,7 @@ export function temper(sim: Simulation, target: GearTarget, perk: number): boole
   );
   const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
   const rolls = [0, 1].flatMap(() =>
-    pool.length > 0
-      ? [rollOne(sim.content, rng, pool, gear.tier, gear.ilvl, cls, gear.blighted === true)]
-      : [],
+    pool.length > 0 ? [rollOne(sim.content, rng, pool, gear.tier, cls, gear.blighted === true)] : [],
   );
   gear.offer = { perk, rolls };
   gear.tempers = (gear.tempers ?? 0) + 1;

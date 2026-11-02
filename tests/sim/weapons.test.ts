@@ -251,7 +251,7 @@ describe('type perks', () => {
 describe('Legendary weapons', () => {
   it('Oathspear marks on a tipper, and the next ability hit staggers the marked foe', () => {
     const sim = newSim();
-    wield(sim, 'oathspear', { gear: { tier: 'legendary', ilvl: 1, seed: 1, perks: [] } });
+    wield(sim, 'oathspear', { gear: { tier: 'legendary', power: 1, seed: 1, perks: [] } });
     face(sim, 'right');
     const foe = dummy(sim, 30, 0);
     tap(sim, 20);
@@ -263,7 +263,7 @@ describe('Legendary weapons', () => {
 
   it('Gravebell pulls foes in before the shockwave', () => {
     const sim = newSim();
-    wield(sim, 'gravebell', { gear: { tier: 'legendary', ilvl: 1, seed: 1, perks: [] } });
+    wield(sim, 'gravebell', { gear: { tier: 'legendary', power: 1, seed: 1, perks: [] } });
     face(sim, 'right');
     const far = dummy(sim, 30, 50);
     const before = { ...sim.ecs.need(far, Body) };

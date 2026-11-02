@@ -234,6 +234,9 @@ export function buildContent(files: ContentFiles): Content {
 
   checkReferences({ enemies, tiles, biomes, world, prefabs }, problems);
   checkItems({ player, enemies, tiles, items, recipes }, problems);
+  for (let i = 1; i < player.power.gap.length; i++)
+    if (player.power.gap[i]![0] <= player.power.gap[i - 1]![0])
+      problems.push('player.json: power.gap: rows must rise by gap');
   checkGear({ player, enemies, biomes, items, loot, abilities, classes }, problems);
   checkWeapons({ weapons, classes, loot }, problems);
   checkClasses({ player, abilities, classes }, problems);
@@ -418,6 +421,15 @@ function checkReferences(
   }
 
   const w = c.world;
+  if (w.rings[0]!.from !== 0) problems.push('world.json: rings: the first ring starts at 0');
+  for (const [i, r] of w.rings.entries()) {
+    const prev = w.rings[i - 1];
+    if (prev && (r.from <= prev.from || r.power < prev.power))
+      problems.push(
+        `world.json: rings[${i}]: must start further out, at no less Power, than the ring before`,
+      );
+    if (r.cap < r.power) problems.push(`world.json: rings[${i}]: its cap is below its Power`);
+  }
   tile('world.json: terrain.waterTile', w.terrain.waterTile);
   tile('world.json: terrain.shallowTile', w.terrain.shallowTile);
   for (const r of w.biomeRules) {

@@ -1,17 +1,17 @@
 /**
  * The Ember Gambler (docs/gear-and-loot.md, section 7): a villager a rebuilt project brings back, who sells an
  * unidentified piece for a slot the player chooses. It soaks up late souls and lets the player aim at a slot
- * (Diablo III's Kadala). Odds and price live in `loot.json → gambler`; the piece rolls like a drop, at the
- * player's level band, and pity does not count it.
+ * (Diablo III's Kadala). Odds and price live in `loot.json → gambler`; the piece rolls like a drop, just above
+ * the player's Max Power, and pity does not count it.
  */
 import type { GearSlot } from '../../content/schemas';
-import { Abilities, Attributes, Inventory, Player } from '../components';
+import { Abilities, Inventory, Player } from '../components';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import type { Check } from './crafting';
 import { rollForSlot } from './gear';
 import { addStack } from './items';
-import { playerLevel } from './progression';
+import { dropPower, maxPower } from './power';
 import { siteNearby } from './restoration';
 import { inventoryCapacity, projectEffects } from './restored-effects';
 
@@ -29,16 +29,9 @@ function shopHere(sim: Simulation): string | null {
   );
 }
 
-/** The item level gambled pieces roll at: one band per so many levels, up to the highest there is. */
-export function gambleItemLevel(sim: Simulation): number {
-  const attrs = sim.ecs.get(sim.player, Attributes);
-  const level = attrs ? playerLevel(attrs) : 1;
-  const highest = Math.max(...Object.values(sim.content.biomes).map((b) => b.itemLevel));
-  return Math.min(highest, 1 + Math.floor((level - 1) / sim.content.loot.gambler.levelsPerBand));
-}
-
+/** The price: the base, plus as much again for every 100 of Max Power, so it keeps pace with the player. */
 export function gamblePrice(sim: Simulation): number {
-  return sim.content.loot.gambler.souls * gambleItemLevel(sim);
+  return sim.content.loot.gambler.souls * (1 + Math.floor(maxPower(sim) / 100));
 }
 
 export function canGamble(sim: Simulation): Check {
@@ -59,7 +52,10 @@ export function gamble(sim: Simulation, slot: GearSlot): boolean {
   }
   const tier = sim.rng.weighted(sim.content.loot.gambler.odds);
   const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
-  const stack = rollForSlot(sim.content, slot, tier, gambleItemLevel(sim), sim.rng.int(1, 0x7fffffff), cls);
+  // A gambled piece lands just above Max Power, with no ring to cap it (it is bought at home).
+  const { start, max } = sim.content.loot.power;
+  const power = dropPower(sim, 'gambler', start, max);
+  const stack = rollForSlot(sim.content, slot, tier, power, sim.rng.int(1, 0x7fffffff), cls);
   if (!stack) return false;
   sim.ecs.need(sim.player, Player).souls -= gamblePrice(sim);
   addStack(sim, sim.player, stack);

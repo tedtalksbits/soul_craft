@@ -11,11 +11,11 @@ import {
   Stamina,
   type ItemStack,
 } from '../../src/sim/components';
-import { TILE } from '../../src/sim/constants';
 import { inputFrame, type PlayerAction } from '../../src/sim/input';
 import { applyDamage, killEnemy } from '../../src/sim/modules/combat';
-import { itemLevelAt, rollDrop, rollGear, rollTier, weaponNumbers } from '../../src/sim/modules/gear';
-import { addItem, addStack, compareGear, playerPower, playerStats } from '../../src/sim/modules/items';
+import { rollDrop, rollGear, rollTier, weaponNumbers } from '../../src/sim/modules/gear';
+import { addItem, addStack, compareGear, playerStats } from '../../src/sim/modules/items';
+import { playerPower } from '../../src/sim/modules/power';
 import { dropPickup } from '../../src/sim/modules/pickups';
 import type { Simulation } from '../../src/sim/simulation';
 import { content, newSim, ofType, press, run, spawnNear } from '../helpers';
@@ -26,19 +26,19 @@ const stacks = (sim: Simulation) => sim.ecs.need(sim.player, Inventory).stacks;
 const { loot } = content;
 
 /** A piece of gear with exactly the given perks. */
-function made(item: string, tier: TierId, perks: { perk: string; value: number }[], ilvl = 1): ItemStack {
-  return { item, count: 1, level: 0, gear: { tier, ilvl, seed: 7, perks } };
+function made(item: string, tier: TierId, perks: { perk: string; value: number }[], power = 10): ItemStack {
+  return { item, count: 1, level: 0, gear: { tier, power, seed: 7, perks } };
 }
 
 describe('a new character', () => {
-  it('starts in Common gear on every slot but the rings, at Power 100', () => {
+  it('starts in Common gear on every slot but the rings, at the starting Power (the empty rings count 0)', () => {
     const sim = newSim();
     const worn = eq(sim);
     expect([worn.weapon?.item, worn.helmet?.item, worn.chest?.item, worn.legs?.item]).toEqual(
       content.player.start.gear,
     );
     expect([worn.ring0, worn.ring1]).toEqual([null, null]);
-    expect(playerPower(sim)).toBe(100);
+    expect(playerPower(sim)).toBe(Math.floor((4 * loot.power.start) / 6));
     // The jacket's innate +10 max HP is there from the first tick.
     expect(sim.ecs.need(sim.player, Health)).toMatchObject({ hp: 110, max: 110 });
   });
@@ -57,19 +57,18 @@ describe('rolling gear', () => {
     }
   });
 
-  it('lands each perk within its spread of the target for the item level and tier', () => {
+  it('lands each perk within its spread of the target for the tier, whatever its Power', () => {
     for (let seed = 1; seed <= 40; seed++) {
       for (const item of ['iron_sword', 'iron_helm', 'iron_mail', 'iron_greaves', 'ring_of_breath']) {
-        for (const p of rollGear(content, item, 'noble', 4, seed).gear!.perks) {
+        for (const p of rollGear(content, item, 'noble', seed * 20, seed).gear!.perks) {
           const def = loot.perks[p.perk]!;
           if (def.fixed) {
             expect(p.value).toBe(def.value);
             continue;
           }
-          // Effects don't grow with item level; a Greater perk is that much stronger again.
-          const level = def.effect ? 1 : 1 + loot.itemLevelGrowth * 3;
+          // A Greater perk is that much stronger again.
           const greater = p.greater ? loot.greater.factor : 1;
-          const target = def.value * level * loot.tiers.noble.perkStrength * greater;
+          const target = def.value * loot.tiers.noble.perkStrength * greater;
           const [lo, hi] = [target * (1 - loot.perkSpread), target * (1 + loot.perkSpread)];
           if (def.integer) {
             expect(p.value).toBeGreaterThanOrEqual(Math.max(1, Math.round(lo)));
@@ -96,9 +95,10 @@ describe('rolling gear', () => {
       expect(rollDrop(content, 'common', 1, seed).item).not.toBe('chipped_sword');
   });
 
-  it('scales base numbers by tier and item level', () => {
-    const rare = weaponNumbers(content, made('iron_sword', 'rare', [], 3))!;
-    expect(rare.damage).toBe(Math.round(16 * loot.tiers.rare.stats * (1 + 2 * loot.itemLevelGrowth)));
+  it('scales base numbers by tier, never by Power (Power is checked against the foe instead)', () => {
+    const rare = weaponNumbers(content, made('iron_sword', 'rare', [], 10))!;
+    expect(rare.damage).toBe(Math.round(16 * loot.tiers.rare.stats));
+    expect(weaponNumbers(content, made('iron_sword', 'rare', [], 900))!.damage).toBe(rare.damage);
     expect(weaponNumbers(content, { item: 'iron_sword', count: 1, level: 0 })!.damage).toBe(16);
   });
 });
@@ -146,9 +146,9 @@ describe('equipping', () => {
 });
 
 describe('Power and comparisons', () => {
-  it('rises with better gear, ignores buffs, and is worked out without touching the player', () => {
+  it('rises with higher-Power gear, ignores buffs, and is worked out without touching the player', () => {
     const sim = newSim();
-    addStack(sim, sim.player, made('iron_sword', 'rare', [{ perk: 'damage', value: 0.1 }], 3));
+    addStack(sim, sim.player, made('iron_sword', 'rare', [{ perk: 'damage', value: 0.1 }], 70));
     const before = JSON.stringify(eq(sim));
     const c = compareGear(sim, 0)!;
     expect(JSON.stringify(eq(sim))).toBe(before);
@@ -165,13 +165,13 @@ describe('Power and comparisons', () => {
     expect(playerPower(sim)).toBe(c.after.power);
   });
 
-  it('counts defense as much as offense', () => {
+  it('follows each piece’s Power, not its stats: a stronger chest at lower Power lowers it', () => {
     const sim = newSim();
-    addStack(sim, sim.player, made('iron_mail', 'noble', [{ perk: 'maxHp', value: 30 }], 3));
+    addStack(sim, sim.player, made('iron_mail', 'noble', [{ perk: 'maxHp', value: 30 }], 1));
     const c = compareGear(sim, 0)!;
     expect(c.after.armor).toBeGreaterThan(c.now.armor);
     expect(c.after.defense).toBeGreaterThan(c.now.defense);
-    expect(c.after.power).toBeGreaterThan(c.now.power);
+    expect(c.after.power).toBeLessThan(c.now.power);
   });
 });
 
@@ -214,17 +214,6 @@ describe('drops', () => {
     const gear = [...sim.ecs.query(Pickup)].flatMap(([, p]) => (p.gear ? [p.gear] : []));
     expect(gear).toHaveLength(5);
     for (const g of gear) expect(g.tier).not.toBe('common');
-  });
-
-  it('takes its item level from the biome it falls in', () => {
-    const sim = newSim();
-    expect(itemLevelAt(sim, 0, 0)).toBe(content.biomes.meadow!.itemLevel);
-    const gen = sim.world.gen;
-    for (let t = 0; t < 4000; t++) {
-      const [tx, ty] = [(t % 200) * 3 - 300, Math.floor(t / 200) * 30 - 300];
-      const biome = gen.biomeAt(tx, ty);
-      expect(itemLevelAt(sim, tx * TILE + 1, ty * TILE + 1)).toBe(content.biomes[biome]!.itemLevel);
-    }
   });
 
   it('comes good after a long run of lesser drops', () => {

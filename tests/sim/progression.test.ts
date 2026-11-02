@@ -112,7 +112,7 @@ describe('leveling', () => {
       item: 'iron_helm',
       count: 1,
       level: 0,
-      gear: { tier: 'standard' as const, ilvl: 1, seed: 1, perks },
+      gear: { tier: 'standard' as const, power: 1, seed: 1, perks },
     });
     eq.helmet = helm([]);
     const leveled = maxHp(first + 2);

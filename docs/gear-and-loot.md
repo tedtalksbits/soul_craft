@@ -141,6 +141,9 @@ the cap. D4 players kept stacking armor past its cap because nothing told them i
 
 ### Power: a true number, never a gate
 
+_Superseded (2026-11-02): Power is now a level on every item, 10 to 1000, checked against the foe's. See
+[`power-and-stash.md`](power-and-stash.md)._
+
 **Power = round(100 × √(Offense × Defense)).**
 
 - **Offense:** weapon damage per stamina, after Might, crits and perks, relative to the starting loadout.
@@ -231,6 +234,9 @@ rolled lines make each copy worth checking.
 first green feel like an event.
 
 ### Item level comes from the place, rarity from luck
+
+_Superseded (2026-11-02): item levels are gone. A drop's Power comes from the player's Max Power and the ring it
+falls in. See [`power-and-stash.md`](power-and-stash.md)._
 
 Each biome sets the item level of what drops there:
 

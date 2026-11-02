@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Entity } from '../../src/core/ecs';
 import {
   Ai,
-  Attributes,
+  Equipment,
   Bleed,
   Body,
   Boss,
@@ -196,10 +196,14 @@ describe('the Ember Gambler', () => {
     expect(countItem(inv(sim), sold!.item)).toBe(1);
   });
 
-  it('charges more at higher levels', () => {
+  it('charges more as Max Power rises', () => {
     const sim = newSim();
     const low = gamblePrice(sim);
-    sim.ecs.need(sim.player, Attributes).vigor = 20;
+    const worn = sim.ecs.need(sim.player, Equipment);
+    for (const slot of ['weapon', 'helmet', 'chest', 'legs'] as const) {
+      const gear = worn[slot]?.gear;
+      if (gear) gear.power = 300;
+    }
     expect(gamblePrice(sim)).toBeGreaterThan(low);
   });
 });

@@ -20,6 +20,7 @@ import type { SimCommand, SimModule } from '../module';
 import { blockedAt } from '../physics';
 import type { Simulation } from '../simulation';
 import { runBrain, setAi } from './brains';
+import { enemyPowerAt } from './power';
 import { enemyTarget } from './stealth';
 
 export function spawnEnemy(
@@ -32,7 +33,9 @@ export function spawnEnemy(
   const { ecs } = sim;
   const def = sim.content.enemy(archetype);
   const e = ecs.create();
-  ecs.add(e, Enemy, { archetype, homeX: x, homeY: y });
+  // A boss brings its own Power; everything else takes its ring's where it rises.
+  const power = def.boss?.power ?? enemyPowerAt(sim.content, x, y);
+  ecs.add(e, Enemy, { archetype, homeX: x, homeY: y, power });
   ecs.add(e, Body, { x, y, w: def.body.w, h: def.body.h });
   ecs.add(e, Motion, { vx: 0, vy: 0, kx: 0, ky: 0, hitWall: false });
   ecs.add(e, Facing, { dir: 'down' });

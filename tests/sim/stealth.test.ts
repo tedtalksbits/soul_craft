@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Entity } from '../../src/core/ecs';
-import { Abilities, Ambush, Blast, Body, Decoy, Staggered, Veiled } from '../../src/sim/components';
+import { Abilities, Ambush, Blast, Body, Decoy, Enemy, Staggered, Veiled } from '../../src/sim/components';
 import { TICK_RATE } from '../../src/sim/constants';
 import { inputFrame } from '../../src/sim/input';
 import { applyDamage } from '../../src/sim/modules/combat';
@@ -132,6 +132,8 @@ describe('Vanish', () => {
     expect(sim.ecs.has(sim.player, Ambush)).toBe(true);
 
     const knight = spawnNear(sim, 'knight', 30, 0);
+    // An even fight, so only the ambush changes the blow.
+    sim.ecs.need(knight, Enemy).power = content.loot.power.start;
     const kb = sim.ecs.need(knight, Body);
     const blow = { amount: 10, crit: false, fromX: kb.x - 10, fromY: kb.y, knockback: 0 };
     sim.events.drain();

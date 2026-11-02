@@ -20,6 +20,14 @@
   ],
   "origin": { "prefab": "ashen_village", "safeRadius": 28, "biome": "meadow" },
   "restClearance": 14,
+  "rings": [
+    { "from": 0, "power": 10, "cap": 150 },
+    { "from": 100, "power": 120, "cap": 300 },
+    { "from": 250, "power": 280, "cap": 450 },
+    { "from": 450, "power": 430, "cap": 600 },
+    { "from": 700, "power": 580, "cap": 750 },
+    { "from": 1000, "power": 730, "cap": 900 }
+  ],
   "packs": { "spread": 3, "attackers": 1 },
   "regions": {
     "sizeChunks": 3,

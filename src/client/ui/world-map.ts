@@ -185,6 +185,7 @@ export class WorldMapScreen {
     ctx.fillStyle = '#0b0a09';
     ctx.fillRect(0, 0, w, hgt);
     this.drawGround(ctx, w, hgt);
+    this.drawRings(ctx);
     this.drawMarkers(ctx);
     this.footer.textContent = this.footerText();
   }
@@ -220,6 +221,37 @@ export class WorldMapScreen {
         }
       }
     }
+  }
+
+  /**
+   * The Power rings (docs/power-and-stash.md, section 2): a faint dashed circle at each ring's inner edge, with its
+   * enemy Power, once the player has seen land past it.
+   */
+  private drawRings(ctx: CanvasRenderingContext2D): void {
+    const { sim } = this.o;
+    const span = CHUNK * TILE;
+    let reached = 0;
+    for (const key of Object.keys(sim.state.explored)) {
+      const [cx = 0, cy = 0] = key.split(',').map(Number);
+      reached = Math.max(reached, Math.hypot((cx + 0.5) * span, (cy + 0.5) * span) / TILE);
+    }
+    const center = this.toScreen(0, 0);
+    ctx.save();
+    ctx.setLineDash([4, 6]);
+    ctx.lineWidth = 1;
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    for (const ring of sim.content.world.rings) {
+      if (ring.from === 0 || ring.from > reached) continue;
+      const r = ring.from * this.scale;
+      ctx.strokeStyle = 'rgba(224, 120, 80, 0.45)';
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(240, 160, 120, 0.85)';
+      ctx.fillText(`Power ${ring.power}`, center.x, center.y - r - 4);
+    }
+    ctx.restore();
   }
 
   private drawMarkers(ctx: CanvasRenderingContext2D): void {

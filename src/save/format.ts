@@ -12,7 +12,7 @@ import { playerLevel } from '../sim/modules/progression';
 import type { SimSnapshot, Simulation } from '../sim/simulation';
 
 export const SAVE_FORMAT = 'soul-craft-save';
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 const SnapshotSchema = z.looseObject({
   version: z.number().int(),
@@ -68,10 +68,11 @@ export class OldSaveError extends SaveError {
 
 /**
  * The oldest save this build loads. The gear and loot rework (versions 14 and 15) replaced crafted gear, and every save
- * before it was a playtest, so older saves are refused rather than migrated. Raise it only for a change that
- * old games cannot survive; prefer a migration.
+ * before it was a playtest, so older saves are refused rather than migrated. Power on every item (version 16) replaced
+ * item levels, and those games are refused too. Raise it only for a change that old games cannot survive; prefer a
+ * migration.
  */
-export const OLDEST_SAVE_VERSION = 15;
+export const OLDEST_SAVE_VERSION = 16;
 
 /** Upgrades a version-n save object to version n+1. Pure: must not mutate its input. */
 export type Migration = (save: Record<string, unknown>) => Record<string, unknown>;

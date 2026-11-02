@@ -27,7 +27,7 @@ const eq = (sim: Simulation) => sim.ecs.need(sim.player, Equipment);
 const health = (sim: Simulation) => sim.ecs.need(sim.player, Health);
 
 function made(item: string, tier: TierId, perks: { perk: string; value: number }[] = []): ItemStack {
-  return { item, count: 1, level: 0, gear: { tier, ilvl: 1, seed: 7, perks } };
+  return { item, count: 1, level: 0, gear: { tier, power: 1, seed: 7, perks } };
 }
 
 /** A blow to the player from just above, after clearing any grace period. */

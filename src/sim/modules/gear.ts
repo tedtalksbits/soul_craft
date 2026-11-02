@@ -22,24 +22,22 @@ import {
 } from '../../content/schemas';
 import { Rng } from '../../core/rng';
 import { Abilities, type Equipment, type Gear, type ItemStack, type PerkRoll } from '../components';
-import { TILE } from '../constants';
 import type { Simulation } from '../simulation';
 import { dropPickup } from './pickups';
 
-/** What gear without rolls counts as: the starting kit, and anything from the `item` dev command. */
-const COMMON: Readonly<Gear> = { tier: 'common', ilvl: 1, seed: 0, perks: [] };
+/** What gear without rolls counts as (a plain item from a recipe or the `item` dev command): Common, no Power. */
+const COMMON: Readonly<Gear> = { tier: 'common', power: 0, seed: 0, perks: [] };
 
 export function gearOf(stack: ItemStack): Readonly<Gear> {
   return stack.gear ?? COMMON;
 }
 
-function levelScale(content: Content, ilvl: number): number {
-  return 1 + content.loot.itemLevelGrowth * (ilvl - 1);
-}
-
-/** How much the tier and item level multiply a base's own numbers (damage, Armor, innate perks). */
+/**
+ * How much the tier multiplies a base's own numbers (damage, Armor, innate perks). Power never does: it is checked
+ * against the foe's instead (modules/power.ts), so item numbers stay small and readable.
+ */
 export function statScale(content: Content, gear: Readonly<Gear>): number {
-  return content.loot.tiers[gear.tier].stats * levelScale(content, gear.ilvl);
+  return content.loot.tiers[gear.tier].stats;
 }
 
 export interface WeaponNumbers {
@@ -259,32 +257,29 @@ export function gearEffects(
 
 /**
  * Rolls a piece of gear of a given base. The perks come from the seed: a tier's worth of different
- * perks from the slot's pool, each within `perkSpread` of its target for the item level and tier. On
+ * perks from the slot's pool, each within `perkSpread` of its target for the tier. On
  * good enough tiers a perk can roll Greater. Class perks favor `cls`, the class being played.
  */
 export function rollGear(
   content: Content,
   item: string,
   tier: TierId,
-  ilvl: number,
+  power: number,
   seed: number,
   cls: string | null = null,
 ): ItemStack {
-  return withRolls(content, new Rng(seed), item, tier, ilvl, seed, cls, false);
+  return withRolls(content, new Rng(seed), item, tier, power, seed, cls, false);
 }
 
 function atLeast(tier: TierId, floor: TierId): boolean {
   return TIERS.indexOf(tier) >= TIERS.indexOf(floor);
 }
 
-/** A perk's rolled strength: its target for the item level and tier, within the spread. */
-function rollValue(content: Content, rng: Rng, def: PerkDef, tier: TierId, ilvl: number): number {
+/** A perk's rolled strength: its target for the tier, within the spread. */
+function rollValue(content: Content, rng: Rng, def: PerkDef, tier: TierId): number {
   const { loot } = content;
   if (def.fixed) return def.value;
-  const level = def.effect ? 1 : levelScale(content, ilvl);
-  return (
-    def.value * level * loot.tiers[tier].perkStrength * rng.range(1 - loot.perkSpread, 1 + loot.perkSpread)
-  );
+  return def.value * loot.tiers[tier].perkStrength * rng.range(1 - loot.perkSpread, 1 + loot.perkSpread);
 }
 
 /**
@@ -340,7 +335,6 @@ export function rollOne(
   rng: Rng,
   pool: [string, PerkDef][],
   tier: TierId,
-  ilvl: number,
   cls: string | null,
   blighted: boolean,
 ): PerkRoll {
@@ -349,7 +343,7 @@ export function rollOne(
   const index = rng.weighted(weights.map((w, j) => [j, w] as const));
   const [id, def] = pool.splice(index, 1)[0]!;
   const greater = atLeast(tier, loot.greater.tier) && rng.chance(loot.greater.chance);
-  const value = rollValue(content, rng, def, tier, ilvl) * (greater ? loot.greater.factor : 1);
+  const value = rollValue(content, rng, def, tier) * (greater ? loot.greater.factor : 1);
   const boosted = blighted && !def.fixed ? value * loot.blight.factor : value;
   return {
     perk: id,
@@ -363,7 +357,7 @@ function withRolls(
   rng: Rng,
   item: string,
   tier: TierId,
-  ilvl: number,
+  power: number,
   seed: number,
   cls: string | null,
   blighted: boolean,
@@ -373,15 +367,15 @@ function withRolls(
   const pool = perkPool(content, item, tier, []);
   const perks: PerkRoll[] = [];
   for (let i = 0; i < loot.tiers[tier].perks && pool.length > 0; i++)
-    perks.push(rollOne(content, rng, pool, tier, ilvl, cls, blighted));
-  const gear: Gear = { tier, ilvl, seed, perks };
+    perks.push(rollOne(content, rng, pool, tier, cls, blighted));
+  const gear: Gear = { tier, power, seed, perks };
   if (blighted) {
     const drawbacks = Object.entries(loot.perks).filter(
       ([, p]) => p.drawback && slot !== null && p.slots.includes(slot),
     );
     if (drawbacks.length > 0) {
       const [id, def] = rng.pick(drawbacks);
-      perks.push({ perk: id, value: rounded(def, rollValue(content, rng, def, tier, ilvl)) });
+      perks.push({ perk: id, value: rounded(def, rollValue(content, rng, def, tier)) });
       gear.blighted = true;
     }
   }
@@ -410,7 +404,7 @@ function dropBases(content: Content, legendary: boolean): Map<GearSlot, [string,
 export function rollDrop(
   content: Content,
   tier: TierId,
-  ilvl: number,
+  power: number,
   seed: number,
   cls: string | null = null,
 ): ItemStack {
@@ -420,7 +414,7 @@ export function rollDrop(
   const item = rng.weighted(legendary ?? bases);
   const { blight } = content.loot;
   const blighted = atLeast(tier, blight.tier) && rng.chance(blight.chance);
-  return withRolls(content, rng, item, tier, ilvl, seed, cls, blighted);
+  return withRolls(content, rng, item, tier, power, seed, cls, blighted);
 }
 
 /**
@@ -431,7 +425,7 @@ export function rollForSlot(
   content: Content,
   slot: GearSlot,
   tier: TierId,
-  ilvl: number,
+  power: number,
   seed: number,
   cls: string | null = null,
 ): ItemStack | null {
@@ -442,7 +436,7 @@ export function rollForSlot(
   const item = rng.weighted(legendary ?? bases);
   const { blight } = content.loot;
   const blighted = atLeast(tier, blight.tier) && rng.chance(blight.chance);
-  return withRolls(content, rng, item, tier, ilvl, seed, cls, blighted);
+  return withRolls(content, rng, item, tier, power, seed, cls, blighted);
 }
 
 /** Rolls a tier from a drop table, honoring pity: after a long run of lesser drops, a good one comes. */
@@ -458,29 +452,27 @@ export function rollTier(sim: Simulation, table: string): TierId {
   return tier;
 }
 
-/** The item level of gear dropped at a world position: the biome's. */
-export function itemLevelAt(sim: Simulation, x: number, y: number): number {
-  const biome = sim.world.gen.biomeAt(Math.floor(x / TILE), Math.floor(y / TILE));
-  return sim.content.biomes[biome]?.itemLevel ?? 1;
-}
-
-/** Drops a freshly rolled piece of gear. Its seed is drawn from the sim, everything after from the seed. */
-export function dropGear(sim: Simulation, table: string, x: number, y: number): void {
+/**
+ * Drops a freshly rolled piece of gear at `power` (see `dropPower`). Its seed is drawn from the sim, everything
+ * after from the seed.
+ */
+export function dropGear(sim: Simulation, table: string, power: number, x: number, y: number): void {
   const tier = rollTier(sim, table);
   const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
-  spill(
-    sim,
-    rollDrop(sim.content, tier, itemLevelAt(sim, x, y), sim.rng.int(1, 0x7fffffff), cls),
-    tier,
-    x,
-    y,
-  );
+  spill(sim, rollDrop(sim.content, tier, power, sim.rng.int(1, 0x7fffffff), cls), tier, x, y);
 }
 
 /** Drops a piece for a set slot and tier (an enemy's `sureGear`), rolled like any other. */
-export function dropSureGear(sim: Simulation, slot: GearSlot, tier: TierId, x: number, y: number): void {
+export function dropSureGear(
+  sim: Simulation,
+  slot: GearSlot,
+  tier: TierId,
+  power: number,
+  x: number,
+  y: number,
+): void {
   const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
-  const stack = rollForSlot(sim.content, slot, tier, itemLevelAt(sim, x, y), sim.rng.int(1, 0x7fffffff), cls);
+  const stack = rollForSlot(sim.content, slot, tier, power, sim.rng.int(1, 0x7fffffff), cls);
   if (stack) spill(sim, stack, tier, x, y);
 }
 

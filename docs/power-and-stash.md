@@ -1,7 +1,7 @@
 # Power, the stash and the character screen: design proposal
 
-**Status: draft 1 (2026-11-02). Nothing here is built. The open questions in section 9 need the owner's answers
-before phase 1 starts.** This builds on `docs/gear-and-loot.md` (the gear rework, phases 0–7, all built) and turns
+**Status: decided (2026-11-02). The owner took the recommended answer to all six questions (section 9). Phases 1
+and 2 are built.** This builds on `docs/gear-and-loot.md` (the gear rework, phases 0–7, all built) and turns
 the owner's next six notes into a design:
 
 1. More enemies.
@@ -56,7 +56,8 @@ the end). What shapes this design:
   meaning "a better piece," not "a higher number."
 - **Your Power** is the average of the six pieces you wear (weapon, helmet, chest, legs, two rings), rounded down.
   An empty slot counts as 0, so wearing something always beats wearing nothing.
-- **Starting gear is Power 10.** A new character is Power 10.
+- **Starting gear is Power 10.** A new character wears four pieces at 10 and no rings, so its Power is 6 until
+  the first rings drop: empty slots count.
 - **The old computed Power goes away.** It was honest, but a number nobody can raise directly doesn't work as a
   goal. Comparisons keep showing the real stat changes (attack, damage taken, HP), so nothing is lost.
 
@@ -93,7 +94,7 @@ fire, the stronger the forgetting, which fits the story. Biomes keep their looks
 
 | Ring | Distance from the village (tiles) | Enemy Power | Drop cap |
 | ---: | --------------------------------: | ----------: | -------: |
-|    0 |                           0 – 100 |          20 |      150 |
+|    0 |                           0 – 100 |          10 |      150 |
 |    1 |                         100 – 250 |         120 |      300 |
 |    2 |                         250 – 450 |         280 |      450 |
 |    3 |                         450 – 700 |         430 |      600 |
@@ -103,8 +104,9 @@ fire, the stronger the forgetting, which fits the story. Biomes keep their looks
 - **Within a ring, enemy Power rises smoothly with distance**, so there are no hard walls. The table gives the value
   at each ring's inner edge.
 - **The map shows the rings** as faint contour lines, labeled with their Power, once you have been there.
-- **Bosses have their own Power:** Grub 60, the Ashen Warden 200. A Warden refight at Heat N adds 100 × (N − 1),
-  so Heat 5 is Power 600 and its chest can drop up to 1000.
+- **Bosses have their own Power:** Grub 40, the Ashen Warden 160. A Warden refight at Heat N adds 100 × (N − 1),
+  so Heat 3 is Power 360. Its chest can drop up to its Power plus 100 (460 at Heat 3); later Wardens, further out,
+  carry the climb toward 1000.
 
 ### Drops: a little above the best you own
 
@@ -116,7 +118,7 @@ keep in the stash (counting your two best rings). Drops are based on it:
 | Wild enemy             | Max Power + 0 to 4                   | No                            |
 | Elite (knight) or camp | Max Power + 3 to 8                   | No                            |
 | Camp boss (Grub)       | Max Power + 6 to 10                  | No                            |
-| Warden chest           | Max Power + 10 to 15                 | Yes, up to 1000               |
+| Warden chest           | Max Power + 10 to 15                 | Yes, up to its Power + 100    |
 | The Ember Gambler      | Max Power + 0 to 4, your chosen slot | No                            |
 
 - **Every drop is at least the ring's floor** (the enemy Power of that ring), so walking into a harder ring pays at
@@ -291,7 +293,42 @@ over at Power 10.
 
 ---
 
-## 9. Open questions for the owner
+**Phase 2 as built (2026-11-02):**
+
+- **Power replaces item levels.** Every piece carries `power` instead of `ilvl` (save version 16; older saves are
+  refused). Base numbers and perk values no longer grow with level: only the tier scales them. The biome
+  `itemLevel` and `loot.itemLevelGrowth` are gone, and the old computed Power (100 × √(offense × defense)) with
+  them. The equipment screen shows Power, Max Power, and each worn piece's Power; the full new screen is phase 4.
+- **Ring 0 starts at Power 10,** the starting Power, so a new character is even with the first foes; the table
+  above shows the built values. The Warden is 160 (not 200) and Grub 40, so a player capped at ring 0's 150 meets
+  the Warden only a little under.
+- **A Warden's chest caps at its Power plus 100,** not 1000: with no cap, refighting the first Warden at Heat 1
+  would carry a player to 1000. Heat (+100 Power a step) and later Wardens raise it.
+- **Adds a boss calls share its Power,** not their ring's.
+- **The gap** is `player.json → power.gap` as in the table above, blended between rows; it scales every blow on a
+  foe (abilities too) by the weapon's Power, and every foe's blow, touch or shot, by the armor's.
+- **Under-leveled warning:** a small red skull over any foe 50 or more above the player's Power
+  (`power.warnAt`).
+- **The map** draws each ring's edge as a faint dashed circle with its Power once the player has seen land past
+  it.
+- **The Gambler** prices by Max Power (the base, plus as much again per 100) and sells just above it. A Warden's
+  signature bought with Marks comes at Max Power.
+- **Dev commands:** `power` prints Power, Max Power, weapon and armor Power, and the enemy Power and drop cap where
+  you stand; `setpower 300` sets everything worn to 300, for playtesting a ring; `gear <tier> [id] [power]` rolls
+  at Max Power by default.
+
+## 9. Decisions (2026-11-02)
+
+The owner took the recommended answer to each question:
+
+1. **Enemy Power comes from distance rings** around the village.
+2. **The weapon's Power sets the blows dealt and the armor's the blows taken.**
+3. **Rings count only toward Power and drops.**
+4. **The stash opens at the village bonfire first,** and at every bonfire once the Storehouse is rebuilt.
+5. **About 2.5 × the enemies** (built in phase 1).
+6. **Infusion is a flat cost:** 1 bone shard and 50 souls.
+
+The questions as they were asked:
 
 1. **Enemy Power from distance rings** (section 2)? The alternative is keeping it per biome, which means the ruins
    can be next to the village at Power 700.

@@ -26,7 +26,12 @@ function goTo(sim: Simulation, station: 'forge' | 'alchemy'): void {
 describe('inventory', () => {
   it('starts with the Chipped Sword equipped and an empty pack', () => {
     const sim = newSim();
-    expect(eq(sim).weapon).toEqual({ item: 'chipped_sword', count: 1, level: 0 });
+    expect(eq(sim).weapon).toEqual({
+      item: 'chipped_sword',
+      count: 1,
+      level: 0,
+      gear: { tier: 'common', power: content.loot.power.start, seed: 0, perks: [] },
+    });
     expect(inv(sim).stacks).toEqual([]);
     expect(playerStats(sim, sim.player).damage).toBe(12);
   });

@@ -30,6 +30,8 @@ export function spawnProjectile(
     perfect?: boolean;
     pierce?: boolean;
     explode?: number;
+    /** A foe's shot: the shooter's Power. */
+    power?: number;
   },
 ): void {
   const e = sim.ecs.create();
@@ -54,6 +56,7 @@ export function spawnProjectile(
           },
         }
       : {}),
+    ...(p.power === undefined ? {} : { power: p.power }),
   });
 }
 
@@ -90,6 +93,7 @@ function updateProjectiles(sim: Simulation): void {
         fromX: body.x - proj.vx * 4,
         fromY: body.y - proj.vy * 4,
         knockback: sim.content.player.hurt.knockback,
+        ...(proj.power === undefined ? {} : { power: proj.power }),
       });
     }
     ecs.destroy(e);

@@ -27,7 +27,7 @@ function wield(sim: Simulation, item = 'ember_staff', extra: Partial<ItemStack> 
 }
 
 function perked(perks: { perk: string; value: number }[]): Partial<ItemStack> {
-  return { gear: { tier: 'rare', ilvl: 1, seed: 1, perks } };
+  return { gear: { tier: 'rare', power: 1, seed: 1, perks } };
 }
 
 function dummy(sim: Simulation, dx: number, dy: number): Entity {
@@ -147,7 +147,7 @@ describe('staff perks', () => {
 describe('Hearthwood', () => {
   it('heals with every Ember spent', () => {
     const sim = newSim();
-    wield(sim, 'hearthwood', { gear: { tier: 'legendary', ilvl: 1, seed: 1, perks: [] } });
+    wield(sim, 'hearthwood', { gear: { tier: 'legendary', power: 1, seed: 1, perks: [] } });
     const health = sim.ecs.need(sim.player, Health);
     health.hp = 50;
     swingOf(sim).embers = 2;

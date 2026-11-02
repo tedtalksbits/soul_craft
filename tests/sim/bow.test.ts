@@ -28,7 +28,7 @@ function wield(sim: Simulation, item = 'ashwood_bow', extra: Partial<ItemStack> 
 }
 
 function perked(perks: { perk: string; value: number }[]): Partial<ItemStack> {
-  return { gear: { tier: 'rare', ilvl: 1, seed: 1, perks } };
+  return { gear: { tier: 'rare', power: 1, seed: 1, perks } };
 }
 
 function dummy(sim: Simulation, dx: number, dy: number): Entity {
@@ -164,7 +164,7 @@ describe('bow perks', () => {
 describe('Pale Wind', () => {
   it('a Perfect Shot makes the next roll free', () => {
     const sim = newSim();
-    wield(sim, 'pale_wind', { gear: { tier: 'legendary', ilvl: 1, seed: 1, perks: [] } });
+    wield(sim, 'pale_wind', { gear: { tier: 'legendary', power: 1, seed: 1, perks: [] } });
     drawAndLoose(sim, bow.charged.chargeTicks + 2);
     const stamina = sim.ecs.need(sim.player, Stamina);
     stamina.value = 60;

@@ -29,6 +29,7 @@ import { castFrame, selectAnim } from './anim-select';
 import type { Dir8 } from './facing';
 import { PixelText } from './pixel-text';
 import { playerLook, type Layer } from './player-look';
+import { playerPower } from '../../sim/modules/power';
 
 const HIT_FLASH_MS = 110;
 const BAR_VISIBLE_MS = 4000;
@@ -54,7 +55,12 @@ interface EntityView {
   layers: PixiSprite[];
   /** A Legendary ring's ember glint, made when first needed. */
   glint: PixiSprite | null;
+  /** The red skull over a foe far above the player's Power, made when first needed. */
+  skull: Graphics | null;
 }
+
+/** A 5×5 skull, row by row ('#' red, '.' the dark eyes and teeth). */
+const SKULL = [' ### ', '#.#.#', '#####', ' #.# ', ' ### '];
 
 export class EntityLayer {
   readonly root = new Container({ sortableChildren: true });
@@ -77,6 +83,7 @@ export class EntityLayer {
     this.clockMs += dtMs;
     const { ecs } = sim;
     const seen = new Set<Entity>();
+    const power = playerPower(sim);
     for (const [e, spriteDef, body] of ecs.query(Sprite, Body)) {
       seen.add(e);
       const view = this.views.get(e) ?? this.create(e);
@@ -161,6 +168,16 @@ export class EntityLayer {
         view.glow.alpha = 0.25 + 0.1 * rank + 0.15 * Math.sin(this.clockMs / (260 - 30 * rank));
       } else view.glow.alpha = 0;
 
+      const outmatched =
+        enemy !== undefined && !dying && enemy.power - power >= sim.content.player.power.warnAt;
+      if (outmatched) view.skull ??= this.makeSkull(view);
+      if (view.skull) {
+        view.skull.visible = outmatched;
+        const head = sheet?.def.pivots['head'];
+        // Above the head and the health bar's line, so the two never overlap.
+        view.skull.position.set(-3, (head ? head[1] : -view.sprite.height) - BAR_GAP - 10);
+      }
+
       // A boss's health is the big bar at the bottom of the screen, not one over its head.
       if (view.bar) view.bar.root.visible = !boss;
       if (view.bar && !boss) {
@@ -176,6 +193,17 @@ export class EntityLayer {
       view.root.destroy({ children: true });
       this.views.delete(e);
     }
+  }
+
+  private makeSkull(view: EntityView): Graphics {
+    const g = new Graphics();
+    // A dark backing one pixel wider all round, so the red reads on any ground.
+    g.rect(-1, -1, 7, 7).fill({ color: 0x1a0606, alpha: 0.85 });
+    for (const [y, row] of SKULL.entries())
+      for (const [x, ch] of [...row].entries())
+        if (ch !== ' ') g.rect(x, y, 1, 1).fill(ch === '#' ? 0xe03a2a : 0x1a0606);
+    view.root.addChild(g);
+    return g;
   }
 
   clear(): void {
@@ -203,6 +231,7 @@ export class EntityLayer {
       barWidth: 16,
       layers: [],
       glint: null,
+      skull: null,
     };
     this.views.set(e, view);
     return view;

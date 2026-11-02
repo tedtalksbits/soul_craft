@@ -37,7 +37,7 @@ function made(
   perks: { perk: string; value: number }[] = [],
   extra: Partial<ItemStack> = {},
 ): ItemStack {
-  return { item, count: 1, level: 0, gear: { tier, ilvl: 1, seed: 11, perks }, ...extra };
+  return { item, count: 1, level: 0, gear: { tier, power: 1, seed: 11, perks }, ...extra };
 }
 
 describe('salvage', () => {
@@ -103,8 +103,8 @@ describe('salvage', () => {
     const sim = newSim();
     act(sim, { type: 'autoSalvage', tier: 'common', on: true });
     const pb = sim.ecs.need(sim.player, Body);
-    dropPickup(sim, 'item', 1, pb.x, pb.y, 'iron_helm', { tier: 'common', ilvl: 1, seed: 1, perks: [] });
-    dropPickup(sim, 'item', 1, pb.x, pb.y, 'iron_mail', { tier: 'rare', ilvl: 1, seed: 1, perks: [] });
+    dropPickup(sim, 'item', 1, pb.x, pb.y, 'iron_helm', { tier: 'common', power: 1, seed: 1, perks: [] });
+    dropPickup(sim, 'item', 1, pb.x, pb.y, 'iron_mail', { tier: 'rare', power: 1, seed: 1, perks: [] });
     run(sim, 40);
     const gear = inv(sim).stacks.filter((s) => s.gear);
     expect(gear.map((s) => s.item)).toEqual(['iron_mail']);

@@ -223,13 +223,13 @@ export interface PerkRoll {
 }
 
 /**
- * What makes one piece of gear itself: its tier, the item level of the place it dropped, its rolled
- * perks, and the seed its rolls came from (rerolls will advance only this item's seed, so reloading
- * never fishes for a better result).
+ * What makes one piece of gear itself: its tier, its Power (a level, checked against the foe's; see
+ * modules/power.ts), its rolled perks, and the seed its rolls came from (rerolls will advance only this
+ * item's seed, so reloading never fishes for a better result).
  */
 export interface Gear {
   tier: TierId;
-  ilvl: number;
+  power: number;
   seed: number;
   perks: PerkRoll[];
   /** One of `perks` is a drawback, and the rest rolled stronger for it. */
@@ -383,6 +383,8 @@ export interface Enemy {
   archetype: string;
   homeX: number;
   homeY: number;
+  /** Its Power: its ring's where it rose, or a boss's own (and its adds share it). */
+  power: number;
 }
 export const Enemy = defineComponent<Enemy>('enemy');
 
@@ -458,6 +460,8 @@ export interface Projectile {
    * on, a fireball may burst, and nothing is hit twice. Absent on other projectiles.
    */
   bow?: { perfect: boolean; hit: Entity[]; pierce?: boolean; explode?: number };
+  /** A foe's shot: the shooter's Power, checked against the player's armor when it lands. */
+  power?: number;
 }
 export const Projectile = defineComponent<Projectile>('projectile');
 

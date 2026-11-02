@@ -11,7 +11,7 @@ const worn = (item: string, tier: TierId): ItemStack => ({
   item,
   count: 1,
   level: 0,
-  gear: { tier, ilvl: 1, seed: 1, perks: [] },
+  gear: { tier, power: 1, seed: 1, perks: [] },
 });
 const color = (tier: TierId) => Number.parseInt(content.loot.tiers[tier].color.slice(1), 16);
 

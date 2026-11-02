@@ -11,6 +11,7 @@ import {
   Motion,
   Pickup,
   Player,
+  Enemy,
   Staggered,
   type ItemStack,
 } from '../../src/sim/components';
@@ -172,6 +173,8 @@ describe('Warden poise', () => {
       const sim = newSim();
       const e = spawnNear(sim, WARDEN, 60, 0);
       Object.assign(sim.ecs.need(e, Health), { hp: 9999, max: 9999 });
+      // An even fight, so only the poise multiplier changes the fill.
+      sim.ecs.need(e, Enemy).power = content.loot.power.start;
       const pb = sim.ecs.need(sim.player, Body);
       applyDamage(sim, e, { amount: 50, crit: false, fromX: pb.x, fromY: pb.y, knockback: 0, poise });
       return sim.ecs.has(e, Staggered);
@@ -186,7 +189,7 @@ describe('the Warden Legendaries', () => {
     item,
     count: 1,
     level: 0,
-    gear: { tier: 'legendary', ilvl: 1, seed: 1, perks: [] },
+    gear: { tier: 'legendary', power: 1, seed: 1, perks: [] },
   });
 
   it('the Aegis turns aside the first blow after a roll, burning what is close', () => {

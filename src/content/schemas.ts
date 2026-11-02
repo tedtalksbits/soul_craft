@@ -796,6 +796,16 @@ export const PlayerSchema = z.object({
   /** Super energy, 0-100. Full charges the super; sword and ability hits fill it, the super's own hits don't. */
   energy: z.object({ perDamage: nonneg, perKill: nonneg, perSecond: nonneg }),
   /**
+   * The Power gap: rows of [your Power minus theirs, damage you deal ×, damage you take ×], in rising order of
+   * the gap. Between rows the multipliers blend; past the ends they hold. Your weapon's Power counts for the
+   * blows you deal, your armor's (helmet, chest, legs) for the blows you take.
+   */
+  power: z.object({
+    gap: z.array(z.tuple([z.number(), pos, pos])).min(2),
+    /** A foe this much above the player's Power shows a red skull, so being under-leveled is never a mystery. */
+    warnAt: pos,
+  }),
+  /**
    * A class dash throws enemies off (not bosses): they keep aiming where it began until `lostTicks` after it ends, so a
    * well-timed dash makes a lunge or an arrow miss instead of following the player to where they landed.
    */
@@ -924,8 +934,23 @@ export const LootSchema = z.object({
     noble: TierDefSchema,
     legendary: TierDefSchema,
   }),
-  /** Base stats and perks grow by this fraction per item level above 1. */
-  itemLevelGrowth: nonneg,
+  /**
+   * Power (docs/power-and-stash.md, section 2): a level on every piece of gear, from `start` (starting gear) to
+   * `max`. A drop comes in at the player's Max Power plus its source's `offsets` roll, never below the foe's own
+   * Power and never above the ring's drop cap (a Warden's chest: its Power plus `wardenHeadroom`).
+   */
+  power: z.object({
+    start: z.number().int().min(1),
+    max: z.number().int().min(1),
+    offsets: z.object({
+      wild: z.tuple([ticks, ticks]),
+      elite: z.tuple([ticks, ticks]),
+      boss: z.tuple([ticks, ticks]),
+      warden: z.tuple([ticks, ticks]),
+      gambler: z.tuple([ticks, ticks]),
+    }),
+    wardenHeadroom: ticks,
+  }),
   /** Rolled perk values land within this fraction either side of their target. */
   perkSpread: fraction,
   /**
@@ -949,8 +974,8 @@ export const LootSchema = z.object({
    * band per `levelsPerBand` levels, up to the highest item level), its tier rolled from `odds`.
    */
   gambler: z.object({
+    /** The price: `souls`, plus as much again for every 100 of the player's Max Power. */
     souls: z.number().int().min(1),
-    levelsPerBand: z.number().int().min(1),
     odds: weighted(TierSchema),
   }),
   /**
@@ -977,6 +1002,8 @@ export const LootSchema = z.object({
       signature: fraction,
       shift: nonneg,
       marksFrom: z.number().int().min(1),
+      /** Power added per step above 1. */
+      power: ticks,
     }),
   }),
   /** Smithy work (docs/gear-and-loot.md, section 7). */
@@ -1146,6 +1173,8 @@ export const EnemySchema = z.object({
     .object({
       title: z.string(),
       arenaTiles: pos,
+      /** Its Power, wherever its arena lies (a boss doesn't take its ring's). */
+      power: z.number().int().min(1),
       /**
        * A Warden's poise: weapon damage fills it (hammers faster) while its shield is down; full, it
        * staggers for `stagger` ticks and empties.
@@ -1207,7 +1236,6 @@ export const TilesSchema = z.array(TileSchema).min(1);
 export const BiomeSchema = z.object({
   name: z.string(),
   /** The item level of gear that drops here. */
-  itemLevel: z.number().int().min(1),
   ground: weighted(z.string()),
   scatter: z
     .array(z.object({ tile: z.string(), scale: pos, threshold: fraction, chance: fraction }))
@@ -1254,6 +1282,13 @@ export const WorldSchema = z.object({
    * never wakes a fight on screen. (Their spots are reshuffled at every rest; see `SimState.spawnEpoch`.)
    */
   restClearance: nonneg,
+  /**
+   * Enemy Power by distance from the village (tiles from the origin), in rings: Power rises smoothly from each
+   * ring's `power` at its inner edge (`from`) to the next one's, and wild drops in a ring stop at its `cap`.
+   */
+  rings: z
+    .array(z.object({ from: nonneg, power: z.number().int().min(1), cap: z.number().int().min(1) }))
+    .min(1),
   /**
    * Packs: members rise within `spread` tiles of their leader. At most `attackers` melee foes wind up or strike at
    * the player at once (the attack token), so a pack of three takes turns instead of lunging on the same tick.

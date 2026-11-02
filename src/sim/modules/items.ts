@@ -35,6 +35,7 @@ import type { Simulation } from '../simulation';
 import { inventoryCapacity } from './restored-effects';
 import { gearOf, gearTotals, rollDrop, rollGear, weaponNumbers } from './gear';
 import { pursued } from './stealth';
+import { characterPower, maxPower, playerPower } from './power';
 
 /** What the player's swing and body amount to once gear, attributes and buffs are applied. */
 export interface PlayerStats {
@@ -102,7 +103,14 @@ function startingEquipment(content: Content): Equipment {
   const eq: Equipment = { ...NO_EQUIPMENT };
   for (const item of content.player.start.gear) {
     const slot = slotFor(content, item, eq);
-    if (slot) eq[slot] = { item, count: 1, level: 0 };
+    // The starting kit: Common, at the lowest Power there is.
+    if (slot)
+      eq[slot] = {
+        item,
+        count: 1,
+        level: 0,
+        gear: { tier: 'common', power: content.loot.power.start, seed: 0, perks: [] },
+      };
   }
   return eq;
 }
@@ -243,39 +251,6 @@ export function playerStats(sim: Simulation, e: Entity): PlayerStats {
   });
 }
 
-/** Weapon damage per stamina, crits included: Power's offense. */
-function offense(stats: PlayerStats): number {
-  const crit = 1 + stats.critChance * (stats.critMultiplier - 1);
-  return (stats.damage * crit) / Math.max(1, stats.staminaCost);
-}
-
-/** Effective health (max HP stretched by damage reduction): Power's defense. */
-function toughness(stats: PlayerStats): number {
-  return stats.maxHp / (1 - stats.defense);
-}
-
-const startPower = new WeakMap<Content, { offense: number; toughness: number }>();
-
-/**
- * Power: 100 × √(offense × defense), each relative to a new character, so a new character is 100 and
- * balance beats stacking one side. Buffs don't count; it is a read on gear and levels, and nothing
- * is ever gated on it.
- */
-export function power(content: Content, eq: Equipment | undefined, attrs: Attributes | undefined): number {
-  let start = startPower.get(content);
-  if (!start) {
-    const base = computeStats(content, startingEquipment(content), undefined);
-    start = { offense: offense(base), toughness: toughness(base) };
-    startPower.set(content, start);
-  }
-  const now = computeStats(content, eq, attrs);
-  return Math.round(100 * Math.sqrt((offense(now) / start.offense) * (toughness(now) / start.toughness)));
-}
-
-export function playerPower(sim: Simulation): number {
-  return power(sim.content, sim.ecs.get(sim.player, Equipment), sim.ecs.get(sim.player, Attributes));
-}
-
 /** The numbers the equipment screen compares. */
 export interface GearSummary {
   power: number;
@@ -289,7 +264,7 @@ export interface GearSummary {
 function summary(content: Content, eq: Equipment, attrs: Attributes | undefined): GearSummary {
   const s = computeStats(content, eq, attrs);
   return {
-    power: power(content, eq, attrs),
+    power: characterPower(eq),
     damage: Math.round(s.damage),
     armor: s.armor,
     defense: s.defense,
@@ -508,7 +483,7 @@ const commands: SimCommand[] = [
       const eq = sim.ecs.need(e, Equipment);
       const st = playerStats(sim, e);
       const show = (s: ItemStack | null) =>
-        s ? `${s.item}${s.level ? ` +${s.level}` : ''} (${gearOf(s).tier}, ilvl ${gearOf(s).ilvl})` : '-';
+        s ? `${s.item}${s.level ? ` +${s.level}` : ''} (${gearOf(s).tier}, Power ${gearOf(s).power})` : '-';
       return [
         ...EQUIP_SLOTS.map((slot) => `${slot.padEnd(7)} ${show(eq[slot])}`),
         `quick   ${eq.quick ?? '-'}`,
@@ -520,24 +495,24 @@ const commands: SimCommand[] = [
   },
   {
     name: 'gear',
-    description: 'Put a rolled piece of gear in the pack: a tier, and optionally the base and item level.',
+    description: 'Put a rolled piece of gear in the pack: a tier, and optionally the base and Power.',
     args: [
       { name: 'tier', type: 'string', options: () => [...TIERS] },
       { name: 'id', type: 'string', options: gearIds, optional: true },
-      { name: 'ilvl', type: 'number', integer: true, optional: true },
+      { name: 'power', type: 'number', integer: true, optional: true },
     ],
     run: ({ sim }, a) => {
       const tier = TIERS.find((t) => t === a.string('tier'));
       if (!tier) throw new CommandError(`tier must be one of ${TIERS.join(', ')}`);
-      const ilvl = a.optNumber('ilvl') ?? 1;
+      const power = a.optNumber('power') ?? maxPower(sim);
       const seed = sim.rng.int(1, 0x7fffffff);
       const id = a.optString('id');
       const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
       const stack = id
-        ? rollGear(sim.content, id, tier, ilvl, seed, cls)
-        : rollDrop(sim.content, tier, ilvl, seed, cls);
+        ? rollGear(sim.content, id, tier, power, seed, cls)
+        : rollDrop(sim.content, tier, power, seed, cls);
       if (!addStack(sim, sim.player, stack)) throw new CommandError('inventory is full');
-      return `added ${tier} ${stack.item} (ilvl ${ilvl})`;
+      return `added ${tier} ${stack.item} (Power ${power})`;
     },
   },
   {

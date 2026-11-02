@@ -150,6 +150,8 @@ function updateAdds(sim: Simulation): void {
     if (blockedAt(sim.world, { x, y, w: add.body.w, h: add.body.h }, x, y)) continue;
     const m = spawnEnemy(sim, archetype, x, y);
     ecs.add(m, Minion, {});
+    // Called by the boss, it fights at the boss's Power, not the ring's.
+    ecs.need(m, Enemy).power = ecs.need(e, Enemy).power;
     // Called to fight: it comes straight for the player.
     setAi(ecs.need(m, Ai), 'chase');
     return;

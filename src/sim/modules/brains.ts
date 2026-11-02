@@ -209,6 +209,7 @@ const archer: Brain<'archer'> = (c, b) => {
         dirY: c.dy / c.dist,
         speed: b.arrowSpeed,
         damage: b.arrowDamage,
+        power: c.enemy.power,
       });
       sim.events.emit({ type: 'enemyAttack', entity: c.e, kind: 'shoot' });
       setAi(ai, 'loose');
@@ -332,11 +333,13 @@ const warden: Brain<'warden'> = (c, b) => {
               speed: 1.8,
               damage: Math.round(b.slamDamage * 0.4 * heatDamage(sim, c.e)),
               life: 90,
+              power: c.enemy.power,
             });
           }
         if (c.dist <= b.slamRadius)
           applyDamage(sim, sim.player, {
             amount: Math.round(b.slamDamage * heatDamage(sim, c.e)),
+            power: c.enemy.power,
             crit: false,
             fromX: c.body.x,
             fromY: c.body.y,

@@ -43,11 +43,11 @@ import {
 import {
   compareGear,
   countItem,
-  playerPower,
   playerStats,
   type Comparison,
   type GearSummary,
 } from '../../sim/modules/items';
+import { maxPower, playerPower } from '../../sim/modules/power';
 import { inventoryCapacity } from '../../sim/modules/restored-effects';
 import type { Simulation } from '../../sim/simulation';
 import { TICK_RATE } from '../../sim/constants';
@@ -223,7 +223,11 @@ export class InventoryScreen {
         h(
           'div',
           { class: 'what' },
-          h('div', { class: 'label' }, SLOT_LABELS[slot]),
+          h(
+            'div',
+            { class: 'label' },
+            stack?.gear ? `${SLOT_LABELS[slot]} · ${stack.gear.power}` : SLOT_LABELS[slot],
+          ),
           stack ? this.gearName(sim, stack) : h('div', { class: 'name none' }, 'Empty'),
           stack ? h('div', { class: 'main' }, mainLine(sim, stack)) : '',
         ),
@@ -287,6 +291,8 @@ export class InventoryScreen {
             { class: 'power' },
             h('div', { class: 'label' }, 'Power'),
             h('div', { class: 'value' }, String(playerPower(sim))),
+            // What drops are based on: the best piece owned per slot, worn or not.
+            h('div', { class: 'label' }, `Max ${maxPower(sim)}`),
             quick,
           ),
           h('div', { class: 'side' }, ...(['helmet', 'chest', 'legs'] as const).map(slotRow)),
@@ -413,7 +419,7 @@ export class InventoryScreen {
       h(
         'div',
         { class: 'tierline' },
-        `${gear.blighted ? 'Blighted ' : ''}${tier.name} ${slot ? capitalize(slot) : ''} · Item level ${gear.ilvl}`,
+        `${gear.blighted ? 'Blighted ' : ''}${tier.name} ${slot ? capitalize(slot) : ''} · Power ${gear.power}`,
       ),
       comparison ? this.comparisonTable(sim, comparison) : '',
       power

@@ -138,7 +138,7 @@ describe('the Stalker with daggers', () => {
 describe('Twinfang', () => {
   it('keeps Vanish through the first strike and breaks it on the second', () => {
     const sim = newSim();
-    wield(sim, 'twinfang', { gear: { tier: 'legendary', ilvl: 1, seed: 1, perks: [] } });
+    wield(sim, 'twinfang', { gear: { tier: 'legendary', power: 1, seed: 1, perks: [] } });
     veil(sim, 10, 0.5);
     run(sim, 2);
     press(sim, ['attack'], daggers.chain[0]!.duration);
@@ -152,7 +152,7 @@ describe('dagger perks', () => {
   it('make every fifth swing free', () => {
     const sim = newSim();
     wield(sim, 'bone_daggers', {
-      gear: { tier: 'rare', ilvl: 1, seed: 1, perks: [{ perk: 'freeFifth', value: 1 }] },
+      gear: { tier: 'rare', power: 1, seed: 1, perks: [{ perk: 'freeFifth', value: 1 }] },
     });
     const stamina = sim.ecs.need(sim.player, Stamina);
     const costs: number[] = [];
@@ -171,7 +171,7 @@ describe('dagger perks', () => {
     const hit = (bleeding: boolean) => {
       const sim = newSim();
       wield(sim, 'bone_daggers', {
-        gear: { tier: 'rare', ilvl: 1, seed: 1, perks: [{ perk: 'bleedVulnerability', value: 0.5 }] },
+        gear: { tier: 'rare', power: 1, seed: 1, perks: [{ perk: 'bleedVulnerability', value: 0.5 }] },
       });
       face(sim, 'right');
       const foe = dummy(sim, 10, 0, 'left');

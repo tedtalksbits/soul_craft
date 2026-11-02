@@ -77,23 +77,26 @@ Every item has `kind`, `name`, `description`, `icon` (a frame name in `assets/sp
 
 Weapons, armor and rings are gear, and gear is loot (docs/gear-and-loot.md). Each also takes `innate` (fixed perks,
 `[{ perk, value }]`, at item level 1, Common strength) and `drop` (how often the base is picked when gear drops,
-relative to the others of its slot; `0` never drops, like the Chipped Sword). A copy's tier, item level, rolled
-perks and roll seed live on the item itself, not here; tier and item level scale the base's damage, Armor and
-innate perks, so tuning a base re-tunes every copy.
+relative to the others of its slot; `0` never drops, like the Chipped Sword). A copy's tier, Power, rolled
+perks and roll seed live on the item itself, not here; the tier scales the base's damage, Armor and innate perks
+(Power never does: it is checked against the foe's), so tuning a base re-tunes every copy.
 
 `loot.json` holds the five `tiers` (name, color, how many perks they roll, and multipliers for base stats and
-perk strength), `itemLevelGrowth` (per item level above 1), `perkSpread` (how far a roll lands from its target),
+perk strength), `power` (the starting and highest Power, each drop source's offset above Max Power, and a Warden
+chest's headroom above its Power), `perkSpread` (how far a roll lands from its target),
 `pity` (after `after` drops in a row below `tier`, the next is that tier or better), the named `tables` of tier
 odds, `greater` and `blight` (from which tier, how often, and how much stronger), `smartLoot` (the share of
 class perks that are for the class being played), and `perks`. A perk is `{ text, stat | effect, value, slots }`
 plus optional `integer`, `fixed` (never scaled or spread), `class` (works only for that class), `minTier` and
 `drawback` (a Blighted item's: it takes its stat away and only rolls as one). A stat perk's `text` shows `{v}` as
 the value. An `effect` is one of the class modifier effect types, so gear and modifiers share the same hooks;
-its numbers are written at strength 1 and the roll scales them (item level doesn't), and `{v}` shows its headline
+its numbers are written at strength 1 and the roll scales them, and `{v}` shows its headline
 number. A weapon, armor piece or ring with a `power { name, text, effect }` is a Legendary base: it drops only as a
 Legendary, and its `innate` perk is the power's partner. A power's `text` is shown as written (`{v}` is only
 filled in for perks). An enemy drops gear with `gear { chance, table }`; its
-item level is the biome's `itemLevel`. Validation insists every slot can roll the best tier's number of perks and
+Power comes from `modules/power.ts`: Max Power plus the source's offset, at least the foe's own Power, at most its
+ring's cap (`world.json → rings`). Enemy Power comes from those rings by distance from the village, or a boss's
+`boss.power`, and `player.json → power.gap` sets how the gap scales blows both ways. Validation insists every slot can roll the best tier's number of perks and
 has a base that can drop, and that class perks and effects name real classes and abilities.
 
 `weapons.json` gives each weapon type a light `chain` (tapped; the last move is the finisher, and

@@ -30,6 +30,7 @@ import { gainEnergy } from './energy';
 import { relicWanted } from './unlocks';
 import { playerStats } from './items';
 import { dropGear, dropSureGear } from './gear';
+import { foeDropPower, scaleDealt, scaleTaken } from './power';
 import { countKill } from './objectives';
 import { dropPickup } from './pickups';
 import { onHurt, onKill } from './modifiers';
@@ -54,6 +55,8 @@ export interface Hit {
   ability?: string;
   /** How much of its damage fills a Warden's poise (hammers 3, the rest 1). */
   poise?: number;
+  /** A foe's blow on the player: the foe's Power, checked against the player's armor (modules/power.ts). */
+  power?: number;
 }
 
 export type HitResult = 'hit' | 'blocked' | 'ignored';
@@ -101,8 +104,10 @@ function damagePlayer(
   // A ring of embers raised by a roll turns the blow aside and bursts.
   if (wardOff(sim)) return 'blocked';
 
-  // Armor and buffs absorb a fraction of every blow; something always gets through.
-  const dealt = Math.max(1, Math.round(hit.amount * (1 - playerStats(sim, e).defense)));
+  // Armor and buffs absorb a fraction of every blow; something always gets through. A foe's blow is scaled by
+  // its Power against the armor's first.
+  const scaled = hit.power === undefined ? hit.amount : scaleTaken(sim, hit.amount, hit.power);
+  const dealt = Math.max(1, Math.round(scaled * (1 - playerStats(sim, e).defense)));
   ecs.add(e, Invulnerable, { ticks: def.hurt.iframes });
   push(sim, e, body, hit, 1);
   unveil(sim);
@@ -163,7 +168,9 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
     sim.events.emit({ type: 'blocked', x: body.x, y: body.y - 4 });
     return 'blocked';
   }
-  const amount = Math.round(hit.amount * (1 + ambush + bleedBonus(sim, e)));
+  // Every blow on a foe is the player's, so the weapon's Power against the foe's scales it.
+  const raw = scaleDealt(sim, hit.amount * (1 + ambush + bleedBonus(sim, e)), enemy.power);
+  const amount = hit.amount > 0 ? Math.max(1, Math.round(raw)) : 0;
   if (ambush > 0) sim.events.emit({ type: 'ambushed', x: body.x, y: body.y, bonus: ambush });
 
   health.hp = Math.max(0, health.hp - amount);
@@ -263,8 +270,14 @@ export function killEnemy(sim: Simulation, e: Entity): void {
   const spawned = ecs.get(e, Spawned);
   if (spawned) sim.state.killed[spawned.spawnId] = true;
   if (!refight) rollDrops(sim, def.drops, body.x, body.y);
-  if (def.gear && sim.rng.chance(def.gear.chance)) dropGear(sim, def.gear.table, body.x, body.y);
-  if (def.sureGear && !refight) dropSureGear(sim, def.sureGear.slot, def.sureGear.tier, body.x, body.y);
+  // Bosses drop well above Max Power, elites above, the wild a little (modules/power.ts).
+  const source = def.boss ? 'boss' : def.gear?.table === 'elite' ? 'elite' : 'wild';
+  if (def.gear && sim.rng.chance(def.gear.chance))
+    dropGear(sim, def.gear.table, foeDropPower(sim, source, enemy, body.x, body.y), body.x, body.y);
+  if (def.sureGear && !refight) {
+    const power = foeDropPower(sim, source, enemy, body.x, body.y);
+    dropSureGear(sim, def.sureGear.slot, def.sureGear.tier, power, body.x, body.y);
+  }
   countKill(sim, enemy.archetype);
   if (def.boss) {
     openChest(sim, e, enemy.archetype, !sim.state.bossesDefeated[enemy.archetype]);
@@ -301,10 +314,12 @@ function contactDamage(sim: Simulation): void {
   const p = sim.player;
   const pb = ecs.need(p, Body);
   const playerBox = bodyBox(pb);
-  for (const [, cd, body] of ecs.query(ContactDamage, Body)) {
+  for (const [e, cd, body] of ecs.query(ContactDamage, Body)) {
     if (cd.amount <= 0 || !overlaps(bodyBox(body), playerBox)) continue;
+    const power = ecs.get(e, Enemy)?.power;
     applyDamage(sim, p, {
       amount: cd.amount,
+      ...(power === undefined ? {} : { power }),
       crit: false,
       fromX: body.x,
       fromY: body.y,

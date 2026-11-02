@@ -16,8 +16,8 @@ import type { PlayerAction } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import type { Check } from './crafting';
-import { gambleItemLevel } from './gambler';
-import { itemLevelAt, rollGear, rollForSlot } from './gear';
+import { rollGear, rollForSlot } from './gear';
+import { dropPower, maxPower } from './power';
 import { addStack, countItem, removeItem } from './items';
 import { dropPickup } from './pickups';
 import { resetEnemies } from './streaming';
@@ -77,6 +77,7 @@ export function kindleHeat(sim: Simulation, e: Entity, archetype: string): void 
   const boss = sim.ecs.get(e, Boss);
   if (heat === undefined || !boss) return;
   boss.heat = heat;
+  sim.ecs.need(e, Enemy).power += sim.content.loot.wardens.heat.power * (heat - 1);
   const health = sim.ecs.need(e, Health);
   health.max = Math.round(health.max * (1 + sim.content.loot.wardens.heat.hp * (heat - 1)));
   health.hp = health.max;
@@ -141,7 +142,10 @@ export function openChest(sim: Simulation, e: Entity, archetype: string, firstKi
   if (!warden) return;
   const loot = sim.content.loot.wardens;
   const heat = heatOf(sim, e);
-  const ilvl = Math.max(itemLevelAt(sim, body.x, body.y), gambleItemLevel(sim));
+  // Each piece rolls its own Power, well above Max Power, and may pass the ring's cap up to the Warden's own plus
+  // its headroom: Wardens (and their Heat) are how the player climbs past a ring.
+  const foe = sim.ecs.need(e, Enemy).power;
+  const piecePower = () => dropPower(sim, 'warden', foe, foe + sim.content.loot.power.wardenHeadroom);
   const cls = sim.ecs.get(sim.player, Abilities)?.class ?? null;
   const tiers = chestTiers(sim, heat);
   const floor = TIERS.indexOf(loot.firstFloor);
@@ -149,7 +153,7 @@ export function openChest(sim: Simulation, e: Entity, archetype: string, firstKi
     const pool = firstKill && i === 0 ? tiers.filter(([t]) => TIERS.indexOf(t) >= floor) : tiers;
     const tier = sim.rng.weighted(pool);
     const slot = sim.rng.pick(['weapon', 'helmet', 'chest', 'legs', 'ring'] as const);
-    const stack = rollForSlot(sim.content, slot, tier, ilvl, sim.rng.int(1, 0x7fffffff), cls);
+    const stack = rollForSlot(sim.content, slot, tier, piecePower(), sim.rng.int(1, 0x7fffffff), cls);
     if (stack) dropPickup(sim, 'item', 1, body.x, body.y, stack.item, stack.gear ?? null);
   }
   for (const m of loot.materials) dropPickup(sim, 'item', m.count, body.x, body.y, m.item);
@@ -164,7 +168,7 @@ export function openChest(sim: Simulation, e: Entity, archetype: string, firstKi
   sim.state.signaturePity = pity;
   if (won) {
     const item = slams >= warden.alternate.slams ? warden.alternate.item : warden.signature;
-    const stack = rollGear(sim.content, item, 'legendary', ilvl, sim.rng.int(1, 0x7fffffff), cls);
+    const stack = rollGear(sim.content, item, 'legendary', piecePower(), sim.rng.int(1, 0x7fffffff), cls);
     dropPickup(sim, 'item', 1, body.x, body.y, stack.item, stack.gear ?? null);
   }
   sim.events.emit({
@@ -220,7 +224,8 @@ export function buySignature(sim: Simulation, boss: string): boolean {
     sim.content,
     warden.signature,
     'legendary',
-    gambleItemLevel(sim),
+    // Bought, not dropped: at Max Power, no higher.
+    Math.max(sim.content.loot.power.start, maxPower(sim)),
     sim.rng.int(1, 0x7fffffff),
     cls,
   );
