@@ -129,6 +129,8 @@ export class App {
         } else if (this.warden.isOpen && e.code === 'Escape') {
           e.preventDefault();
           this.warden.close();
+        } else if (this.inventory.isOpen && this.inventory.key(e.code)) {
+          e.preventDefault();
         } else if (this.inventory.isOpen && (e.code === 'Escape' || pack)) {
           e.preventDefault();
           this.inventory.close();

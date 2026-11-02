@@ -32,10 +32,18 @@ import { TICK_RATE } from '../constants';
 import type { PlayerAction } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
-import { pocketRoom, stashable, stashCapacity, stashOf, stashRoom } from './storage';
+import {
+  pocketRoom,
+  STASH_CLOSED,
+  stashable,
+  stashCapacity,
+  stashOf,
+  stashReachable,
+  stashRoom,
+} from './storage';
 import { gearOf, gearTotals, rollDrop, rollGear, weaponNumbers } from './gear';
 import { pursued } from './stealth';
-import { characterPower, maxPower, playerPower } from './power';
+import { characterPower, gearPower, maxPower, playerPower } from './power';
 
 /** What the player's swing and body amount to once gear, attributes and buffs are applied. */
 export interface PlayerStats {
@@ -298,9 +306,17 @@ export interface Comparison {
  */
 export function compareGear(sim: Simulation, index: number): Comparison | null {
   const stack = sim.ecs.need(sim.player, Inventory).stacks[index];
+  return stack ? compareStack(sim, stack) : null;
+}
+
+/**
+ * Tries any piece (carried, stashed) on a copy of the player's equipment, in `wanted` when it fits there (which
+ * ring it would replace). Null for anything that is not gear.
+ */
+export function compareStack(sim: Simulation, stack: ItemStack, wanted?: EquipSlot): Comparison | null {
   const eq = sim.ecs.need(sim.player, Equipment);
-  const slot = stack ? slotFor(sim.content, stack.item, eq) : null;
-  if (!stack || !slot) return null;
+  const slot = targetSlot(sim.content, stack.item, eq, wanted);
+  if (!slot) return null;
   const attrs = sim.ecs.get(sim.player, Attributes);
   return {
     slot,
@@ -338,14 +354,25 @@ function slotFor(content: Content, item: string, eq: Equipment): EquipSlot | nul
   return eq.ring0 === null || eq.ring1 !== null ? 'ring0' : 'ring1';
 }
 
-/** Equips the pack stack at `index`, swapping what was in the slot back into its place in the pack. */
-export function equip(sim: Simulation, index: number): boolean {
+/** Where a piece goes: `wanted` if it fits there (either ring slot for a ring), else its own slot. */
+function targetSlot(content: Content, item: string, eq: Equipment, wanted?: EquipSlot): EquipSlot | null {
+  const kind = gearSlotOf(content.item(item));
+  if (wanted && (kind === wanted || (kind === 'ring' && (wanted === 'ring0' || wanted === 'ring1'))))
+    return wanted;
+  return slotFor(content, item, eq);
+}
+
+/**
+ * Equips the pack stack at `index` (into `wanted`, if it fits there), swapping what was in the slot back into its
+ * place in the pack.
+ */
+export function equip(sim: Simulation, index: number, wanted?: EquipSlot): boolean {
   const e = sim.player;
   const inv = sim.ecs.need(e, Inventory);
   const eq = sim.ecs.need(e, Equipment);
   const stack = inv.stacks[index];
   if (!stack) return false;
-  const slot = slotFor(sim.content, stack.item, eq);
+  const slot = targetSlot(sim.content, stack.item, eq, wanted);
   if (!slot) return false;
   const previous = eq[slot];
   inv.stacks.splice(index, 1);
@@ -354,6 +381,74 @@ export function equip(sim: Simulation, index: number): boolean {
   syncVitals(sim, e);
   sim.events.emit({ type: 'equipped', item: stack.item, slot });
   return true;
+}
+
+/** Equips a piece straight from the stash, where it opens; what it replaces takes its place there. */
+export function equipFromStash(sim: Simulation, index: number, wanted?: EquipSlot): boolean {
+  const kept = stashOf(sim);
+  const stack = kept[index];
+  if (!stack) return false;
+  if (!stashReachable(sim)) {
+    sim.events.emit({ type: 'craftFailed', recipe: 'equip', reason: STASH_CLOSED });
+    return false;
+  }
+  const eq = sim.ecs.need(sim.player, Equipment);
+  const slot = targetSlot(sim.content, stack.item, eq, wanted);
+  if (!slot) return false;
+  const previous = eq[slot];
+  if (previous) kept.splice(index, 1, previous);
+  else kept.splice(index, 1);
+  eq[slot] = stack;
+  syncVitals(sim, sim.player);
+  sim.events.emit({ type: 'equipped', item: stack.item, slot });
+  return true;
+}
+
+/**
+ * Puts on the highest-Power piece the player can reach for every slot: carried, or stashed where the stash opens
+ * (the two best rings for the two ring slots). A worn piece stays on unless something has more Power. Returns how
+ * many pieces it changed.
+ */
+export function equipBest(sim: Simulation): number {
+  const eq = sim.ecs.need(sim.player, Equipment);
+  const inv = sim.ecs.need(sim.player, Inventory);
+  const reach = stashReachable(sim);
+  type Spot = { stack: ItemStack; from: 'worn' | 'pack' | 'stash' };
+  const spots: Spot[] = [
+    ...EQUIP_SLOTS.flatMap((s): Spot[] => (eq[s] ? [{ stack: eq[s], from: 'worn' }] : [])),
+    ...inv.stacks.map((stack): Spot => ({ stack, from: 'pack' })),
+    ...(reach ? stashOf(sim).map((stack): Spot => ({ stack, from: 'stash' })) : []),
+  ];
+  const best = (kind: string, n: number) =>
+    spots
+      .filter((s) => s.stack.gear && gearSlotOf(sim.content.item(s.stack.item)) === kind)
+      // Ties go to what is worn, so nothing changes for nothing.
+      .sort(
+        (a, b) =>
+          gearPower(b.stack) - gearPower(a.stack) || Number(b.from === 'worn') - Number(a.from === 'worn'),
+      )
+      .slice(0, n);
+  const wanted: [EquipSlot, Spot | undefined][] = [
+    ['weapon', best('weapon', 1)[0]],
+    ['helmet', best('helmet', 1)[0]],
+    ['chest', best('chest', 1)[0]],
+    ['legs', best('legs', 1)[0]],
+  ];
+  const rings = best('ring', 2);
+  // Keep each worn ring in its slot when it stays, so only the newcomer moves in.
+  const kept = (['ring0', 'ring1'] as const).filter((s) => rings.some((r) => r.stack === eq[s]));
+  const free = (['ring0', 'ring1'] as const).filter((s) => !kept.includes(s));
+  for (const r of rings.filter((r) => r.from !== 'worn')) wanted.push([free.shift()!, r]);
+  let changed = 0;
+  for (const [slot, spot] of wanted) {
+    if (!spot || spot.from === 'worn' || eq[slot] === spot.stack) continue;
+    const ok =
+      spot.from === 'pack'
+        ? equip(sim, inv.stacks.indexOf(spot.stack), slot)
+        : equipFromStash(sim, stashOf(sim).indexOf(spot.stack), slot);
+    if (ok) changed++;
+  }
+  return changed;
 }
 
 export function unequip(sim: Simulation, slot: EquipSlot): boolean {
@@ -422,13 +517,24 @@ function setQuick(sim: Simulation, item: string | null): void {
 
 function applyAction(sim: Simulation, action: PlayerAction): void {
   // The pack pauses the game, so swapping gear mid-fight would be free; it waits until nothing is after you.
-  if ((action.type === 'equip' || action.type === 'unequip') && pursued(sim)) {
+  const changesGear =
+    action.type === 'equip' ||
+    action.type === 'unequip' ||
+    action.type === 'equipStash' ||
+    action.type === 'equipBest';
+  if (changesGear && pursued(sim)) {
     sim.events.emit({ type: 'gearLocked' });
     return;
   }
   switch (action.type) {
     case 'equip':
-      equip(sim, action.index);
+      equip(sim, action.index, action.slot);
+      return;
+    case 'equipStash':
+      equipFromStash(sim, action.index, action.slot);
+      return;
+    case 'equipBest':
+      equipBest(sim);
       return;
     case 'unequip':
       unequip(sim, action.slot);

@@ -43,6 +43,9 @@ export function pocketRoom(sim: Simulation, item: string): number {
 
 // ------------------------------------------------------------------ the stash
 
+/** Why the stash can't be used here. */
+export const STASH_CLOSED = 'rest at the village bonfire (or any, once the Storehouse is rebuilt)';
+
 export function stashOf(sim: Simulation): ItemStack[] {
   return (sim.state.stash ??= []);
 }

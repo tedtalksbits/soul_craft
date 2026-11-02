@@ -6,16 +6,15 @@ import { Inventory, Player } from '../components';
 import type { SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import type { Check } from './crafting';
-import { pocketRoom, stashable, stashOf, stashReachable, stashRoom } from './storage';
+import { pocketRoom, STASH_CLOSED, stashable, stashOf, stashReachable, stashRoom } from './storage';
 
 const fail = (reason: string): Check => ({ ok: false, reason });
-const UNREACHABLE = 'rest at the village bonfire (or any, once the Storehouse is rebuilt)';
 
 export function canStash(sim: Simulation, index: number): Check {
   const stack = sim.ecs.need(sim.player, Inventory).stacks[index];
   if (!stack) return fail('nothing there');
   if (!stashable(sim.content, stack.item)) return fail('materials are never short of room');
-  if (!stashReachable(sim)) return fail(UNREACHABLE);
+  if (!stashReachable(sim)) return fail(STASH_CLOSED);
   if (stashRoom(sim) <= 0) return fail('the stash is full');
   return { ok: true };
 }
@@ -23,7 +22,7 @@ export function canStash(sim: Simulation, index: number): Check {
 export function canUnstash(sim: Simulation, index: number): Check {
   const stack = stashOf(sim)[index];
   if (!stack) return fail('nothing there');
-  if (!stashReachable(sim)) return fail(UNREACHABLE);
+  if (!stashReachable(sim)) return fail(STASH_CLOSED);
   if (pocketRoom(sim, stack.item) <= 0) return fail('that pocket is full');
   return { ok: true };
 }

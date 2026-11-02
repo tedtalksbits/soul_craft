@@ -244,7 +244,7 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    weapon of each of the six types in hand, trims and legs in the tier's color, and an ember glint for a
    Legendary ring.
 
-### Next: Power, the stash and the character screen (decided; phases 1 to 3 built)
+### Next: Power, the stash and the character screen (decided; phases 1 to 4 built)
 
 The next round of gear work: Power from 10 to 1000 printed on every item, drops a little above the best you own,
 cheap infusion, dismantling anywhere, pockets and a stash, a Destiny-style slot flyout, and more enemies. The
@@ -263,7 +263,10 @@ proposal and its open questions are in [`docs/power-and-stash.md`](power-and-sta
    consumables, unlimited materials; a 200-piece stash that opens at the village bonfire, and at every bonfire
    once the Storehouse is rebuilt (its ranks now add stash room); full pockets send new gear to the stash from
    anywhere; Max Power counts the stash; a Stash tab and Stash buttons on the Inventory screen.
-4. **The character screen.**
+4. **The character screen (built):** Character, Bag, Stash, Crafting and Abilities tabs; slot tiles with only
+   icon, tier and Power; a flyout per slot of everything owned for it (carried and stashed, highest Power first,
+   ▲ when better); a short card on hover, full inspect on right-click; click to equip (straight from the stash
+   where it opens); Equip best; a short stat line with Details; arrow keys and Enter. No gamepad yet.
 5. **Dismantle and infuse.**
 
 ### Milestone 5: Life sim, in service of combat

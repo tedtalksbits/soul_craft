@@ -42,16 +42,18 @@ import {
 } from '../../sim/modules/gear';
 import {
   compareGear,
+  compareStack,
   countItem,
   playerStats,
   type Comparison,
   type GearSummary,
 } from '../../sim/modules/items';
-import { maxPower, playerPower } from '../../sim/modules/power';
+import { gearPower, maxPower, playerPower } from '../../sim/modules/power';
 import { canStash, canUnstash } from '../../sim/modules/stash';
 import {
   pocketOf,
   pocketUsed,
+  STASH_CLOSED,
   stashable,
   stashCapacity,
   stashOf,
@@ -76,7 +78,7 @@ export interface InventoryHost {
   abilityIcon(ability: string): HTMLElement;
 }
 
-type Tab = 'items' | 'stash' | 'craft' | 'abilities';
+type Tab = 'items' | 'bag' | 'stash' | 'craft' | 'abilities';
 
 const SLOT_BINDING = { aoe: 'aoe', class: 'classAbility', super: 'super' } as const;
 const SLOT_NAMES = { aoe: 'AoE ability', class: 'Class ability', super: 'Super' } as const;
@@ -102,14 +104,12 @@ const STAT_LABELS = {
 /** What is selected: a pack slot, a piece of equipped gear, or a place in the stash. */
 type Selection = { pack: number } | { slot: EquipSlot } | { stash: number };
 
-/** The gear pockets, in the order the pack shows them. */
-const POCKETS = [
-  ['weapon', 'Weapons'],
-  ['helmet', 'Helmets'],
-  ['chest', 'Chests'],
-  ['legs', 'Legs'],
-  ['ring', 'Rings'],
-] as const;
+/** A piece owned for a slot, and where it is: in a pocket (by pack index) or in the stash (by stash index). */
+interface Owned {
+  stack: ItemStack;
+  index: number;
+  from: 'pack' | 'stash';
+}
 
 export class InventoryScreen {
   private el: HTMLElement | null = null;
@@ -119,6 +119,11 @@ export class InventoryScreen {
   private selected: Selection | null = null;
   /** A Noble or Legendary salvage waiting on its second press. */
   private confirmSalvage = false;
+  /** The slot whose flyout is open, and the piece hovered in it. */
+  private flyoutSlot: EquipSlot | null = 'weapon';
+  private hover: { from: 'pack' | 'stash'; index: number } | null = null;
+  /** The full stat sheet is shown. */
+  private details = false;
   private shown = '';
 
   constructor(
@@ -159,11 +164,13 @@ export class InventoryScreen {
     const body =
       this.tab === 'items'
         ? this.itemsTab(sim)
-        : this.tab === 'stash'
-          ? this.stashTab(sim)
-          : this.tab === 'craft'
-            ? this.craftTab(sim)
-            : this.abilitiesTab(sim);
+        : this.tab === 'bag'
+          ? this.bagTab(sim)
+          : this.tab === 'stash'
+            ? this.stashTab(sim)
+            : this.tab === 'craft'
+              ? this.craftTab(sim)
+              : this.abilitiesTab(sim);
     this.el.replaceChildren(this.header(sim), body);
     const shown = this.el.querySelector('.body');
     if (shown) shown.scrollTop = scroll;
@@ -175,6 +182,9 @@ export class InventoryScreen {
       this.tab,
       this.station,
       this.selected,
+      this.flyoutSlot,
+      this.hover,
+      this.details,
       sim.ecs.get(e, Inventory)?.stacks,
       sim.state.stash,
       sim.state.checkpoint?.id,
@@ -210,7 +220,8 @@ export class InventoryScreen {
     return h(
       'div',
       { class: 'head' },
-      tab('items', 'Inventory'),
+      tab('items', 'Character'),
+      tab('bag', 'Bag'),
       tab('stash', 'Stash'),
       tab('craft', this.station ? STATIONS[this.station] : 'Crafting'),
       tab('abilities', 'Abilities'),
@@ -225,38 +236,38 @@ export class InventoryScreen {
 
   // ------------------------------------------------------------------ inventory tab
 
+  /**
+   * The character screen (docs/power-and-stash.md, section 6): six slot tiles showing only icon, tier and Power.
+   * Hovering one opens its flyout, everything owned for that slot, highest Power first (stashed pieces dimmed);
+   * hovering a piece there shows a short card, clicking equips it, right-clicking inspects it in full.
+   */
   private itemsTab(sim: Simulation): HTMLElement {
     const e = sim.player;
     const eq = sim.ecs.need(e, Equipment);
-    const inv = sim.ecs.need(e, Inventory);
-    const stacks = inv.stacks;
-    const picked = this.selected;
+    const open = this.flyoutSlot;
 
-    const slotRow = (slot: EquipSlot) => {
+    const slotTile = (slot: EquipSlot) => {
       const stack = eq[slot];
-      const on = picked !== null && 'slot' in picked && picked.slot === slot;
-      const row = h(
+      const on = open === slot;
+      const tile = h(
         'button',
         {
-          class: on ? 'slot selected' : 'slot',
-          disabled: stack === null,
-          onclick: () => this.select(on ? null : { slot }),
+          class: on ? 'slot-tile open' : 'slot-tile',
+          onmouseenter: () => this.openSlot(slot),
+          onfocus: () => this.openSlot(slot),
+          onclick: () => (stack ? this.select({ slot }) : this.openSlot(slot)),
         },
         this.cell(sim, stack, null, null),
         h(
           'div',
           { class: 'what' },
-          h(
-            'div',
-            { class: 'label' },
-            stack?.gear ? `${SLOT_LABELS[slot]} · ${stack.gear.power}` : SLOT_LABELS[slot],
-          ),
-          stack ? this.gearName(sim, stack) : h('div', { class: 'name none' }, 'Empty'),
-          stack ? h('div', { class: 'main' }, mainLine(sim, stack)) : '',
+          h('div', { class: 'label' }, SLOT_LABELS[slot]),
+          h('div', { class: 'tile-power' }, stack?.gear ? String(stack.gear.power) : '–'),
         ),
       );
-      return row;
+      return tile;
     };
+
     const quickCount = eq.quick ? countItem(sim.ecs.need(e, Inventory), eq.quick) : 0;
     const quick = this.cell(
       sim,
@@ -264,41 +275,228 @@ export class InventoryScreen {
       'Quick (Q)',
       eq.quick ? () => this.host.act({ type: 'setQuick', item: null }) : null,
     );
-
-    // Each kind of thing in its own section, keeping its pack index for selection.
-    const indexed = stacks.map((stack, i) => ({ stack, i, pocket: pocketOf(sim.content, stack.item) }));
-    const cells = (pocket: (p: Pocket) => boolean) =>
-      indexed
-        .filter((x) => pocket(x.pocket))
-        .map(({ stack, i }) => {
-          const on = picked !== null && 'pack' in picked && picked.pack === i;
-          const cell = this.cell(sim, stack, null, () => this.select(on ? null : { pack: i }));
-          if (on) cell.classList.add('selected');
-          const compared = compareGear(sim, i);
-          if (compared && compared.after.power < compared.now.power)
-            cell.append(h('span', { class: 'worse', title: 'Lowers your Power' }, '↓'));
-          return cell;
-        });
-    const { storage } = sim.content.player;
-    const pocketLine = POCKETS.map(
-      ([p, label]) => `${label} ${pocketUsed(sim.content, inv, p)}/${storage.pocket}`,
-    ).join(' · ');
-    const gearCells = cells((p) => p !== 'bag' && p !== 'materials');
-    const bagCells = cells((p) => p === 'bag');
-    const materialCells = cells((p) => p === 'materials');
+    const power = playerPower(sim);
+    const max = maxPower(sim);
 
     const stats = playerStats(sim, e);
-    const attrs = sim.ecs.get(e, Attributes);
     const capped = stats.defense >= sim.content.player.armor.cap;
-    const statRows: [string, string][] = [
+    const statLine = [
+      `Attack ${Math.round(stats.damage)}`,
+      `Armor ${stats.armor} (${Math.round(stats.defense * 100)}% less damage${capped ? ', capped' : ''})`,
+      `HP ${stats.maxHp}`,
+      `Stamina ${stats.maxStamina}`,
+    ].join(' · ');
+
+    return h(
+      'div',
+      { class: 'body character' },
+      h(
+        'div',
+        { class: 'power-head' },
+        h('div', { class: 'power-label' }, 'Power'),
+        h('div', { class: 'power-value' }, String(power)),
+        h(
+          'div',
+          { class: 'power-max', title: 'Drops are based on this: the best piece you own per slot' },
+          `Max ${max}`,
+        ),
+        h(
+          'button',
+          {
+            class: 'work',
+            disabled: max <= power && !this.betterReachable(sim),
+            title: 'Put on the highest-Power piece you can reach for every slot',
+            onclick: () => this.host.act({ type: 'equipBest' }),
+          },
+          'Equip best',
+        ),
+        quick,
+      ),
+      h(
+        'div',
+        { class: 'doll' },
+        h('div', { class: 'side' }, ...(['weapon', 'ring0', 'ring1'] as const).map(slotTile)),
+        this.flyout(sim),
+        h('div', { class: 'side' }, ...(['helmet', 'chest', 'legs'] as const).map(slotTile)),
+      ),
+      h(
+        'div',
+        { class: 'stat-line' },
+        h('span', {}, statLine),
+        h(
+          'button',
+          { class: 'quiet', onclick: () => this.toggleDetails() },
+          this.details ? 'Hide details' : 'Details',
+        ),
+      ),
+      this.details ? this.statSheet(sim) : '',
+      this.packTools(sim),
+      h('div', { class: 'col detail' }, this.selected ? this.selectedDetail(sim) : this.card(sim)),
+    );
+  }
+
+  /** Everything owned for the open slot: carried pieces, then stashed ones, highest Power first. */
+  private flyout(sim: Simulation): HTMLElement {
+    const slot = this.flyoutSlot;
+    if (!slot)
+      return h(
+        'div',
+        { class: 'flyout' },
+        h('p', { class: 'hint' }, 'Hover a slot to see what you have for it.'),
+      );
+    const pieces = this.owned(sim, slot);
+    const worn = gearPower(sim.ecs.need(sim.player, Equipment)[slot]);
+    const reach = stashReachable(sim);
+    const tiles = pieces.map((p) => {
+      const on = this.hover !== null && this.hover.from === p.from && this.hover.index === p.index;
+      const cell = this.cell(sim, p.stack, null, () =>
+        this.host.act(
+          p.from === 'pack'
+            ? { type: 'equip', index: p.index, slot }
+            : { type: 'equipStash', index: p.index, slot },
+        ),
+      );
+      cell.classList.add('flyout-cell');
+      if (on) cell.classList.add('selected');
+      if (p.from === 'stash') {
+        cell.classList.add('stashed');
+        if (!reach) cell.title = `${cell.title} (in the stash: ${STASH_CLOSED})`;
+      }
+      cell.onmouseenter = () => this.hoverPiece({ from: p.from, index: p.index });
+      cell.oncontextmenu = (ev) => {
+        ev.preventDefault();
+        this.select(p.from === 'pack' ? { pack: p.index } : { stash: p.index });
+      };
+      const pw = gearPower(p.stack);
+      cell.append(h('span', { class: 'power-badge' }, String(pw)));
+      if (pw > worn) cell.append(h('span', { class: 'better', title: 'More Power than what you wear' }, '▲'));
+      if (p.from === 'stash') cell.append(h('span', { class: 'stash-mark', title: 'In the stash' }, 'S'));
+      return cell;
+    });
+    const carried = pieces.filter((p) => p.from === 'pack').length;
+    const stashed = pieces.length - carried;
+    return h(
+      'div',
+      { class: 'flyout' },
+      h('h2', {}, `${SLOT_LABELS[slot]} · ${carried} carried${stashed ? `, ${stashed} in the stash` : ''}`),
+      tiles.length
+        ? h('div', { class: 'grid' }, ...tiles)
+        : h('p', { class: 'hint' }, 'Nothing else for this slot yet.'),
+      h('p', { class: 'hint' }, 'Click to equip · right-click to inspect'),
+    );
+  }
+
+  /** The pieces owned for a slot (rings for either ring slot), carried then stashed, highest Power first. */
+  private owned(sim: Simulation, slot: EquipSlot): Owned[] {
+    const kind = slot === 'ring0' || slot === 'ring1' ? 'ring' : slot;
+    const fits = (stack: ItemStack) => gearSlotOf(sim.content.item(stack.item)) === kind;
+    const carried = sim.ecs
+      .need(sim.player, Inventory)
+      .stacks.map((stack, index): Owned => ({ stack, index, from: 'pack' }))
+      .filter((p) => fits(p.stack));
+    const stashed = stashOf(sim)
+      .map((stack, index): Owned => ({ stack, index, from: 'stash' }))
+      .filter((p) => fits(p.stack));
+    return [...carried, ...stashed].sort((x, y) => gearPower(y.stack) - gearPower(x.stack));
+  }
+
+  /** Whether Equip best would change anything: some reachable piece has more Power than what is worn. */
+  private betterReachable(sim: Simulation): boolean {
+    const eq = sim.ecs.need(sim.player, Equipment);
+    return (['weapon', 'helmet', 'chest', 'legs', 'ring0', 'ring1'] as const).some((slot) =>
+      this.owned(sim, slot).some(
+        (p) => (p.from === 'pack' || stashReachable(sim)) && gearPower(p.stack) > gearPower(eq[slot]),
+      ),
+    );
+  }
+
+  /** The short card for the hovered piece: name, tier, Power, the two changes that matter, its perks. */
+  private card(sim: Simulation): HTMLElement {
+    const slot = this.flyoutSlot;
+    const hover = this.hover;
+    const stack =
+      hover === null
+        ? undefined
+        : hover.from === 'pack'
+          ? sim.ecs.need(sim.player, Inventory).stacks[hover.index]
+          : stashOf(sim)[hover.index];
+    if (!slot || !hover || !stack) {
+      const worn = slot ? sim.ecs.need(sim.player, Equipment)[slot] : null;
+      if (worn) return this.shortCard(sim, worn, null, 'Click the slot to inspect it in full.');
+      return h('p', { class: 'hint' }, 'Hover a piece to compare it with what you wear.');
+    }
+    const c = compareStack(sim, stack, slot);
+    const where =
+      hover.from === 'stash' && !stashReachable(sim)
+        ? `In the stash: ${STASH_CLOSED} to equip it.`
+        : 'Click to equip · right-click to inspect';
+    return this.shortCard(sim, stack, c, where);
+  }
+
+  private shortCard(sim: Simulation, stack: ItemStack, c: Comparison | null, hint: string): HTMLElement {
+    const def = sim.content.item(stack.item);
+    const gear = gearOf(stack);
+    const tier = sim.content.loot.tiers[gear.tier];
+    const kind = gearSlotOf(def);
+    const legendary = legendaryPower(sim.content, stack);
+    const changes: HTMLElement[] = [];
+    if (c) {
+      const delta = (
+        label: string,
+        now: number,
+        after: number,
+        fmt: (n: number) => string,
+        lower = false,
+      ) => {
+        const diff = after - now;
+        if (Math.abs(diff) < 1e-9) return;
+        const good = lower ? diff < 0 : diff > 0;
+        changes.push(
+          h(
+            'li',
+            { class: good ? 'up' : 'down' },
+            `${label} ${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))} ${good ? '▲' : '▼'}`,
+          ),
+        );
+      };
+      const whole = (n: number) => String(Math.round(n));
+      const pct = (n: number) => `${Math.round(n * 100)}%`;
+      delta('Power', c.now.power, c.after.power, whole);
+      if (kind === 'weapon') delta('Attack', c.now.damage, c.after.damage, whole);
+      else if (kind === 'ring') {
+        delta('Max HP', c.now.maxHp, c.after.maxHp, whole);
+        delta('Max stamina', c.now.maxStamina, c.after.maxStamina, whole);
+      } else delta('Damage taken', 1 - c.now.defense, 1 - c.after.defense, pct, true);
+    }
+    const perks = perkLines(sim.content, stack).filter((l) => !l.innate || legendary === undefined);
+    const card = h(
+      'div',
+      { class: 'short-card' },
+      h('div', { class: 'title' }, this.cell(sim, stack, null, null), this.gearName(sim, stack)),
+      h(
+        'div',
+        { class: 'tierline' },
+        `${gear.blighted ? 'Blighted ' : ''}${tier.name} ${kind ? capitalize(kind) : ''} · Power ${gear.power}`,
+      ),
+      changes.length ? h('ul', { class: 'changes' }, ...changes.slice(0, 3)) : '',
+      h(
+        'ul',
+        { class: 'perks' },
+        legendary ? h('li', { class: 'legendary' }, `${legendary.name}: ${legendary.text}`) : '',
+        ...perks.map((l) => h('li', { class: l.drawback ? 'drawback' : '' }, perkText(sim.content, l))),
+      ),
+      h('p', { class: 'hint' }, hint),
+    );
+    card.style.setProperty('--tier', tier.color);
+    return card;
+  }
+
+  /** The full stat sheet, behind Details. */
+  private statSheet(sim: Simulation): HTMLElement {
+    const stats = playerStats(sim, sim.player);
+    const attrs = sim.ecs.get(sim.player, Attributes);
+    const rows: [string, string][] = [
       ['Level', attrs ? String(playerLevel(attrs)) : '1'],
-      ['Attack', String(Math.round(stats.damage))],
-      [
-        'Armor',
-        `${stats.armor} (${Math.round(stats.defense * 100)}% less damage${capped ? ', capped' : ''})`,
-      ],
-      ['Max HP', String(stats.maxHp)],
-      ['Max stamina', String(stats.maxStamina)],
       ['Stamina regen', `${Math.round(stats.staminaRegen * TICK_RATE)}/s`],
       ...ATTRIBUTES.map((id): [string, string] => {
         const own = attrs?.[id] ?? 0;
@@ -309,44 +507,103 @@ export class InventoryScreen {
         ];
       }),
     ];
+    return h('dl', { class: 'stat-sheet' }, ...rows.flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)]));
+  }
 
+  /** Consumables and materials: the bag (with its limit) and the counts. */
+  private bagTab(sim: Simulation): HTMLElement {
+    const inv = sim.ecs.need(sim.player, Inventory);
+    const picked = this.selected;
+    const cells = (pocket: (p: Pocket) => boolean) =>
+      inv.stacks
+        .map((stack, i) => ({ stack, i }))
+        .filter(({ stack }) => pocket(pocketOf(sim.content, stack.item)))
+        .map(({ stack, i }) => {
+          const on = picked !== null && 'pack' in picked && picked.pack === i;
+          const cell = this.cell(sim, stack, null, () => this.select(on ? null : { pack: i }));
+          if (on) cell.classList.add('selected');
+          return cell;
+        });
+    const index = picked && 'pack' in picked ? picked.pack : null;
+    const stack = index === null ? undefined : inv.stacks[index];
+    const shown =
+      index !== null && stack && !gearSlotOf(sim.content.item(stack.item))
+        ? this.detail(sim, stack, index)
+        : h('p', { class: 'hint' }, 'Select something to use it or stash it.');
     return h(
       'div',
       { class: 'body items' },
       h(
         'div',
-        { class: 'col gear' },
-        h(
-          'div',
-          { class: 'paperdoll' },
-          h('div', { class: 'side' }, ...(['weapon', 'ring0', 'ring1'] as const).map(slotRow)),
-          h(
-            'div',
-            { class: 'power' },
-            h('div', { class: 'label' }, 'Power'),
-            h('div', { class: 'value' }, String(playerPower(sim))),
-            // What drops are based on: the best piece owned per slot, worn or not.
-            h('div', { class: 'label' }, `Max ${maxPower(sim)}`),
-            quick,
-          ),
-          h('div', { class: 'side' }, ...(['helmet', 'chest', 'legs'] as const).map(slotRow)),
-        ),
-        h('dl', {}, ...statRows.flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])),
-      ),
-      h(
-        'div',
         { class: 'col' },
-        h('h2', {}, 'Gear'),
-        h('p', { class: 'hint' }, pocketLine),
-        h('div', { class: 'grid' }, ...gearCells),
-        this.packTools(sim),
-        h('h2', {}, `Bag ${pocketUsed(sim.content, inv, 'bag')}/${storage.bag}`),
-        h('div', { class: 'grid' }, ...bagCells),
+        h('h2', {}, `Bag ${pocketUsed(sim.content, inv, 'bag')}/${sim.content.player.storage.bag}`),
+        h('div', { class: 'grid' }, ...cells((p) => p === 'bag')),
         h('h2', {}, 'Materials'),
-        h('div', { class: 'grid' }, ...materialCells),
+        h('div', { class: 'grid' }, ...cells((p) => p === 'materials')),
       ),
-      h('div', { class: 'col detail' }, this.selectedDetail(sim)),
+      h('div', { class: 'col detail' }, shown),
     );
+  }
+
+  private openSlot(slot: EquipSlot): void {
+    if (this.flyoutSlot === slot) return;
+    this.flyoutSlot = slot;
+    this.hover = null;
+    this.refresh(true);
+  }
+
+  private hoverPiece(piece: { from: 'pack' | 'stash'; index: number }): void {
+    if (this.hover?.from === piece.from && this.hover.index === piece.index) return;
+    this.hover = piece;
+    this.selected = null;
+    this.refresh(true);
+  }
+
+  private toggleDetails(): void {
+    this.details = !this.details;
+    this.refresh(true);
+  }
+
+  /**
+   * Keyboard on the character screen: the arrows move between slots (up and down a column, left and right across),
+   * Enter equips the highest-Power piece for the open slot. True if it used the key.
+   */
+  key(code: string): boolean {
+    if (!this.el || this.tab !== 'items') return false;
+    const columns: EquipSlot[][] = [
+      ['weapon', 'ring0', 'ring1'],
+      ['helmet', 'chest', 'legs'],
+    ];
+    const at = this.flyoutSlot ?? 'weapon';
+    const col = columns.findIndex((c) => c.includes(at));
+    const row = columns[col]!.indexOf(at);
+    const move = (c: number, r: number) => {
+      const next = columns[(c + 2) % 2]![(r + 3) % 3]!;
+      this.openSlot(next);
+      return true;
+    };
+    switch (code) {
+      case 'ArrowUp':
+        return move(col, row - 1);
+      case 'ArrowDown':
+        return move(col, row + 1);
+      case 'ArrowLeft':
+      case 'ArrowRight':
+        return move(col + 1, row);
+      case 'Enter': {
+        const sim = this.host.sim();
+        const best = sim ? this.owned(sim, at)[0] : undefined;
+        if (!best) return false;
+        this.host.act(
+          best.from === 'pack'
+            ? { type: 'equip', index: best.index, slot: at }
+            : { type: 'equipStash', index: best.index, slot: at },
+        );
+        return true;
+      }
+      default:
+        return false;
+    }
   }
 
   private select(selection: Selection | null): void {
@@ -357,16 +614,58 @@ export class InventoryScreen {
 
   private selectedDetail(sim: Simulation): HTMLElement {
     const picked = this.selected;
+    const back = h('button', { class: 'quiet', onclick: () => this.select(null) }, 'Back');
     if (picked && 'slot' in picked) {
       const stack = sim.ecs.need(sim.player, Equipment)[picked.slot];
       if (stack)
         return this.gearDetail(
           sim,
           stack,
-          [h('button', { onclick: () => this.host.act({ type: 'unequip', slot: picked.slot }) }, 'Unequip')],
+          [
+            back,
+            h('button', { onclick: () => this.host.act({ type: 'unequip', slot: picked.slot }) }, 'Unequip'),
+          ],
           null,
           this.work(sim, { slot: picked.slot }, stack),
         );
+    }
+    if (picked && 'stash' in picked) {
+      const stack = stashOf(sim)[picked.stash];
+      if (stack) {
+        const index = picked.stash;
+        const check = canUnstash(sim, index);
+        return this.gearDetail(
+          sim,
+          stack,
+          [
+            back,
+            h(
+              'button',
+              {
+                disabled: !stashReachable(sim),
+                title: stashReachable(sim) ? '' : STASH_CLOSED,
+                onclick: () =>
+                  this.host.act({
+                    type: 'equipStash',
+                    index,
+                    ...(this.flyoutSlot ? { slot: this.flyoutSlot } : {}),
+                  }),
+              },
+              'Equip',
+            ),
+            h(
+              'button',
+              {
+                disabled: !check.ok,
+                title: check.ok ? '' : check.reason,
+                onclick: () => this.host.act({ type: 'unstash', index }),
+              },
+              'Take',
+            ),
+          ],
+          compareStack(sim, stack, this.flyoutSlot ?? 'weapon'),
+        );
+      }
     }
     const index = picked && 'pack' in picked ? picked.pack : null;
     const stack = index === null ? undefined : sim.ecs.need(sim.player, Inventory).stacks[index];
@@ -382,10 +681,22 @@ export class InventoryScreen {
         sim,
         stack,
         [
-          h('button', { onclick: () => this.host.act({ type: 'equip', index }) }, 'Equip'),
+          h('button', { class: 'quiet', onclick: () => this.select(null) }, 'Back'),
+          h(
+            'button',
+            {
+              onclick: () =>
+                this.host.act({
+                  type: 'equip',
+                  index,
+                  ...(this.flyoutSlot ? { slot: this.flyoutSlot } : {}),
+                }),
+            },
+            'Equip',
+          ),
           this.stashButton(sim, index),
         ],
-        comparison,
+        this.flyoutSlot ? compareStack(sim, stack, this.flyoutSlot) : comparison,
         this.work(sim, { pack: index }, stack),
       );
     }
@@ -964,15 +1275,6 @@ function capitalize(text: string): string {
 }
 
 /** The headline number under a piece of gear's name on the paper doll. */
-function mainLine(sim: Simulation, stack: ItemStack): string {
-  const weapon = weaponNumbers(sim.content, stack);
-  if (weapon) return `${weapon.damage} attack`;
-  const armor = armorValue(sim.content, stack);
-  if (armor > 0) return `${armor} armor`;
-  const first = perkLines(sim.content, stack)[0];
-  return first ? perkText(sim.content, first) : '';
-}
-
 /** A piece of gear's own numbers, before perks. */
 function gearFacts(sim: Simulation, stack: ItemStack): string[] {
   const def = sim.content.item(stack.item);

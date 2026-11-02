@@ -484,86 +484,157 @@ kbd {
   color: var(--dim);
   white-space: nowrap;
 }
-/* The equipment paper doll: weapon and rings left, armor right, Power between. */
-.inventory .paperdoll {
+/*
+ * The character screen: Power across the top; the six slot tiles in two columns with the open slot's flyout
+ * between them; the short stat line; and the hovered piece's card (or an inspected one) on the right.
+ */
+.inventory .character {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 0.6em;
-  margin-bottom: 1em;
+  grid-template-columns: minmax(0, 1fr) 19em;
+  grid-auto-rows: auto;
+  gap: 0.8em 1em;
+  align-items: start;
 }
-.inventory .paperdoll .side {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.inventory .character > :not(.detail) {
+  grid-column: 1;
 }
-.inventory .slot {
+.inventory .character .detail {
+  grid-column: 2;
+  grid-row: 1 / span 5;
+}
+.inventory .power-head {
   display: flex;
   align-items: center;
-  gap: 0.4em;
-  width: 10.5em;
-  padding: 2px 4px 2px 2px;
+  gap: 0.8em;
+}
+.inventory .power-label {
+  font-family: var(--display);
+  letter-spacing: 0.15em;
+  font-size: 0.8em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+.inventory .power-value {
+  font-family: var(--display);
+  font-size: 2em;
+  color: var(--ember);
+  font-variant-numeric: tabular-nums;
+}
+.inventory .power-max {
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.inventory .power-head .cell {
+  margin-left: auto;
+}
+.inventory .doll {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.8em;
+}
+.inventory .doll .side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.inventory .slot-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 2px 6px 2px 2px;
   text-align: left;
   border: 1px solid transparent;
 }
-.inventory .slot.selected {
+.inventory .slot-tile.open {
   border-color: var(--edge);
   background: rgba(214, 190, 140, 0.08);
 }
-.inventory .slot:not(:disabled):hover {
-  background: rgba(214, 190, 140, 0.06);
-}
-.inventory .slot:disabled {
-  cursor: default;
-}
-.inventory .slot .what {
-  min-width: 0;
-  line-height: 1.15;
-}
-.inventory .slot .label {
+.inventory .slot-tile .label {
   font-size: 0.65em;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--dim);
 }
-.inventory .slot .name {
-  font-size: 0.85em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.inventory .slot .name.none {
-  color: var(--dim);
-  opacity: 0.6;
-}
-.inventory .slot .main {
-  font-size: 0.75em;
-  color: var(--dim);
-  white-space: nowrap;
-}
-.inventory .power {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2em;
-  min-width: 5em;
-}
-.inventory .power .label {
+.inventory .slot-tile .tile-power {
   font-family: var(--display);
-  letter-spacing: 0.15em;
-  font-size: 0.75em;
-  color: var(--dim);
-  text-transform: uppercase;
-}
-.inventory .power .value {
-  font-family: var(--display);
-  font-size: 2em;
-  color: var(--ember);
+  font-size: 1.1em;
   font-variant-numeric: tabular-nums;
-  margin-bottom: 0.6em;
 }
-.inventory .power .cell .label {
-  top: calc(100% + 6px);
+.inventory .flyout {
+  min-height: 10em;
+  padding: 0.3em 0.5em;
+  border: 1px solid rgba(214, 190, 140, 0.15);
+}
+.inventory .flyout .grid {
+  grid-template-columns: repeat(auto-fill, 48px);
+  row-gap: 14px;
+  margin-bottom: 0.4em;
+}
+.inventory .cell .power-badge {
+  position: absolute;
+  bottom: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 3px #000;
+}
+.inventory .cell .better {
+  position: absolute;
+  right: -7px;
+  top: -9px;
+  font-size: 0.75em;
+  color: #8fd47a;
+  text-shadow: 0 0 3px #000;
+}
+.inventory .cell .stash-mark {
+  position: absolute;
+  left: -6px;
+  top: -9px;
+  font-size: 0.65em;
+  color: var(--dim);
+  text-shadow: 0 0 3px #000;
+}
+.inventory .cell.stashed > img,
+.inventory .cell.stashed > canvas {
+  opacity: 0.5;
+}
+.inventory .stat-line {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  font-size: 0.85em;
+  color: var(--dim);
+}
+.inventory .stat-sheet {
+  font-size: 0.85em;
+}
+.inventory .short-card .title {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.inventory .short-card .title .name {
+  font-family: var(--display);
+}
+.inventory .short-card .changes {
+  list-style: none;
+  margin: 0 0 0.4em;
+}
+.inventory .short-card .changes .up {
+  color: #8fd47a;
+}
+.inventory .short-card .changes .down {
+  color: #e07060;
+}
+.inventory .short-card .perks li {
+  font-size: 0.85em;
+}
+.inventory .short-card .perks .legendary {
+  color: var(--tier);
+}
+.inventory .short-card .perks .drawback {
+  color: #e07060;
 }
 
 /* Tier borders. Each tier has its own shape as well as its color, so color is never the only cue. */

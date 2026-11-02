@@ -1,7 +1,7 @@
 # Power, the stash and the character screen: design proposal
 
 **Status: decided (2026-11-02). The owner took the recommended answer to all six questions (section 9). Phases 1
-to 3 are built.** This builds on `docs/gear-and-loot.md` (the gear rework, phases 0–7, all built) and turns
+to 4 are built.** This builds on `docs/gear-and-loot.md` (the gear rework, phases 0–7, all built) and turns
 the owner's next six notes into a design:
 
 1. More enemies.
@@ -316,6 +316,29 @@ over at Power 10.
 - **Dev commands:** `power` prints Power, Max Power, weapon and armor Power, and the enemy Power and drop cap where
   you stand; `setpower 300` sets everything worn to 300, for playtesting a ring; `gear <tier> [id] [power]` rolls
   at Max Power by default.
+
+**Phase 4 as built (2026-11-02):**
+
+- **Tabs:** Character, Bag (consumables and materials), Stash, Crafting, Abilities. The Character tab replaces the
+  old Inventory tab.
+- **Slot tiles** show the icon, tier border and Power only. Hovering one (or moving to it with the arrow keys)
+  opens its **flyout** between the two columns: everything owned for that slot, carried pieces and stashed ones
+  together, highest Power first, each with its Power, a green ▲ when it has more Power than what is worn, and a
+  small S and dimmed icon for a stashed piece. Both ring slots share the rings.
+- **Hovering a piece** shows the **short card** on the right: name, tier, type and Power, the changes that matter
+  (Power, then Attack for a weapon, Damage taken for armor, max HP and stamina for a ring), the Legendary power
+  first and one line per perk.
+- **Clicking a piece equips it** into the open slot (so a ring replaces the ring you chose). A stashed piece
+  equips where the stash opens, and the piece it replaces takes its place in the stash. **Right-clicking**
+  inspects it in full: every stat, the comparison table, perks, and the forge's buttons; a Back button returns to
+  the cards. Clicking a slot tile inspects what is worn there.
+- **Equip best** puts on the highest-Power piece for every slot, the two best rings for the ring slots. Ties go
+  to what is worn, and stashed pieces only count where the stash opens.
+- **The stat line** is short (attack, armor and its percentage, HP, stamina); level, regen and the attributes are
+  behind **Details**.
+- **Keyboard:** the arrows move between slots, Enter equips the open slot's highest-Power piece.
+- **Not done:** gamepad. The client has no gamepad support anywhere yet, so the screen works by mouse and
+  keyboard. The character sprite between the slot columns is still to come (the flyout uses that space for now).
 
 **Phase 3 as built (2026-11-02):**
 

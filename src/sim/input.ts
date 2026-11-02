@@ -29,7 +29,12 @@ export type ActionName = keyof typeof Action;
 export type GearTarget = { pack: number } | { slot: EquipSlot };
 
 export type PlayerAction =
-  | { type: 'equip'; index: number }
+  /** Equips a carried piece (by pack index), into `slot` when given (which ring to replace). */
+  | { type: 'equip'; index: number; slot?: EquipSlot }
+  /** Equips a piece straight from the stash (by stash index); what it replaces goes into the stash. Where it opens. */
+  | { type: 'equipStash'; index: number; slot?: EquipSlot }
+  /** Puts on the highest-Power piece the player can reach for every slot. */
+  | { type: 'equipBest' }
   | { type: 'unequip'; slot: EquipSlot }
   /** Moves a carried piece (by pack index) into the stash, or one from the stash (by index) back. Only where it opens. */
   | { type: 'stash'; index: number }
