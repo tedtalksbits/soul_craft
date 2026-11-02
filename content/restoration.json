@@ -41,7 +41,7 @@
   },
   "storehouse": {
     "name": "The Storehouse",
-    "description": "A collapsed storehouse. Rebuilt, it will hold what you cannot carry: your pack grows by eight slots.",
+    "description": "A collapsed storehouse. Rebuilt, it keeps your stash at every bonfire, not just the village's.",
     "tier": "small",
     "cost": {
       "items": [
@@ -50,12 +50,14 @@
       ],
       "souls": 150
     },
-    "effects": [{ "type": "inventorySlots", "amount": 8 }],
+    "effects": [{ "type": "stashEverywhere" }],
     "sprite": { "ruin": "storehouse_ruin", "restored": "storehouse" },
-    "restoredLines": ["Shelves and sacks, stacked to the rafters. Your pack has room for eight more."],
+    "restoredLines": [
+      "Shelves and sacks, stacked to the rafters. Whatever you leave here, you can reach from any bonfire."
+    ],
     "ranks": [
       {
-        "description": "Add a loft and a counter. Eight more slots, and a peddler with a gambler’s eye has asked for the counter.",
+        "description": "Add a loft and a counter: a hundred more places in the stash, and a peddler with a gambler’s eye has asked for the counter.",
         "cost": {
           "items": [
             { "item": "ashwood", "count": 30 },
@@ -63,10 +65,10 @@
           ],
           "souls": 375
         },
-        "effects": [{ "type": "inventorySlots", "amount": 8 }, { "type": "gambler" }]
+        "effects": [{ "type": "stashSlots", "amount": 100 }, { "type": "gambler" }]
       },
       {
-        "description": "A cellar under the floor, warded with a Warden’s ember: eight more slots.",
+        "description": "A cellar under the floor, warded with a Warden’s ember: a hundred more places in the stash.",
         "cost": {
           "items": [
             { "item": "ashwood", "count": 50 },
@@ -75,7 +77,7 @@
           ],
           "souls": 900
         },
-        "effects": [{ "type": "inventorySlots", "amount": 8 }]
+        "effects": [{ "type": "stashSlots", "amount": 100 }]
       }
     ]
   },

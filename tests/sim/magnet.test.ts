@@ -49,8 +49,8 @@ describe('loot magnet', () => {
 
   it('does not pull items the pack has no room for', () => {
     const sim = newSim();
-    addItem(sim, sim.player, 'ashwood', 99 * content.player.inventorySlots);
-    const e = dropAt(sim, radius - 6, 'item', 'bone_shard');
+    addItem(sim, sim.player, 'field_bandage', 10 * content.player.storage.bag);
+    const e = dropAt(sim, radius - 6, 'item', 'ember_tonic');
     const x = sim.ecs.need(e, Body).x;
     run(sim, 90);
     expect(sim.ecs.need(e, Body).x).toBe(x);

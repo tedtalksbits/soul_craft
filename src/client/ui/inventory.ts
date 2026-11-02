@@ -48,7 +48,16 @@ import {
   type GearSummary,
 } from '../../sim/modules/items';
 import { maxPower, playerPower } from '../../sim/modules/power';
-import { inventoryCapacity } from '../../sim/modules/restored-effects';
+import { canStash, canUnstash } from '../../sim/modules/stash';
+import {
+  pocketOf,
+  pocketUsed,
+  stashable,
+  stashCapacity,
+  stashOf,
+  stashReachable,
+  type Pocket,
+} from '../../sim/modules/storage';
 import type { Simulation } from '../../sim/simulation';
 import { TICK_RATE } from '../../sim/constants';
 import { primaryKey, type Bindings } from '../keybinds';
@@ -67,7 +76,7 @@ export interface InventoryHost {
   abilityIcon(ability: string): HTMLElement;
 }
 
-type Tab = 'items' | 'craft' | 'abilities';
+type Tab = 'items' | 'stash' | 'craft' | 'abilities';
 
 const SLOT_BINDING = { aoe: 'aoe', class: 'classAbility', super: 'super' } as const;
 const SLOT_NAMES = { aoe: 'AoE ability', class: 'Class ability', super: 'Super' } as const;
@@ -90,8 +99,17 @@ const STAT_LABELS = {
   maxHp: 'max HP',
 } as const;
 
-/** What is selected: a pack slot, or a piece of equipped gear. */
-type Selection = { pack: number } | { slot: EquipSlot };
+/** What is selected: a pack slot, a piece of equipped gear, or a place in the stash. */
+type Selection = { pack: number } | { slot: EquipSlot } | { stash: number };
+
+/** The gear pockets, in the order the pack shows them. */
+const POCKETS = [
+  ['weapon', 'Weapons'],
+  ['helmet', 'Helmets'],
+  ['chest', 'Chests'],
+  ['legs', 'Legs'],
+  ['ring', 'Rings'],
+] as const;
 
 export class InventoryScreen {
   private el: HTMLElement | null = null;
@@ -141,9 +159,11 @@ export class InventoryScreen {
     const body =
       this.tab === 'items'
         ? this.itemsTab(sim)
-        : this.tab === 'craft'
-          ? this.craftTab(sim)
-          : this.abilitiesTab(sim);
+        : this.tab === 'stash'
+          ? this.stashTab(sim)
+          : this.tab === 'craft'
+            ? this.craftTab(sim)
+            : this.abilitiesTab(sim);
     this.el.replaceChildren(this.header(sim), body);
     const shown = this.el.querySelector('.body');
     if (shown) shown.scrollTop = scroll;
@@ -156,6 +176,8 @@ export class InventoryScreen {
       this.station,
       this.selected,
       sim.ecs.get(e, Inventory)?.stacks,
+      sim.state.stash,
+      sim.state.checkpoint?.id,
       sim.ecs.get(e, Equipment),
       sim.ecs.get(e, Player)?.souls,
       sim.ecs.get(e, Buffs)?.active.map((b) => b.stat),
@@ -189,6 +211,7 @@ export class InventoryScreen {
       'div',
       { class: 'head' },
       tab('items', 'Inventory'),
+      tab('stash', 'Stash'),
       tab('craft', this.station ? STATIONS[this.station] : 'Crafting'),
       tab('abilities', 'Abilities'),
       h('div', { class: 'souls' }, `${souls} souls`),
@@ -205,8 +228,8 @@ export class InventoryScreen {
   private itemsTab(sim: Simulation): HTMLElement {
     const e = sim.player;
     const eq = sim.ecs.need(e, Equipment);
-    const stacks = sim.ecs.need(e, Inventory).stacks;
-    const slots = inventoryCapacity(sim);
+    const inv = sim.ecs.need(e, Inventory);
+    const stacks = inv.stacks;
     const picked = this.selected;
 
     const slotRow = (slot: EquipSlot) => {
@@ -242,16 +265,27 @@ export class InventoryScreen {
       eq.quick ? () => this.host.act({ type: 'setQuick', item: null }) : null,
     );
 
-    const grid = Array.from({ length: slots }, (_, i) => {
-      const stack = stacks[i] ?? null;
-      const on = picked !== null && 'pack' in picked && picked.pack === i;
-      const cell = this.cell(sim, stack, null, () => this.select(stack && !on ? { pack: i } : null));
-      if (on) cell.classList.add('selected');
-      const compared = stack ? compareGear(sim, i) : null;
-      if (compared && compared.after.power < compared.now.power)
-        cell.append(h('span', { class: 'worse', title: 'Lowers your Power' }, '↓'));
-      return cell;
-    });
+    // Each kind of thing in its own section, keeping its pack index for selection.
+    const indexed = stacks.map((stack, i) => ({ stack, i, pocket: pocketOf(sim.content, stack.item) }));
+    const cells = (pocket: (p: Pocket) => boolean) =>
+      indexed
+        .filter((x) => pocket(x.pocket))
+        .map(({ stack, i }) => {
+          const on = picked !== null && 'pack' in picked && picked.pack === i;
+          const cell = this.cell(sim, stack, null, () => this.select(on ? null : { pack: i }));
+          if (on) cell.classList.add('selected');
+          const compared = compareGear(sim, i);
+          if (compared && compared.after.power < compared.now.power)
+            cell.append(h('span', { class: 'worse', title: 'Lowers your Power' }, '↓'));
+          return cell;
+        });
+    const { storage } = sim.content.player;
+    const pocketLine = POCKETS.map(
+      ([p, label]) => `${label} ${pocketUsed(sim.content, inv, p)}/${storage.pocket}`,
+    ).join(' · ');
+    const gearCells = cells((p) => p !== 'bag' && p !== 'materials');
+    const bagCells = cells((p) => p === 'bag');
+    const materialCells = cells((p) => p === 'materials');
 
     const stats = playerStats(sim, e);
     const attrs = sim.ecs.get(e, Attributes);
@@ -302,9 +336,14 @@ export class InventoryScreen {
       h(
         'div',
         { class: 'col' },
-        h('h2', {}, `Pack ${stacks.length}/${slots}`),
-        h('div', { class: 'grid' }, ...grid),
+        h('h2', {}, 'Gear'),
+        h('p', { class: 'hint' }, pocketLine),
+        h('div', { class: 'grid' }, ...gearCells),
         this.packTools(sim),
+        h('h2', {}, `Bag ${pocketUsed(sim.content, inv, 'bag')}/${storage.bag}`),
+        h('div', { class: 'grid' }, ...bagCells),
+        h('h2', {}, 'Materials'),
+        h('div', { class: 'grid' }, ...materialCells),
       ),
       h('div', { class: 'col detail' }, this.selectedDetail(sim)),
     );
@@ -342,7 +381,10 @@ export class InventoryScreen {
       return this.gearDetail(
         sim,
         stack,
-        [h('button', { onclick: () => this.host.act({ type: 'equip', index }) }, 'Equip')],
+        [
+          h('button', { onclick: () => this.host.act({ type: 'equip', index }) }, 'Equip'),
+          this.stashButton(sim, index),
+        ],
         comparison,
         this.work(sim, { pack: index }, stack),
       );
@@ -365,6 +407,12 @@ export class InventoryScreen {
             ),
       );
     }
+    if (stashable(sim.content, stack.item)) buttons.push(this.stashButton(sim, index));
+    return this.plainDetail(sim, stack, buttons);
+  }
+
+  private plainDetail(sim: Simulation, stack: ItemStack, buttons: HTMLElement[]): HTMLElement {
+    const def = sim.content.item(stack.item);
     return h(
       'div',
       {},
@@ -372,6 +420,67 @@ export class InventoryScreen {
       h('p', {}, def.description),
       h('ul', { class: 'facts' }, ...facts(def).map((f) => h('li', {}, f))),
       h('div', { class: 'actions' }, ...buttons),
+    );
+  }
+
+  /** Puts a carried piece in the stash; greyed out, with the reason, where the stash doesn't open. */
+  private stashButton(sim: Simulation, index: number): HTMLElement {
+    const check = canStash(sim, index);
+    return h(
+      'button',
+      {
+        disabled: !check.ok,
+        title: check.ok ? '' : check.reason,
+        onclick: () => this.host.act({ type: 'stash', index }),
+      },
+      'Stash',
+    );
+  }
+
+  // ------------------------------------------------------------------ stash tab
+
+  /** Everything kept at the bonfire: browse it anywhere, take from it where it opens. */
+  private stashTab(sim: Simulation): HTMLElement {
+    const kept = stashOf(sim);
+    const picked = this.selected;
+    const cells = kept.map((stack, i) => {
+      const on = picked !== null && 'stash' in picked && picked.stash === i;
+      const cell = this.cell(sim, stack, null, () => this.select(on ? null : { stash: i }));
+      if (on) cell.classList.add('selected');
+      return cell;
+    });
+    const where = stashReachable(sim)
+      ? 'Open here: take what you need.'
+      : 'Rest at the village bonfire to take from it (at any bonfire, once the Storehouse is rebuilt). Full pockets send new gear here from anywhere.';
+    const index = picked && 'stash' in picked ? picked.stash : null;
+    const stack = index === null ? undefined : kept[index];
+    let detail: HTMLElement = h('p', { class: 'hint' }, 'Select something in the stash.');
+    if (index !== null && stack) {
+      const check = canUnstash(sim, index);
+      const take = h(
+        'button',
+        {
+          disabled: !check.ok,
+          title: check.ok ? '' : check.reason,
+          onclick: () => this.host.act({ type: 'unstash', index }),
+        },
+        'Take',
+      );
+      detail = gearSlotOf(sim.content.item(stack.item))
+        ? this.gearDetail(sim, stack, [take])
+        : this.plainDetail(sim, stack, [take]);
+    }
+    return h(
+      'div',
+      { class: 'body items' },
+      h(
+        'div',
+        { class: 'col' },
+        h('h2', {}, `Stash ${kept.length}/${stashCapacity(sim)}`),
+        h('p', { class: 'hint' }, where),
+        h('div', { class: 'grid' }, ...cells),
+      ),
+      h('div', { class: 'col detail' }, detail),
     );
   }
 

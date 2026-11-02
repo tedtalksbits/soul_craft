@@ -30,7 +30,7 @@
   "death": { "soulPenalty": 0.5, "respawnDelay": 210 },
   "magnet": { "radius": 40, "speed": 0.4, "accel": 0.12, "maxSpeed": 5 },
   "exploration": { "revealRadius": 14 },
-  "inventorySlots": 24,
+  "storage": { "pocket": 9, "bag": 12, "stash": 200 },
   "start": {
     "class": "vanguard",
     "gear": ["chipped_sword", "ashen_hood", "padded_jacket", "wanderers_wraps"],

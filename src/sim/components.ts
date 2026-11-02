@@ -342,7 +342,7 @@ export interface ItemStack {
   junk?: true;
 }
 
-/** What the player carries. Order is the display order; capacity is `inventoryCapacity()` (base slots plus a rebuilt storehouse). */
+/** What the player carries. Order is the display order; each kind of thing has its own limit (modules/storage.ts). */
 export interface Inventory {
   stacks: ItemStack[];
 }

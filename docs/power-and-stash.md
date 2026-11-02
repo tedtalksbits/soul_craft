@@ -1,7 +1,7 @@
 # Power, the stash and the character screen: design proposal
 
 **Status: decided (2026-11-02). The owner took the recommended answer to all six questions (section 9). Phases 1
-and 2 are built.** This builds on `docs/gear-and-loot.md` (the gear rework, phases 0–7, all built) and turns
+to 3 are built.** This builds on `docs/gear-and-loot.md` (the gear rework, phases 0–7, all built) and turns
 the owner's next six notes into a design:
 
 1. More enemies.
@@ -316,6 +316,26 @@ over at Power 10.
 - **Dev commands:** `power` prints Power, Max Power, weapon and armor Power, and the enemy Power and drop cap where
   you stand; `setpower 300` sets everything worn to 300, for playtesting a ring; `gear <tier> [id] [power]` rolls
   at Max Power by default.
+
+**Phase 3 as built (2026-11-02):**
+
+- **One inventory, a limit per kind of thing** (`modules/storage.ts`): carried items stay in the player's
+  `Inventory`, but each kind counts against its own limit, from `player.json → storage`: 9 spare pieces per gear
+  slot (the two ring slots share one pocket), 12 stacks of consumables in the bag, and no limit at all on
+  materials, key items, relics and tools. The old 24-slot pack and `inventorySlots` are gone.
+- **The stash** (`SimState.stash`, 200 pieces) holds gear and spare consumables. It opens while resting at the
+  village bonfire, or at any bonfire once the Storehouse is rebuilt. The Inventory screen has a **Stash** tab that
+  shows its contents anywhere and takes from it where it opens, and every carried piece or consumable has a
+  **Stash** button (greyed out, with the reason, elsewhere).
+- **Full pockets never lose loot:** a piece that doesn't fit its pocket goes straight to the stash from anywhere,
+  with a "sent to the stash" toast. Only when the stash is full too does it stay on the ground. The loot magnet
+  still pulls gear while the stash has room.
+- **The Storehouse** now gives the stash: rank I opens it at every bonfire, ranks II and III add 100 places each
+  (rank II still brings the Gambler). Its old pack slots are gone with the pack.
+- **Max Power counts the stash.**
+- **No save change was needed:** the stash is an optional field, so phase 2 saves load with an empty one.
+- **The pack column** is split into Gear (with a per-pocket count line, "Weapons 3/9 · Helmets 0/9 …"), Bag and
+  Materials. Equipping straight from the stash waits for the phase 4 flyouts: for now, take a piece out first.
 
 ## 9. Decisions (2026-11-02)
 

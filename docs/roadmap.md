@@ -244,7 +244,7 @@ Playtest feedback shifted gear from crafting to loot. The design, its research a
    weapon of each of the six types in hand, trims and legs in the tier's color, and an ember glint for a
    Legendary ring.
 
-### Next: Power, the stash and the character screen (decided; phases 1 and 2 built)
+### Next: Power, the stash and the character screen (decided; phases 1 to 3 built)
 
 The next round of gear work: Power from 10 to 1000 printed on every item, drops a little above the best you own,
 cheap infusion, dismantling anywhere, pockets and a stash, a Destiny-style slot flyout, and more enemies. The
@@ -259,7 +259,10 @@ proposal and its open questions are in [`docs/power-and-stash.md`](power-and-sta
    their own, Heat +100 a step); the gap scales blows dealt (weapon) and taken (armor); drops at Max Power plus a
    source offset, at least the foe's Power, at most the ring's cap (a Warden's chest: its Power + 100); a red skull
    over foes 50+ above you, the rings on the map, and `power` / `setpower` dev commands.
-3. **Pockets, bag, materials and stash.**
+3. **Pockets, bag, materials and stash (built):** 9 spare pieces per gear slot (rings share), 12 stacks of
+   consumables, unlimited materials; a 200-piece stash that opens at the village bonfire, and at every bonfire
+   once the Storehouse is rebuilt (its ranks now add stash room); full pockets send new gear to the stash from
+   anywhere; Max Power counts the stash; a Stash tab and Stash buttons on the Inventory screen.
 4. **The character screen.**
 5. **Dismantle and infuse.**
 

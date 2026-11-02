@@ -602,8 +602,10 @@ export const RecipesSchema = z.record(z.string(), RecipeSchema);
 export const RestorationEffectSchema = z.discriminatedUnion('type', [
   /** More flask charges: the well. */
   z.object({ type: z.literal('maxFlasks'), amount: z.number().int().min(1) }),
-  /** More pack slots: the storehouse. */
-  z.object({ type: z.literal('inventorySlots'), amount: z.number().int().min(1) }),
+  /** More room in the stash: the storehouse's ranks. */
+  z.object({ type: z.literal('stashSlots'), amount: z.number().int().min(1) }),
+  /** The stash opens at every bonfire, not only the village's: the storehouse. */
+  z.object({ type: z.literal('stashEverywhere') }),
   /** No enemies spawn within this many tiles of the village: the palisade. */
   z.object({ type: z.literal('safeRadius'), tiles: pos }),
   /** The site gives warm light at night: lamp posts. */
@@ -753,8 +755,15 @@ export const PlayerSchema = z.object({
   magnet: z.object({ radius: nonneg, speed: pos, accel: nonneg, maxSpeed: pos }),
   /** The world map: ground within `revealRadius` tiles of the player counts as explored. */
   exploration: z.object({ revealRadius: pos }),
-  /** How many different stacks the player can carry. */
-  inventorySlots: z.number().int().min(1),
+  /**
+   * Where things are kept (modules/storage.ts): `pocket` spare pieces per gear slot (rings share one), `bag`
+   * stacks of consumables, and `stash` pieces at a bonfire before the Storehouse adds more. Materials have no limit.
+   */
+  storage: z.object({
+    pocket: z.number().int().min(1),
+    bag: z.number().int().min(1),
+    stash: z.number().int().min(1),
+  }),
   /**
    * A new game starts as this class, wearing this gear and carrying these items. Only the AoE ability
    * is known at first unless `unlocked` says otherwise; relics unlock the rest.

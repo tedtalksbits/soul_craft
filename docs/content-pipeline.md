@@ -156,13 +156,14 @@ Every item id named anywhere is cross-checked on load.
 interacting with the ruin shows the rebuild screen, and once rebuilt the site says its `restoredLines`. The
 sprites are frames in the `village` sheet (`pnpm art village`). Effects (ADR 0012):
 
-| Effect                                      | Gives                                                  |
-| ------------------------------------------- | ------------------------------------------------------ |
-| `{ "type": "maxFlasks", "amount": 1 }`      | Flask charges, added once when rebuilt                 |
-| `{ "type": "inventorySlots", "amount": 8 }` | Pack slots                                             |
-| `{ "type": "safeRadius", "tiles": 40 }`     | No enemies spawn within this many tiles of the village |
-| `{ "type": "light", "radius": 70 }`         | Warm light at the site                                 |
-| `{ "type": "forgeSteps" }`                  | Unlocks weapon upgrade steps that name this project    |
+| Effect                                    | Gives                                                  |
+| ----------------------------------------- | ------------------------------------------------------ |
+| `{ "type": "maxFlasks", "amount": 1 }`    | Flask charges, added once when rebuilt                 |
+| `{ "type": "stashSlots", "amount": 100 }` | More room in the stash                                 |
+| `{ "type": "stashEverywhere" }`           | The stash opens at every bonfire, not just the village |
+| `{ "type": "safeRadius", "tiles": 40 }`   | No enemies spawn within this many tiles of the village |
+| `{ "type": "light", "radius": 70 }`       | Warm light at the site                                 |
+| `{ "type": "forgeSteps" }`                | Unlocks weapon upgrade steps that name this project    |
 
 Stone comes from rocks (`tiles.json → rock.cut`), wood from trees.
 

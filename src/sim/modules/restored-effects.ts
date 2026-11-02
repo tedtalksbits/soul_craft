@@ -1,5 +1,5 @@
 /**
- * What rebuilt village projects give, read by the systems they change (pack size,
+ * What rebuilt village projects give, read by the systems they change (the stash,
  * enemy spawning, forge upgrades). Kept apart from the restoration module so those
  * systems can ask without importing the rebuild logic, which itself uses them.
  */
@@ -22,13 +22,6 @@ export function projectEffects(sim: Simulation, id: string): RestorationEffect[]
 /** Every effect of every rebuilt project. Projects the content no longer defines give nothing. */
 export function restoredEffects(sim: Simulation): RestorationEffect[] {
   return Object.keys(sim.state.restored).flatMap((id) => projectEffects(sim, id));
-}
-
-/** How many stacks the player can carry: the base pack plus a rebuilt storehouse. */
-export function inventoryCapacity(sim: Simulation): number {
-  let slots = sim.content.player.inventorySlots;
-  for (const fx of restoredEffects(sim)) if (fx.type === 'inventorySlots') slots += fx.amount;
-  return slots;
 }
 
 /** How far (tiles) from the village center no enemy rises, once the palisade stands. 0 before. */

@@ -26,8 +26,10 @@ export function effectText(fx: RestorationEffect): string {
   switch (fx.type) {
     case 'maxFlasks':
       return `+${fx.amount} flask ${fx.amount === 1 ? 'charge' : 'charges'}`;
-    case 'inventorySlots':
-      return `+${fx.amount} pack slots`;
+    case 'stashSlots':
+      return `+${fx.amount} places in the stash`;
+    case 'stashEverywhere':
+      return 'Your stash opens at every bonfire';
     case 'safeRadius':
       return `No enemies rise within ${fx.tiles} paces of the village`;
     case 'light':

@@ -31,6 +31,9 @@ export type GearTarget = { pack: number } | { slot: EquipSlot };
 export type PlayerAction =
   | { type: 'equip'; index: number }
   | { type: 'unequip'; slot: EquipSlot }
+  /** Moves a carried piece (by pack index) into the stash, or one from the stash (by index) back. Only where it opens. */
+  | { type: 'stash'; index: number }
+  | { type: 'unstash'; index: number }
   | { type: 'use'; item: string }
   | { type: 'setQuick'; item: string | null }
   | { type: 'craft'; recipe: string }

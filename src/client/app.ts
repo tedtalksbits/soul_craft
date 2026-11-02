@@ -625,7 +625,7 @@ export class App {
       }
       case 'craftFailed':
         return this.ui.toast(
-          `Cannot ${e.recipe === 'salvage' || e.recipe === 'temper' || e.recipe === 'cleanse' || e.recipe === 'infuse' || e.recipe === 'upgrade' ? e.recipe : 'craft'}: ${e.reason}`,
+          `Cannot ${e.recipe === 'salvage' || e.recipe === 'temper' || e.recipe === 'cleanse' || e.recipe === 'infuse' || e.recipe === 'upgrade' || e.recipe === 'stash' ? e.recipe : e.recipe === 'unstash' ? 'take it' : 'craft'}: ${e.reason}`,
         );
       case 'salvaged':
         return this.ui.toast(
@@ -643,6 +643,8 @@ export class App {
         return this.ui.banner(`${this.content.item(e.item).name.toUpperCase()} +${e.level}`, 'good');
       case 'inventoryFull':
         return this.ui.toast(`No room for ${this.content.item(e.item).name}`);
+      case 'sentToStash':
+        return this.ui.toast(`${this.content.item(e.item).name}: pocket full, sent to the stash`);
       case 'buffStarted':
         return this.ui.toast(`${this.content.item(e.item).name}: ${e.seconds}s`);
       case 'playerDied':

@@ -3,6 +3,7 @@
  * saved verbatim inside snapshots. Records stand in for sets so it stays JSON.
  */
 import type { TierId } from '../content/schemas';
+import type { ItemStack } from './components';
 
 export interface SimState {
   seed: number;
@@ -21,6 +22,8 @@ export interface SimState {
   heatCleared?: Record<string, number>;
   /** Chests in a row without the signature item, per Warden. */
   signaturePity?: Record<string, number>;
+  /** Gear and consumables kept at a bonfire (modules/storage.ts). Absent in saves from before it. */
+  stash?: ItemStack[];
   /** Ranks a rebuilt project has risen past I (2 means rank III). Absent in saves from before it. */
   projectRanks?: Record<string, number>;
   /** Tiers whose gear is salvaged the moment it is picked up. Absent in saves from before it. */

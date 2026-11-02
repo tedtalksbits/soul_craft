@@ -36,13 +36,15 @@ describe('inventory', () => {
     expect(playerStats(sim, sim.player).damage).toBe(12);
   });
 
-  it('fills stacks up to their limit, then new slots, and reports what did not fit', () => {
+  it('fills stacks up to their limit, then new ones while the bag has room, and reports what did not fit', () => {
     const sim = newSim();
     expect(addItem(sim, sim.player, 'field_bandage', 25)).toBe(0);
     expect(inv(sim).stacks.map((s) => s.count)).toEqual([10, 10, 5]);
-    const slots = content.player.inventorySlots;
-    expect(addItem(sim, sim.player, 'ashwood', 99 * slots)).toBe(99 * 3);
-    expect(inv(sim).stacks).toHaveLength(slots);
+    const { bag } = content.player.storage;
+    expect(addItem(sim, sim.player, 'field_bandage', 10 * bag)).toBe(10 * 3 - 5);
+    expect(inv(sim).stacks).toHaveLength(bag);
+    // Materials are counts with no limit.
+    expect(addItem(sim, sim.player, 'ashwood', 99 * 100)).toBe(0);
   });
 
   it('collects item pickups, and leaves them on the ground when the pack is full', () => {
@@ -55,11 +57,11 @@ describe('inventory', () => {
     ]);
     expect(countItem(inv(sim), 'iron_scrap')).toBe(3);
 
-    addItem(sim, sim.player, 'ashwood', 99 * content.player.inventorySlots);
-    dropPickup(sim, 'item', 1, pb.x, pb.y, 'bone_shard');
+    addItem(sim, sim.player, 'field_bandage', 10 * content.player.storage.bag);
+    dropPickup(sim, 'item', 1, pb.x, pb.y, 'ember_tonic');
     const full = run(sim, 40);
     expect(ofType(full, 'inventoryFull').length).toBeGreaterThan(0);
-    expect([...sim.ecs.query(Pickup)].some(([, p]) => p.item === 'bone_shard')).toBe(true);
+    expect([...sim.ecs.query(Pickup)].some(([, p]) => p.item === 'ember_tonic')).toBe(true);
   });
 });
 

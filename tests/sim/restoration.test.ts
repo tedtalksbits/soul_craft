@@ -6,7 +6,7 @@ import { inputFrame } from '../../src/sim/input';
 import { canUpgrade } from '../../src/sim/modules/crafting';
 import { addItem, countItem } from '../../src/sim/modules/items';
 import { rebuild } from '../../src/sim/modules/restoration';
-import { inventoryCapacity } from '../../src/sim/modules/restored-effects';
+import { stashReachable } from '../../src/sim/modules/storage';
 import { resetEnemies } from '../../src/sim/modules/streaming';
 import type { Simulation } from '../../src/sim/simulation';
 import { content, newSim, ofType, press, run } from '../helpers';
@@ -90,16 +90,13 @@ describe('village restoration', () => {
     expect(ofType(press(sim, ['use']), 'read')[0]?.lines).toEqual(content.restoration['well']!.restoredLines);
   });
 
-  it('grows the pack when the storehouse is rebuilt', () => {
+  it('opens the stash at every bonfire once the storehouse is rebuilt', () => {
     const sim = newSim();
-    const base = inventoryCapacity(sim);
+    sim.ecs.need(sim.player, Player).state = 'sit';
+    sim.state.checkpoint = { id: 'wayshrine@3,4#1,1', x: 0, y: 0 };
+    expect(stashReachable(sim)).toBe(false);
     rebuild(sim, 'storehouse', { anywhere: true, free: true });
-    expect(inventoryCapacity(sim)).toBe(base + 8);
-    // More stone than the bigger pack holds: it fills every slot, the new ones included.
-    const inv = sim.ecs.need(sim.player, Inventory);
-    const left = addItem(sim, sim.player, 'stone', 99 * (base + 8) + 1);
-    expect(inv.stacks.length).toBe(base + 8);
-    expect(left).toBeGreaterThan(0);
+    expect(stashReachable(sim)).toBe(true);
   });
 
   it('keeps enemies from rising near the village once the palisade stands', () => {

@@ -13,9 +13,11 @@ import { rollForSlot } from './gear';
 import { addStack } from './items';
 import { dropPower, maxPower } from './power';
 import { siteNearby } from './restoration';
-import { inventoryCapacity, projectEffects } from './restored-effects';
+import { projectEffects } from './restored-effects';
+import { pocketLimit, pocketUsed, stashRoom } from './storage';
 
 const fail = (reason: string): Check => ({ ok: false, reason });
+const inv = (sim: Simulation) => sim.ecs.need(sim.player, Inventory);
 
 /** Whether a project's site has the Gambler's shop at its rank. */
 export function hasGambler(sim: Simulation, project: string): boolean {
@@ -34,18 +36,20 @@ export function gamblePrice(sim: Simulation): number {
   return sim.content.loot.gambler.souls * (1 + Math.floor(maxPower(sim) / 100));
 }
 
-export function canGamble(sim: Simulation): Check {
+/** Whether the player can buy now; with a `slot`, also whether its pocket (or the stash, past it) has room. */
+export function canGamble(sim: Simulation, slot?: GearSlot): Check {
   if (!shopHere(sim)) return fail('only at the Gambler’s shop');
   const price = gamblePrice(sim);
   if (sim.ecs.need(sim.player, Player).souls < price) return fail(`needs ${price} souls`);
-  if (sim.ecs.need(sim.player, Inventory).stacks.length >= inventoryCapacity(sim))
-    return fail('inventory is full');
+  const pocketFull =
+    slot !== undefined && pocketLimit(sim.content, slot) <= pocketUsed(sim.content, inv(sim), slot);
+  if (pocketFull && stashRoom(sim) <= 0) return fail('pocket and stash are full');
   return { ok: true };
 }
 
 /** Pays the price and rolls a piece for the slot: tier from the odds, then everything else from its seed. */
 export function gamble(sim: Simulation, slot: GearSlot): boolean {
-  const check = canGamble(sim);
+  const check = canGamble(sim, slot);
   if (!check.ok) {
     sim.events.emit({ type: 'craftFailed', recipe: 'gamble', reason: check.reason });
     return false;

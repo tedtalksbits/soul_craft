@@ -4,8 +4,8 @@
  * boss, from its own. In a fight only the gap matters: the weapon's Power against the foe's sets the blows dealt,
  * the armor's sets the blows taken (`player.json → power.gap`). Item numbers never scale with Power.
  *
- * Drops come in a little above Max Power, the average of the best piece per slot the player owns (worn or
- * carried), so wearing junk never farms better loot and a better piece always lifts the next drop.
+ * Drops come in a little above Max Power, the average of the best piece per slot the player owns (worn,
+ * carried or stashed), so wearing junk never farms better loot and a better piece always lifts the next drop.
  */
 import { CommandError } from '../../core/commands';
 import { gearSlotOf, type Content } from '../../content/content';
@@ -46,12 +46,16 @@ export function playerPower(sim: Simulation): number {
 }
 
 /**
- * Max Power: the average of the best piece the player owns for each slot, worn or carried (the two best rings
+ * Max Power: the average of the best piece the player owns for each slot, worn, carried or stashed (the two best rings
  * for the two ring slots). Drops are based on it.
  */
 export function maxPower(sim: Simulation): number {
   const eq = sim.ecs.get(sim.player, Equipment);
-  const owned = [...SLOTS.map((s) => eq?.[s] ?? null), ...(sim.ecs.get(sim.player, Inventory)?.stacks ?? [])];
+  const owned = [
+    ...SLOTS.map((s) => eq?.[s] ?? null),
+    ...(sim.ecs.get(sim.player, Inventory)?.stacks ?? []),
+    ...(sim.state.stash ?? []),
+  ];
   const best: Record<string, number[]> = {};
   for (const stack of owned) {
     if (!stack?.gear) continue;

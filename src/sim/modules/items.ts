@@ -32,7 +32,7 @@ import { TICK_RATE } from '../constants';
 import type { PlayerAction } from '../input';
 import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
-import { inventoryCapacity } from './restored-effects';
+import { pocketRoom, stashable, stashCapacity, stashOf, stashRoom } from './storage';
 import { gearOf, gearTotals, rollDrop, rollGear, weaponNumbers } from './gear';
 import { pursued } from './stealth';
 import { characterPower, maxPower, playerPower } from './power';
@@ -119,11 +119,19 @@ export function countItem(inv: Inventory, item: string): number {
   return inv.stacks.reduce((n, s) => (s.item === item ? n + s.count : n), 0);
 }
 
-/** Puts one item stack (a piece of gear and its rolls) in its own pack slot. False if the pack is full. */
+/**
+ * Puts one item stack (a piece of gear and its rolls) in its pocket. With the pocket full, the player's goes
+ * straight to the stash, from anywhere, so a full pocket never loses loot. False only if both are full.
+ */
 export function addStack(sim: Simulation, e: Entity, stack: ItemStack): boolean {
   const inv = sim.ecs.need(e, Inventory);
-  if (inv.stacks.length >= inventoryCapacity(sim)) return false;
-  inv.stacks.push(stack);
+  if (e !== sim.player || pocketRoom(sim, stack.item) > 0) {
+    inv.stacks.push(stack);
+    return true;
+  }
+  if (!stashable(sim.content, stack.item) || stashRoom(sim) <= 0) return false;
+  stashOf(sim).push(stack);
+  sim.events.emit({ type: 'sentToStash', item: stack.item });
   return true;
 }
 
@@ -139,7 +147,8 @@ export function addItem(sim: Simulation, e: Entity, item: string, count: number,
     s.count += take;
     left -= take;
   }
-  while (left > 0 && inv.stacks.length < inventoryCapacity(sim)) {
+  let room = pocketRoom(sim, item);
+  while (left > 0 && room-- > 0) {
     const take = Math.min(max, left);
     inv.stacks.push({ item, count: take, level });
     left -= take;
@@ -147,14 +156,16 @@ export function addItem(sim: Simulation, e: Entity, item: string, count: number,
   return left;
 }
 
-/** How many of an item could still be added. */
+/** How many of an item could still be added: room in its stacks and its pocket (and the stash, for gear). */
 export function roomFor(sim: Simulation, e: Entity, item: string, level = 0): number {
   const inv = sim.ecs.need(e, Inventory);
   const max = sim.content.item(item).stack;
   const inStacks = inv.stacks
     .filter((s) => s.item === item && s.level === level)
     .reduce((n, s) => n + (max - s.count), 0);
-  return inStacks + (inventoryCapacity(sim) - inv.stacks.length) * max;
+  const overflow = gearSlotOf(sim.content.item(item)) ? Math.max(0, stashRoom(sim)) : 0;
+  const room = pocketRoom(sim, item);
+  return room === Infinity ? Infinity : inStacks + (room + overflow) * max;
 }
 
 /** Removes `count` of an item (from the last stacks first). All or nothing. */
@@ -488,7 +499,7 @@ const commands: SimCommand[] = [
         ...EQUIP_SLOTS.map((slot) => `${slot.padEnd(7)} ${show(eq[slot])}`),
         `quick   ${eq.quick ?? '-'}`,
         `stats   power ${playerPower(sim)}  dmg ${st.damage.toFixed(1)}  armor ${st.armor} (${(st.defense * 100).toFixed(0)}%)  maxHp ${st.maxHp}  regen ${st.staminaRegen.toFixed(2)}`,
-        `items   ${inv.stacks.length}/${inventoryCapacity(sim)} slots`,
+        `items   ${inv.stacks.length} carried, ${stashOf(sim).length}/${stashCapacity(sim)} in the stash`,
         ...inv.stacks.map((s, i) => `  [${i}] ${s.item} x${s.count}${s.level ? ` +${s.level}` : ''}`),
       ].join('\n');
     },

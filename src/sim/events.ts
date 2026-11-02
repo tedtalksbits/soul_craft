@@ -69,6 +69,11 @@ export type SimEvent =
       y: number;
     }
   | { type: 'inventoryFull'; item: string }
+  /** A piece picked up with its pocket full went straight to the stash. */
+  | { type: 'sentToStash'; item: string }
+  /** Moved between the pockets and the stash. */
+  | { type: 'stashed'; item: string }
+  | { type: 'unstashed'; item: string }
   /** Gear perks and powers at work: a flinch shrugged off, the Last Ember catching a killing blow, a roll's stamina refunded, a burning streak. */
   | { type: 'keptFooting' }
   /** Weapon moves: a charge starting and filling, a type's rule landing (flow, tipper, crush, a spent mark), a slam's shockwave. */
