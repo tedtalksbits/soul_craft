@@ -1048,8 +1048,8 @@ export const LootSchema = z.object({
       cap: pos,
     }),
     cleanse: z.object({ souls: z.number().int().nonnegative(), items: z.array(ItemCountSchema) }),
-    /** Infusing costs this share of the materials and souls the old item's upgrades took. */
-    infuse: fraction,
+    /** Infusing (raising a piece to a higher one's Power, which is used up) costs this, at any Power. */
+    infuse: z.object({ souls: z.number().int().nonnegative(), items: z.array(ItemCountSchema) }),
   }),
   perks: z.record(z.string(), PerkSchema),
 });

@@ -1,4 +1,4 @@
-import type { AttributeId, GearSlot, TierId } from '../content/schemas';
+import type { AttributeId, GearSlot } from '../content/schemas';
 import type { EquipSlot } from './components';
 
 /**
@@ -25,8 +25,8 @@ export type ActionName = keyof typeof Action;
  * Menu actions (inventory, crafting). They travel inside the InputFrame like
  * button presses, so they are just as deterministic and replayable.
  */
-/** A piece of gear the smithy works on: in the pack, or worn. */
-export type GearTarget = { pack: number } | { slot: EquipSlot };
+/** A piece of gear the smithy works on: in the pack, worn, or in the stash (only where the stash opens). */
+export type GearTarget = { pack: number } | { slot: EquipSlot } | { stash: number };
 
 export type PlayerAction =
   /** Equips a carried piece (by pack index), into `slot` when given (which ring to replace). */
@@ -61,11 +61,14 @@ export type PlayerAction =
   /** Puts on (or takes off) a class modifier, learning it first if needed. Only at a bonfire. */
   | { type: 'wearModifier'; modifier: string; on: boolean }
   /** Smithy work. Salvaging needs the forge or a bonfire; upgrading and infusing the forge; tempering and cleansing the smith. */
-  | { type: 'salvage'; index: number }
-  | { type: 'salvageJunk' }
-  | { type: 'mark'; index: number; mark: 'lock' | 'junk' | null }
-  | { type: 'autoSalvage'; tier: TierId; on: boolean }
+  /** Breaks a carried (or, where it opens, stashed) piece into materials. Anywhere. */
+  | { type: 'salvage'; target: GearTarget }
+  /** Breaks everything marked junk; Noble pieces only with `includeNoble`, Legendaries and locked pieces never. */
+  | { type: 'salvageJunk'; includeNoble?: boolean }
+  | { type: 'mark'; target: GearTarget; mark: 'lock' | 'junk' | null }
+  | { type: 'autoJunk'; on: boolean }
   | { type: 'upgradeGear'; target: GearTarget }
+  /** Raises `to` to `from`'s higher Power; `from` is used up. At any bonfire. */
   | { type: 'infuse'; from: GearTarget; to: GearTarget }
   | { type: 'temper'; target: GearTarget; perk: number }
   /** Settles a temper: 0 keeps the old perk, 1 or 2 takes a new one. */

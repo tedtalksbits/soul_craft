@@ -8,12 +8,13 @@ import {
   Station,
   type ItemStack,
 } from '../../src/sim/components';
-import { inputFrame, type PlayerAction } from '../../src/sim/input';
+import { inputFrame, type GearTarget, type PlayerAction } from '../../src/sim/input';
 import { armorValue } from '../../src/sim/modules/gear';
 import { addStack, countItem, playerStats } from '../../src/sim/modules/items';
 import { dropPickup } from '../../src/sim/modules/pickups';
 import { levelCost, playerLevel } from '../../src/sim/modules/progression';
-import { temperCost } from '../../src/sim/modules/smithy';
+import { junkYield, temperCost } from '../../src/sim/modules/smithy';
+import { stashOf } from '../../src/sim/modules/storage';
 import type { Simulation } from '../../src/sim/simulation';
 import type { TierId } from '../../src/content/schemas';
 import { content, newSim, ofType, run } from '../helpers';
@@ -41,9 +42,8 @@ function made(
 }
 
 describe('salvage', () => {
-  it('breaks gear into its slot’s materials by tier, at the forge', () => {
+  it('breaks gear into its slot’s materials by tier', () => {
     const sim = newSim();
-    atForge(sim);
     addStack(
       sim,
       sim.player,
@@ -52,7 +52,7 @@ describe('salvage', () => {
         { perk: 'souls', value: 0.1 },
       ]),
     );
-    const events = act(sim, { type: 'salvage', index: 0 });
+    const events = act(sim, { type: 'salvage', target: { pack: 0 } });
     expect(ofType(events, 'salvaged')).toHaveLength(1);
     const [a, b] = smithy.salvage.materials.weapon;
     expect(countItem(inv(sim), a)).toBe(smithy.salvage.yields.rare[0]);
@@ -66,52 +66,73 @@ describe('salvage', () => {
     const sim = newSim();
     atForge(sim);
     addStack(sim, sim.player, made('cinderbrand', 'legendary'));
-    act(sim, { type: 'salvage', index: 0 });
+    act(sim, { type: 'salvage', target: { pack: 0 } });
     expect(countItem(inv(sim), smithy.salvage.mark)).toBe(1);
   });
 
-  it('needs the forge or a bonfire, and leaves locked gear alone', () => {
+  it('works anywhere, but never on a locked or worn piece', () => {
     const sim = newSim();
     sim.ecs.need(sim.player, Body).x += 600;
     run(sim, 2);
     addStack(sim, sim.player, made('iron_helm', 'standard'));
-    const away = act(sim, { type: 'salvage', index: 0 });
-    expect(ofType(away, 'craftFailed')[0]?.reason).toMatch(/forge or a bonfire/);
-    player(sim).state = 'sit';
-    act(sim, { type: 'mark', index: 0, mark: 'lock' });
-    expect(ofType(act(sim, { type: 'salvage', index: 0 }), 'craftFailed')[0]?.reason).toBe('it is locked');
-    act(sim, { type: 'mark', index: 0, mark: null });
-    expect(ofType(act(sim, { type: 'salvage', index: 0 }), 'salvaged')).toHaveLength(1);
+    act(sim, { type: 'mark', target: { pack: 0 }, mark: 'lock' });
+    const locked = act(sim, { type: 'salvage', target: { pack: 0 } });
+    expect(ofType(locked, 'craftFailed')[0]?.reason).toBe('it is locked');
+    act(sim, { type: 'mark', target: { pack: 0 }, mark: null });
+    expect(ofType(act(sim, { type: 'salvage', target: { pack: 0 } }), 'salvaged')).toHaveLength(1);
+    const worn = act(sim, { type: 'salvage', target: { slot: 'chest' } });
+    expect(ofType(worn, 'craftFailed')[0]?.reason).toBe('take it off first');
   });
 
-  it('salvaging junk skips locked, Noble and Legendary pieces', () => {
-    const sim = newSim();
-    atForge(sim);
-    addStack(sim, sim.player, made('iron_helm', 'common', [], { junk: true }));
-    addStack(sim, sim.player, made('iron_mail', 'standard', [], { junk: true, locked: true }));
-    addStack(sim, sim.player, made('iron_greaves', 'noble', [], { junk: true }));
-    addStack(sim, sim.player, made('ring_of_vigor', 'rare'));
-    act(sim, { type: 'salvageJunk' });
-    expect(
+  it('dismantling all junk skips locked pieces and Legendaries, and Noble ones unless asked', () => {
+    const gearLeft = (sim: Simulation) =>
       inv(sim)
         .stacks.map((s) => s.item)
-        .filter((i) => content.items[i]?.kind !== 'material'),
-    ).toEqual(['iron_mail', 'iron_greaves', 'ring_of_vigor']);
+        .filter((i) => content.items[i]?.kind !== 'material');
+    const setUp = () => {
+      const sim = newSim();
+      addStack(sim, sim.player, made('iron_helm', 'common', [], { junk: true }));
+      addStack(sim, sim.player, made('iron_mail', 'standard', [], { junk: true, locked: true }));
+      addStack(sim, sim.player, made('iron_greaves', 'noble', [], { junk: true }));
+      addStack(sim, sim.player, made('cinderbrand', 'legendary', [], { junk: true }));
+      addStack(sim, sim.player, made('ring_of_vigor', 'rare'));
+      return sim;
+    };
+    const plain = setUp();
+    expect(junkYield(plain).pieces).toBe(1);
+    act(plain, { type: 'salvageJunk' });
+    expect(gearLeft(plain)).toEqual(['iron_mail', 'iron_greaves', 'cinderbrand', 'ring_of_vigor']);
+    const noble = setUp();
+    act(noble, { type: 'salvageJunk', includeNoble: true });
+    expect(gearLeft(noble)).toEqual(['iron_mail', 'cinderbrand', 'ring_of_vigor']);
   });
 
-  it('auto-salvages the tiers the player picks, as they are picked up', () => {
+  it('dismantles stashed junk too, where the stash opens', () => {
     const sim = newSim();
-    act(sim, { type: 'autoSalvage', tier: 'common', on: true });
+    stashOf(sim).push(made('iron_helm', 'common', [], { junk: true }));
+    act(sim, { type: 'salvageJunk' });
+    expect(stashOf(sim)).toHaveLength(1);
+    player(sim).state = 'sit';
+    sim.state.checkpoint = { id: `${content.world.origin.prefab}@origin#0,0`, x: 0, y: 0 };
+    act(sim, { type: 'salvageJunk' });
+    expect(stashOf(sim)).toEqual([]);
+  });
+
+  it('auto-junk marks Common and Standard pieces below your best for their slot as they come in', () => {
+    const sim = newSim();
+    act(sim, { type: 'autoJunk', on: true });
     const pb = sim.ecs.need(sim.player, Body);
-    dropPickup(sim, 'item', 1, pb.x, pb.y, 'iron_helm', { tier: 'common', power: 1, seed: 1, perks: [] });
-    dropPickup(sim, 'item', 1, pb.x, pb.y, 'iron_mail', { tier: 'rare', power: 1, seed: 1, perks: [] });
+    // The worn hood is Power 10.
+    dropPickup(sim, 'item', 1, pb.x, pb.y, 'iron_helm', { tier: 'common', power: 5, seed: 1, perks: [] });
+    dropPickup(sim, 'item', 1, pb.x, pb.y, 'iron_helm', { tier: 'common', power: 50, seed: 2, perks: [] });
+    dropPickup(sim, 'item', 1, pb.x, pb.y, 'iron_helm', { tier: 'rare', power: 5, seed: 3, perks: [] });
     run(sim, 40);
-    const gear = inv(sim).stacks.filter((s) => s.gear);
-    expect(gear.map((s) => s.item)).toEqual(['iron_mail']);
-    expect(countItem(inv(sim), smithy.salvage.materials.armor[0])).toBe(smithy.salvage.yields.common[0]);
-    // Only the lowest tiers can be set.
-    act(sim, { type: 'autoSalvage', tier: 'legendary', on: true });
-    expect(sim.state.autoSalvage).toEqual(['common']);
+    const helms = inv(sim).stacks.filter((s) => s.item === 'iron_helm');
+    expect(helms.map((s) => [s.gear?.power, s.gear?.tier, s.junk === true])).toEqual([
+      [5, 'common', true],
+      [50, 'common', false],
+      [5, 'rare', false],
+    ]);
   });
 });
 
@@ -133,27 +154,69 @@ describe('upgrades and infusing', () => {
     expect(playerStats(sim, sim.player).armor).toBeGreaterThan(0);
   });
 
-  it('infusing moves an old piece’s upgrades onto a new one for a share of their cost', () => {
+  it('infusing raises a favorite to a stronger piece’s Power, using that piece up, for a flat price', () => {
     const sim = newSim();
-    atForge(sim);
     const eq = sim.ecs.need(sim.player, Equipment);
     eq.weapon!.level = 2;
-    addStack(sim, sim.player, made('iron_sword', 'noble'));
+    addStack(
+      sim,
+      sim.player,
+      made('iron_sword', 'rare', [], { gear: { tier: 'rare', power: 214, seed: 3, perks: [] } }),
+    );
     player(sim).souls = 1000;
-    for (const item of ['iron_scrap', 'bone_shard', 'stone']) dropPickupless(sim, item, 20);
+    dropPickupless(sim, 'bone_shard', 5);
+    const away = act(sim, { type: 'infuse', from: { pack: 0 }, to: { slot: 'weapon' } });
+    expect(ofType(away, 'craftFailed')[0]?.reason).toBe('infuse at a bonfire');
+    player(sim).state = 'sit';
     const events = act(sim, {
       type: 'infuse',
-      from: { slot: 'weapon' },
-      to: { pack: inv(sim).stacks.findIndex((s) => s.item === 'iron_sword') },
+      from: { pack: inv(sim).stacks.findIndex((s) => s.item === 'iron_sword') },
+      to: { slot: 'weapon' },
     });
-    expect(ofType(events, 'infused')).toHaveLength(1);
-    expect(eq.weapon!.level).toBe(0);
-    const sword = inv(sim).stacks.find((s) => s.item === 'iron_sword')!;
-    expect(sword.level).toBe(2);
-    const steps =
-      content.items['chipped_sword']?.kind === 'weapon' ? content.items['chipped_sword'].upgrades : [];
-    const souls = Math.ceil((steps[0]!.souls + steps[1]!.souls) * smithy.infuse);
-    expect(player(sim).souls).toBe(1000 - souls);
+    expect(ofType(events, 'infused')).toEqual([
+      { type: 'infused', from: 'iron_sword', to: 'chipped_sword', power: 214 },
+    ]);
+    // The favorite keeps everything else: its upgrades, its tier.
+    expect(eq.weapon).toMatchObject({
+      item: 'chipped_sword',
+      level: 2,
+      gear: { power: 214, tier: 'common' },
+    });
+    expect(inv(sim).stacks.some((s) => s.item === 'iron_sword')).toBe(false);
+    expect(player(sim).souls).toBe(1000 - smithy.infuse.souls);
+    expect(countItem(inv(sim), 'bone_shard')).toBe(5 - smithy.infuse.items[0]!.count);
+  });
+
+  it('won’t infuse from a weaker, locked or worn piece, or across slots', () => {
+    const sim = newSim();
+    player(sim).state = 'sit';
+    player(sim).souls = 1000;
+    dropPickupless(sim, 'bone_shard', 5);
+    addStack(
+      sim,
+      sim.player,
+      made('iron_sword', 'rare', [], { gear: { tier: 'rare', power: 5, seed: 3, perks: [] } }),
+    );
+    addStack(
+      sim,
+      sim.player,
+      made('iron_helm', 'rare', [], { gear: { tier: 'rare', power: 300, seed: 4, perks: [] } }),
+    );
+    addStack(
+      sim,
+      sim.player,
+      made('bone_cleaver', 'rare', [], {
+        locked: true,
+        gear: { tier: 'rare', power: 300, seed: 5, perks: [] },
+      }),
+    );
+    const at = (item: string) => ({ pack: inv(sim).stacks.findIndex((s) => s.item === item) });
+    const reason = (from: GearTarget, to: GearTarget) =>
+      ofType(act(sim, { type: 'infuse', from, to }), 'craftFailed')[0]?.reason;
+    expect(reason(at('iron_sword'), { slot: 'weapon' })).toBe('it has no more Power');
+    expect(reason(at('iron_helm'), { slot: 'weapon' })).toBe('only from gear of the same slot');
+    expect(reason(at('bone_cleaver'), { slot: 'weapon' })).toBe('it is locked');
+    expect(reason({ slot: 'weapon' }, at('iron_sword'))).toBe('take it off first');
   });
 });
 

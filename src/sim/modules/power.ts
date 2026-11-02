@@ -49,7 +49,13 @@ export function playerPower(sim: Simulation): number {
  * Max Power: the average of the best piece the player owns for each slot, worn, carried or stashed (the two best rings
  * for the two ring slots). Drops are based on it.
  */
-export function maxPower(sim: Simulation): number {
+/** The Power of the best piece owned for a slot ('ring': the best ring), worn, carried or stashed. */
+export function bestOwnedPower(sim: Simulation, slot: string): number {
+  return ownedPowers(sim)[slot]?.[0] ?? 0;
+}
+
+/** Every owned piece's Power by slot, highest first. */
+function ownedPowers(sim: Simulation): Record<string, number[]> {
   const eq = sim.ecs.get(sim.player, Equipment);
   const owned = [
     ...SLOTS.map((s) => eq?.[s] ?? null),
@@ -62,13 +68,15 @@ export function maxPower(sim: Simulation): number {
     const slot = gearSlotOf(sim.content.item(stack.item));
     if (slot) (best[slot] ??= []).push(stack.gear.power);
   }
-  const top = (slot: string, n: number) => (best[slot] ?? []).sort((a, b) => b - a).slice(0, n);
-  const rings = top('ring', 2);
-  return average([
-    ...(['weapon', 'helmet', 'chest', 'legs'] as const).map((s) => top(s, 1)[0] ?? 0),
-    rings[0] ?? 0,
-    rings[1] ?? 0,
-  ]);
+  for (const list of Object.values(best)) list.sort((a, b) => b - a);
+  return best;
+}
+
+export function maxPower(sim: Simulation): number {
+  const best = ownedPowers(sim);
+  const top = (slot: string) => best[slot]?.[0] ?? 0;
+  const rings = best['ring'] ?? [];
+  return average([top('weapon'), top('helmet'), top('chest'), top('legs'), rings[0] ?? 0, rings[1] ?? 0]);
 }
 
 // ------------------------------------------------------------------ rings

@@ -2,7 +2,6 @@
  * Persistent world-level state that is not attached to any entity. Plain data,
  * saved verbatim inside snapshots. Records stand in for sets so it stays JSON.
  */
-import type { TierId } from '../content/schemas';
 import type { ItemStack } from './components';
 
 export interface SimState {
@@ -26,8 +25,11 @@ export interface SimState {
   stash?: ItemStack[];
   /** Ranks a rebuilt project has risen past I (2 means rank III). Absent in saves from before it. */
   projectRanks?: Record<string, number>;
-  /** Tiers whose gear is salvaged the moment it is picked up. Absent in saves from before it. */
-  autoSalvage?: TierId[];
+  /**
+   * Auto-junk: Common and Standard gear below the best piece owned for its slot is marked junk the moment it is
+   * picked up. Absent (off) in saves from before it.
+   */
+  autoJunk?: boolean;
   litBonfires: Record<string, true>;
   /**
    * Every lit bonfire's name and position, kept even when its chunk is unloaded, so the player can

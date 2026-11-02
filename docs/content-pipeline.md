@@ -123,8 +123,8 @@ tier `odds`.
 
 `loot.json → smithy` prices the smithy's work: `salvage` (per tier, how many of each slot's three
 `materials`, plus one `mark` item from a Legendary; never souls), `temper` (souls and items, times a factor per
-tier, rising by `growth` per temper to at most `cap` times), `cleanse` (souls and items) and `infuse` (the share
-of the old item's upgrade costs that moving them takes). The `smithWork` restoration effect brings the smith
+tier, rising by `growth` per temper to at most `cap` times), `cleanse` (souls and items) and `infuse` (souls and
+items, the same at any Power: raising a piece to a stronger one's Power, which is used up). The `smithWork` restoration effect brings the smith
 back, for tempering and cleansing.
 
 Armor cuts hits to `k / (k + Armor)` (`player.json → armor`), never past `cap` with buffs. Attributes gain less

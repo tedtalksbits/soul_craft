@@ -1,15 +1,16 @@
 /**
- * Smithy work on one piece of gear, for the equipment screen's details panel: lock and junk marks,
- * salvage, upgrades, infusing, tempering and cleansing. Every button shows its price and, when it can't be
- * used, why; work that needs the forge or the smith only appears there (or, for salvage, at a bonfire).
+ * Smithy work on one piece of gear, for the equipment screen's details panel: lock and junk marks, dismantling
+ * (anywhere, by holding the button), infusing (at a bonfire), upgrades, tempering and cleansing. Every button
+ * shows its price and, when it can't be used, why; work that needs the forge or the smith only appears there.
  */
 import { gearSlotOf } from '../../content/content';
-import type { ItemCount } from '../../content/schemas';
-import { Equipment, Inventory, Player, type ItemStack } from '../../sim/components';
+import { TIERS, type ItemCount } from '../../content/schemas';
+import { Inventory, Player, type ItemStack } from '../../sim/components';
 import type { GearTarget, PlayerAction } from '../../sim/input';
 import { stationNearby, type Check } from '../../sim/modules/crafting';
 import { gearOf, perkLines, perkText } from '../../sim/modules/gear';
-import { EQUIP_SLOTS } from '../../sim/modules/items';
+import { gearPower } from '../../sim/modules/power';
+import { stashOf, stashReachable } from '../../sim/modules/storage';
 import {
   canCleanse,
   canInfuse,
@@ -27,10 +28,10 @@ import { h } from './dom';
 
 export interface WorkContext {
   act(action: PlayerAction): void;
-  /** A Noble or Legendary salvage waiting on a second press. */
-  confirming: boolean;
-  confirm(on: boolean): void;
 }
+
+/** How long a destructive button must be held: long enough that a stray click never fires it. */
+export const HOLD_MS = 600;
 
 /** "40 souls · 2 Bone Shard". */
 export function costText(sim: Simulation, souls: number, items: readonly ItemCount[]): string {
@@ -52,6 +53,31 @@ function button(label: string, check: Check, onclick: () => void, extra = ''): H
   );
 }
 
+/**
+ * A button that fires only once held for `HOLD_MS` (dismantling, and feeding a good piece into another): it fills
+ * while held, and letting go early cancels it.
+ */
+export function holdButton(label: string, check: Check, fire: () => void, extra = ''): HTMLElement {
+  const el = button(check.ok ? `${label} (hold)` : label, check, () => undefined, `hold ${extra}`.trim());
+  let timer: number | undefined;
+  const cancel = () => {
+    window.clearTimeout(timer);
+    el.classList.remove('holding');
+  };
+  el.onpointerdown = () => {
+    if (!check.ok) return;
+    el.classList.add('holding');
+    el.style.setProperty('--hold', `${HOLD_MS}ms`);
+    timer = window.setTimeout(() => {
+      el.classList.remove('holding');
+      fire();
+    }, HOLD_MS);
+  };
+  el.onpointerup = cancel;
+  el.onpointerleave = cancel;
+  return el;
+}
+
 /** One rolled perk's text as it would show on this item. */
 function rollText(sim: Simulation, stack: ItemStack, roll: { perk: string; value: number }): string {
   const line = perkLines(sim.content, { ...stack, gear: { ...gearOf(stack), perks: [roll] } }).find(
@@ -60,18 +86,19 @@ function rollText(sim: Simulation, stack: ItemStack, roll: { perk: string; value
   return line ? perkText(sim.content, line) : roll.perk;
 }
 
-/** Every piece of gear the player has, with where it is. */
-function allGear(sim: Simulation): { target: GearTarget; stack: ItemStack }[] {
-  const eq = sim.ecs.need(sim.player, Equipment);
-  const worn = EQUIP_SLOTS.flatMap((slot) => {
-    const stack = eq[slot];
-    return stack ? [{ target: { slot }, stack }] : [];
-  });
+/** Every piece of gear the player could feed into another: carried, and stashed where the stash opens. */
+function feedable(sim: Simulation): { target: GearTarget; stack: ItemStack }[] {
+  const isGear = (stack: ItemStack) => gearSlotOf(sim.content.item(stack.item)) !== null;
   const pack = sim.ecs
     .need(sim.player, Inventory)
     .stacks.map((stack, i) => ({ target: { pack: i }, stack }))
-    .filter(({ stack }) => gearSlotOf(sim.content.item(stack.item)) !== null);
-  return [...worn, ...pack];
+    .filter(({ stack }) => isGear(stack));
+  const kept = stashReachable(sim)
+    ? stashOf(sim)
+        .map((stack, i) => ({ target: { stash: i }, stack }))
+        .filter(({ stack }) => isGear(stack))
+    : [];
+  return [...pack, ...kept];
 }
 
 /** The smithy's buttons for one piece of gear. */
@@ -82,9 +109,8 @@ export function gearWork(
   ctx: WorkContext,
 ): HTMLElement {
   const rows: (HTMLElement | string)[] = [];
-  const gear = gearOf(stack);
-  if ('pack' in target) {
-    const index = target.pack;
+  const worn = 'slot' in target;
+  if (!worn) {
     rows.push(
       h(
         'div',
@@ -93,7 +119,8 @@ export function gearWork(
           'button',
           {
             class: 'work quiet',
-            onclick: () => ctx.act({ type: 'mark', index, mark: stack.locked ? null : 'lock' }),
+            title: 'L',
+            onclick: () => ctx.act({ type: 'mark', target, mark: stack.locked ? null : 'lock' }),
           },
           stack.locked ? 'Unlock' : 'Lock',
         ),
@@ -101,49 +128,60 @@ export function gearWork(
           'button',
           {
             class: 'work quiet',
-            onclick: () => ctx.act({ type: 'mark', index, mark: stack.junk ? null : 'junk' }),
+            title: 'X',
+            onclick: () => ctx.act({ type: 'mark', target, mark: stack.junk ? null : 'junk' }),
           },
           stack.junk ? 'Not junk' : 'Mark as junk',
         ),
       ),
     );
-  }
-  const atForge = stationNearby(sim, 'forge');
-  const resting = sim.ecs.need(sim.player, Player).state === 'sit';
-  if (!atForge && !resting) {
+    // Dismantling: anywhere, held so a stray click never breaks a piece.
+    const yields = costText(sim, 0, salvageYield(sim, stack));
     rows.push(
-      h(
-        'p',
-        { class: 'hint' },
-        'At the forge: upgrade, infuse and salvage. With the smith back: temper and cleanse.',
+      holdButton(
+        `Dismantle → ${yields}`,
+        canSalvage(sim, target),
+        () => ctx.act({ type: 'salvage', target }),
+        'danger',
       ),
     );
-    return h('div', { class: 'smithy' }, ...rows);
   }
 
-  // Salvage: pack gear only, at the forge or a bonfire. Noble and Legendary ask twice.
-  if ('pack' in target) {
-    const index = target.pack;
-    const yields = costText(sim, 0, salvageYield(sim, stack));
-    const precious = gear.tier === 'noble' || gear.tier === 'legendary';
-    const check = canSalvage(sim, index);
+  // Infusing, at any bonfire: feed a piece with more Power into this one. Feeding a Noble or better is held.
+  const resting = sim.ecs.need(sim.player, Player).state === 'sit';
+  const slot = gearSlotOf(sim.content.item(stack.item));
+  const feeders = feedable(sim).filter(
+    (f) =>
+      f.stack !== stack &&
+      !f.stack.locked &&
+      gearSlotOf(sim.content.item(f.stack.item)) === slot &&
+      gearPower(f.stack) > gearPower(stack),
+  );
+  if (stack.gear && feeders.length > 0) {
+    const cost = infuseCost(sim);
     rows.push(
-      ctx.confirming
-        ? button(
-            `Really salvage this ${sim.content.loot.tiers[gear.tier].name}? → ${yields}`,
-            check,
-            () => {
-              ctx.confirm(false);
-              ctx.act({ type: 'salvage', index });
-            },
-            'danger',
-          )
-        : button(`Salvage → ${yields}`, check, () =>
-            precious ? ctx.confirm(true) : ctx.act({ type: 'salvage', index }),
-          ),
+      h(
+        'div',
+        { class: 'hint' },
+        resting
+          ? `Infuse: raise it to another piece's Power (that piece is used up) · ${costText(sim, cost.souls, cost.items)}`
+          : 'Infuse at a bonfire: raise it to the Power of a stronger piece you own.',
+      ),
     );
+    for (const f of feeders.sort((x, y) => gearPower(y.stack) - gearPower(x.stack))) {
+      const label = `${gearPower(stack)} → ${gearPower(f.stack)} from ${sim.content.item(f.stack.item).name}`;
+      const check = canInfuse(sim, f.target, target);
+      const fire = () => ctx.act({ type: 'infuse', from: f.target, to: target });
+      const precious = TIERS.indexOf(gearOf(f.stack).tier) >= TIERS.indexOf('noble');
+      rows.push(precious ? holdButton(label, check, fire) : button(label, check, fire));
+    }
   }
-  if (!atForge) return h('div', { class: 'smithy' }, ...rows);
+
+  const atForge = stationNearby(sim, 'forge');
+  if (!atForge) {
+    rows.push(h('p', { class: 'hint' }, 'At the forge: upgrade. With the smith back: temper and cleanse.'));
+    return h('div', { class: 'smithy' }, ...rows);
+  }
 
   const next = nextGearUpgrade(sim, target);
   if (next) {
@@ -155,20 +193,6 @@ export function gearWork(
         () => ctx.act({ type: 'upgradeGear', target }),
       ),
     );
-    // Infusing: bring an older piece's upgrades over onto this one.
-    for (const source of allGear(sim)) {
-      if (source.stack === stack || source.stack.level <= stack.level) continue;
-      if (gearSlotOf(sim.content.item(source.stack.item)) !== gearSlotOf(sim.content.item(stack.item)))
-        continue;
-      const cost = infuseCost(sim, source.stack);
-      rows.push(
-        button(
-          `Infuse +${source.stack.level} from ${sim.content.item(source.stack.item).name} · ${costText(sim, cost.souls, cost.items)}`,
-          canInfuse(sim, source.target, target),
-          () => ctx.act({ type: 'infuse', from: source.target, to: target }),
-        ),
-      );
-    }
   }
 
   // Tempering: one perk at a time, then a choice between it and two new ones.

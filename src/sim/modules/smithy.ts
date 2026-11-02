@@ -4,12 +4,13 @@
  * an investment, and the smith (once the smithy is rebuilt) tempers a perk or cleanses a Blighted item.
  * Nothing here can fail by chance, and every price is shown before it is paid.
  *
- * Where: salvage at the forge or a bonfire; upgrades and infusing at the forge; tempering and cleansing at
- * the forge with the smith back. Choosing between a temper's offers needs nothing.
+ * Where: salvage anywhere (docs/power-and-stash.md, section 4); infusing at any bonfire; upgrades at the forge;
+ * tempering and cleansing at the forge with the smith back. Choosing between a temper's offers needs nothing.
+ * Stashed pieces can be worked on only where the stash opens.
  */
 import { CommandError } from '../../core/commands';
 import { gearSlotOf } from '../../content/content';
-import { TIERS, type ItemCount, type TierId } from '../../content/schemas';
+import { TIERS, type ItemCount } from '../../content/schemas';
 import { Rng } from '../../core/rng';
 import { Abilities, Equipment, Inventory, Player, type ItemStack } from '../components';
 import type { GearTarget, PlayerAction } from '../input';
@@ -17,16 +18,25 @@ import type { SimCommand, SimModule } from '../module';
 import type { Simulation } from '../simulation';
 import { stationNearby, type Check } from './crafting';
 import { gearOf, perkPool, rollOne } from './gear';
-import { addItem, countItem, removeItem, roomFor, syncVitals } from './items';
+import { addItem, countItem, removeItem, syncVitals } from './items';
+import { bestOwnedPower, gearPower } from './power';
+import { STASH_CLOSED, stashOf, stashReachable } from './storage';
 import { projectName } from './restoration';
 import { restoredEffects } from './restored-effects';
 
 const fail = (reason: string): Check => ({ ok: false, reason });
 
-/** The stack a target names, if there is one. */
+/** The stack a target names, if there is one (a stashed one only where the stash opens). */
 export function targetStack(sim: Simulation, target: GearTarget): ItemStack | null {
   if ('slot' in target) return sim.ecs.need(sim.player, Equipment)[target.slot];
+  if ('stash' in target) return stashReachable(sim) ? (stashOf(sim)[target.stash] ?? null) : null;
   return sim.ecs.need(sim.player, Inventory).stacks[target.pack] ?? null;
+}
+
+/** Takes a carried or stashed stack out of where it is kept. */
+function takeOut(sim: Simulation, target: GearTarget): void {
+  if ('pack' in target) sim.ecs.need(sim.player, Inventory).stacks.splice(target.pack, 1);
+  else if ('stash' in target) stashOf(sim).splice(target.stash, 1);
 }
 
 const atForge = (sim: Simulation) => stationNearby(sim, 'forge');
@@ -71,19 +81,19 @@ export function salvageYield(sim: Simulation, stack: ItemStack): ItemCount[] {
   return out;
 }
 
-export function canSalvage(sim: Simulation, index: number): Check {
-  const stack = sim.ecs.need(sim.player, Inventory).stacks[index];
+export function canSalvage(sim: Simulation, target: GearTarget): Check {
+  if ('slot' in target) return fail('take it off first');
+  if ('stash' in target && !stashReachable(sim)) return fail(STASH_CLOSED);
+  const stack = targetStack(sim, target);
   if (!stack || !gearSlotOf(sim.content.item(stack.item))) return fail('only gear can be salvaged');
   if (stack.locked) return fail('it is locked');
-  if (!atForge(sim) && !resting(sim)) return fail('salvage at the forge or a bonfire');
   return { ok: true };
 }
 
-/** Breaks the pack stack at `index` into materials. Refused if they wouldn't fit in the pack. */
-export function salvage(sim: Simulation, index: number): boolean {
-  const check = canSalvage(sim, index);
-  const inv = sim.ecs.need(sim.player, Inventory);
-  const stack = inv.stacks[index];
+/** Breaks a carried (or stashed) piece into materials, anywhere. */
+export function salvage(sim: Simulation, target: GearTarget): boolean {
+  const check = canSalvage(sim, target);
+  const stack = targetStack(sim, target);
   if (!check.ok || !stack) {
     sim.events.emit({
       type: 'craftFailed',
@@ -92,64 +102,73 @@ export function salvage(sim: Simulation, index: number): boolean {
     });
     return false;
   }
-  return breakDown(sim, stack, () => inv.stacks.splice(index, 1));
-}
-
-/** Turns a stack into its materials, once `take` has removed it; puts it back if they wouldn't fit. */
-function breakDown(sim: Simulation, stack: ItemStack, take: () => void): boolean {
-  const inv = sim.ecs.need(sim.player, Inventory);
-  const before = inv.stacks.slice();
-  take();
-  const materials = salvageYield(sim, stack);
-  if (materials.some((m) => roomFor(sim, sim.player, m.item) < m.count)) {
-    inv.stacks = before;
-    sim.events.emit({ type: 'craftFailed', recipe: 'salvage', reason: 'inventory is full' });
-    return false;
-  }
-  for (const m of materials) addItem(sim, sim.player, m.item, m.count);
-  sim.events.emit({ type: 'salvaged', item: stack.item, tier: gearOf(stack).tier, materials });
+  takeOut(sim, target);
+  breakDown(sim, stack);
   return true;
 }
 
+/** Adds a stack's materials (which always fit: materials have no limit) and says what came of it. */
+function breakDown(sim: Simulation, stack: ItemStack): void {
+  const materials = salvageYield(sim, stack);
+  for (const m of materials) addItem(sim, sim.player, m.item, m.count);
+  sim.events.emit({ type: 'salvaged', item: stack.item, tier: gearOf(stack).tier, materials });
+}
+
 /**
- * Salvages everything marked junk. It never touches a locked piece, and never a Noble or Legendary one:
- * those go one at a time, on purpose (a bulk salvage that ate legendaries is how players lose gear).
+ * The junk a bulk salvage would break, carried and (where it opens) stashed. It never touches a locked piece or a
+ * Legendary, and a Noble only with `includeNoble` for that one run: a bulk salvage that ate good gear is how
+ * players lose it (Diablo IV, Season 4).
  */
-export function salvageJunk(sim: Simulation): number {
-  if (!atForge(sim) && !resting(sim)) {
-    sim.events.emit({ type: 'craftFailed', recipe: 'salvage', reason: 'salvage at the forge or a bonfire' });
-    return 0;
+export function junkToSalvage(sim: Simulation, includeNoble = false): GearTarget[] {
+  const top = TIERS.indexOf(includeNoble ? 'legendary' : 'noble');
+  const takes = (stack: ItemStack) =>
+    stack.junk === true && !stack.locked && TIERS.indexOf(gearOf(stack).tier) < top;
+  const pack = sim.ecs
+    .need(sim.player, Inventory)
+    .stacks.flatMap((stack, i): GearTarget[] => (takes(stack) ? [{ pack: i }] : []));
+  const kept = stashReachable(sim)
+    ? stashOf(sim).flatMap((stack, i): GearTarget[] => (takes(stack) ? [{ stash: i }] : []))
+    : [];
+  return [...pack, ...kept];
+}
+
+/** What a bulk salvage would give, for the preview. */
+export function junkYield(sim: Simulation, includeNoble = false): { pieces: number; materials: ItemCount[] } {
+  const total = new Map<string, number>();
+  const targets = junkToSalvage(sim, includeNoble);
+  for (const t of targets) {
+    const stack = targetStack(sim, t);
+    if (stack)
+      for (const m of salvageYield(sim, stack)) total.set(m.item, (total.get(m.item) ?? 0) + m.count);
   }
+  return { pieces: targets.length, materials: [...total].map(([item, count]) => ({ item, count })) };
+}
+
+/** Salvages all the junk `junkToSalvage` names, anywhere. */
+export function salvageJunk(sim: Simulation, includeNoble = false): number {
+  const targets = junkToSalvage(sim, includeNoble);
+  const stacks = targets.flatMap((t) => targetStack(sim, t) ?? []);
+  // By identity, so taking one out doesn't shift the next one's index.
   const inv = sim.ecs.need(sim.player, Inventory);
-  const noble = TIERS.indexOf('noble');
-  let done = 0;
-  for (let i = inv.stacks.length - 1; i >= 0; i--) {
-    const stack = inv.stacks[i]!;
-    if (!stack.junk || stack.locked || TIERS.indexOf(gearOf(stack).tier) >= noble) continue;
-    if (breakDown(sim, stack, () => inv.stacks.splice(i, 1))) done++;
-  }
-  return done;
+  inv.stacks = inv.stacks.filter((s) => !stacks.includes(s));
+  if (sim.state.stash) sim.state.stash = sim.state.stash.filter((s) => !stacks.includes(s));
+  for (const stack of stacks) breakDown(sim, stack);
+  return stacks.length;
 }
 
-/** Gear of a tier the player auto-salvages becomes materials the moment it is picked up. True if it did. */
-export function autoSalvage(sim: Simulation, stack: ItemStack): boolean {
-  if (!stack.gear || !(sim.state.autoSalvage ?? []).includes(stack.gear.tier)) return false;
-  return breakDown(sim, stack, () => undefined);
+/**
+ * Auto-junk: a Common or Standard piece arriving below the best piece already owned for its slot is marked junk,
+ * so the pile sorts itself and "Dismantle all junk" clears it. Called as gear is picked up.
+ */
+export function autoJunk(sim: Simulation, stack: ItemStack): void {
+  if (!sim.state.autoJunk || !stack.gear) return;
+  if (stack.gear.tier !== 'common' && stack.gear.tier !== 'standard') return;
+  const slot = gearSlotOf(sim.content.item(stack.item));
+  if (slot && stack.gear.power < bestOwnedPower(sim, slot)) stack.junk = true;
 }
 
-/** Only the two lowest tiers can be salvaged on pickup. */
-export const AUTO_SALVAGE_TIERS: readonly TierId[] = ['common', 'standard'];
-
-function setAutoSalvage(sim: Simulation, tier: TierId, on: boolean): void {
-  if (!AUTO_SALVAGE_TIERS.includes(tier)) return;
-  const now = new Set(sim.state.autoSalvage ?? []);
-  if (on) now.add(tier);
-  else now.delete(tier);
-  sim.state.autoSalvage = TIERS.filter((t) => now.has(t));
-}
-
-function mark(sim: Simulation, index: number, as: 'lock' | 'junk' | null): void {
-  const stack = sim.ecs.need(sim.player, Inventory).stacks[index];
+function mark(sim: Simulation, target: GearTarget, as: 'lock' | 'junk' | null): void {
+  const stack = targetStack(sim, target);
   if (!stack || !gearSlotOf(sim.content.item(stack.item))) return;
   delete stack.locked;
   delete stack.junk;
@@ -237,38 +256,36 @@ export function upgradeGear(
   return true;
 }
 
-/** What moving `from`'s upgrades onto `to` costs: a share of the materials and souls they took. */
-export function infuseCost(sim: Simulation, from: ItemStack): { souls: number; items: ItemCount[] } {
-  const share = sim.content.loot.smithy.infuse;
-  const spent = stepsOf(sim, from.item).slice(0, from.level);
-  const items = new Map<string, number>();
-  for (const step of spent) for (const c of step.items) items.set(c.item, (items.get(c.item) ?? 0) + c.count);
-  return {
-    souls: Math.ceil(spent.reduce((n, s) => n + s.souls, 0) * share),
-    items: [...items].map(([item, count]) => ({ item, count: Math.ceil(count * share) })),
-  };
+/** What infusing costs: the same at any Power (Destiny spent nine years cutting this down; we start there). */
+export function infuseCost(sim: Simulation): { souls: number; items: ItemCount[] } {
+  return sim.content.loot.smithy.infuse;
 }
 
+/**
+ * Whether `from` can be fed into `to`: two pieces for the same slot, `from` of higher Power, carried or stashed
+ * (never worn, never locked), at a bonfire, and paid for.
+ */
 export function canInfuse(sim: Simulation, from: GearTarget, to: GearTarget): Check {
-  const a = targetStack(sim, from);
-  const b = targetStack(sim, to);
-  if (!a || !b || a === b) return fail('choose two pieces of gear');
-  const slotA = gearSlotOf(sim.content.item(a.item));
-  if (!slotA || slotA !== gearSlotOf(sim.content.item(b.item)))
-    return fail('only into gear of the same slot');
-  if (stepsOf(sim, b.item).length === 0) return fail('it cannot be upgraded');
-  if (a.level <= b.level) return fail('it is upgraded no further');
-  if (!atForge(sim)) return fail('needs a forge');
-  const cost = infuseCost(sim, a);
+  const fed = targetStack(sim, from);
+  const kept = targetStack(sim, to);
+  if (!fed || !kept || fed === kept) return fail('choose two pieces of gear');
+  const slot = gearSlotOf(sim.content.item(kept.item));
+  if (!slot || slot !== gearSlotOf(sim.content.item(fed.item)))
+    return fail('only from gear of the same slot');
+  if ('slot' in from) return fail('take it off first');
+  if (fed.locked) return fail('it is locked');
+  if (gearPower(fed) <= gearPower(kept)) return fail('it has no more Power');
+  if (!resting(sim)) return fail('infuse at a bonfire');
+  const cost = infuseCost(sim);
   return affords(sim, cost.souls, cost.items);
 }
 
-/** Moves `from`'s upgrade level onto `to` (as far as `to` goes), so a better drop never resets an investment. */
+/** Raises `to` to `from`'s Power, keeping everything else about it; `from` is used up. */
 export function infuse(sim: Simulation, from: GearTarget, to: GearTarget): boolean {
   const check = canInfuse(sim, from, to);
-  const a = targetStack(sim, from);
-  const b = targetStack(sim, to);
-  if (!check.ok || !a || !b) {
+  const fed = targetStack(sim, from);
+  const kept = targetStack(sim, to);
+  if (!check.ok || !fed || !kept?.gear) {
     sim.events.emit({
       type: 'craftFailed',
       recipe: 'infuse',
@@ -276,13 +293,15 @@ export function infuse(sim: Simulation, from: GearTarget, to: GearTarget): boole
     });
     return false;
   }
-  const cost = infuseCost(sim, a);
+  const cost = infuseCost(sim);
   pay(sim, cost.souls, cost.items);
-  b.level = Math.min(a.level, stepsOf(sim, b.item).length);
-  a.level = 0;
-  refit(sim, from);
+  kept.gear.power = gearPower(fed);
+  // By identity: taking the fed piece out may shift the kept one's index.
+  const inv = sim.ecs.need(sim.player, Inventory);
+  inv.stacks = inv.stacks.filter((s) => s !== fed);
+  if (sim.state.stash) sim.state.stash = sim.state.stash.filter((s) => s !== fed);
   refit(sim, to);
-  sim.events.emit({ type: 'infused', from: a.item, to: b.item, level: b.level });
+  sim.events.emit({ type: 'infused', from: fed.item, to: kept.item, power: kept.gear.power });
   return true;
 }
 
@@ -411,16 +430,16 @@ export function cleanse(sim: Simulation, target: GearTarget): boolean {
 function applyAction(sim: Simulation, action: PlayerAction): void {
   switch (action.type) {
     case 'salvage':
-      salvage(sim, action.index);
+      salvage(sim, action.target);
       return;
     case 'salvageJunk':
-      salvageJunk(sim);
+      salvageJunk(sim, action.includeNoble === true);
       return;
     case 'mark':
-      mark(sim, action.index, action.mark);
+      mark(sim, action.target, action.mark);
       return;
-    case 'autoSalvage':
-      setAutoSalvage(sim, action.tier, action.on);
+    case 'autoJunk':
+      sim.state.autoJunk = action.on;
       return;
     case 'upgradeGear':
       upgradeGear(sim, action.target);

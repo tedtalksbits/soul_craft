@@ -1,7 +1,7 @@
 # Power, the stash and the character screen: design proposal
 
-**Status: decided (2026-11-02). The owner took the recommended answer to all six questions (section 9). Phases 1
-to 4 are built.** This builds on `docs/gear-and-loot.md` (the gear rework, phases 0–7, all built) and turns
+**Status: decided (2026-11-02). The owner took the recommended answer to all six questions (section 9). All five
+phases are built.** This builds on `docs/gear-and-loot.md` (the gear rework, phases 0–7, all built) and turns
 the owner's next six notes into a design:
 
 1. More enemies.
@@ -316,6 +316,28 @@ over at Power 10.
 - **Dev commands:** `power` prints Power, Max Power, weapon and armor Power, and the enemy Power and drop cap where
   you stand; `setpower 300` sets everything worn to 300, for playtesting a ring; `gear <tier> [id] [power]` rolls
   at Max Power by default.
+
+**Phase 5 as built (2026-11-02):**
+
+- **Dismantle anywhere:** the button on any carried or stashed piece's inspect view, held for 0.6 s (it fills as
+  you hold, and letting go early cancels). Worn pieces have to come off first, and locked ones never break.
+  Stashed pieces can be worked on only where the stash opens. Materials have no limit, so a dismantle never fails
+  for room.
+- **Marks:** X marks the hovered piece as junk and L locks it (or the buttons on its inspect view). Junk with more
+  Power than what you wear in its slot shows a green ⇪ instead of the ✕: it could infuse your piece first.
+- **Dismantle all junk**, also held, under the character screen: it shows what it will give before you hold it
+  ("3 → 5 Iron Scrap, 2 Bone Shard"). It takes carried junk anywhere, and stashed junk where the stash opens. It
+  never touches locked pieces or Legendaries, and takes Noble ones only when **include Noble** is ticked, for that
+  one run.
+- **Auto-junk** replaces the auto-salvage toggles: when on, a Common or Standard piece picked up below the best you
+  own for its slot is marked junk as it comes in (nothing is destroyed on pickup any more). Off by default.
+- **Infuse** (at any bonfire): a piece's inspect view lists every carried or stashed piece for the same slot with
+  more Power, as "102 → 214 from Iron Sword". Choosing one raises the piece to that Power and uses the other up;
+  tier, perks, upgrades and tempering stay. It costs 1 bone shard and 50 souls at any Power
+  (`loot.json → smithy.infuse`), never feeds from a locked or worn piece, and feeding a Noble or better is held.
+  It replaces the old Infuse that moved upgrade levels between pieces.
+- **Not done:** a keyboard key to dismantle (the hold is mouse only), and the "offered once you reach ring 1"
+  prompt for auto-junk (it is a plain toggle).
 
 **Phase 4 as built (2026-11-02):**
 

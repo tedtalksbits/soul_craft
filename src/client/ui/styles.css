@@ -1539,3 +1539,24 @@ kbd {
   background: var(--ember);
   box-shadow: 0 0 6px var(--ember);
 }
+
+/* A hold-to-confirm button: it fills from the left while held (smithy-panel.ts, holdButton). */
+.work.hold {
+  position: relative;
+  overflow: hidden;
+}
+.work.hold::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: rgba(224, 112, 96, 0.35);
+  pointer-events: none;
+}
+.work.hold.holding::before {
+  width: 100%;
+  transition: width var(--hold, 600ms) linear;
+}
+.inventory .cell .mark.fuel {
+  color: #8fd47a;
+}

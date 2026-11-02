@@ -93,7 +93,7 @@
       "cap": 4
     },
     "cleanse": { "souls": 200, "items": [{ "item": "glowspore", "count": 3 }] },
-    "infuse": 0.25
+    "infuse": { "souls": 50, "items": [{ "item": "bone_shard", "count": 1 }] }
   },
   "perks": {
     "damage": { "text": "+{v} damage", "stat": "damage", "value": 0.08, "slots": ["weapon"] },

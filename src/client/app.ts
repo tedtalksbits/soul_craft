@@ -627,14 +627,14 @@ export class App {
       }
       case 'craftFailed':
         return this.ui.toast(
-          `Cannot ${e.recipe === 'salvage' || e.recipe === 'temper' || e.recipe === 'cleanse' || e.recipe === 'infuse' || e.recipe === 'upgrade' || e.recipe === 'stash' ? e.recipe : e.recipe === 'unstash' ? 'take it' : 'craft'}: ${e.reason}`,
+          `Cannot ${e.recipe === 'salvage' ? 'dismantle' : e.recipe === 'temper' || e.recipe === 'cleanse' || e.recipe === 'infuse' || e.recipe === 'upgrade' || e.recipe === 'stash' ? e.recipe : e.recipe === 'unstash' ? 'take it' : 'craft'}: ${e.reason}`,
         );
       case 'salvaged':
         return this.ui.toast(
-          `Salvaged ${this.content.item(e.item).name}: ${e.materials.map((m) => `+${m.count} ${this.content.item(m.item).name}`).join(', ')}`,
+          `Dismantled ${this.content.item(e.item).name}: ${e.materials.map((m) => `+${m.count} ${this.content.item(m.item).name}`).join(', ')}`,
         );
       case 'infused':
-        return this.ui.toast(`${this.content.item(e.to).name} infused to +${e.level}`);
+        return this.ui.toast(`${this.content.item(e.to).name} infused to Power ${e.power}`);
       case 'tempered':
         return this.ui.toast('Tempered. Choose which perk to keep.');
       case 'cleansed':

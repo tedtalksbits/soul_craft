@@ -97,7 +97,7 @@ export type SimEvent =
   | { type: 'upgraded'; item: string; level: number }
   /** Smithy work done: gear broken into materials, upgrades moved, a perk tempered, blight burned off, attributes reset. */
   | { type: 'salvaged'; item: string; tier: TierId; materials: ItemCount[] }
-  | { type: 'infused'; from: string; to: string; level: number }
+  | { type: 'infused'; from: string; to: string; power: number }
   | { type: 'tempered'; item: string }
   | { type: 'cleansed'; item: string }
   | { type: 'respecced'; points: number }

@@ -30,7 +30,7 @@ import { canWear, modifierSlots, modifiersOf, wornModifiers } from '../../sim/mo
 import { playerLevel } from '../../sim/modules/progression';
 import { unlockHint } from '../../sim/modules/unlocks';
 import type { GearTarget, PlayerAction } from '../../sim/input';
-import { AUTO_SALVAGE_TIERS } from '../../sim/modules/smithy';
+import { junkYield } from '../../sim/modules/smithy';
 import { canCraft, canUpgrade, nextUpgrade, stationNearby } from '../../sim/modules/crafting';
 import {
   gearOf,
@@ -64,7 +64,7 @@ import type { Simulation } from '../../sim/simulation';
 import { TICK_RATE } from '../../sim/constants';
 import { primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
-import { gearWork } from './smithy-panel';
+import { gearWork, holdButton } from './smithy-panel';
 
 export interface InventoryHost {
   sim(): Simulation | null;
@@ -117,8 +117,8 @@ export class InventoryScreen {
   /** The station this screen was opened at; filters the crafting list. */
   private station: StationId | null = null;
   private selected: Selection | null = null;
-  /** A Noble or Legendary salvage waiting on its second press. */
-  private confirmSalvage = false;
+  /** "Dismantle all junk" takes Noble pieces too, for the next run only. */
+  private includeNoble = false;
   /** The slot whose flyout is open, and the piece hovered in it. */
   private flyoutSlot: EquipSlot | null = 'weapon';
   private hover: { from: 'pack' | 'stash'; index: number } | null = null;
@@ -195,8 +195,8 @@ export class InventoryScreen {
       stationNearby(sim, 'alchemy'),
       sim.ecs.get(e, Player)?.state === 'sit',
       sim.state.restored,
-      sim.state.autoSalvage,
-      this.confirmSalvage,
+      sim.state.autoJunk,
+      this.includeNoble,
       this.tab === 'abilities' ? abilityStatus(sim) : null,
       this.tab === 'abilities' ? variantSignature(sim) : null,
       this.host.bindings(),
@@ -382,7 +382,7 @@ export class InventoryScreen {
       tiles.length
         ? h('div', { class: 'grid' }, ...tiles)
         : h('p', { class: 'hint' }, 'Nothing else for this slot yet.'),
-      h('p', { class: 'hint' }, 'Click to equip · right-click to inspect'),
+      h('p', { class: 'hint' }, 'Click to equip · right-click to inspect · X junk · L lock'),
     );
   }
 
@@ -590,6 +590,22 @@ export class InventoryScreen {
       case 'ArrowLeft':
       case 'ArrowRight':
         return move(col + 1, row);
+      case 'KeyX':
+      case 'KeyL': {
+        const sim = this.host.sim();
+        const hover = this.hover;
+        if (!sim || !hover) return false;
+        const target = hover.from === 'pack' ? { pack: hover.index } : { stash: hover.index };
+        const stack =
+          hover.from === 'pack'
+            ? sim.ecs.need(sim.player, Inventory).stacks[hover.index]
+            : stashOf(sim)[hover.index];
+        if (!stack) return false;
+        const as = code === 'KeyX' ? 'junk' : 'lock';
+        const on = as === 'junk' ? stack.junk : stack.locked;
+        this.host.act({ type: 'mark', target, mark: on ? null : as });
+        return true;
+      }
       case 'Enter': {
         const sim = this.host.sim();
         const best = sim ? this.owned(sim, at)[0] : undefined;
@@ -608,7 +624,6 @@ export class InventoryScreen {
 
   private select(selection: Selection | null): void {
     this.selected = selection;
-    this.confirmSalvage = false;
     this.refresh(true);
   }
 
@@ -664,6 +679,7 @@ export class InventoryScreen {
             ),
           ],
           compareStack(sim, stack, this.flyoutSlot ?? 'weapon'),
+          this.work(sim, { stash: index }, stack),
         );
       }
     }
@@ -778,7 +794,7 @@ export class InventoryScreen {
         'Take',
       );
       detail = gearSlotOf(sim.content.item(stack.item))
-        ? this.gearDetail(sim, stack, [take])
+        ? this.gearDetail(sim, stack, [take], null, this.work(sim, { stash: index }, stack))
         : this.plainDetail(sim, stack, [take]);
     }
     return h(
@@ -910,48 +926,56 @@ export class InventoryScreen {
 
   /** The smithy's buttons for a piece of gear, wired to this screen. */
   private work(sim: Simulation, target: GearTarget, stack: ItemStack): HTMLElement {
-    return gearWork(sim, target, stack, {
-      act: (action) => this.host.act(action),
-      confirming: this.confirmSalvage,
-      confirm: (on) => {
-        this.confirmSalvage = on;
-        this.refresh(true);
-      },
-    });
+    return gearWork(sim, target, stack, { act: (action) => this.host.act(action) });
   }
 
-  /** Under the pack: salvage everything marked junk, and which tiers salvage themselves on pickup. */
+  /**
+   * "Dismantle all junk", anywhere, with what it will give shown first; Noble pieces only when ticked for that run,
+   * locked pieces and Legendaries never. Below it, auto-junk.
+   */
   private packTools(sim: Simulation): HTMLElement {
-    const stacks = sim.ecs.need(sim.player, Inventory).stacks;
-    const junk = stacks.filter((s) => s.junk && !s.locked).length;
-    const can = stationNearby(sim, 'forge') || sim.ecs.need(sim.player, Player).state === 'sit';
-    const auto = sim.state.autoSalvage ?? [];
+    const preview = junkYield(sim, this.includeNoble);
+    const gives = preview.materials.map((m) => `${m.count} ${sim.content.item(m.item).name}`).join(', ');
+    const label = preview.pieces ? `Dismantle all junk: ${preview.pieces} → ${gives}` : 'Dismantle all junk';
+    const includeNoble = this.includeNoble;
     return h(
       'div',
       { class: 'pack-tools' },
+      holdButton(label, preview.pieces ? { ok: true } : { ok: false, reason: 'nothing marked' }, () => {
+        this.host.act({ type: 'salvageJunk', includeNoble });
+        this.includeNoble = false;
+      }),
       h(
         'button',
         {
-          class: 'work',
-          disabled: !can || junk === 0,
-          title: can ? '' : 'salvage at the forge or a bonfire',
-          onclick: () => this.host.act({ type: 'salvageJunk' }),
-        },
-        `Salvage junk (${junk})`,
-      ),
-      h('span', { class: 'hint' }, 'Auto-salvage:'),
-      ...AUTO_SALVAGE_TIERS.map((tier) => {
-        const on = auto.includes(tier);
-        return h(
-          'button',
-          {
-            class: on ? 'work toggle on' : 'work toggle',
-            onclick: () => this.host.act({ type: 'autoSalvage', tier, on: !on }),
+          class: this.includeNoble ? 'work toggle on' : 'work toggle',
+          title: 'Locked pieces and Legendaries are never dismantled in bulk',
+          onclick: () => {
+            this.includeNoble = !this.includeNoble;
+            this.refresh(true);
           },
-          `${on ? '☑' : '☐'} ${sim.content.loot.tiers[tier].name}`,
-        );
-      }),
+        },
+        `${this.includeNoble ? '☑' : '☐'} include Noble`,
+      ),
+      h(
+        'button',
+        {
+          class: sim.state.autoJunk ? 'work toggle on' : 'work toggle',
+          title: 'Marks Common and Standard pieces below your best for their slot as junk when picked up',
+          onclick: () => this.host.act({ type: 'autoJunk', on: !sim.state.autoJunk }),
+        },
+        `${sim.state.autoJunk ? '☑' : '☐'} Auto-junk`,
+      ),
     );
+  }
+
+  /** Whether a piece has more Power than the worn piece of its slot (the weaker ring, for rings). */
+  private fuel(sim: Simulation, stack: ItemStack): boolean {
+    const eq = sim.ecs.need(sim.player, Equipment);
+    const kind = gearSlotOf(sim.content.item(stack.item));
+    if (!kind) return false;
+    const worn = kind === 'ring' ? Math.min(gearPower(eq.ring0), gearPower(eq.ring1)) : gearPower(eq[kind]);
+    return gearPower(stack) > worn;
   }
 
   /** An item's name in its tier's color, with its upgrade level. */
@@ -984,6 +1008,9 @@ export class InventoryScreen {
         cell.append(h('span', { class: 'count' }, String(stack.count)));
       if (stack.level > 0) cell.append(h('span', { class: 'level' }, `+${stack.level}`));
       if (stack.locked) cell.append(h('span', { class: 'mark', title: 'Locked' }, '🔒'));
+      else if (stack.junk && this.fuel(sim, stack))
+        // Junk with more Power than what is worn is worth feeding into it before it is broken.
+        cell.append(h('span', { class: 'mark fuel', title: 'Junk, but it could infuse what you wear' }, '⇪'));
       else if (stack.junk) cell.append(h('span', { class: 'mark junk', title: 'Junk' }, '✕'));
     }
     if (label) cell.append(h('span', { class: 'label' }, label));
