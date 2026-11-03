@@ -620,11 +620,16 @@ export const ItemSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('tool'),
     ...itemBase,
+    /**
+     * A gathering tool (crafted, never loot, no Power). Worn on the tool belt, it is swung at what it gathers:
+     * `bite` extra hits a swing, `yield` more of what breaks, and it wears out after `durability` swings.
+     */
     tool: z.object({
       kind: ToolKindSchema,
-      tier: z.number().int().min(1),
-      power: z.number().int().nonnegative(),
+      tier: z.number().int().nonnegative(),
+      bite: z.number().int().nonnegative(),
       yield: nonneg,
+      durability: z.number().int().min(1),
     }),
   }),
 ]);
@@ -823,6 +828,8 @@ export const PlayerSchema = z.object({
     /** Gear worn from the start, all Common at item level 1. */
     gear: z.array(z.string()).min(1),
     items: z.array(ItemCountSchema).default([]),
+    /** Tools on the belt from the start, so a new game can gather. */
+    tools: z.array(z.string()).default([]),
     unlocked: z.object({ class: z.boolean(), super: z.boolean() }).default({ class: false, super: false }),
   }),
   /**
@@ -869,6 +876,11 @@ export const PlayerSchema = z.object({
    * well-timed dash makes a lunge or an arrow miss instead of following the player to where they landed.
    */
   dodge: z.object({ lostTicks: ticks }),
+  /**
+   * A tool swing: attacking a tree or rock with the right tool on the belt swings the tool instead of the weapon,
+   * striking a box `reach` deep and `width` wide on tick `strikeAt` of `duration`.
+   */
+  toolSwing: z.object({ reach: pos, width: pos, duration: ticks, strikeAt: ticks }),
 });
 export type PlayerDef = z.infer<typeof PlayerSchema>;
 

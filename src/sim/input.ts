@@ -36,6 +36,8 @@ export type PlayerAction =
   /** Puts on the highest-Power piece the player can reach for every slot. */
   | { type: 'equipBest' }
   | { type: 'unequip'; slot: EquipSlot }
+  /** Takes the tool of a kind off the tool belt (a tool in the pack goes on it through `equip`). */
+  | { type: 'unequipTool'; kind: 'axe' | 'pick' }
   /** Moves a carried piece (by pack index) into the stash, or one from the stash (by index) back. Only where it opens. */
   | { type: 'stash'; index: number }
   | { type: 'unstash'; index: number }

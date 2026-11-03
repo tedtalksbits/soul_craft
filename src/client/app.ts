@@ -27,6 +27,8 @@ import { betterGear, Tutorial } from './tutorial';
 import { FixedLoop } from './loop';
 import type { GameRenderer } from './render/renderer';
 import { iconElement, tintedIcon } from './ui/icons';
+import { playerLook } from './render/player-look';
+import { h } from './ui/dom';
 import { InventoryScreen } from './ui/inventory';
 import { LevelScreen } from './ui/level';
 import { RebuildScreen } from './ui/rebuild';
@@ -85,6 +87,7 @@ export class App {
       bindings: () => this.input.bindings,
       sigil: (cls) => this.sigilIcon(cls, 2),
       abilityIcon: (ability) => this.abilityIcon(ability, 2),
+      portrait: () => this.portrait(),
     });
     this.level = new LevelScreen(uiRoot, {
       sim: () => this.sim,
@@ -211,6 +214,28 @@ export class App {
       cls?.element.base ?? '#ffffff',
       scale,
     );
+  }
+
+  /**
+   * The player standing, facing the viewer, in the gear they wear: the body frame and each gear layer stacked, the
+   * layers tinted like the game tints them (player-look.ts).
+   */
+  private portrait(scale = 4): HTMLElement {
+    const el = h('div', { class: 'portrait' });
+    const sim = this.sim;
+    if (!sim) return el;
+    const look = playerLook(sim, this.settings.current.helmet);
+    const frame = (sheet: string) => this.assets.sheet(sheet)?.animRect('idle_down');
+    const body = frame(look.body);
+    if (!body) return el;
+    el.style.width = `${body.w * scale}px`;
+    el.style.height = `${body.h * scale}px`;
+    el.append(iconElement(body, scale));
+    for (const layer of look.layers) {
+      const rect = frame(layer.sheet);
+      if (rect) el.append(tintedIcon(rect, `#${layer.tint.toString(16).padStart(6, '0')}`, scale));
+    }
+    return el;
   }
 
   itemIcon(item: string, scale = 2): HTMLElement {
@@ -659,6 +684,10 @@ export class App {
         return this.ui.banner(`${this.content.item(e.item).name.toUpperCase()} +${e.level}`, 'good');
       case 'inventoryFull':
         return this.ui.toast(`No room for ${this.content.item(e.item).name}`);
+      case 'toolBroke':
+        return this.ui.toast(`${this.content.item(e.item).name} broke. Craft another.`);
+      case 'needsTool':
+        return this.ui.toast(e.kind === 'axe' ? 'Needs an axe' : 'Needs a pickaxe', 1200);
       case 'sentToStash':
         return this.ui.toast(`${this.content.item(e.item).name}: pocket full, sent to the stash`);
       case 'buffStarted':

@@ -5,7 +5,7 @@
  * tinted with the piece's tier color, so five tiers cost no extra art. Pure presentation.
  */
 import type { ItemStack } from '../../sim/components';
-import { Equipment } from '../../sim/components';
+import { Equipment, Player } from '../../sim/components';
 import { gearOf } from '../../sim/modules/gear';
 import { superWeapon } from '../../sim/modules/supers';
 import type { Simulation } from '../../sim/simulation';
@@ -61,6 +61,9 @@ export function playerLook(sim: Simulation, showHelmet: boolean): PlayerLook {
   // A roaming super's weapon replaces the held one in hand (docs/supers.md).
   const wielded = superWeapon(sim);
   const weapon = eq?.weapon ? sim.content.items[eq.weapon.item] : undefined;
+  // Swinging a tool, the weapon is put away (tools have no art in hand yet).
+  const gathering = sim.ecs.get(sim.player, Player)?.state === 'gather';
+  if (gathering) return { body: BODY[chest ?? 'cloth'], layers, shimmer: false };
   if (wielded)
     layers.push({ sheet: wielded.look.sheet, tint: Number.parseInt(wielded.look.tint.slice(1), 16) });
   else if (weapon?.kind === 'weapon') layers.push({ sheet: `player_${weapon.weapon.type}`, tint: 0xffffff });

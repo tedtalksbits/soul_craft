@@ -24,6 +24,7 @@ import { rebuild } from '../../src/sim/modules/restoration';
 import { projectRank, restoredEffects } from '../../src/sim/modules/restored-effects';
 import { stashCapacity } from '../../src/sim/modules/storage';
 import { strikeTiles } from '../../src/sim/modules/terrain';
+import { toolbelt } from '../../src/sim/modules/tools';
 import type { Simulation } from '../../src/sim/simulation';
 import { content, face, newSim, ofType, press, run, spawnNear } from '../helpers';
 
@@ -105,44 +106,42 @@ describe('gathering tools', () => {
     return { tx, ty, box: { x: tx * TILE + 2, y: ty * TILE + 2, w: 4, h: 4 } };
   }
 
-  it('an axe brings a tree down in fewer swings', () => {
-    const swings = (withAxe: boolean) => {
+  /** Puts a tool on the belt, as worn (or none of that kind). */
+  function belt(sim: Simulation, kind: 'axe' | 'pick', item: string | null) {
+    toolbelt(sim)[kind] = item ? { item, count: 1, level: 0 } : null;
+  }
+
+  it('a better axe brings a tree down in fewer swings', () => {
+    const swings = (axe: string) => {
       const sim = newSim();
-      if (withAxe) addItem(sim, sim.player, 'iron_axe', 1);
+      belt(sim, 'axe', axe);
       const { tx, ty, box } = tileBeside(sim, 'tree');
       let n = 0;
       while (sim.world.tileAt(tx, ty)?.id === 'tree' && n < 10) {
-        strikeTiles(sim, box);
+        strikeTiles(sim, box, [], 'axe');
         n++;
       }
       return n;
     };
-    expect(swings(false)).toBe(3);
-    expect(swings(true)).toBe(2);
+    expect(swings('crude_axe')).toBe(3);
+    expect(swings('iron_axe')).toBe(2);
+    // Steel's two extra hits on top of the swing fell a three-hit tree at once.
+    expect(swings('steel_axe')).toBe(1);
   });
 
-  it('a pickaxe turns up iron in rock, which bare hands never find', () => {
-    const iron = (withPick: boolean) => {
+  it('a pickaxe of a good enough tier turns up iron in rock, which a crude one never finds', () => {
+    const iron = (pick: string) => {
       const sim = newSim();
-      if (withPick) addItem(sim, sim.player, 'iron_pickaxe', 1);
+      belt(sim, 'pick', pick);
       for (let i = 0; i < 30; i++) {
         const { tx, ty, box } = tileBeside(sim, 'rock');
-        while (sim.world.tileAt(tx, ty)?.id === 'rock') strikeTiles(sim, box);
+        for (let n = 0; n < 10 && sim.world.tileAt(tx, ty)?.id === 'rock'; n++)
+          strikeTiles(sim, box, [], 'pick');
       }
       return [...sim.ecs.query(Pickup)].filter(([, p]) => p.item === 'iron_scrap').length;
     };
-    expect(iron(false)).toBe(0);
-    expect(iron(true)).toBeGreaterThan(3);
-  });
-
-  it('the best tool of a kind carried is the one that counts', () => {
-    const sim = newSim();
-    addItem(sim, sim.player, 'iron_axe', 1);
-    addItem(sim, sim.player, 'steel_axe', 1);
-    const { tx, ty, box } = tileBeside(sim, 'tree');
-    strikeTiles(sim, box);
-    // Steel's two extra hits on top of the swing fell a three-hit tree at once.
-    expect(sim.world.tileAt(tx, ty)?.id).not.toBe('tree');
+    expect(iron('crude_pickaxe')).toBe(0);
+    expect(iron('iron_pickaxe')).toBeGreaterThan(3);
   });
 });
 

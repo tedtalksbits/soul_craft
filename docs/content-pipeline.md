@@ -141,9 +141,11 @@ attribute points count toward them.
   `{ type: "coat", coating, seconds }`, where `coating` is `{ kind: "fire", damage, seconds }` (hits set foes
   burning), `{ kind: "bleed", stacks, ticks, damage, stagger }` (hits stack Bleed) or `{ kind: "warden", bonus }`
   (more damage to bosses). A new coating replaces the old one.
-- `tool`: `tool { kind, tier, power, yield }`, an `axe` or `pick`. It works from the pack (the best of each kind
-  carried counts): `power` extra hits a swing on tiles whose `cut.tool` matches, `yield` more item drops, and the
-  tile's `cut.toolDrops` up to its `tier`.
+- `tool`: `tool { kind, tier, bite, yield, durability }`, an `axe` or `pick`: crafted, never loot, no Power. It
+  works from the tool belt (one per kind, `player.json → start.tools` to begin with): attacking a tile whose
+  `cut.tool` matches swings the tool instead of the weapon (`player.json → toolSwing`), for `bite` extra hits, `yield`
+  more item drops and the tile's `cut.toolDrops` up to its `tier`. Each swing wears it; after `durability` swings it
+  breaks. Weapons cut only tiles with no `cut.tool` (grass, moss).
   Drinking one takes the flask's drink time. A second buff on the same stat refreshes the first.
 
 A buff's `stat` is `damage`, `defense`, `staminaRegen` (fractions: 0.2 = +20%) or `maxHp` (points).

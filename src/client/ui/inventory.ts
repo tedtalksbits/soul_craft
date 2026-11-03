@@ -10,6 +10,7 @@ import {
   ATTRIBUTES,
   STATIONS,
   type CoatingDef,
+  type ToolKind,
   type ItemDef,
   type StationId,
 } from '../../content/schemas';
@@ -31,6 +32,7 @@ import { playerLevel } from '../../sim/modules/progression';
 import { unlockHint } from '../../sim/modules/unlocks';
 import type { GearTarget, PlayerAction } from '../../sim/input';
 import { canSalvage, junkYield } from '../../sim/modules/smithy';
+import { beltOf, durabilityLeft, toolDef } from '../../sim/modules/tools';
 import { canCraft, canUpgrade, nextUpgrade, stationNearby } from '../../sim/modules/crafting';
 import {
   gearOf,
@@ -75,6 +77,8 @@ export interface InventoryHost {
   bindings(): Bindings;
   /** Tinted class sigils and ability icons. */
   sigil(cls: string): HTMLElement;
+  /** The player as they stand, in the gear they wear, for the middle of the character screen. */
+  portrait(): HTMLElement;
   abilityIcon(ability: string): HTMLElement;
 }
 
@@ -120,7 +124,9 @@ export class InventoryScreen {
   /** "Dismantle all junk" takes Noble pieces too, for the next run only. */
   private includeNoble = false;
   /** The slot whose flyout is open, and the piece hovered in it. */
-  private flyoutSlot: EquipSlot | null = 'weapon';
+  private flyoutSlot: EquipSlot | null = null;
+  /** The tool belt quarter whose flyout is open. */
+  private toolFlyout: ToolKind | null = null;
   private hover: { from: 'pack' | 'stash'; index: number } | null = null;
   /** The full stat sheet is shown. */
   private details = false;
@@ -185,6 +191,7 @@ export class InventoryScreen {
       this.station,
       this.selected,
       this.flyoutSlot,
+      this.toolFlyout,
       this.hover,
       this.details,
       sim.ecs.get(e, Inventory)?.stacks,
@@ -239,68 +246,121 @@ export class InventoryScreen {
   // ------------------------------------------------------------------ inventory tab
 
   /**
-   * The character screen (docs/power-and-stash.md, section 6): six slot tiles showing only icon, tier and Power.
-   * Hovering one opens its flyout, everything owned for that slot, highest Power first (stashed pieces dimmed);
-   * hovering a piece there shows a short card, clicking equips it, right-clicking inspects it in full.
+   * The character screen (the mood board, 2026-11-02): weapon and rings left of the character, the tool belt beside
+   * the weapon, armor right, one big Power number on top, a quiet info column, and key hints along the bottom. Slots
+   * show only an icon, a tier frame and Power. Hovering a slot opens its flyout over the character (everything owned
+   * for it, highest Power first); hovering a piece there puts its short card in the info column; clicking equips,
+   * right-clicking inspects. Moving off the slots and the flyout closes it, so at rest the character is in view.
    */
   private itemsTab(sim: Simulation): HTMLElement {
     const e = sim.player;
     const eq = sim.ecs.need(e, Equipment);
-    const open = this.flyoutSlot;
+    const power = playerPower(sim);
+    const max = maxPower(sim);
 
     const slotTile = (slot: EquipSlot) => {
       const stack = eq[slot];
-      const on = open === slot;
       const tile = h(
         'button',
         {
-          class: on ? 'slot-tile open' : 'slot-tile',
+          class: this.flyoutSlot === slot ? 'c-slot open' : 'c-slot',
+          title: SLOT_LABELS[slot],
           onmouseenter: () => this.openSlot(slot),
           onfocus: () => this.openSlot(slot),
           onclick: () => (stack ? this.select({ slot }) : this.openSlot(slot)),
         },
         this.cell(sim, stack, null, null),
-        h(
-          'div',
-          { class: 'what' },
-          h('div', { class: 'label' }, SLOT_LABELS[slot]),
-          h('div', { class: 'tile-power' }, stack?.gear ? String(stack.gear.power) : '–'),
-        ),
       );
+      if (!stack) tile.classList.add('empty');
+      if (stack?.gear) tile.append(h('span', { class: 'c-power' }, String(stack.gear.power)));
       return tile;
     };
+
+    // The tool belt: a round frame, a quarter per kind of tool (the hoe and rod quarters wait on farming and fishing).
+    const belt = beltOf(sim);
+    const quarter = (kind: ToolKind | null, label: string) => {
+      const stack = kind ? belt[kind] : null;
+      const el = h('button', {
+        class: `c-quarter${kind && this.toolFlyout === kind ? ' open' : ''}${kind ? '' : ' unused'}`,
+        title: label,
+        disabled: !kind,
+      });
+      if (kind) {
+        el.onmouseenter = () => this.openTool(kind);
+        el.onfocus = () => this.openTool(kind);
+      }
+      if (stack) {
+        el.append(this.host.icon(stack.item));
+        const def = toolDef(sim, stack.item);
+        if (def) {
+          const left = durabilityLeft(sim, stack) / def.durability;
+          const wear = h('span', { class: 'c-wear' });
+          wear.style.setProperty('--left', String(Math.max(0, Math.min(1, left))));
+          el.append(wear);
+        }
+      }
+      return el;
+    };
+    const tools = h(
+      'div',
+      { class: 'c-tools', title: 'Tool belt' },
+      quarter('axe', 'Axe'),
+      quarter('pick', 'Pickaxe'),
+      quarter(null, 'Hoe (comes with farming)'),
+      quarter(null, 'Fishing rod (comes with fishing)'),
+    );
 
     const quickCount = eq.quick ? countItem(sim.ecs.need(e, Inventory), eq.quick) : 0;
     const quick = this.cell(
       sim,
       eq.quick ? { item: eq.quick, count: quickCount, level: 0 } : null,
-      'Quick (Q)',
+      'Q',
       eq.quick ? () => this.host.act({ type: 'setQuick', item: null }) : null,
     );
-    const power = playerPower(sim);
-    const max = maxPower(sim);
+    quick.title = 'Quick item (Q): click to clear';
 
-    const stats = playerStats(sim, e);
-    const capped = stats.defense >= sim.content.player.armor.cap;
-    const statLine = [
-      `Attack ${Math.round(stats.damage)}`,
-      `Armor ${stats.armor} (${Math.round(stats.defense * 100)}% less damage${capped ? ', capped' : ''})`,
-      `HP ${stats.maxHp}`,
-      `Stamina ${stats.maxStamina}`,
-    ].join(' · ');
+    const info = this.selected
+      ? this.selectedDetail(sim)
+      : this.toolFlyout
+        ? this.toolCard(sim)
+        : this.hover || this.flyoutSlot
+          ? this.card(sim)
+          : this.statColumn(sim);
 
+    const stage = h(
+      'div',
+      { class: 'c-stage' },
+      h(
+        'div',
+        { class: 'c-left' },
+        h('div', { class: 'c-weapon-row' }, slotTile('weapon'), tools),
+        slotTile('ring0'),
+        slotTile('ring1'),
+      ),
+      h(
+        'div',
+        { class: 'c-center' },
+        this.host.portrait(),
+        this.flyoutSlot || this.toolFlyout ? this.flyout(sim) : '',
+      ),
+      h('div', { class: 'c-right' }, slotTile('helmet'), slotTile('chest'), slotTile('legs')),
+    );
+    // Off the slots and the flyout, the flyout closes and the character shows again.
+    stage.onmouseleave = () => this.closeFlyout();
+
+    const key = (k: string, what: string) => h('span', { class: 'c-key' }, h('b', {}, k), what);
     return h(
       'div',
       { class: 'body character' },
       h(
         'div',
-        { class: 'power-head' },
-        h('div', { class: 'power-label' }, 'Power'),
-        h('div', { class: 'power-value' }, String(power)),
+        { class: 'c-top' },
+        h('span', { class: 'c-power-label' }, 'Power'),
+        h('span', { class: 'c-power-value' }, String(power)),
         h(
-          'div',
-          { class: 'power-max', title: 'Drops are based on this: the best piece you own per slot' },
-          `Max ${max}`,
+          'span',
+          { class: 'c-max', title: 'Max Power: the best piece you own per slot. Drops are based on it.' },
+          `max ${max}`,
         ),
         h(
           'button',
@@ -312,40 +372,81 @@ export class InventoryScreen {
           },
           'Equip best',
         ),
+        h('span', { class: 'c-gap' }),
         quick,
       ),
+      h('div', { class: 'c-main' }, stage, h('div', { class: 'c-info' }, info)),
       h(
         'div',
-        { class: 'doll' },
-        h('div', { class: 'side' }, ...(['weapon', 'ring0', 'ring1'] as const).map(slotTile)),
-        this.flyout(sim),
-        h('div', { class: 'side' }, ...(['helmet', 'chest', 'legs'] as const).map(slotTile)),
+        { class: 'c-footer' },
+        key('Click', 'equip'),
+        key('Right-click', 'inspect'),
+        key('X', 'junk'),
+        key('L', 'lock'),
+        key('Hold F', 'dismantle'),
+        h('span', { class: 'c-gap' }),
+        this.packTools(sim),
       ),
-      h(
-        'div',
-        { class: 'stat-line' },
-        h('span', {}, statLine),
-        h(
-          'button',
-          { class: 'quiet', onclick: () => this.toggleDetails() },
-          this.details ? 'Hide details' : 'Details',
-        ),
-      ),
-      this.details ? this.statSheet(sim) : '',
-      this.packTools(sim),
-      h('div', { class: 'col detail' }, this.selected ? this.selectedDetail(sim) : this.card(sim)),
     );
   }
 
-  /** Everything owned for the open slot: carried pieces, then stashed ones, highest Power first. */
+  /** The info column at rest: the numbers that matter, one per line, the rest behind Details. */
+  private statColumn(sim: Simulation): HTMLElement {
+    const stats = playerStats(sim, sim.player);
+    const attrs = sim.ecs.get(sim.player, Attributes);
+    const capped = stats.defense >= sim.content.player.armor.cap;
+    const row = (label: string, value: string, title: string) =>
+      [h('dt', { title }, label), h('dd', { title }, value)] as const;
+    return h(
+      'div',
+      { class: 'c-stats' },
+      h(
+        'dl',
+        {},
+        ...row('Attack', String(Math.round(stats.damage)), 'Damage of a light blow, before crits'),
+        ...row(
+          'Armor',
+          `${stats.armor} · ${Math.round(stats.defense * 100)}%${capped ? ' max' : ''}`,
+          'Armor, and how much less damage you take',
+        ),
+        ...row('Health', String(stats.maxHp), 'Max health'),
+        ...row('Stamina', String(stats.maxStamina), 'Max stamina'),
+        ...row('Level', attrs ? String(playerLevel(attrs)) : '1', 'Level up at a bonfire'),
+      ),
+      h(
+        'button',
+        { class: 'quiet', onclick: () => this.toggleDetails() },
+        this.details ? 'Fewer' : 'Details',
+      ),
+      this.details ? this.statSheet(sim) : '',
+    );
+  }
+
+  /** The flyout for the open slot (or tool belt quarter): everything owned for it, highest Power first. */
   private flyout(sim: Simulation): HTMLElement {
-    const slot = this.flyoutSlot;
-    if (!slot)
+    const tool = this.toolFlyout;
+    if (tool) {
+      const tools = sim.ecs
+        .need(sim.player, Inventory)
+        .stacks.map((stack, index) => ({ stack, index }))
+        .filter(({ stack }) => toolDef(sim, stack.item)?.kind === tool);
+      const cells = tools.map(({ stack, index }) => {
+        const on = this.hover?.from === 'pack' && this.hover.index === index;
+        const cell = this.cell(sim, stack, null, () => this.host.act({ type: 'equip', index }));
+        cell.classList.add('flyout-cell');
+        if (on) cell.classList.add('selected');
+        cell.onmouseenter = () => this.hoverPiece({ from: 'pack', index });
+        return cell;
+      });
       return h(
         'div',
-        { class: 'flyout' },
-        h('p', { class: 'hint' }, 'Hover a slot to see what you have for it.'),
+        { class: 'c-flyout left' },
+        h('div', { class: 'c-fly-head' }, tool === 'axe' ? 'Axes' : 'Pickaxes'),
+        cells.length ? h('div', { class: 'grid' }, ...cells) : h('p', { class: 'hint' }, 'Craft one'),
       );
+    }
+    const slot = this.flyoutSlot;
+    if (!slot) return h('div', {});
     const pieces = this.owned(sim, slot);
     const worn = gearPower(sim.ecs.need(sim.player, Equipment)[slot]);
     const reach = stashReachable(sim);
@@ -375,16 +476,52 @@ export class InventoryScreen {
       if (p.from === 'stash') cell.append(h('span', { class: 'stash-mark', title: 'In the stash' }, 'S'));
       return cell;
     });
-    const carried = pieces.filter((p) => p.from === 'pack').length;
-    const stashed = pieces.length - carried;
+    const side = slot === 'helmet' || slot === 'chest' || slot === 'legs' ? 'right' : 'left';
     return h(
       'div',
-      { class: 'flyout' },
-      h('h2', {}, `${SLOT_LABELS[slot]} · ${carried} carried${stashed ? `, ${stashed} in the stash` : ''}`),
-      tiles.length
-        ? h('div', { class: 'grid' }, ...tiles)
-        : h('p', { class: 'hint' }, 'Nothing else for this slot yet.'),
-      h('p', { class: 'hint' }, 'Click equip · right-click inspect · X junk · L lock · hold F dismantle'),
+      { class: `c-flyout ${side}` },
+      h('div', { class: 'c-fly-head' }, `${SLOT_LABELS[slot]}s`),
+      tiles.length ? h('div', { class: 'grid' }, ...tiles) : h('p', { class: 'hint' }, 'Nothing else yet'),
+    );
+  }
+
+  /** A tool's short card: what it gathers, how many swings it has left, and its numbers. */
+  private toolCard(sim: Simulation): HTMLElement {
+    const kind = this.toolFlyout;
+    const hover = this.hover;
+    const carried =
+      hover?.from === 'pack' ? sim.ecs.need(sim.player, Inventory).stacks[hover.index] : undefined;
+    const stack = carried ?? (kind ? beltOf(sim)[kind] : null);
+    if (!stack)
+      return h('p', { class: 'hint' }, kind === 'pick' ? 'No pickaxe on the belt' : 'No axe on the belt');
+    const def = toolDef(sim, stack.item);
+    if (!def) return h('div', {});
+    const left = durabilityLeft(sim, stack);
+    const pips = 10;
+    const filled = Math.ceil((left / def.durability) * pips);
+    return h(
+      'div',
+      { class: 'short-card tool-card' },
+      h(
+        'div',
+        { class: 'title' },
+        this.host.icon(stack.item),
+        h('div', { class: 'name' }, itemName(sim.content.item(stack.item), 0)),
+      ),
+      h('div', { class: 'tierline' }, def.kind === 'axe' ? 'Axe: trees, mushrooms' : 'Pickaxe: rock'),
+      h(
+        'div',
+        { class: 'c-pips', title: `${left} of ${def.durability} swings left` },
+        ...Array.from({ length: pips }, (_, i) => h('span', { class: i < filled ? 'on' : '' })),
+        h('b', {}, `${left}`),
+      ),
+      h(
+        'ul',
+        { class: 'perks' },
+        def.bite > 0 ? h('li', {}, `+${def.bite} hit${def.bite === 1 ? '' : 's'} a swing`) : '',
+        def.yield > 0 ? h('li', {}, `+${Math.round(def.yield * 100)}% materials`) : '',
+      ),
+      h('p', { class: 'hint' }, carried ? 'Click to put it on the belt' : 'On the belt'),
     );
   }
 
@@ -549,7 +686,27 @@ export class InventoryScreen {
 
   private openSlot(slot: EquipSlot): void {
     if (this.flyoutSlot === slot) return;
+    this.cancelDismantle();
     this.flyoutSlot = slot;
+    this.toolFlyout = null;
+    this.hover = null;
+    this.refresh(true);
+  }
+
+  private openTool(kind: ToolKind): void {
+    if (this.toolFlyout === kind) return;
+    this.cancelDismantle();
+    this.toolFlyout = kind;
+    this.flyoutSlot = null;
+    this.hover = null;
+    this.refresh(true);
+  }
+
+  private closeFlyout(): void {
+    if (!this.flyoutSlot && !this.toolFlyout && !this.hover) return;
+    this.cancelDismantle();
+    this.flyoutSlot = null;
+    this.toolFlyout = null;
     this.hover = null;
     this.refresh(true);
   }
@@ -1384,9 +1541,10 @@ function facts(def: ItemDef): string[] {
       ];
     case 'tool':
       return [
-        `${def.tool.kind === 'axe' ? 'Fells trees and mushrooms' : 'Breaks rock'}: +${def.tool.power} ${def.tool.power === 1 ? 'hit' : 'hits'} a swing`,
-        `+${Math.round(def.tool.yield * 100)}% materials, and the richer finds of tier ${def.tool.tier}`,
-        'Works from the pack; the best one carried counts',
+        def.tool.kind === 'axe' ? 'Fells trees and mushrooms' : 'Breaks rock',
+        ...(def.tool.bite > 0 ? [`+${def.tool.bite} ${def.tool.bite === 1 ? 'hit' : 'hits'} a swing`] : []),
+        ...(def.tool.yield > 0 ? [`+${Math.round(def.tool.yield * 100)}% materials`] : []),
+        `Lasts ${def.tool.durability} swings`,
       ];
     default:
       return [];

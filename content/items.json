@@ -69,13 +69,29 @@
     "icon": "warden_sigil",
     "stack": 10
   },
+  "crude_axe": {
+    "kind": "tool",
+    "name": "Crude Axe",
+    "description": "A stone head lashed to a branch. It fells trees, slowly, and not for long.",
+    "icon": "iron_axe",
+    "stack": 1,
+    "tool": { "kind": "axe", "tier": 0, "bite": 0, "yield": 0, "durability": 60 }
+  },
+  "crude_pickaxe": {
+    "kind": "tool",
+    "name": "Crude Pickaxe",
+    "description": "A sharpened stone on a stick. It breaks rock, slowly, and not for long.",
+    "icon": "iron_pickaxe",
+    "stack": 1,
+    "tool": { "kind": "pick", "tier": 0, "bite": 0, "yield": 0, "durability": 60 }
+  },
   "iron_axe": {
     "kind": "tool",
     "name": "Iron Axe",
     "description": "A woodsman’s axe. Trees come down in half the swings.",
     "icon": "iron_axe",
     "stack": 1,
-    "tool": { "kind": "axe", "tier": 1, "power": 1, "yield": 0.5 }
+    "tool": { "kind": "axe", "tier": 1, "bite": 1, "yield": 0.5, "durability": 160 }
   },
   "iron_pickaxe": {
     "kind": "tool",
@@ -83,7 +99,7 @@
     "description": "Splits rock along its grain, and finds the iron in it.",
     "icon": "iron_pickaxe",
     "stack": 1,
-    "tool": { "kind": "pick", "tier": 1, "power": 1, "yield": 0.5 }
+    "tool": { "kind": "pick", "tier": 1, "bite": 1, "yield": 0.5, "durability": 160 }
   },
   "steel_axe": {
     "kind": "tool",
@@ -91,7 +107,7 @@
     "description": "Bright-edged and balanced. Nothing in the wilds stands long against it.",
     "icon": "steel_axe",
     "stack": 1,
-    "tool": { "kind": "axe", "tier": 2, "power": 2, "yield": 1 }
+    "tool": { "kind": "axe", "tier": 2, "bite": 2, "yield": 1, "durability": 360 }
   },
   "steel_pickaxe": {
     "kind": "tool",
@@ -99,7 +115,7 @@
     "description": "It rings on stone, and the stone gives up what it hides.",
     "icon": "steel_pickaxe",
     "stack": 1,
-    "tool": { "kind": "pick", "tier": 2, "power": 2, "yield": 1 }
+    "tool": { "kind": "pick", "tier": 2, "bite": 2, "yield": 1, "durability": 360 }
   },
   "chipped_sword": {
     "kind": "weapon",

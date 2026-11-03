@@ -485,90 +485,240 @@ kbd {
   white-space: nowrap;
 }
 /*
- * The character screen: Power across the top; the six slot tiles in two columns with the open slot's flyout
- * between them; the short stat line; and the hovered piece's card (or an inspected one) on the right.
+ * The character screen (the mood board): Power on top; weapon, tool belt and rings left of the character, armor
+ * right; a quiet info column; key hints along the bottom. Ember marks Power and what is open; tier color stays on
+ * frames; everything else is ash.
  */
 .inventory .character {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 19em;
-  grid-auto-rows: auto;
-  gap: 0.8em 1em;
-  align-items: start;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.6em;
 }
-.inventory .character > :not(.detail) {
-  grid-column: 1;
-}
-.inventory .character .detail {
-  grid-column: 2;
-  grid-row: 1 / span 5;
-}
-.inventory .power-head {
+.inventory .c-top {
   display: flex;
   align-items: center;
   gap: 0.8em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid rgba(214, 190, 140, 0.12);
 }
-.inventory .power-label {
+.inventory .c-power-label {
   font-family: var(--display);
-  letter-spacing: 0.15em;
-  font-size: 0.8em;
+  letter-spacing: 0.18em;
+  font-size: 0.75em;
   color: var(--dim);
   text-transform: uppercase;
 }
-.inventory .power-value {
+.inventory .c-power-value {
   font-family: var(--display);
-  font-size: 2em;
+  font-size: 2.4em;
+  line-height: 1;
   color: var(--ember);
   font-variant-numeric: tabular-nums;
 }
-.inventory .power-max {
+.inventory .c-max {
   color: var(--dim);
+  font-size: 0.85em;
   font-variant-numeric: tabular-nums;
 }
-.inventory .power-head .cell {
-  margin-left: auto;
+.inventory .c-gap {
+  flex: 1;
 }
-.inventory .doll {
+.inventory .c-main {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.8em;
+  grid-template-columns: minmax(0, 1fr) 15em;
+  gap: 1.2em;
+  align-items: start;
 }
-.inventory .doll .side {
+.inventory .c-stage {
+  display: grid;
+  grid-template-columns: auto minmax(12em, 1fr) auto;
+  gap: 1em;
+  align-items: start;
+  min-height: 15em;
+}
+.inventory .c-left,
+.inventory .c-right {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 18px;
 }
-.inventory .slot-tile {
+.inventory .c-weapon-row {
   display: flex;
-  align-items: center;
-  gap: 0.5em;
-  padding: 2px 6px 2px 2px;
-  text-align: left;
-  border: 1px solid transparent;
+  align-items: flex-end;
+  gap: 10px;
 }
-.inventory .slot-tile.open {
-  border-color: var(--edge);
-  background: rgba(214, 190, 140, 0.08);
+.inventory .c-slot {
+  position: relative;
+  padding: 0;
+  outline-offset: 3px;
 }
-.inventory .slot-tile .label {
-  font-size: 0.65em;
-  letter-spacing: 0.08em;
+.inventory .c-slot.open {
+  outline: 1px solid var(--ember);
+}
+.inventory .c-slot.empty .cell {
+  opacity: 0.4;
+}
+.inventory .c-power {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 3px #000;
+}
+/* The tool belt: a round frame, a quarter per kind of tool. */
+.inventory .c-tools {
+  display: grid;
+  grid-template-columns: 26px 26px;
+  grid-template-rows: 26px 26px;
+  gap: 2px;
+  width: 56px;
+  height: 56px;
+  padding: 1px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(214, 190, 140, 0.25);
+  box-shadow:
+    0 0 0 1px #000,
+    0 0 0 2px rgba(214, 190, 140, 0.35);
+}
+.inventory .c-quarter {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: #1c1919;
+  overflow: hidden;
+}
+.inventory .c-quarter .icon {
+  transform: scale(0.75);
+}
+.inventory .c-quarter.unused {
+  background: #141212;
+  cursor: default;
+}
+.inventory .c-quarter.open {
+  background: #2a2420;
+  box-shadow: inset 0 0 0 1px var(--ember);
+}
+.inventory .c-wear {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 2px;
+  height: 2px;
+  background: #3a3330;
+}
+.inventory .c-wear::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--left, 1) * 100%);
+  background: var(--ember);
+}
+.inventory .c-center {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 15em;
+}
+.inventory .portrait {
+  position: relative;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 18px rgba(240, 138, 60, 0.18));
+}
+.inventory .portrait > .icon {
+  position: absolute;
+  inset: 0;
+}
+/* A slot's flyout lays over the character, from the side its slot is on. */
+.inventory .c-flyout {
+  position: absolute;
+  top: 0;
+  max-width: 100%;
+  padding: 0.4em 0.6em 0.9em;
+  background: rgba(16, 13, 12, 0.96);
+  border: 1px solid rgba(214, 190, 140, 0.3);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  z-index: 2;
+}
+.inventory .c-flyout.left {
+  left: 0;
+}
+.inventory .c-flyout.right {
+  right: 0;
+}
+.inventory .c-fly-head {
+  font-family: var(--display);
+  letter-spacing: 0.12em;
+  font-size: 0.7em;
+  color: var(--dim);
   text-transform: uppercase;
+  margin-bottom: 0.4em;
+}
+.inventory .c-flyout .grid {
+  grid-template-columns: repeat(3, 48px);
+  row-gap: 16px;
+}
+.inventory .c-info {
+  min-height: 15em;
+  padding-left: 1em;
+  border-left: 1px solid rgba(214, 190, 140, 0.12);
+}
+.inventory .c-stats dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25em 1em;
+  margin-bottom: 0.6em;
+}
+.inventory .c-stats dt {
   color: var(--dim);
 }
-.inventory .slot-tile .tile-power {
-  font-family: var(--display);
-  font-size: 1.1em;
+.inventory .c-stats dd {
+  text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.inventory .flyout {
-  min-height: 10em;
-  padding: 0.3em 0.5em;
-  border: 1px solid rgba(214, 190, 140, 0.15);
+.inventory .c-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em 1.1em;
+  padding-top: 0.5em;
+  border-top: 1px solid rgba(214, 190, 140, 0.12);
+  font-size: 0.8em;
+  color: var(--dim);
 }
-.inventory .flyout .grid {
-  grid-template-columns: repeat(auto-fill, 48px);
-  row-gap: 14px;
-  margin-bottom: 0.4em;
+.inventory .c-key b {
+  font-weight: 600;
+  color: var(--ink);
+  margin-right: 0.35em;
+}
+.inventory .c-footer .pack-tools {
+  display: flex;
+  gap: 0.4em;
+  font-size: 1em;
+}
+.inventory .c-pips {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0.3em 0 0.5em;
+}
+.inventory .c-pips span {
+  width: 7px;
+  height: 7px;
+  background: #3a3330;
+}
+.inventory .c-pips span.on {
+  background: var(--ember);
+}
+.inventory .c-pips b {
+  margin-left: 0.5em;
+  font-weight: 400;
+  font-size: 0.85em;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
 }
 .inventory .cell .power-badge {
   position: absolute;
@@ -598,13 +748,6 @@ kbd {
 .inventory .cell.stashed > img,
 .inventory .cell.stashed > canvas {
   opacity: 0.5;
-}
-.inventory .stat-line {
-  display: flex;
-  align-items: center;
-  gap: 0.8em;
-  font-size: 0.85em;
-  color: var(--dim);
 }
 .inventory .stat-sheet {
   font-size: 0.85em;
@@ -1577,4 +1720,26 @@ kbd {
   to {
     height: calc(100% + 16px);
   }
+}
+
+/* Slot tiles and tool quarters are frames of their own, not buttons. */
+.inventory .c-slot,
+.inventory .c-quarter,
+.inventory .c-slot:hover,
+.inventory .c-quarter:hover,
+.inventory .c-slot:focus-visible,
+.inventory .c-quarter:focus-visible,
+.inventory .c-slot:active,
+.inventory .c-quarter:active,
+.inventory .c-quarter:disabled {
+  border: 0;
+  border-image: none;
+}
+.inventory .c-slot:hover .cell,
+.inventory .c-quarter:not(:disabled):hover {
+  filter: brightness(1.25);
+}
+.inventory .c-slot .cell {
+  width: 60px;
+  height: 60px;
 }

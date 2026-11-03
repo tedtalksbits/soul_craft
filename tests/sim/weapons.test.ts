@@ -58,6 +58,8 @@ function hold(sim: Simulation, ticks: number, after: number): ReturnType<typeof 
 describe('the light chain', () => {
   it('runs through its steps while tapped in rhythm, and starts over once the window lapses', () => {
     const sim = newSim();
+    // Away from the tree below the spawn: facing it, an attack would swing the axe (modules/tools.ts).
+    face(sim, 'right');
     const chain = weapons.types.sword.chain;
     const steps: number[] = [];
     for (const move of chain) {
@@ -118,6 +120,8 @@ describe('holding attack', () => {
 describe('dash-strikes', () => {
   it('come out of an attack pressed during a roll', () => {
     const sim = newSim();
+    // Away from the tree below the spawn: facing it, an attack would swing the axe (modules/tools.ts).
+    face(sim, 'right');
     press(sim, ['roll'], 12);
     tap(sim, content.player.roll.duration);
     expect(swingOf(sim).move).toBe('dash');

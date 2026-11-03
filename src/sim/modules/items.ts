@@ -42,6 +42,7 @@ import {
   stashRoom,
 } from './storage';
 import { superWeapon } from './supers';
+import { equipTool, toolDef, unequipTool } from './tools';
 import { gearOf, gearTotals, rollDrop, rollGear, weaponNumbers } from './gear';
 import { characterPower, gearPower, maxPower, playerPower } from './power';
 
@@ -529,7 +530,13 @@ function applyAction(sim: Simulation, action: PlayerAction): void {
   // Gear can change mid-fight (the owner's call, 2026-11-02): swapping to the right tool is part of the game.
   switch (action.type) {
     case 'equip':
-      equip(sim, action.index, action.slot);
+      // A tool goes on the tool belt, never in a gear slot.
+      if (toolDef(sim, sim.ecs.need(sim.player, Inventory).stacks[action.index]?.item ?? ''))
+        equipTool(sim, action.index);
+      else equip(sim, action.index, action.slot);
+      return;
+    case 'unequipTool':
+      unequipTool(sim, action.kind);
       return;
     case 'equipStash':
       equipFromStash(sim, action.index, action.slot);

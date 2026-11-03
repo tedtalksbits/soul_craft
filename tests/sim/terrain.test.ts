@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Body, Equipment, Pickup } from '../../src/sim/components';
-import { Action, NO_INPUT } from '../../src/sim/input';
+import { Body, Pickup } from '../../src/sim/components';
 import { TILE } from '../../src/sim/constants';
 import { tileDamageKey } from '../../src/sim/modules/terrain';
 import type { Simulation } from '../../src/sim/simulation';
@@ -33,22 +32,6 @@ describe('cuttable terrain', () => {
     expect(ofType(third, 'tileCut')).toEqual([expect.objectContaining({ tile: 'tree', hits: 3 })]);
     expect(sim.world.tileAt(tx, ty)?.id).toBe('grass');
     expect(sim.state.tileDamage).toEqual({});
-  });
-
-  it('a lunging charged attack cuts what it reaches late in its swing, once, like a tap', () => {
-    for (const [item, dx] of [
-      ['bone_daggers', 46],
-      ['iron_sword', 58],
-    ] as const) {
-      const sim = newSim();
-      sim.ecs.need(sim.player, Equipment).weapon = { item, count: 1, level: 0 };
-      face(sim, 'right');
-      const pb = sim.ecs.need(sim.player, Body);
-      sim.world.setTile(Math.floor((pb.x + dx) / TILE), Math.floor(pb.y / TILE), 'tree');
-      const events = run(sim, 1, { ...NO_INPUT, held: Action.attack, pressed: Action.attack });
-      events.push(...run(sim, 80, { ...NO_INPUT, held: Action.attack }), ...run(sim, 60));
-      expect(ofType(events, 'tileHit')).toHaveLength(1);
-    }
   });
 
   it('drops crafting materials, never souls, when trees and mushrooms break', () => {

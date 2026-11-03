@@ -288,9 +288,15 @@ proposal and its open questions are in [`docs/power-and-stash.md`](power-and-sta
 - **Supers with their own weapons** ([`docs/supers.md`](supers.md), ADR 0013): all three roaming supers are built,
   Bladestorm's shade blades, Earthshatter's stone maul and Cinder Storm's cinder stave; the burst and defensive
   variants' upgrades come next.
-- **Proposed, not built:** a UI
-  redesign from a mood board of professional game UI. **To discuss:** gathering with the bow, and tools (axe,
-  pickaxe, hoe) as their own mechanic.
+- **Tools, kept apart from weapons** (owner's call): crafted, no Power, worn on a tool belt (axe and pickaxe now;
+  the hoe and rod quarters wait on farming and fishing). Attacking a tree or rock with its tool on the belt swings
+  the tool, whatever weapon is held, and only tools fell trees and break rock. Tools wear out after so many swings
+  and break: crafting new ones is the materials' sink. A new game starts with a crude axe and pickaxe (craftable
+  anywhere); the iron and smith's tools bite deeper, yield more and last longer.
+- **The character screen, redesigned from the mood board** (owner approved, with their sketch): weapon, tool belt
+  and rings left of the character drawn in their gear, armor right, one big Power number, a quiet info column that
+  becomes the hovered piece's card, flyouts over the character that close when you move away, and key hints along
+  the bottom.
 
 ### Milestone 5: Life sim, in service of combat
 

@@ -58,7 +58,7 @@ export interface Invulnerable {
 export const Invulnerable = defineComponent<Invulnerable>('invulnerable');
 
 export type PlayerStateName =
-  'free' | 'attack' | 'charge' | 'roll' | 'hurt' | 'drink' | 'sit' | 'dead' | 'cast';
+  'free' | 'attack' | 'charge' | 'roll' | 'hurt' | 'drink' | 'sit' | 'dead' | 'cast' | 'gather';
 export interface Player {
   state: PlayerStateName;
   /** Ticks spent in the current state. */
@@ -304,6 +304,8 @@ export interface Swing {
   embers?: number;
   /** Tiles (by `tileDamageKey`) this move has already struck: each takes one hit a swing. */
   struckTiles?: string[];
+  /** The tool a tool swing (`gather`) is swinging. */
+  tool?: 'axe' | 'pick';
 }
 export const Swing = defineComponent<Swing>('swing');
 
@@ -355,7 +357,16 @@ export interface ItemStack {
   /** Kept out of bulk salvage, or marked to go in it. */
   locked?: true;
   junk?: true;
+  /** A tool's swings left before it breaks (absent: as new). */
+  durability?: number;
 }
+
+/** The tool belt: one gathering tool per kind (modules/tools.ts), kept apart from weapons and gear. */
+export interface Toolbelt {
+  axe: ItemStack | null;
+  pick: ItemStack | null;
+}
+export const Toolbelt = defineComponent<Toolbelt>('toolbelt');
 
 /** What the player carries. Order is the display order; each kind of thing has its own limit (modules/storage.ts). */
 export interface Inventory {

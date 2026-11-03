@@ -27,6 +27,7 @@ import { gamblerModule } from './gambler';
 import { wardensModule } from './wardens';
 import { powerModule } from './power';
 import { stashModule } from './stash';
+import { toolsModule } from './tools';
 
 /**
  * Every simulation feature, in registration order. Within a phase, systems
@@ -37,6 +38,7 @@ export const SIM_MODULES: readonly SimModule[] = [
   // Menu actions (equip, use, craft) apply before the player acts this tick.
   itemsModule,
   stashModule,
+  toolsModule,
   craftingModule,
   smithyModule,
   gamblerModule,

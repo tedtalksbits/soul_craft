@@ -30,7 +30,7 @@ import { dir8FromVec, resolveDir8, type Dir8 } from './facing';
 const TICK_MS = 1000 / TICK_RATE;
 
 /** Player states whose animation plays once, in step with the state's own timer. */
-const PLAYER_TIMED = new Set(['attack', 'charge', 'roll', 'hurt', 'drink', 'sit', 'dead', 'cast']);
+const PLAYER_TIMED = new Set(['attack', 'charge', 'roll', 'hurt', 'drink', 'sit', 'dead', 'cast', 'gather']);
 /** Enemy AI states that are timed actions rather than open-ended behavior. */
 const ENEMY_TIMED = new Set([
   'windup',
@@ -114,6 +114,8 @@ export function selectAnim(
   if (player) {
     pose = player.state === 'free' ? (moving ? 'walk' : 'idle') : player.state;
     if (player.state === 'attack') pose = currentMove(sim).pose;
+    // A tool swing is a plain swing.
+    if (player.state === 'gather') pose = 'attack';
     if (player.state === 'charge') pose = weaponType(sim).def.chargePose;
     if (player.state === 'cast') {
       const c = castPose(sim, e, player.t);

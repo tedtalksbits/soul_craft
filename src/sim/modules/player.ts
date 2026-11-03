@@ -54,6 +54,7 @@ import {
 } from './weapons';
 import { resetEnemies } from './streaming';
 import { strikeTiles } from './terrain';
+import { gatherTarget, giveStartingTools, toolBox, wearTool } from './tools';
 
 /** How long an early attack/roll press is remembered. */
 const BUFFER_TICKS = 12;
@@ -86,6 +87,7 @@ export function spawnPlayer(sim: Simulation, x: number, y: number, playerClass?:
   ecs.add(e, Team, { team: 'player' });
   ecs.add(e, Sprite, { sheet: def.sprite });
   giveStartingKit(sim, e);
+  giveStartingTools(sim, e);
   giveStartingClass(sim, e, playerClass);
   giveStartingAttributes(sim, e);
   // The starting gear can raise max health and stamina; begin full.
@@ -148,6 +150,8 @@ function updatePlayer(sim: Simulation): void {
       }
       const slot = pressedSlot(act);
       if (slot) startCast(sim, slot);
+      // Facing a tree or rock with its tool on the belt, an attack swings the tool; otherwise the weapon.
+      else if (act & Action.attack && startGather(sim, e, p, facing)) break;
       else if (act & Action.attack && stamina.value > 0) startAttack(sim, e, p, facing, stamina);
       else if (act & Action.roll && stamina.value >= def.roll.minStamina)
         startRoll(sim, p, facing, stamina, mx, my);
@@ -185,6 +189,9 @@ function updatePlayer(sim: Simulation): void {
       }
       break;
     }
+    case 'gather':
+      updateGather(sim, e, p);
+      break;
     case 'charge':
       updateCharge(sim, e, p, facing, stamina, mx, my);
       break;
@@ -265,6 +272,33 @@ function emitSwing(sim: Simulation, e: Entity, p: Player): void {
   const body = sim.ecs.need(e, Body);
   const move = currentMove(sim);
   sim.events.emit({ type: 'swing', x: body.x, y: body.y, dirX: p.dirX, dirY: p.dirY, arc: move.arc });
+}
+
+/** Starts a tool swing if the player faces something their belt's tools gather. True if it did. */
+function startGather(sim: Simulation, e: Entity, p: Player, facing: Facing): boolean {
+  aimMove(sim, e, p, facing);
+  const kind = gatherTarget(sim, p);
+  if (!kind) return false;
+  swingOf(sim).tool = kind;
+  setState(p, 'gather');
+  const body = sim.ecs.need(e, Body);
+  sim.events.emit({ type: 'swing', x: body.x, y: body.y, dirX: p.dirX, dirY: p.dirY, arc: 'bash' });
+  return true;
+}
+
+/** A tool swing: a plain chop or strike at the tile in front, wearing the tool, then free again. */
+function updateGather(sim: Simulation, e: Entity, p: Player): void {
+  const motion = sim.ecs.need(e, Motion);
+  motion.vx = motion.vy = 0;
+  const swing = sim.content.player.toolSwing;
+  const kind = swingOf(sim).tool;
+  if (p.t === swing.strikeAt && kind) {
+    if (strikeTiles(sim, toolBox(sim, p), [], kind)) {
+      sim.hitstop = Math.max(sim.hitstop, sim.content.player.attack.hitstop);
+      wearTool(sim, kind);
+    }
+  }
+  if (p.t >= swing.duration) setState(p, 'free');
 }
 
 function startAttack(sim: Simulation, e: Entity, p: Player, facing: Facing, stamina: Stamina): void {

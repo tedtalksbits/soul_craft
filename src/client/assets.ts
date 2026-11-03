@@ -85,6 +85,14 @@ export class SpriteSheet {
     return { url: this.url, x, y, w, h, sheetW: this.source.width, sheetH: this.source.height };
   }
 
+  /** Where an animation's frame sits in the sheet image, for drawing it in a menu. */
+  animRect(key: string, index = 0): FrameRect | undefined {
+    const tex = this.anim(key)?.textures[index];
+    if (!tex) return undefined;
+    const { x, y, width: w, height: h } = tex.frame;
+    return { url: this.url, x, y, w, h, sheetW: this.source.width, sheetH: this.source.height };
+  }
+
   /** An animation, or a named still frame wrapped as a one-frame animation. */
   anim(key: string): Anim | undefined {
     const anim = this.anims.get(key);

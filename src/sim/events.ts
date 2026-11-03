@@ -69,6 +69,9 @@ export type SimEvent =
       y: number;
     }
   | { type: 'inventoryFull'; item: string }
+  /** A tool wore out and left the belt; a weapon blow fell on something only a tool gathers. */
+  | { type: 'toolBroke'; item: string }
+  | { type: 'needsTool'; kind: 'axe' | 'pick' }
   /** A piece picked up with its pocket full went straight to the stash. */
   | { type: 'sentToStash'; item: string }
   /** Moved between the pockets and the stash. */
@@ -86,8 +89,8 @@ export type SimEvent =
   | { type: 'lastEmber' }
   | { type: 'dodged' }
   | { type: 'streakBurst'; x: number; y: number }
-  | { type: 'equipped'; item: string; slot: EquipSlot }
-  | { type: 'unequipped'; item: string; slot: EquipSlot }
+  | { type: 'equipped'; item: string; slot: EquipSlot | 'axe' | 'pick' }
+  | { type: 'unequipped'; item: string; slot: EquipSlot | 'axe' | 'pick' }
   /** Gear can't change with an enemy after the player. */
   | { type: 'buffStarted'; stat: StatId; item: string; seconds: number }
   | { type: 'buffEnded'; stat: StatId }

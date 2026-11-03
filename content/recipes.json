@@ -62,6 +62,24 @@
     "souls": 60,
     "station": "alchemy"
   },
+  "crude_axe": {
+    "output": { "item": "crude_axe", "count": 1 },
+    "inputs": [
+      { "item": "ashwood", "count": 2 },
+      { "item": "stone", "count": 2 }
+    ],
+    "souls": 0,
+    "station": null
+  },
+  "crude_pickaxe": {
+    "output": { "item": "crude_pickaxe", "count": 1 },
+    "inputs": [
+      { "item": "ashwood", "count": 2 },
+      { "item": "stone", "count": 3 }
+    ],
+    "souls": 0,
+    "station": null
+  },
   "iron_axe": {
     "output": { "item": "iron_axe", "count": 1 },
     "inputs": [

@@ -151,6 +151,8 @@ describe('bow perks', () => {
 
   it('make a shot out of a roll free', () => {
     const sim = newSim();
+    // Away from the tree below the spawn: facing it, an attack would swing the axe (modules/tools.ts).
+    face(sim, 'right');
     wield(sim, 'ashwood_bow', perked([{ perk: 'freeDashShot', value: 1 }]));
     press(sim, ['roll'], 12);
     const stamina = sim.ecs.need(sim.player, Stamina);
