@@ -15,6 +15,7 @@ pnpm content:format         # canonical JSON layout (what the in-game editor wri
 pnpm assets:placeholders    # (re)generate missing placeholder sprite sheets; --force overwrites
 pnpm art:setup              # once: Python venv for the art generators in tools/art
 pnpm art <tool>             # regenerate a character sheet from source, e.g. pnpm art ashen_one
+pnpm icons                  # pack the loose icon PNGs in assets/sprites/source/icons/ into their sheets
 ```
 
 ## Layers and the rules that keep them honest
@@ -48,7 +49,7 @@ ESLint enforces the "never" column for the pure layers. Do not disable those rul
   `content/npcs.json`, with the NPC placed in a prefab. New kinds of goal go in `ObjectiveStepGoalSchema` and
   `stepMet` in `src/sim/modules/objectives.ts`.
 - **An item or recipe** → `content/items.json` / `content/recipes.json` (see `docs/content-pipeline.md`), with an
-  icon frame in the `items` sheet. Menu verbs are `PlayerAction`s on the `InputFrame` (ADR 0009), never direct calls.
+  icon at `assets/sprites/source/icons/items/<name>.png` packed by `pnpm icons` (`docs/icons.md`). Menu verbs are `PlayerAction`s on the `InputFrame` (ADR 0009), never direct calls.
 - **A class or ability** → `content/classes.json` / `content/abilities.json`, built from the effect types in
   `AbilityEffectSchema` (ADR 0010). Only a new kind of effect needs code, in `src/sim/modules/abilities.ts`.
 - **Art** → `assets/sprites/<name>.png` + `<name>.json` (format: `src/content/sprite-sheet.ts`). Sheets made by a

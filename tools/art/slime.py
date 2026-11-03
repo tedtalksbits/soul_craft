@@ -26,7 +26,7 @@ def hx(h):
 
 # material: (highlight, base, shadow, deep). No id 2: compose() dithers it as chainmail.
 RAMPS = {
-    1: ('#b08ac0', '#7d5a92', '#55396a', '#33213f'),  # violet gel (items.py's slime_gel uses the same ramp)
+    1: ('#b08ac0', '#7d5a92', '#55396a', '#33213f'),  # violet gel (the slime_gel item icon uses the same ramp)
     3: ('#d6fff2', '#8af0d6', '#4cc8b0', '#227a6c'),  # teal nodules: bright at every level, they glow
     4: ('#a07a8e', '#7a5668', '#553c4a', '#33232d'),  # mushroom cap (fungal_cap)
     5: ('#e0d6bc', '#bfb497', '#8f866e', '#5e5848'),  # cap stem (fungal_cap's cream)

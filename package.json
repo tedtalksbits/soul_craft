@@ -23,7 +23,8 @@
     "content:validate": "tsx scripts/validate-content.ts",
     "content:format": "tsx scripts/format-content.ts",
     "art:setup": "tsx scripts/art.ts setup",
-    "art": "tsx scripts/art.ts run"
+    "art": "tsx scripts/art.ts run",
+    "icons": "tsx scripts/icons.ts"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm exec lint-staged && pnpm typecheck"

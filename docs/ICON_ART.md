@@ -1,12 +1,13 @@
 # Ability icon request: variants
 
-**Done (2026-10-31).** The pack was generated with PixelLab as described below (`icons_roll3`), and Rally, Knife
-Fan, Pyre, Vanish and Ghost Run came from a reroll (`icons_roll4`). The picks are in `PICKS` in `tools/art/icons.py`.
+**Done (2026-10-31).** The pack was generated with PixelLab as described below, and Rally, Knife Fan, Pyre,
+Vanish and Ghost Run came from a reroll. Since 2026-11-03 every icon is a loose PNG packed by `pnpm icons`
+(`docs/icons.md`); the roll sheets and the picker that cut them were retired.
 The note is kept as the template for future icon requests: it is self-contained for the art agent, which can't
 read this repository.
 
-To add icons later, save the new pack in `assets/sprites/source/`, add one `(id, roll, index)` line per icon to
-`PICKS`, and run `pnpm art icons`. A variant without its own frame shows its base's icon.
+To add icons later, save each chosen icon as `assets/sprites/source/icons/abilities/<id>.png` and run
+`pnpm icons`. A variant without its own icon shows its base's.
 
 ---
 
