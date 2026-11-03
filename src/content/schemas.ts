@@ -858,6 +858,7 @@ export const PerkStatSchema = z.enum([
   'flaskCharges',
   'reach',
   'chargeSpeed',
+  'chargedStamina',
   'stagger',
   'finisherDamage',
   'midAttackDamage',
@@ -1035,6 +1036,17 @@ export const LootSchema = z.object({
         ring: z.tuple([z.string(), z.string(), z.string()]),
       }),
       mark: z.string(),
+      /** Every dismantled piece also gives up Echoes, more for better tiers: what infusing spends. */
+      echo: z.object({
+        item: z.string(),
+        yields: z.object({
+          common: ticks,
+          standard: ticks,
+          rare: ticks,
+          noble: ticks,
+          legendary: ticks,
+        }),
+      }),
     }),
     /**
      * Tempering one perk: the base cost times the tier's factor, rising by `growth` with each temper of the
@@ -1048,8 +1060,21 @@ export const LootSchema = z.object({
       cap: pos,
     }),
     cleanse: z.object({ souls: z.number().int().nonnegative(), items: z.array(ItemCountSchema) }),
-    /** Infusing (raising a piece to a higher one's Power, which is used up) costs this, at any Power. */
-    infuse: z.object({ souls: z.number().int().nonnegative(), items: z.array(ItemCountSchema) }),
+    /**
+     * Infusing (raising a piece to the Power of another of the same slot and tier, which is used up) costs `souls`
+     * and the tier's count of `item` (Echoes, from dismantling), at any Power.
+     */
+    infuse: z.object({
+      souls: z.number().int().nonnegative(),
+      item: z.string(),
+      costs: z.object({
+        common: ticks,
+        standard: ticks,
+        rare: ticks,
+        noble: ticks,
+        legendary: ticks,
+      }),
+    }),
   }),
   perks: z.record(z.string(), PerkSchema),
 });

@@ -91,8 +91,8 @@ export function enemyTarget(sim: Simulation, def: EnemyDef, body: Body): Target 
 }
 
 /**
- * Whether anything is after the player: a living enemy, awake, that can see them. Resting and changing gear wait
- * until it is not, so a bonfire or the pack is never an escape from a fight.
+ * Whether anything is after the player: a living enemy, awake, that can see them. Resting waits until it is not,
+ * so a bonfire is never an escape from a fight.
  */
 export function pursued(sim: Simulation): boolean {
   for (const [e, enemy, ai, body] of sim.ecs.query(Enemy, Ai, Body)) {

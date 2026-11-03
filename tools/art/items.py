@@ -465,6 +465,24 @@ ICONS['warden_mark'] = [
     "................",
     "................",
 ]
+ICONS['echo'] = [   # an Echo: a pale wisp of memory, what dismantled gear leaves behind
+    "................",
+    "........u.......",
+    ".......uU.......",
+    "......uUUu......",
+    "......uWWU......",
+    ".....uWWWWu.....",
+    ".....UWwwWU.....",
+    "....uWw^^wWu....",
+    "....UW^^^^WU....",
+    "....UW^^^^WU....",
+    "....uUW^^WUu....",
+    ".....uUWWUu.....",
+    "......uUUu......",
+    ".......uu.......",
+    "................",
+    "................",
+]
 ICONS['fire_oil'] = [
     "................",
     "................",
@@ -932,7 +950,7 @@ ORDER = ['ashwood', 'fungal_cap', 'glowspore', 'iron_scrap', 'bone_shard', 'slim
          'fire_oil', 'bleeding_oil', 'wardens_bane', 'iron_axe', 'iron_pickaxe', 'steel_axe', 'steel_pickaxe', 'warden_sigil',
          'iron_dirks', 'bone_recurve', 'charred_rod', 'cinderbrand', 'oathspear', 'gravebell', 'twinfang', 'pale_wind',
          'hearthwood', 'wardens_aegis', 'wardens_brand', 'crown_of_the_unforgotten', 'pyreheart_cuirass',
-         'ashwalker_greaves', 'ring_last_ember']
+         'ashwalker_greaves', 'ring_last_ember', 'echo']
 
 # ---------------------------------------------------------------- shading and outline
 def paint(rows):

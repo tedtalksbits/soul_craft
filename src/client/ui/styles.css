@@ -1560,3 +1560,21 @@ kbd {
 .inventory .cell .mark.fuel {
   color: #8fd47a;
 }
+
+/* A piece being dismantled while F is held: its tile fills from the bottom; letting go stops it. */
+.inventory .cell.holding::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  height: 0;
+  background: rgba(224, 112, 96, 0.55);
+  pointer-events: none;
+  animation: dismantle-fill var(--hold, 1500ms) linear forwards;
+}
+@keyframes dismantle-fill {
+  to {
+    height: calc(100% + 16px);
+  }
+}

@@ -145,6 +145,9 @@ export class App {
     addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && !e.defaultPrevented) this.togglePause();
     });
+    addEventListener('keyup', (e) => {
+      if (this.inventory.isOpen) this.inventory.keyUp(e.code);
+    });
     this.tutorial = new Tutorial(
       this.settings,
       this.ui,
@@ -516,8 +519,6 @@ export class App {
         return this.ui.toast("You can't rest with enemies nearby.");
       case 'lastEmber':
         return this.ui.banner('THE LAST EMBER FLARES', 'good');
-      case 'gearLocked':
-        return this.ui.toast("You can't change gear with enemies nearby.");
       case 'flaskEmpty':
         return this.ui.toast('The flask is empty. Rest at a bonfire.');
       case 'abilityUnlocked': {

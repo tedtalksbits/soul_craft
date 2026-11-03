@@ -289,6 +289,8 @@ export interface Swing {
   freeRoll?: boolean;
   /** Embers stored by an Ember staff's melee hits, spent by its fireballs. */
   embers?: number;
+  /** Tiles (by `tileDamageKey`) this move has already struck: each takes one hit a swing. */
+  struckTiles?: string[];
 }
 export const Swing = defineComponent<Swing>('swing');
 

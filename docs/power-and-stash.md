@@ -317,6 +317,9 @@ over at Power 10.
   you stand; `setpower 300` sets everything worn to 300, for playtesting a ring; `gear <tier> [id] [power]` rolls
   at Max Power by default.
 
+**After playtest round 2 (2026-11-02):** infusing needs two pieces of the same rarity and costs Echoes (from
+dismantling) plus 50 souls; holding F over a piece in a flyout dismantles it; gear can change while enemies are near.
+
 **Phase 5 as built (2026-11-02):**
 
 - **Dismantle anywhere:** the button on any carried or stashed piece's inspect view, held for 0.6 s (it fills as

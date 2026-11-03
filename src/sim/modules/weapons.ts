@@ -50,7 +50,7 @@ import { gainEnergy } from './energy';
 import { gearEffects, gearTotals } from './gear';
 import { playerStats } from './items';
 import { onWeaponHit } from './perks';
-import { spawnProjectile } from './projectiles';
+import { shotHits, spawnProjectile } from './projectiles';
 
 /** The equipped weapon's type and its moves. Bare hands fight like a sword. */
 export function weaponType(sim: Simulation): { id: WeaponTypeId; def: WeaponTypeDef } {
@@ -175,7 +175,10 @@ export function moveNumbers(sim: Simulation, move: MoveDef = currentMove(sim)): 
     move !== def.charged && move !== def.dash && isFinisher(sim) ? 1 + totals.finisherDamage : 1;
   return {
     damage: stats.damage * move.damage * affinity * partial * finisher,
-    staminaCost: stats.staminaCost * move.stamina,
+    // A charged attack is costly (the owner's ask: the full-power version is what a geared player earns), and a
+    // perk takes the edge off.
+    staminaCost:
+      stats.staminaCost * move.stamina * (move === def.charged ? Math.max(0, 1 - totals.chargedStamina) : 1),
     reach: stats.reach * move.reach * (1 + totals.reach),
     width: stats.width * move.width,
     knockback: stats.knockback * move.knockback,
@@ -540,9 +543,8 @@ function updateArrows(sim: Simulation): void {
   const totals = gearTotals(sim.content, ecs.get(sim.player, Equipment));
   for (const [arrow, proj, body] of ecs.query(Projectile, Body)) {
     if (!proj.bow) continue;
-    const point = { x: body.x - 1, y: body.y - 1, w: 2, h: 2 };
     for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
-      if (proj.bow.hit.includes(target) || ecs.has(target, Dying) || !overlaps(point, bodyBox(tb))) continue;
+      if (proj.bow.hit.includes(target) || ecs.has(target, Dying) || !shotHits(body, proj, tb)) continue;
       proj.bow.hit.push(target);
       const result = applyDamage(sim, target, {
         amount: Math.max(1, Math.round(proj.damage)),

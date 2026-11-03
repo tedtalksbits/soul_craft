@@ -293,3 +293,26 @@ describe('lunges', () => {
     expect(ofType(events, 'damaged').filter((d) => d.isPlayer)).toHaveLength(0);
   });
 });
+
+describe('charged stamina', () => {
+  it('a charged attack costs several light swings, and the perk takes a share off', () => {
+    const cost = (perk: number) => {
+      const sim = newSim();
+      wield(sim, 'iron_sword', {
+        gear: {
+          tier: 'rare',
+          power: 10,
+          seed: 1,
+          perks: perk ? [{ perk: 'chargedStamina', value: perk }] : [],
+        },
+      });
+      const def = weapons.types.sword;
+      const light = moveNumbers(sim, def.chain[0]).staminaCost;
+      return { light, charged: moveNumbers(sim, def.charged).staminaCost };
+    };
+    const plain = cost(0);
+    expect(plain.charged).toBeCloseTo(plain.light * weapons.types.sword.charged.stamina);
+    expect(plain.charged).toBeGreaterThanOrEqual(plain.light * 3);
+    expect(cost(0.25).charged).toBeCloseTo(plain.charged * 0.75);
+  });
+});

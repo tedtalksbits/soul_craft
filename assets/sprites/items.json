@@ -57,7 +57,8 @@
     "crown_of_the_unforgotten": 50,
     "pyreheart_cuirass": 51,
     "ashwalker_greaves": 52,
-    "ring_last_ember": 53
+    "ring_last_ember": 53,
+    "echo": 54
   },
   "animations": {}
 }

@@ -1,4 +1,4 @@
-import { DIR_VEC } from '../../core/math';
+import { DIR_VEC, overlaps, type Box } from '../../core/math';
 import { Body, Facing, Player, Projectile, type ProjectileKind, type TeamId } from '../components';
 import { TILE } from '../constants';
 import type { SimModule } from '../module';
@@ -6,6 +6,34 @@ import type { Simulation } from '../simulation';
 import { applyDamage } from './combat';
 
 const LIFETIME = 150;
+/**
+ * How far above a foe's feet its body reaches, for shots. A body is only its footprint, but a shot flies at bow
+ * height and the player aims at the sprite, so a shot through the torso must count.
+ */
+const SHOT_HURT_HEIGHT = 14;
+
+/** The ground a shot crossed this tick (from where it was to where it is), so a fast one never skips a foe. */
+export function shotPath(body: Body, proj: Projectile): Box {
+  const px = body.x - proj.vx;
+  const py = body.y - proj.vy;
+  return {
+    x: Math.min(px, body.x) - 1,
+    y: Math.min(py, body.y) - 1,
+    w: Math.abs(proj.vx) + 2,
+    h: Math.abs(proj.vy) + 2,
+  };
+}
+
+/** Whether a shot's path this tick meets a foe: its footprint, and its body above it. */
+export function shotHits(body: Body, proj: Projectile, foe: Body): boolean {
+  const hurt = {
+    x: foe.x - foe.w / 2,
+    y: foe.y - foe.h / 2 - SHOT_HURT_HEIGHT,
+    w: foe.w,
+    h: foe.h + SHOT_HURT_HEIGHT,
+  };
+  return overlaps(shotPath(body, proj), hurt);
+}
 const HIT_RADIUS = 7;
 /** Cosine of the half-angle within which a ready shield deflects arrows. */
 const SHIELD_ARC_COS = 0.5;

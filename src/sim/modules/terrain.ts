@@ -35,19 +35,24 @@ function richer(drops: readonly DropDef[], yieldBonus: number): DropDef[] {
 
 export const tileDamageKey = (tx: number, ty: number): string => `${tx},${ty}`;
 
-/** Deals one hit to every cuttable tile under `box`. Returns whether any multi-hit tile was struck. */
-export function strikeTiles(sim: Simulation, box: Box): boolean {
+/**
+ * Deals one hit to every cuttable tile under `box` that isn't in `struck` (and adds it there), so a swing whose box
+ * lingers over a tile for several ticks still hits it once. Returns whether any multi-hit tile was struck.
+ */
+export function strikeTiles(sim: Simulation, box: Box, struck: string[] = []): boolean {
   let solidHit = false;
   for (let ty = Math.floor(box.y / TILE); ty <= Math.floor((box.y + box.h) / TILE); ty++) {
     for (let tx = Math.floor(box.x / TILE); tx <= Math.floor((box.x + box.w) / TILE); tx++) {
       const tile = sim.world.tileAt(tx, ty);
       const cut = tile?.cut;
       if (!tile || !cut) continue;
-      if (cut.hits > 1) solidHit = true;
+      const key = tileDamageKey(tx, ty);
+      if (struck.includes(key)) continue;
+      struck.push(key);
       const x = tx * TILE + TILE / 2;
       const y = ty * TILE + TILE / 2;
-      const key = tileDamageKey(tx, ty);
       // The right tool bites deeper: extra hits a swing, and richer drops once it breaks.
+      if (cut.hits > 1) solidHit = true;
       const tool = cut.tool ? bestTool(sim, cut.tool) : null;
       const taken = (sim.state.tileDamage[key] ?? 0) + 1 + (tool?.power ?? 0);
       if (taken < cut.hits) {

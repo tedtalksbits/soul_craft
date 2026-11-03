@@ -272,6 +272,23 @@ proposal and its open questions are in [`docs/power-and-stash.md`](power-and-sta
    place of auto-salvage, and Infuse at any bonfire: raise a piece to a stronger one's Power for 1 bone shard and
    50 souls, the stronger one used up.
 
+**Playtest round 2 (2026-11-02).** Density and the Warden fight landed well. Changed from the notes:
+
+- **Gear can change mid-fight:** the lock while an enemy is after you is gone.
+- **Charged attacks cut terrain like taps:** each tile takes a hit the first tick a swing reaches it, so a lunging
+  charge (the daggers' lunge-through, the sword's thrust) no longer passes trees by.
+- **Charged attacks cost 2.5 to 4 times a light swing's stamina,** and a new weapon perk (`chargedStamina`, 20%)
+  brings it down.
+- **The class dodge throws enemies off for 1.5 s after the dash** (was 0.4 s).
+- **Shots hit what they visibly pass through:** arrows, fireballs and knives test their whole path each tick against
+  a hurtbox that rises to the foe's body, not just its footprint.
+- **Infuse needs the same rarity,** and costs Echoes (a new material every dismantled piece gives, more for better
+  tiers) plus 50 souls. **Hold F** over a piece in a flyout to dismantle it (1.5 s, the tile fills, letting go
+  cancels); the held buttons take 1.5 s too.
+- **Proposed, not built:** supers with their own weapons and movesets ([`docs/supers.md`](supers.md)), and a UI
+  redesign from a mood board of professional game UI. **To discuss:** gathering with the bow, and tools (axe,
+  pickaxe, hoe) as their own mechanic.
+
 ### Milestone 5: Life sim, in service of combat
 
 Each part opens through the restoration thread: a Kindling clears the fields or brings back the villager who

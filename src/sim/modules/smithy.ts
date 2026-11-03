@@ -10,7 +10,7 @@
  */
 import { CommandError } from '../../core/commands';
 import { gearSlotOf } from '../../content/content';
-import { TIERS, type ItemCount } from '../../content/schemas';
+import { TIERS, type ItemCount, type TierId } from '../../content/schemas';
 import { Rng } from '../../core/rng';
 import { Abilities, Equipment, Inventory, Player, type ItemStack } from '../components';
 import type { GearTarget, PlayerAction } from '../input';
@@ -78,6 +78,8 @@ export function salvageYield(sim: Simulation, stack: ItemStack): ItemCount[] {
     .map((item, i) => ({ item, count: salvage.yields[tier][i] ?? 0 }))
     .filter((c) => c.count > 0);
   if (tier === 'legendary') out.push({ item: salvage.mark, count: 1 });
+  const echoes = salvage.echo.yields[tier];
+  if (echoes > 0) out.push({ item: salvage.echo.item, count: echoes });
   return out;
 }
 
@@ -256,9 +258,13 @@ export function upgradeGear(
   return true;
 }
 
-/** What infusing costs: the same at any Power (Destiny spent nine years cutting this down; we start there). */
-export function infuseCost(sim: Simulation): { souls: number; items: ItemCount[] } {
-  return sim.content.loot.smithy.infuse;
+/**
+ * What infusing a piece of this tier costs: souls and Echoes (from dismantling), the same at any Power (Destiny
+ * spent nine years cutting its cost down; we start there), more for better tiers.
+ */
+export function infuseCost(sim: Simulation, tier: TierId): { souls: number; items: ItemCount[] } {
+  const c = sim.content.loot.smithy.infuse;
+  return { souls: c.souls, items: [{ item: c.item, count: c.costs[tier] }] };
 }
 
 /**
@@ -272,11 +278,13 @@ export function canInfuse(sim: Simulation, from: GearTarget, to: GearTarget): Ch
   const slot = gearSlotOf(sim.content.item(kept.item));
   if (!slot || slot !== gearSlotOf(sim.content.item(fed.item)))
     return fail('only from gear of the same slot');
+  // Same rarity only: a Common can't take a Legendary's Power, so a tier has to be found, not bought.
+  if (gearOf(fed).tier !== gearOf(kept).tier) return fail('only from gear of the same rarity');
   if ('slot' in from) return fail('take it off first');
   if (fed.locked) return fail('it is locked');
   if (gearPower(fed) <= gearPower(kept)) return fail('it has no more Power');
   if (!resting(sim)) return fail('infuse at a bonfire');
-  const cost = infuseCost(sim);
+  const cost = infuseCost(sim, gearOf(kept).tier);
   return affords(sim, cost.souls, cost.items);
 }
 
@@ -293,7 +301,7 @@ export function infuse(sim: Simulation, from: GearTarget, to: GearTarget): boole
     });
     return false;
   }
-  const cost = infuseCost(sim);
+  const cost = infuseCost(sim, kept.gear.tier);
   pay(sim, cost.souls, cost.items);
   kept.gear.power = gearPower(fed);
   // By identity: taking the fed piece out may shift the kept one's index.

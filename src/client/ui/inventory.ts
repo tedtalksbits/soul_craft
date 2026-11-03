@@ -30,7 +30,7 @@ import { canWear, modifierSlots, modifiersOf, wornModifiers } from '../../sim/mo
 import { playerLevel } from '../../sim/modules/progression';
 import { unlockHint } from '../../sim/modules/unlocks';
 import type { GearTarget, PlayerAction } from '../../sim/input';
-import { junkYield } from '../../sim/modules/smithy';
+import { canSalvage, junkYield } from '../../sim/modules/smithy';
 import { canCraft, canUpgrade, nextUpgrade, stationNearby } from '../../sim/modules/crafting';
 import {
   gearOf,
@@ -64,7 +64,7 @@ import type { Simulation } from '../../sim/simulation';
 import { TICK_RATE } from '../../sim/constants';
 import { primaryKey, type Bindings } from '../keybinds';
 import { h } from './dom';
-import { gearWork, holdButton } from './smithy-panel';
+import { gearWork, HOLD_MS, holdButton } from './smithy-panel';
 
 export interface InventoryHost {
   sim(): Simulation | null;
@@ -124,6 +124,8 @@ export class InventoryScreen {
   private hover: { from: 'pack' | 'stash'; index: number } | null = null;
   /** The full stat sheet is shown. */
   private details = false;
+  /** A dismantle under way while F is held: the tile filling, and the timer that breaks the piece. */
+  private dismantling: { cell: HTMLElement; timer: number } | null = null;
   private shown = '';
 
   constructor(
@@ -382,7 +384,7 @@ export class InventoryScreen {
       tiles.length
         ? h('div', { class: 'grid' }, ...tiles)
         : h('p', { class: 'hint' }, 'Nothing else for this slot yet.'),
-      h('p', { class: 'hint' }, 'Click to equip · right-click to inspect · X junk · L lock'),
+      h('p', { class: 'hint' }, 'Click equip · right-click inspect · X junk · L lock · hold F dismantle'),
     );
   }
 
@@ -429,7 +431,7 @@ export class InventoryScreen {
     const where =
       hover.from === 'stash' && !stashReachable(sim)
         ? `In the stash: ${STASH_CLOSED} to equip it.`
-        : 'Click to equip · right-click to inspect';
+        : 'Click equip · right-click inspect · hold F dismantle';
     return this.shortCard(sim, stack, c, where);
   }
 
@@ -554,6 +556,7 @@ export class InventoryScreen {
 
   private hoverPiece(piece: { from: 'pack' | 'stash'; index: number }): void {
     if (this.hover?.from === piece.from && this.hover.index === piece.index) return;
+    this.cancelDismantle();
     this.hover = piece;
     this.selected = null;
     this.refresh(true);
@@ -562,6 +565,49 @@ export class InventoryScreen {
   private toggleDetails(): void {
     this.details = !this.details;
     this.refresh(true);
+  }
+
+  /** The hovered piece, as the smithy names it. */
+  private hoveredTarget(): GearTarget | null {
+    const hover = this.hover;
+    if (!hover) return null;
+    return hover.from === 'pack' ? { pack: hover.index } : { stash: hover.index };
+  }
+
+  /**
+   * Holding F over a piece dismantles it once held for `HOLD_MS`; its tile fills meanwhile, and letting go (or moving
+   * to another piece) before then calls it off.
+   */
+  private startDismantle(): boolean {
+    const sim = this.host.sim();
+    const target = this.hoveredTarget();
+    if (!sim || !target || this.dismantling) return target !== null;
+    const check = canSalvage(sim, target);
+    const cell = this.el?.querySelector<HTMLElement>('.flyout-cell.selected');
+    if (!check.ok || !cell) return true;
+    cell.style.setProperty('--hold', `${HOLD_MS}ms`);
+    cell.classList.add('holding');
+    this.dismantling = {
+      cell,
+      timer: window.setTimeout(() => {
+        this.dismantling = null;
+        cell.classList.remove('holding');
+        this.host.act({ type: 'salvage', target });
+      }, HOLD_MS),
+    };
+    return true;
+  }
+
+  private cancelDismantle(): void {
+    if (!this.dismantling) return;
+    window.clearTimeout(this.dismantling.timer);
+    this.dismantling.cell.classList.remove('holding');
+    this.dismantling = null;
+  }
+
+  /** A key let go on the character screen: F calls off a dismantle under way. */
+  keyUp(code: string): void {
+    if (code === 'KeyF') this.cancelDismantle();
   }
 
   /**
@@ -590,6 +636,8 @@ export class InventoryScreen {
       case 'ArrowLeft':
       case 'ArrowRight':
         return move(col + 1, row);
+      case 'KeyF':
+        return this.startDismantle();
       case 'KeyX':
       case 'KeyL': {
         const sim = this.host.sim();

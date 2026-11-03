@@ -177,3 +177,29 @@ describe('Pale Wind', () => {
     expect(stamina.value).toBeLessThan(60);
   });
 });
+
+describe('arrows in flight', () => {
+  it('hit a foe aimed at through its body, not only at its feet', () => {
+    const sim = newSim();
+    wield(sim);
+    const foe = dummy(sim, 60, 0);
+    const fb = sim.ecs.need(foe, Body);
+    // Aimed at the torso, a body's height above its footprint, as a player aims at the sprite.
+    const aim = { x: fb.x, y: fb.y - 10 };
+    const events = run(sim, 1, { ...NO_INPUT, pressed: Action.attack, aim });
+    events.push(...run(sim, 40, { ...NO_INPUT, aim }));
+    expect(hitsOn(events, foe)).toHaveLength(1);
+  });
+
+  it('never skip a small foe at full speed', () => {
+    const sim = newSim();
+    wield(sim);
+    face(sim, 'down');
+    const foe = spawnNear(sim, 'slime', 0, 50);
+    sim.ecs.remove(foe, Ai);
+    sim.ecs.remove(foe, Motion);
+    sim.ecs.remove(foe, ContactDamage);
+    Object.assign(sim.ecs.need(foe, Health), { hp: 9999, max: 9999 });
+    expect(hitsOn(drawAndLoose(sim, bow.charged.chargeTicks + 30), foe)).toHaveLength(1);
+  });
+});

@@ -42,7 +42,6 @@ import {
   stashRoom,
 } from './storage';
 import { gearOf, gearTotals, rollDrop, rollGear, weaponNumbers } from './gear';
-import { pursued } from './stealth';
 import { characterPower, gearPower, maxPower, playerPower } from './power';
 
 /** What the player's swing and body amount to once gear, attributes and buffs are applied. */
@@ -516,16 +515,7 @@ function setQuick(sim: Simulation, item: string | null): void {
 }
 
 function applyAction(sim: Simulation, action: PlayerAction): void {
-  // The pack pauses the game, so swapping gear mid-fight would be free; it waits until nothing is after you.
-  const changesGear =
-    action.type === 'equip' ||
-    action.type === 'unequip' ||
-    action.type === 'equipStash' ||
-    action.type === 'equipBest';
-  if (changesGear && pursued(sim)) {
-    sim.events.emit({ type: 'gearLocked' });
-    return;
-  }
+  // Gear can change mid-fight (the owner's call, 2026-11-02): swapping to the right tool is part of the game.
   switch (action.type) {
     case 'equip':
       equip(sim, action.index, action.slot);

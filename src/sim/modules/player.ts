@@ -375,8 +375,11 @@ function strike(sim: Simulation, e: Entity, p: Player): boolean {
     return true;
   }
 
-  // Terrain takes one hit per swing, on the first active tick.
-  if (p.t === currentMove(sim).activeFrom && strikeTiles(sim, box)) {
+  // Terrain takes one hit per swing, the first tick the blow reaches it: a charged thrust's lunge may only get
+  // there late in its active window, and it must cut just like a tap does.
+  const swing = swingOf(sim);
+  if (p.t === currentMove(sim).activeFrom) swing.struckTiles = [];
+  if (strikeTiles(sim, box, (swing.struckTiles ??= []))) {
     sim.hitstop = Math.max(sim.hitstop, def.attack.hitstop);
   }
   return false;

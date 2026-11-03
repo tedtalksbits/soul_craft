@@ -47,7 +47,7 @@
       "chainWindow": 14,
       "charged": {
         "damage": 2,
-        "stamina": 1.6,
+        "stamina": 3.5,
         "reach": 1.5,
         "width": 0.6,
         "duration": 24,
@@ -108,7 +108,7 @@
       "chainWindow": 14,
       "charged": {
         "damage": 1.6,
-        "stamina": 1.8,
+        "stamina": 3.8,
         "reach": 0.75,
         "width": 1,
         "duration": 28,
@@ -180,7 +180,7 @@
       "chainWindow": 16,
       "charged": {
         "damage": 2,
-        "stamina": 1.5,
+        "stamina": 3.2,
         "reach": 1,
         "width": 1.1,
         "duration": 34,
@@ -279,7 +279,7 @@
       "chainWindow": 10,
       "charged": {
         "damage": 2.2,
-        "stamina": 2,
+        "stamina": 4,
         "reach": 1.2,
         "width": 1.4,
         "duration": 20,
@@ -334,7 +334,7 @@
       "chainWindow": 0,
       "charged": {
         "damage": 2.4,
-        "stamina": 1.2,
+        "stamina": 2.5,
         "reach": 1,
         "width": 1,
         "duration": 14,
@@ -421,7 +421,7 @@
       "chainWindow": 14,
       "charged": {
         "damage": 2.3,
-        "stamina": 1,
+        "stamina": 2.5,
         "reach": 1,
         "width": 1,
         "duration": 16,

@@ -113,14 +113,13 @@ describe('no resting or changing gear with an enemy after you', () => {
     expect(player(sim).state).toBe('sit');
   });
 
-  it('locks gear while an enemy is after you', () => {
+  it('lets gear change while an enemy is after you', () => {
     const sim = newSim();
     addItem(sim, sim.player, 'iron_sword', 1);
     spawnNear(sim, 'hollow', 30, 0);
     const equip: PlayerAction = { type: 'equip', index: 0 };
-    const events = run(sim, 1, inputFrame({ menu: true, actions: [equip] }));
-    expect(ofType(events, 'gearLocked')).toHaveLength(1);
-    expect(sim.ecs.need(sim.player, Equipment).weapon?.item).toBe('chipped_sword');
+    run(sim, 1, inputFrame({ menu: true, actions: [equip] }));
+    expect(sim.ecs.need(sim.player, Equipment).weapon?.item).toBe('iron_sword');
   });
 });
 

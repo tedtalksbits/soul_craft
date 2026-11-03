@@ -31,7 +31,7 @@ export interface WorkContext {
 }
 
 /** How long a destructive button must be held: long enough that a stray click never fires it. */
-export const HOLD_MS = 600;
+export const HOLD_MS = 1500;
 
 /** "40 souls · 2 Bone Shard". */
 export function costText(sim: Simulation, souls: number, items: readonly ItemCount[]): string {
@@ -155,17 +155,16 @@ export function gearWork(
       f.stack !== stack &&
       !f.stack.locked &&
       gearSlotOf(sim.content.item(f.stack.item)) === slot &&
+      gearOf(f.stack).tier === gearOf(stack).tier &&
       gearPower(f.stack) > gearPower(stack),
   );
   if (stack.gear && feeders.length > 0) {
-    const cost = infuseCost(sim);
+    const cost = infuseCost(sim, gearOf(stack).tier);
     rows.push(
       h(
         'div',
         { class: 'hint' },
-        resting
-          ? `Infuse: raise it to another piece's Power (that piece is used up) · ${costText(sim, cost.souls, cost.items)}`
-          : 'Infuse at a bonfire: raise it to the Power of a stronger piece you own.',
+        resting ? `Infuse · ${costText(sim, cost.souls, cost.items)}` : 'Infuse at a bonfire',
       ),
     );
     for (const f of feeders.sort((x, y) => gearPower(y.stack) - gearPower(x.stack))) {

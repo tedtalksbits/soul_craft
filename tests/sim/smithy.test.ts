@@ -157,14 +157,17 @@ describe('upgrades and infusing', () => {
   it('infusing raises a favorite to a stronger piece’s Power, using that piece up, for a flat price', () => {
     const sim = newSim();
     const eq = sim.ecs.need(sim.player, Equipment);
-    eq.weapon!.level = 2;
+    eq.weapon = made('chipped_sword', 'rare', [], {
+      level: 2,
+      gear: { tier: 'rare', power: 10, seed: 2, perks: [] },
+    });
     addStack(
       sim,
       sim.player,
       made('iron_sword', 'rare', [], { gear: { tier: 'rare', power: 214, seed: 3, perks: [] } }),
     );
     player(sim).souls = 1000;
-    dropPickupless(sim, 'bone_shard', 5);
+    dropPickupless(sim, 'echo', 20);
     const away = act(sim, { type: 'infuse', from: { pack: 0 }, to: { slot: 'weapon' } });
     expect(ofType(away, 'craftFailed')[0]?.reason).toBe('infuse at a bonfire');
     player(sim).state = 'sit';
@@ -180,18 +183,25 @@ describe('upgrades and infusing', () => {
     expect(eq.weapon).toMatchObject({
       item: 'chipped_sword',
       level: 2,
-      gear: { power: 214, tier: 'common' },
+      gear: { power: 214, tier: 'rare' },
     });
     expect(inv(sim).stacks.some((s) => s.item === 'iron_sword')).toBe(false);
     expect(player(sim).souls).toBe(1000 - smithy.infuse.souls);
-    expect(countItem(inv(sim), 'bone_shard')).toBe(5 - smithy.infuse.items[0]!.count);
+    expect(countItem(inv(sim), 'echo')).toBe(20 - smithy.infuse.costs.rare);
   });
 
-  it('won’t infuse from a weaker, locked or worn piece, or across slots', () => {
+  it('won’t infuse from a weaker, locked or worn piece, or across slots or rarities', () => {
     const sim = newSim();
     player(sim).state = 'sit';
     player(sim).souls = 1000;
-    dropPickupless(sim, 'bone_shard', 5);
+    dropPickupless(sim, 'echo', 20);
+    const eq = sim.ecs.need(sim.player, Equipment);
+    eq.weapon = made('chipped_sword', 'rare', [], { gear: { tier: 'rare', power: 10, seed: 2, perks: [] } });
+    addStack(
+      sim,
+      sim.player,
+      made('iron_dirks', 'noble', [], { gear: { tier: 'noble', power: 300, seed: 6, perks: [] } }),
+    );
     addStack(
       sim,
       sim.player,
@@ -217,6 +227,7 @@ describe('upgrades and infusing', () => {
     expect(reason(at('iron_helm'), { slot: 'weapon' })).toBe('only from gear of the same slot');
     expect(reason(at('bone_cleaver'), { slot: 'weapon' })).toBe('it is locked');
     expect(reason({ slot: 'weapon' }, at('iron_sword'))).toBe('take it off first');
+    expect(reason(at('iron_dirks'), { slot: 'weapon' })).toBe('only from gear of the same rarity');
   });
 });
 

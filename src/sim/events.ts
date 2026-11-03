@@ -89,7 +89,6 @@ export type SimEvent =
   | { type: 'equipped'; item: string; slot: EquipSlot }
   | { type: 'unequipped'; item: string; slot: EquipSlot }
   /** Gear can't change with an enemy after the player. */
-  | { type: 'gearLocked' }
   | { type: 'buffStarted'; stat: StatId; item: string; seconds: number }
   | { type: 'buffEnded'; stat: StatId }
   | { type: 'crafted'; recipe: string; item: string; count: number }

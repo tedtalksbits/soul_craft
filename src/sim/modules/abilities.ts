@@ -38,7 +38,7 @@ import { FULL_ENERGY, gainEnergy } from './energy';
 import { modifiedCooldown, onCast } from './modifiers';
 import { grantOvershield } from './overshield';
 import { onAbilityUsed, spendMark } from './weapons';
-import { spawnProjectile } from './projectiles';
+import { shotHits, spawnProjectile } from './projectiles';
 import { clearStealth, loseTrack, spawnDecoy, veil } from './stealth';
 import { abilityPower } from './progression';
 import { slotUnlocked } from './unlocks';
@@ -429,9 +429,8 @@ function tickAreas(sim: Simulation): void {
   for (const [e, proj, body] of ecs.query(Projectile, Body)) {
     // Bow arrows are the weapons module's.
     if (proj.team !== 'player' || proj.bow) continue;
-    const point = { x: body.x - 1, y: body.y - 1, w: 2, h: 2 };
     for (const [target, , tb] of ecs.query(Enemy, Body, Health)) {
-      if (ecs.has(target, Dying) || !overlaps(point, bodyBox(tb))) continue;
+      if (ecs.has(target, Dying) || !shotHits(body, proj, tb)) continue;
       const hit = {
         ability: proj.ability ?? '',
         damage: proj.damage,

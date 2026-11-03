@@ -27,6 +27,13 @@
     "icon": "glowspore",
     "stack": 99
   },
+  "echo": {
+    "kind": "material",
+    "name": "Echo",
+    "description": "What a piece of gear remembers of the hands that held it. Dismantling gear gives it up; infusing spends it.",
+    "icon": "echo",
+    "stack": 99
+  },
   "iron_scrap": {
     "kind": "material",
     "name": "Iron Scrap",
