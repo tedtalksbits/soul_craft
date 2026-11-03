@@ -27,8 +27,10 @@
     "dismantle": 20,
     "infuse": 21,
     "stash": 22,
-    "best": 23,
-    "details": 24
+    "bag": 23,
+    "all": 24,
+    "best": 25,
+    "details": 26
   },
   "animations": {}
 }

@@ -73,7 +73,7 @@
     "kind": "tool",
     "name": "Crude Axe",
     "description": "A stone head lashed to a branch. It fells trees, slowly, and not for long.",
-    "icon": "iron_axe",
+    "icon": "crude_axe",
     "stack": 1,
     "tool": { "kind": "axe", "tier": 0, "bite": 0, "yield": 0, "durability": 60 }
   },
@@ -81,7 +81,7 @@
     "kind": "tool",
     "name": "Crude Pickaxe",
     "description": "A sharpened stone on a stick. It breaks rock, slowly, and not for long.",
-    "icon": "iron_pickaxe",
+    "icon": "crude_pickaxe",
     "stack": 1,
     "tool": { "kind": "pick", "tier": 0, "bite": 0, "yield": 0, "durability": 60 }
   },

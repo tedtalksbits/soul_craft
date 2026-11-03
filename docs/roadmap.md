@@ -292,11 +292,13 @@ proposal and its open questions are in [`docs/power-and-stash.md`](power-and-sta
   the hoe and rod quarters wait on farming and fishing). Attacking a tree or rock with its tool on the belt swings
   the tool, whatever weapon is held, and only tools fell trees and break rock. Tools wear out after so many swings
   and break: crafting new ones is the materials' sink. A new game starts with a crude axe and pickaxe (craftable
-  anywhere); the iron and smith's tools bite deeper, yield more and last longer.
+  anywhere); the iron and smith's tools bite deeper, yield more and last longer. The swing shows the tool itself (its
+  icon, chopping down at the hand), so a crude, iron or smith's tool reads as what it is.
 - **The character screen, redesigned from the mood board** (owner approved, with their sketch): weapon, tool belt
   and rings left of the character drawn in their gear, armor right, one big Power number, a quiet info column that
   becomes the hovered piece's card, flyouts over the character that close when you move away, and key hints along
-  the bottom.
+  the bottom. Stats and actions are icons with hover text (`ui_icons`). The Bag and Stash tabs share the frame: fill on
+  top, the bag's fixed slots, the stash filtered by slot and sorted by Power, the hovered piece in the info column.
 
 ### Milestone 5: Life sim, in service of combat
 

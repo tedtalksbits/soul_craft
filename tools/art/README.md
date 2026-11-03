@@ -19,6 +19,7 @@ pnpm art village        # regenerate assets/sprites/village.png + village.json (
 pnpm art arena          # regenerate assets/sprites/arena.png + arena.json (seconds)
 pnpm art ui_kit         # re-cut the DOM UI pieces in assets/ui/ from assets/ui/source/kit.png (seconds)
 pnpm art icons          # regenerate assets/sprites/sigils.* + abilities.* from assets/sprites/source/ (seconds)
+pnpm art ui_icons       # regenerate assets/sprites/ui_icons.* : the menus' stat and action glyphs (seconds)
 ```
 
 Output is deterministic, so running a tool without changing it produces no diff. `pnpm dev`
@@ -41,6 +42,7 @@ hot-reloads the sheet as soon as it is written. The character and animation spec
 | `arena.py`     | `arena.*`    | The Warden arena's brazier, 16×24: `brazier` (cold, a still in `frames`) and `brazier_lit` (3 frames, 8 fps, loop)                                                                                                                                                                                 |
 | `ui_kit.py`    | `assets/ui/` | 9-slice UI pieces and their states, cut from one PixelLab sheet (`assets/ui/source/kit.png`)                                                                                                                                                                                                       |
 | `icons.py`     | `sigils.*`   | 16×16 tintable class sigils, plus `abilities.*` (ability icons), picked from PixelLab rolls in `assets/sprites/source/`                                                                                                                                                                            |
+| `ui_icons.py`  | `ui_icons.*` | 16×16 tintable menu glyphs (stats, attributes, actions, mouse buttons) drawn as text grids, tinted by the menus                                                                                                                                                                                    |
 
 ## How the Ashen One generator works
 

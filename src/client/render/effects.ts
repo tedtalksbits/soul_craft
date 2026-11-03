@@ -1,6 +1,6 @@
 /**
  * Purely cosmetic world-space effects: particles, floating damage numbers,
- * the sword arc and projectiles. Uses Math.random freely: none of this is
+ * the sword arc, the tool in a tool swing and projectiles. Uses Math.random freely: none of this is
  * simulation state.
  */
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
@@ -14,10 +14,12 @@ import {
   Player,
   Projectile,
   Sprite as SpriteDef,
+  Swing,
   type PickupKind,
   type ProjectileKind,
 } from '../../sim/components';
 import type { SimEvent } from '../../sim/events';
+import { beltOf } from '../../sim/modules/tools';
 import {
   chargeTicks,
   currentMove,
@@ -51,6 +53,15 @@ const DEFAULT_FLIGHT_HEIGHT = -8;
 const WOOD = 0x6e5236;
 /** Arc center above the feet when a sheet has no `swing` pivot (sized for 24px-tall sprites). */
 const DEFAULT_SWING_PIVOT: readonly [number, number] = [0, -9];
+/**
+ * A tool swing chops down from overhead to the facing: the arc's start and end, in radians off the facing (towards
+ * the side the player faces, so the blow always falls from above).
+ */
+const CHOP_FROM = -1.5;
+const CHOP_TO = 0.2;
+/** Item icons draw a tool from its handle at the lower left to its head at the upper right. */
+const ICON_GRIP: readonly [number, number] = [0.12, 0.85];
+const ICON_ANGLE = -Math.PI / 4;
 
 interface Particle {
   sprite: Sprite;
@@ -99,6 +110,8 @@ export class Effects {
   private readonly particleLayer = new Container();
   private readonly numberLayer = new Container();
   private readonly slashG = new Graphics();
+  /** The tool in hand during a tool swing: its item icon, chopped through an arc (tools have no body layer). */
+  private readonly toolSprite = new Sprite();
   private readonly projectileG = new Graphics();
   private readonly particles: Particle[] = [];
   private readonly pool: Sprite[] = [];
@@ -106,7 +119,9 @@ export class Effects {
   private slash: { ageMs: number; dirX: number; dirY: number } | null = null;
 
   constructor(private readonly assets: Assets) {
-    this.root.addChild(this.projectileG, this.particleLayer, this.slashG, this.numberLayer);
+    this.root.addChild(this.projectileG, this.particleLayer, this.slashG, this.toolSprite, this.numberLayer);
+    this.toolSprite.anchor.set(...ICON_GRIP);
+    this.toolSprite.visible = false;
   }
 
   handle(e: SimEvent, content?: Content): void {
@@ -391,6 +406,33 @@ export class Effects {
   }
 
   /**
+   * A tool swing: the belt's tool, raised overhead, comes down on the strike tick and rests there until the swing
+   * ends. Drawn from its item icon, so a crude, iron or smith's tool looks like itself.
+   */
+  private drawTool(sim: Simulation, p: Player, cx: number, cy: number): void {
+    const sprite = this.toolSprite;
+    const kind = p.state === 'gather' ? sim.ecs.get(sim.player, Swing)?.tool : undefined;
+    const stack = kind ? beltOf(sim)[kind] : null;
+    const icon = stack ? sim.content.items[stack.item]?.icon : undefined;
+    const texture = icon ? this.assets.sheet('items')?.named.get(icon) : undefined;
+    if (!texture) {
+      sprite.visible = false;
+      return;
+    }
+    const { duration, strikeAt } = sim.content.player.toolSwing;
+    // Facing left, the icon is mirrored so the head still leads and the blow still falls from above.
+    const side = p.dirX < 0 ? -1 : 1;
+    const down = Math.min(1, p.t / strikeAt);
+    const angle = Math.atan2(p.dirY, p.dirX) + side * (CHOP_FROM + (CHOP_TO - CHOP_FROM) * down * down);
+    sprite.texture = texture;
+    sprite.visible = true;
+    sprite.position.set(cx, cy);
+    sprite.scale.set(side, 1);
+    sprite.rotation = angle - (side < 0 ? Math.PI - ICON_ANGLE : ICON_ANGLE);
+    sprite.alpha = Math.min(1, (duration - p.t) / 4);
+  }
+
+  /**
    * The weapon's swing, timed to the move's active window (a hammer winds up long before it lands): a
    * slash arc, a thrust line, a full sweep, or a slam's ring where it lands. A charge glints brighter
    * as it fills.
@@ -413,6 +455,7 @@ export class Effects {
       g.circle(ex, cy - 24, 2).fill({ color: 0x2a1408, alpha: 0.8 });
       g.circle(ex, cy - 24, 1.3).fill({ color: 0xffc050 });
     }
+    this.drawTool(sim, p, cx, cy);
     if (p.state === 'charge') {
       const fill = Math.min(1, p.t / chargeTicks(sim));
       const pulse = fill >= 1 ? 0.6 + 0.4 * Math.sin(p.t / 4) : fill * 0.6;

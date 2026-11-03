@@ -58,7 +58,9 @@
     "pyreheart_cuirass": 51,
     "ashwalker_greaves": 52,
     "ring_last_ember": 53,
-    "echo": 54
+    "echo": 54,
+    "crude_axe": 55,
+    "crude_pickaxe": 56
   },
   "animations": {}
 }

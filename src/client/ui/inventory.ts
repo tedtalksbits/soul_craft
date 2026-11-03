@@ -115,6 +115,17 @@ const CHANGE_NAMES: Readonly<Record<string, string>> = {
 };
 /** Glyph tints: ember for Power, ink for what you press, dim ash for labels. */
 const EMBER = '#f0b866';
+/** A carried or stashed piece, by where it is and its index there. */
+type Piece = { from: 'pack' | 'stash'; index: number };
+type StashFilter = 'weapon' | 'helmet' | 'chest' | 'legs' | 'ring' | 'other';
+/** The stash's slot filters, each shown as a plain piece of that slot. */
+const STASH_FILTERS: readonly (readonly [StashFilter, string, string])[] = [
+  ['weapon', 'iron_sword', 'Weapons'],
+  ['helmet', 'iron_helm', 'Helmets'],
+  ['chest', 'iron_mail', 'Chest armor'],
+  ['legs', 'iron_greaves', 'Leg armor'],
+  ['ring', 'ring_of_vigor', 'Rings'],
+];
 const INK = '#ece4d2';
 const DIM = '#a39a88';
 
@@ -147,7 +158,9 @@ export class InventoryScreen {
   private flyoutSlot: EquipSlot | null = null;
   /** The tool belt quarter whose flyout is open. */
   private toolFlyout: ToolKind | null = null;
-  private hover: { from: 'pack' | 'stash'; index: number } | null = null;
+  private hover: Piece | null = null;
+  /** The stash's filter by slot (null: everything). */
+  private stashFilter: StashFilter | null = null;
   /** The full stat sheet is shown. */
   private details = false;
   /** A dismantle under way while F is held: the tile filling, and the timer that breaks the piece. */
@@ -213,6 +226,7 @@ export class InventoryScreen {
       this.flyoutSlot,
       this.toolFlyout,
       this.hover,
+      this.stashFilter,
       this.details,
       sim.ecs.get(e, Inventory)?.stacks,
       sim.state.stash,
@@ -330,14 +344,7 @@ export class InventoryScreen {
       quarter(null, 'Fishing rod (comes with fishing)'),
     );
 
-    const quickCount = eq.quick ? countItem(sim.ecs.need(e, Inventory), eq.quick) : 0;
-    const quick = this.cell(
-      sim,
-      eq.quick ? { item: eq.quick, count: quickCount, level: 0 } : null,
-      'Q',
-      eq.quick ? () => this.host.act({ type: 'setQuick', item: null }) : null,
-    );
-    quick.title = 'Quick item (Q): click to clear';
+    const quick = this.quickCell(sim);
 
     const info = this.selected
       ? this.selectedDetail(sim)
@@ -369,15 +376,7 @@ export class InventoryScreen {
     stage.onmouseleave = () => this.closeFlyout();
 
     const key = (input: string | HTMLElement, glyph: string, what: string) =>
-      this.tip(
-        h(
-          'span',
-          { class: 'c-key' },
-          typeof input === 'string' ? h('b', {}, input) : input,
-          this.host.glyph(glyph, DIM),
-        ),
-        what,
-      );
+      this.footKey(input, glyph, what);
     return h(
       'div',
       { class: 'body character' },
@@ -465,7 +464,7 @@ export class InventoryScreen {
         const on = this.hover?.from === 'pack' && this.hover.index === index;
         const cell = this.cell(sim, stack, null, () => this.host.act({ type: 'equip', index }));
         cell.classList.add('flyout-cell');
-        if (on) cell.classList.add('selected');
+        if (on) cell.classList.add('selected', 'hovered');
         cell.onmouseenter = () => this.hoverPiece({ from: 'pack', index });
         return cell;
       });
@@ -491,7 +490,7 @@ export class InventoryScreen {
         ),
       );
       cell.classList.add('flyout-cell');
-      if (on) cell.classList.add('selected');
+      if (on) cell.classList.add('selected', 'hovered');
       if (p.from === 'stash') {
         cell.classList.add('stashed');
         if (!reach) cell.title = `${cell.title} (in the stash: ${STASH_CLOSED})`;
@@ -694,38 +693,128 @@ export class InventoryScreen {
     return h('div', { class: 'stat-sheet' }, ...rows);
   }
 
-  /** Consumables and materials: the bag (with its limit) and the counts. */
+  /**
+   * The bag, in the character screen's look: how full it is on top, its fixed slots (the empty ones shown, so the
+   * limit is plain) and the materials below, the hovered or selected item in the info column.
+   */
   private bagTab(sim: Simulation): HTMLElement {
     const inv = sim.ecs.need(sim.player, Inventory);
-    const picked = this.selected;
-    const cells = (pocket: (p: Pocket) => boolean) =>
+    const size = sim.content.player.storage.bag;
+    const used = pocketUsed(sim.content, inv, 'bag');
+    const held = (pocket: Pocket) =>
       inv.stacks
-        .map((stack, i) => ({ stack, i }))
-        .filter(({ stack }) => pocket(pocketOf(sim.content, stack.item)))
-        .map(({ stack, i }) => {
-          const on = picked !== null && 'pack' in picked && picked.pack === i;
-          const cell = this.cell(sim, stack, null, () => this.select(on ? null : { pack: i }));
-          if (on) cell.classList.add('selected');
-          return cell;
-        });
-    const index = picked && 'pack' in picked ? picked.pack : null;
-    const stack = index === null ? undefined : inv.stacks[index];
-    const shown =
-      index !== null && stack && !gearSlotOf(sim.content.item(stack.item))
-        ? this.detail(sim, stack, index)
-        : h('p', { class: 'hint' }, 'Select something to use it or stash it.');
+        .map((stack, index) => ({ stack, index }))
+        .filter(({ stack }) => pocketOf(sim.content, stack.item) === pocket)
+        .map(({ stack, index }) => this.storeCell(sim, stack, { pack: index }, { from: 'pack', index }));
+    const bag = held('bag');
+    while (bag.length < size) bag.push(this.cell(sim, null, null, null));
+    const materials = held('materials');
+
+    const pips = h('div', { class: 'c-pips' });
+    for (let i = 0; i < size; i++) pips.append(h('span', { class: i < used ? 'on' : '' }));
+    const grids = h(
+      'div',
+      { class: 'c-store' },
+      h('div', { class: 'c-fly-head' }, 'Bag'),
+      h('div', { class: 'grid' }, ...bag),
+      h('div', { class: 'c-fly-head' }, 'Materials'),
+      materials.length ? h('div', { class: 'grid' }, ...materials) : h('p', { class: 'hint' }, 'None yet'),
+    );
+    grids.onmouseleave = () => this.unhover();
+
+    const hovered = this.hover?.from === 'pack' ? inv.stacks[this.hover.index] : undefined;
+    const index = this.selected && 'pack' in this.selected ? this.selected.pack : null;
+    const picked = index === null ? undefined : inv.stacks[index];
+    const info = hovered
+      ? this.itemCard(sim, hovered)
+      : index !== null && picked && !gearSlotOf(sim.content.item(picked.item))
+        ? this.detail(sim, picked, index)
+        : h('p', { class: 'hint' }, 'Click an item to use it or stash it.');
+
+    return this.storeScreen(
+      [
+        this.tip(this.host.glyph('bag', EMBER), `Bag: ${size} slots for potions and other things you use`),
+        h('span', { class: 'c-count' }, String(used), h('small', {}, `/${size}`)),
+        pips,
+        h('span', { class: 'c-gap' }),
+        this.quickCell(sim),
+      ],
+      grids,
+      info,
+      [this.footKey(this.host.glyph('mouse_left', INK), 'inspect', 'Click: select')],
+    );
+  }
+
+  /**
+   * The Bag and Stash tabs share the character screen's frame: a top bar, the grid beside the info column, key hints
+   * along the bottom.
+   */
+  private storeScreen(
+    top: HTMLElement[],
+    grids: HTMLElement,
+    info: HTMLElement,
+    keys: HTMLElement[],
+  ): HTMLElement {
     return h(
       'div',
-      { class: 'body items' },
+      { class: 'body character store' },
+      h('div', { class: 'c-top' }, ...top),
+      h('div', { class: 'c-main' }, grids, h('div', { class: 'c-info' }, info)),
+      h('div', { class: 'c-footer' }, ...keys),
+    );
+  }
+
+  /** A cell in the bag or stash: hovering shows it in the info column, clicking selects it. */
+  private storeCell(sim: Simulation, stack: ItemStack, selection: Selection, piece: Piece): HTMLElement {
+    const on = JSON.stringify(this.selected) === JSON.stringify(selection);
+    const cell = this.cell(sim, stack, null, () => this.select(on ? null : selection));
+    if (on) cell.classList.add('selected');
+    if (this.hover?.from === piece.from && this.hover.index === piece.index) cell.classList.add('hovered');
+    cell.onmouseenter = () => this.hoverStored(piece);
+    if (gearSlotOf(sim.content.item(stack.item))) {
+      cell.append(h('span', { class: 'power-badge' }, String(gearPower(stack))));
+      if (this.aboveWorn(sim, stack))
+        cell.append(h('span', { class: 'better', title: 'More Power than what you wear' }, '▲'));
+    }
+    return cell;
+  }
+
+  /** A short card for anything that isn't gear: what it is and what it does. */
+  private itemCard(sim: Simulation, stack: ItemStack): HTMLElement {
+    const def = sim.content.item(stack.item);
+    return h(
+      'div',
+      { class: 'short-card' },
+      h('div', { class: 'title' }, this.cell(sim, stack, null, null), this.gearName(sim, stack)),
+      h('p', { class: 'hint' }, def.description),
+      h('ul', { class: 'perks' }, ...facts(def).map((f) => h('li', {}, f))),
+    );
+  }
+
+  /** The quick item (Q): shown on the character and bag screens, a click clears it. */
+  private quickCell(sim: Simulation): HTMLElement {
+    const quick = sim.ecs.need(sim.player, Equipment).quick;
+    const count = quick ? countItem(sim.ecs.need(sim.player, Inventory), quick) : 0;
+    const cell = this.cell(
+      sim,
+      quick ? { item: quick, count, level: 0 } : null,
+      'Q',
+      quick ? () => this.host.act({ type: 'setQuick', item: null }) : null,
+    );
+    cell.title = 'Quick item (Q): click to clear';
+    return cell;
+  }
+
+  /** A key hint for the footer: the key (or mouse button) and its action's glyph, the words in hover text. */
+  private footKey(input: string | HTMLElement, glyph: string, what: string): HTMLElement {
+    return this.tip(
       h(
-        'div',
-        { class: 'col' },
-        h('h2', {}, `Bag ${pocketUsed(sim.content, inv, 'bag')}/${sim.content.player.storage.bag}`),
-        h('div', { class: 'grid' }, ...cells((p) => p === 'bag')),
-        h('h2', {}, 'Materials'),
-        h('div', { class: 'grid' }, ...cells((p) => p === 'materials')),
+        'span',
+        { class: 'c-key' },
+        typeof input === 'string' ? h('b', {}, input) : input,
+        this.host.glyph(glyph, DIM),
       ),
-      h('div', { class: 'col detail' }, shown),
+      what,
     );
   }
 
@@ -756,11 +845,26 @@ export class InventoryScreen {
     this.refresh(true);
   }
 
-  private hoverPiece(piece: { from: 'pack' | 'stash'; index: number }): void {
+  private hoverPiece(piece: Piece): void {
     if (this.hover?.from === piece.from && this.hover.index === piece.index) return;
     this.cancelDismantle();
     this.hover = piece;
     this.selected = null;
+    this.refresh(true);
+  }
+
+  /** Hovering in the bag or stash: the info column shows the piece, and a selection stays for when you move off. */
+  private hoverStored(piece: Piece): void {
+    if (this.hover?.from === piece.from && this.hover.index === piece.index) return;
+    this.cancelDismantle();
+    this.hover = piece;
+    this.refresh(true);
+  }
+
+  private unhover(): void {
+    if (!this.hover) return;
+    this.cancelDismantle();
+    this.hover = null;
     this.refresh(true);
   }
 
@@ -785,7 +889,7 @@ export class InventoryScreen {
     const target = this.hoveredTarget();
     if (!sim || !target || this.dismantling) return target !== null;
     const check = canSalvage(sim, target);
-    const cell = this.el?.querySelector<HTMLElement>('.flyout-cell.selected');
+    const cell = this.el?.querySelector<HTMLElement>('.cell.hovered');
     if (!check.ok || !cell) return true;
     cell.style.setProperty('--hold', `${HOLD_MS}ms`);
     cell.classList.add('holding');
@@ -817,7 +921,10 @@ export class InventoryScreen {
    * Enter equips the highest-Power piece for the open slot. True if it used the key.
    */
   key(code: string): boolean {
-    if (!this.el || this.tab !== 'items') return false;
+    if (!this.el) return false;
+    if (this.tab === 'stash' && (code === 'KeyF' || code === 'KeyX' || code === 'KeyL'))
+      return this.markKey(code);
+    if (this.tab !== 'items') return false;
     const columns: EquipSlot[][] = [
       ['weapon', 'ring0', 'ring1'],
       ['helmet', 'chest', 'legs'],
@@ -839,23 +946,9 @@ export class InventoryScreen {
       case 'ArrowRight':
         return move(col + 1, row);
       case 'KeyF':
-        return this.startDismantle();
       case 'KeyX':
-      case 'KeyL': {
-        const sim = this.host.sim();
-        const hover = this.hover;
-        if (!sim || !hover) return false;
-        const target = hover.from === 'pack' ? { pack: hover.index } : { stash: hover.index };
-        const stack =
-          hover.from === 'pack'
-            ? sim.ecs.need(sim.player, Inventory).stacks[hover.index]
-            : stashOf(sim)[hover.index];
-        if (!stack) return false;
-        const as = code === 'KeyX' ? 'junk' : 'lock';
-        const on = as === 'junk' ? stack.junk : stack.locked;
-        this.host.act({ type: 'mark', target, mark: on ? null : as });
-        return true;
-      }
+      case 'KeyL':
+        return this.markKey(code);
       case 'Enter': {
         const sim = this.host.sim();
         const best = sim ? this.owned(sim, at)[0] : undefined;
@@ -870,6 +963,24 @@ export class InventoryScreen {
       default:
         return false;
     }
+  }
+
+  /** F dismantles the hovered piece (held), X marks it junk, L locks it; on the character screen and the stash. */
+  private markKey(code: 'KeyF' | 'KeyX' | 'KeyL'): boolean {
+    if (code === 'KeyF') return this.startDismantle();
+    const sim = this.host.sim();
+    const hover = this.hover;
+    const target = this.hoveredTarget();
+    if (!sim || !hover || !target) return false;
+    const stack =
+      hover.from === 'pack'
+        ? sim.ecs.need(sim.player, Inventory).stacks[hover.index]
+        : stashOf(sim)[hover.index];
+    if (!stack || !gearSlotOf(sim.content.item(stack.item))) return false;
+    const as = code === 'KeyX' ? 'junk' : 'lock';
+    const on = as === 'junk' ? stack.junk : stack.locked;
+    this.host.act({ type: 'mark', target, mark: on ? null : as });
+    return true;
   }
 
   private select(selection: Selection | null): void {
@@ -1016,23 +1127,66 @@ export class InventoryScreen {
 
   // ------------------------------------------------------------------ stash tab
 
-  /** Everything kept at the bonfire: browse it anywhere, take from it where it opens. */
+  /**
+   * Everything kept at the bonfire, in the character screen's look: how full it is and whether it opens here on top,
+   * filters by slot, the pieces best first, the hovered or selected one in the info column. Browse it anywhere; take
+   * from it where it opens. Junk, lock and dismantle work on the hovered piece as they do in a flyout.
+   */
   private stashTab(sim: Simulation): HTMLElement {
     const kept = stashOf(sim);
-    const picked = this.selected;
-    const cells = kept.map((stack, i) => {
-      const on = picked !== null && 'stash' in picked && picked.stash === i;
-      const cell = this.cell(sim, stack, null, () => this.select(on ? null : { stash: i }));
-      if (on) cell.classList.add('selected');
-      return cell;
-    });
-    const where = stashReachable(sim)
-      ? 'Open here: take what you need.'
-      : 'Rest at the village bonfire to take from it (at any bonfire, once the Storehouse is rebuilt). Full pockets send new gear here from anywhere.';
-    const index = picked && 'stash' in picked ? picked.stash : null;
-    const stack = index === null ? undefined : kept[index];
-    let detail: HTMLElement = h('p', { class: 'hint' }, 'Select something in the stash.');
-    if (index !== null && stack) {
+    const cap = stashCapacity(sim);
+    const open = stashReachable(sim);
+    const filter = this.stashFilter;
+    const kindOf = (stack: ItemStack) => gearSlotOf(sim.content.item(stack.item)) ?? 'other';
+    const shown = kept
+      .map((stack, index) => ({ stack, index }))
+      .filter(({ stack }) => filter === null || kindOf(stack) === filter)
+      // Gear first, highest Power first; everything else after, in the order it was put away.
+      .sort((x, y) => gearPower(y.stack) - gearPower(x.stack) || x.index - y.index)
+      .map(({ stack, index }) => this.storeCell(sim, stack, { stash: index }, { from: 'stash', index }));
+
+    const chip = (kind: StashFilter | null, glyph: HTMLElement, label: string) =>
+      this.tip(
+        h(
+          'button',
+          {
+            class: `c-filter${filter === kind ? ' on' : ''}`,
+            onclick: () => {
+              this.stashFilter = kind;
+              this.refresh(true);
+            },
+          },
+          glyph,
+        ),
+        label,
+      );
+    const filters = h(
+      'div',
+      { class: 'c-filters' },
+      chip(null, this.host.glyph('all', INK), 'Everything'),
+      ...STASH_FILTERS.map(([kind, item, label]) => chip(kind, this.host.icon(item), label)),
+      chip('other', this.host.glyph('bag', INK), 'Everything else'),
+    );
+    const grids = h(
+      'div',
+      { class: 'c-store' },
+      filters,
+      shown.length
+        ? h('div', { class: 'grid' }, ...shown)
+        : h('p', { class: 'hint' }, kept.length ? 'Nothing of that kind' : 'Empty'),
+    );
+    grids.onmouseleave = () => this.unhover();
+
+    const hovered = this.hover?.from === 'stash' ? kept[this.hover.index] : undefined;
+    const where = open ? 'Click to take it or equip it.' : `Browse only: ${STASH_CLOSED} to take from it.`;
+    const index = this.selected && 'stash' in this.selected ? this.selected.stash : null;
+    const picked = index === null ? undefined : kept[index];
+    let info: HTMLElement = h('p', { class: 'hint' }, open ? 'Hover a piece to see it.' : where);
+    if (hovered)
+      info = gearSlotOf(sim.content.item(hovered.item))
+        ? this.shortCard(sim, hovered, compareStack(sim, hovered), where)
+        : this.itemCard(sim, hovered);
+    else if (index !== null && picked) {
       const check = canUnstash(sim, index);
       const take = h(
         'button',
@@ -1043,21 +1197,64 @@ export class InventoryScreen {
         },
         'Take',
       );
-      detail = gearSlotOf(sim.content.item(stack.item))
-        ? this.gearDetail(sim, stack, [take], null, this.work(sim, { stash: index }, stack))
-        : this.plainDetail(sim, stack, [take]);
+      const back = h('button', { class: 'quiet', onclick: () => this.select(null) }, 'Back');
+      info = gearSlotOf(sim.content.item(picked.item))
+        ? this.gearDetail(
+            sim,
+            picked,
+            [
+              back,
+              h(
+                'button',
+                {
+                  disabled: !open,
+                  title: open ? '' : STASH_CLOSED,
+                  onclick: () => this.host.act({ type: 'equipStash', index }),
+                },
+                'Equip',
+              ),
+              take,
+            ],
+            compareStack(sim, picked),
+            this.work(sim, { stash: index }, picked),
+          )
+        : this.plainDetail(sim, picked, [back, take]);
     }
-    return h(
-      'div',
-      { class: 'body items' },
-      h(
-        'div',
-        { class: 'col' },
-        h('h2', {}, `Stash ${kept.length}/${stashCapacity(sim)}`),
-        h('p', { class: 'hint' }, where),
-        h('div', { class: 'grid' }, ...cells),
-      ),
-      h('div', { class: 'col detail' }, detail),
+
+    const fill = h('span', { class: 'c-fill' });
+    fill.style.setProperty('--full', String(Math.min(1, kept.length / Math.max(1, cap))));
+    return this.storeScreen(
+      [
+        this.tip(this.host.glyph('stash', EMBER), 'Stash: kept at the bonfire, and counted in Max Power'),
+        h('span', { class: 'c-count' }, String(kept.length), h('small', {}, `/${cap}`)),
+        fill,
+        this.tip(
+          h(
+            'span',
+            { class: open ? 'c-open on' : 'c-open' },
+            this.host.glyph(open ? 'stash' : 'lock', open ? EMBER : DIM),
+            open ? 'Open' : 'Browse only',
+          ),
+          open
+            ? 'Open here: take what you need.'
+            : 'Rest at the village bonfire to take from it (at any bonfire, once the Storehouse is rebuilt). Full pockets send new gear here from anywhere.',
+        ),
+      ],
+      grids,
+      info,
+      [
+        this.footKey(this.host.glyph('mouse_left', INK), 'inspect', 'Click: select'),
+        // The smithy reaches stashed pieces only where the stash opens.
+        ...(open
+          ? [
+              this.footKey('X', 'junk', 'X: mark as junk'),
+              this.footKey('L', 'lock', 'L: lock'),
+              this.footKey('F', 'dismantle', 'Hold F: dismantle'),
+            ]
+          : []),
+        h('span', { class: 'c-gap' }),
+        this.packTools(sim),
+      ],
     );
   }
 
@@ -1220,7 +1417,7 @@ export class InventoryScreen {
   }
 
   /** Whether a piece has more Power than the worn piece of its slot (the weaker ring, for rings). */
-  private fuel(sim: Simulation, stack: ItemStack): boolean {
+  private aboveWorn(sim: Simulation, stack: ItemStack): boolean {
     const eq = sim.ecs.need(sim.player, Equipment);
     const kind = gearSlotOf(sim.content.item(stack.item));
     if (!kind) return false;
@@ -1258,7 +1455,7 @@ export class InventoryScreen {
         cell.append(h('span', { class: 'count' }, String(stack.count)));
       if (stack.level > 0) cell.append(h('span', { class: 'level' }, `+${stack.level}`));
       if (stack.locked) cell.append(h('span', { class: 'mark', title: 'Locked' }, '🔒'));
-      else if (stack.junk && this.fuel(sim, stack))
+      else if (stack.junk && this.aboveWorn(sim, stack))
         // Junk with more Power than what is worn is worth feeding into it before it is broken.
         cell.append(h('span', { class: 'mark fuel', title: 'Junk, but it could infuse what you wear' }, '⇪'));
       else if (stack.junk) cell.append(h('span', { class: 'mark junk', title: 'Junk' }, '✕'));

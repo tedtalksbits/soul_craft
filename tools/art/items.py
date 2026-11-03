@@ -609,6 +609,42 @@ ICONS['steel_pickaxe'] = [
     "................",
     "................",
 ]
+ICONS['crude_axe'] = [   # a knapped stone head lashed to a crooked branch
+    "................",
+    "........tt......",
+    ".......tTTt.....",
+    "......tTTtt(....",
+    ".......tTt((....",
+    "......k0ltt(....",
+    ".....kK0L((.....",
+    ".....kK2........",
+    "....kK2.........",
+    "...kK2..........",
+    "..kK2...........",
+    ".kK2............",
+    ".k2.............",
+    "................",
+    "................",
+    "................",
+]
+ICONS['crude_pickaxe'] = [   # a sharpened stone bound across a stick
+    "................",
+    "..tt............",
+    "..tTtt..........",
+    "...((ttTt.......",
+    "......(lLt......",
+    ".......L0Tt.....",
+    "......kK0.(t....",
+    "......kK2..(....",
+    ".....kK2........",
+    "....kK2.........",
+    "...kK2..........",
+    "..kK2...........",
+    ".kK2............",
+    ".k2.............",
+    "................",
+    "................",
+]
 ICONS['warden_sigil'] = [
     "................",
     "................",
@@ -950,7 +986,7 @@ ORDER = ['ashwood', 'fungal_cap', 'glowspore', 'iron_scrap', 'bone_shard', 'slim
          'fire_oil', 'bleeding_oil', 'wardens_bane', 'iron_axe', 'iron_pickaxe', 'steel_axe', 'steel_pickaxe', 'warden_sigil',
          'iron_dirks', 'bone_recurve', 'charred_rod', 'cinderbrand', 'oathspear', 'gravebell', 'twinfang', 'pale_wind',
          'hearthwood', 'wardens_aegis', 'wardens_brand', 'crown_of_the_unforgotten', 'pyreheart_cuirass',
-         'ashwalker_greaves', 'ring_last_ember', 'echo']
+         'ashwalker_greaves', 'ring_last_ember', 'echo', 'crude_axe', 'crude_pickaxe']
 
 # ---------------------------------------------------------------- shading and outline
 def paint(rows):
