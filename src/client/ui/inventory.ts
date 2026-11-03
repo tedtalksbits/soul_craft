@@ -79,6 +79,8 @@ export interface InventoryHost {
   sigil(cls: string): HTMLElement;
   /** The player as they stand, in the gear they wear, for the middle of the character screen. */
   portrait(): HTMLElement;
+  /** A menu glyph (`ui_icons`: stats, attributes, actions), tinted. */
+  glyph(name: string, color: string): HTMLElement;
   abilityIcon(ability: string): HTMLElement;
 }
 
@@ -97,6 +99,24 @@ const SLOT_LABELS: Readonly<Record<EquipSlot, string>> = {
 };
 
 const ATTRIBUTE_NAMES = { vigor: 'Vigor', endurance: 'Endurance', might: 'Might', attunement: 'Attunement' };
+const ATTRIBUTE_GLYPHS = {
+  vigor: 'health',
+  endurance: 'stamina',
+  might: 'might',
+  attunement: 'attunement',
+} as const;
+/** What a change chip's glyph means, for its hover text. */
+const CHANGE_NAMES: Readonly<Record<string, string>> = {
+  power: 'Power',
+  attack: 'Attack',
+  health: 'Max health',
+  stamina: 'Max stamina',
+  armor: 'Damage taken',
+};
+/** Glyph tints: ember for Power, ink for what you press, dim ash for labels. */
+const EMBER = '#f0b866';
+const INK = '#ece4d2';
+const DIM = '#a39a88';
 
 const STAT_LABELS = {
   damage: 'damage',
@@ -348,19 +368,27 @@ export class InventoryScreen {
     // Off the slots and the flyout, the flyout closes and the character shows again.
     stage.onmouseleave = () => this.closeFlyout();
 
-    const key = (k: string, what: string) => h('span', { class: 'c-key' }, h('b', {}, k), what);
+    const key = (input: string | HTMLElement, glyph: string, what: string) =>
+      this.tip(
+        h(
+          'span',
+          { class: 'c-key' },
+          typeof input === 'string' ? h('b', {}, input) : input,
+          this.host.glyph(glyph, DIM),
+        ),
+        what,
+      );
     return h(
       'div',
       { class: 'body character' },
       h(
         'div',
         { class: 'c-top' },
-        h('span', { class: 'c-power-label' }, 'Power'),
+        this.tip(this.host.glyph('power', EMBER), 'Power: the average of what you wear'),
         h('span', { class: 'c-power-value' }, String(power)),
-        h(
-          'span',
-          { class: 'c-max', title: 'Max Power: the best piece you own per slot. Drops are based on it.' },
-          `max ${max}`,
+        this.tip(
+          h('span', { class: 'c-max' }, this.host.glyph('power_max', DIM), String(max)),
+          'Max Power: the best piece you own per slot. Drops are based on it.',
         ),
         h(
           'button',
@@ -370,7 +398,8 @@ export class InventoryScreen {
             title: 'Put on the highest-Power piece you can reach for every slot',
             onclick: () => this.host.act({ type: 'equipBest' }),
           },
-          'Equip best',
+          this.host.glyph('best', INK),
+          'Best',
         ),
         h('span', { class: 'c-gap' }),
         quick,
@@ -379,15 +408,21 @@ export class InventoryScreen {
       h(
         'div',
         { class: 'c-footer' },
-        key('Click', 'equip'),
-        key('Right-click', 'inspect'),
-        key('X', 'junk'),
-        key('L', 'lock'),
-        key('Hold F', 'dismantle'),
+        key(this.host.glyph('mouse_left', INK), 'equip', 'Click: equip'),
+        key(this.host.glyph('mouse_right', INK), 'inspect', 'Right-click: inspect'),
+        key('X', 'junk', 'X: mark as junk'),
+        key('L', 'lock', 'L: lock'),
+        key('F', 'dismantle', 'Hold F: dismantle'),
         h('span', { class: 'c-gap' }),
         this.packTools(sim),
       ),
     );
+  }
+
+  /** Hover text on an element: what an icon means, so the screen itself can stay wordless. */
+  private tip<T extends HTMLElement>(el: T, text: string): T {
+    el.title = text;
+    return el;
   }
 
   /** The info column at rest: the numbers that matter, one per line, the rest behind Details. */
@@ -395,24 +430,20 @@ export class InventoryScreen {
     const stats = playerStats(sim, sim.player);
     const attrs = sim.ecs.get(sim.player, Attributes);
     const capped = stats.defense >= sim.content.player.armor.cap;
-    const row = (label: string, value: string, title: string) =>
-      [h('dt', { title }, label), h('dd', { title }, value)] as const;
+    const row = (glyph: string, value: string, title: string) =>
+      this.tip(h('div', { class: 'c-stat' }, this.host.glyph(glyph, DIM), h('span', {}, value)), title);
     return h(
       'div',
       { class: 'c-stats' },
-      h(
-        'dl',
-        {},
-        ...row('Attack', String(Math.round(stats.damage)), 'Damage of a light blow, before crits'),
-        ...row(
-          'Armor',
-          `${stats.armor} · ${Math.round(stats.defense * 100)}%${capped ? ' max' : ''}`,
-          'Armor, and how much less damage you take',
-        ),
-        ...row('Health', String(stats.maxHp), 'Max health'),
-        ...row('Stamina', String(stats.maxStamina), 'Max stamina'),
-        ...row('Level', attrs ? String(playerLevel(attrs)) : '1', 'Level up at a bonfire'),
+      row('attack', String(Math.round(stats.damage)), 'Attack: the damage of a light blow, before crits'),
+      row(
+        'armor',
+        `${stats.armor} · ${Math.round(stats.defense * 100)}%${capped ? ' max' : ''}`,
+        'Armor, and how much less damage you take',
       ),
+      row('health', String(stats.maxHp), 'Max health'),
+      row('stamina', String(stats.maxStamina), 'Max stamina'),
+      row('level', attrs ? String(playerLevel(attrs)) : '1', 'Level: level up at a bonfire'),
       h(
         'button',
         { class: 'quiet', onclick: () => this.toggleDetails() },
@@ -581,7 +612,7 @@ export class InventoryScreen {
     const changes: HTMLElement[] = [];
     if (c) {
       const delta = (
-        label: string,
+        glyph: string,
         now: number,
         after: number,
         fmt: (n: number) => string,
@@ -593,19 +624,20 @@ export class InventoryScreen {
         changes.push(
           h(
             'li',
-            { class: good ? 'up' : 'down' },
-            `${label} ${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))} ${good ? '▲' : '▼'}`,
+            { class: good ? 'up' : 'down', title: CHANGE_NAMES[glyph] ?? glyph },
+            this.host.glyph(glyph, DIM),
+            `${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))} ${good ? '▲' : '▼'}`,
           ),
         );
       };
       const whole = (n: number) => String(Math.round(n));
       const pct = (n: number) => `${Math.round(n * 100)}%`;
-      delta('Power', c.now.power, c.after.power, whole);
-      if (kind === 'weapon') delta('Attack', c.now.damage, c.after.damage, whole);
+      delta('power', c.now.power, c.after.power, whole);
+      if (kind === 'weapon') delta('attack', c.now.damage, c.after.damage, whole);
       else if (kind === 'ring') {
-        delta('Max HP', c.now.maxHp, c.after.maxHp, whole);
-        delta('Max stamina', c.now.maxStamina, c.after.maxStamina, whole);
-      } else delta('Damage taken', 1 - c.now.defense, 1 - c.after.defense, pct, true);
+        delta('health', c.now.maxHp, c.after.maxHp, whole);
+        delta('stamina', c.now.maxStamina, c.after.maxStamina, whole);
+      } else delta('armor', 1 - c.now.defense, 1 - c.after.defense, pct, true);
     }
     const perks = perkLines(sim.content, stack).filter((l) => !l.innate || legendary === undefined);
     const card = h(
@@ -634,19 +666,32 @@ export class InventoryScreen {
   private statSheet(sim: Simulation): HTMLElement {
     const stats = playerStats(sim, sim.player);
     const attrs = sim.ecs.get(sim.player, Attributes);
-    const rows: [string, string][] = [
-      ['Level', attrs ? String(playerLevel(attrs)) : '1'],
-      ['Stamina regen', `${Math.round(stats.staminaRegen * TICK_RATE)}/s`],
-      ...ATTRIBUTES.map((id): [string, string] => {
+    const rows = [
+      this.tip(
+        h(
+          'div',
+          { class: 'c-stat' },
+          this.host.glyph('stamina', DIM),
+          h('span', {}, `${Math.round(stats.staminaRegen * TICK_RATE)}/s`),
+        ),
+        'Stamina back per second',
+      ),
+      ...ATTRIBUTES.map((id) => {
         const own = attrs?.[id] ?? 0;
         const extra = stats.attributes[id] - own;
-        return [
-          ATTRIBUTE_NAMES[id],
-          extra > 0 ? `${stats.attributes[id]} (${own} +${extra} gear)` : String(own),
-        ];
+        return this.tip(
+          h(
+            'div',
+            { class: 'c-stat' },
+            this.host.glyph(ATTRIBUTE_GLYPHS[id], DIM),
+            h('span', {}, String(stats.attributes[id])),
+            extra > 0 ? h('span', { class: 'c-extra' }, `+${extra}`) : '',
+          ),
+          extra > 0 ? `${ATTRIBUTE_NAMES[id]}: ${own}, and ${extra} from gear` : ATTRIBUTE_NAMES[id],
+        );
       }),
     ];
-    return h('dl', { class: 'stat-sheet' }, ...rows.flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)]));
+    return h('div', { class: 'stat-sheet' }, ...rows);
   }
 
   /** Consumables and materials: the bag (with its limit) and the counts. */

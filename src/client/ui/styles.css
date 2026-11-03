@@ -668,19 +668,6 @@ kbd {
   padding-left: 1em;
   border-left: 1px solid rgba(214, 190, 140, 0.12);
 }
-.inventory .c-stats dl {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.25em 1em;
-  margin-bottom: 0.6em;
-}
-.inventory .c-stats dt {
-  color: var(--dim);
-}
-.inventory .c-stats dd {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
 .inventory .c-footer {
   display: flex;
   flex-wrap: wrap;
@@ -1744,4 +1731,54 @@ kbd {
 .inventory .c-slot .cell {
   width: 60px;
   height: 60px;
+}
+
+/* Glyphs (ui_icons): an icon and a number, the words in hover text. */
+.inventory .c-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.12em 0;
+  font-variant-numeric: tabular-nums;
+}
+.inventory .c-stats,
+.inventory .stat-sheet {
+  display: grid;
+  gap: 0.15em;
+}
+.inventory .stat-sheet {
+  grid-template-columns: repeat(2, auto);
+  justify-content: start;
+  column-gap: 1.2em;
+  margin-top: 0.4em;
+}
+.inventory .c-extra {
+  color: #8fd47a;
+  font-size: 0.85em;
+}
+.inventory .c-max {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+}
+.inventory .c-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+.inventory .c-key b {
+  min-width: 1.4em;
+  padding: 0 0.3em;
+  text-align: center;
+  border: 1px solid rgba(214, 190, 140, 0.35);
+}
+.inventory .short-card .changes li {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+}
+.inventory .c-top .work {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
 }

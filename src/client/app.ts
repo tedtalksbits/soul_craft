@@ -88,6 +88,7 @@ export class App {
       sigil: (cls) => this.sigilIcon(cls, 2),
       abilityIcon: (ability) => this.abilityIcon(ability, 2),
       portrait: () => this.portrait(),
+      glyph: (name, color) => tintedIcon(this.assets.sheet('ui_icons')?.frameRect(name), color, 2),
     });
     this.level = new LevelScreen(uiRoot, {
       sim: () => this.sim,
