@@ -1,6 +1,6 @@
 # Supers: design proposal
 
-**Status: proposal (2026-11-02), nothing built.** From the playtest: "Bladestorm is underwhelming, I don't feel
+**Status: decided (2026-11-02), nothing built yet.** From the playtest: "Bladestorm is underwhelming, I don't feel
 powerful, and it doesn't work with a bow. In Destiny the super has its own weapon for its duration. There are
 different kinds of supers (roaming, defensive, DPS): the fantasy is there, it lacks implementation."
 
@@ -74,12 +74,13 @@ Suggested order: the super weapon framework with Bladestorm first (it is the one
 proves the framework with the bow case), then Earthshatter and Cinder Storm, then the burst and defensive
 variants.
 
-## Open questions for the owner
+## Decisions (2026-11-02)
 
-1. **Roaming as the default super for every class?** The alternative keeps today's bursts as defaults.
-2. **Should a super's weapon show on the character** (new art in the generator), or is an effect overlay enough
-   for the first pass?
-3. **Earthshatter shares its name** with an Overwatch ultimate. Rename it?
+1. **The roaming super is every class's default:** Earthshatter, Bladestorm and Cinder Storm become the roaming
+   supers; the bursts and defensive supers are their variants.
+2. **The super weapon shows on the character:** a stone maul, twin shade blades and the caster's burning hands,
+   drawn in the `tools/art` player generator.
+3. **Earthshatter keeps its name.**
 
 Research notes and sources are summarized here; the details (Destiny's super history, Warframe, God of War,
 Diablo IV, Hades) came from a research pass on 2026-11-02 that could not reach Bungie's own site, so Destiny
