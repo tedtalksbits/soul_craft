@@ -542,6 +542,145 @@
       "base": { "damage": 12, "reach": 16, "width": 18, "knockback": 1.5 },
       "as": "daggers",
       "look": { "sheet": "player_daggers", "tint": "#a58cff" }
+    },
+    "stone_maul": {
+      "name": "Stone Maul",
+      "chain": [
+        {
+          "damage": 3,
+          "stamina": 1,
+          "reach": 1.2,
+          "width": 1.4,
+          "duration": 22,
+          "activeFrom": 8,
+          "activeTo": 12,
+          "hitstop": 6,
+          "lunge": 0.6,
+          "stagger": 30,
+          "hyperArmor": true,
+          "arc": "slash"
+        },
+        {
+          "damage": 3,
+          "stamina": 1,
+          "reach": 1.1,
+          "width": 1,
+          "duration": 24,
+          "activeFrom": 9,
+          "activeTo": 13,
+          "hitstop": 6,
+          "stagger": 40,
+          "hyperArmor": true,
+          "around": true,
+          "arc": "sweep"
+        }
+      ],
+      "chainWindow": 14,
+      "charged": {
+        "damage": 6,
+        "stamina": 1,
+        "reach": 1.2,
+        "width": 1.4,
+        "duration": 26,
+        "activeFrom": 12,
+        "activeTo": 16,
+        "hitstop": 8,
+        "lunge": 3,
+        "stagger": 60,
+        "hyperArmor": true,
+        "pose": "cast_slam",
+        "chargeTicks": 14,
+        "partial": 0.6,
+        "arc": "slam"
+      },
+      "dash": {
+        "damage": 2.5,
+        "stamina": 1,
+        "reach": 1,
+        "width": 1.2,
+        "duration": 18,
+        "activeFrom": 2,
+        "activeTo": 10,
+        "hitstop": 5,
+        "lunge": 3.5,
+        "stagger": 40,
+        "through": true,
+        "arc": "thrust"
+      },
+      "dashWindow": 10,
+      "signature": { "type": "break", "shockwave": { "radius": 56, "damage": 2, "stagger": 60 } },
+      "affinity": [],
+      "chargePose": "cast_raise",
+      "base": { "damage": 12, "reach": 20, "width": 22, "knockback": 4 },
+      "as": "hammer",
+      "look": { "sheet": "player_hammer", "tint": "#d8b070" }
+    },
+    "cinder_stave": {
+      "name": "Cinder Stave",
+      "chain": [
+        {
+          "damage": 1.5,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 10,
+          "activeFrom": 2,
+          "activeTo": 2,
+          "hitstop": 1,
+          "shot": { "speed": 5, "range": 140 },
+          "pose": "cast_push",
+          "arc": "thrust"
+        },
+        {
+          "damage": 1.5,
+          "stamina": 1,
+          "reach": 1,
+          "width": 1,
+          "duration": 10,
+          "activeFrom": 2,
+          "activeTo": 2,
+          "hitstop": 1,
+          "shot": { "speed": 5, "range": 140 },
+          "pose": "cast_push",
+          "arc": "thrust"
+        }
+      ],
+      "chainWindow": 8,
+      "charged": {
+        "damage": 6,
+        "stamina": 1,
+        "reach": 1,
+        "width": 1,
+        "duration": 18,
+        "activeFrom": 4,
+        "activeTo": 4,
+        "hitstop": 4,
+        "shot": { "speed": 3.5, "range": 150, "explode": 40 },
+        "pose": "cast_throw",
+        "chargeTicks": 16,
+        "partial": 0.6,
+        "arc": "thrust"
+      },
+      "dash": {
+        "damage": 2,
+        "stamina": 1,
+        "reach": 1.2,
+        "width": 1,
+        "duration": 16,
+        "activeFrom": 3,
+        "activeTo": 8,
+        "hitstop": 3,
+        "stagger": 20,
+        "around": true,
+        "arc": "sweep"
+      },
+      "dashWindow": 10,
+      "signature": { "type": "embers", "max": 4, "spark": 0.3, "explode": 28 },
+      "affinity": [],
+      "chargePose": "cast_throw",
+      "base": { "damage": 12, "reach": 16, "width": 16, "knockback": 1.5 },
+      "as": "staff",
+      "look": { "sheet": "player_staff", "tint": "#ff8a3a" }
     }
   }
 }

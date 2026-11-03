@@ -335,7 +335,14 @@ export const MoveSchema = z
      * Fires an arrow on its first active tick instead of swinging: flying `speed` px per tick for at most
      * `range` px. Reach and width don't apply.
      */
-    shot: z.object({ speed: pos, range: pos }).optional(),
+    shot: z
+      .object({
+        speed: pos,
+        range: pos,
+        /** It bursts this many px around where it lands (a super's cinder ball). */
+        explode: pos.optional(),
+      })
+      .optional(),
     /** How the swing is drawn (`bash` is a staff's blunt, ember-hot strike), and the body pose it uses. */
     arc: z.enum(['slash', 'thrust', 'sweep', 'slam', 'bash']),
     pose: z.string().default('attack'),

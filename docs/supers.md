@@ -1,6 +1,6 @@
 # Supers: design proposal
 
-**Status: decided (2026-11-02). The framework and Bladestorm are built (ADR 0013); Earthshatter and Cinder Storm are next.** From the playtest: "Bladestorm is underwhelming, I don't feel
+**Status: decided (2026-11-02). The three roaming supers are built (ADR 0013); the burst and defensive variants are next.** From the playtest: "Bladestorm is underwhelming, I don't feel
 powerful, and it doesn't work with a bow. In Destiny the super has its own weapon for its duration. There are
 different kinds of supers (roaming, defensive, DPS): the fantasy is there, it lacks implementation."
 
@@ -84,8 +84,17 @@ variants.
   that snap to a foe within 56 px and 35° of the aim, a held phase cut that lunges through a line (5 ×), and a blink
   strike out of a roll. 10 s, +1 s a kill (up to +6 s), 35% less damage taken, 40% faster, free stamina, 0.6 of its
   damage on bosses, and a 2 s vanish when it ends. It works the same with a bow in hand.
-- **The look in hand** is the twin daggers layer, tinted shade violet. Dedicated art can come later from the
-  `tools/art` player generator.
+- **Earthshatter** puts the **stone maul** in hand (it counts as a hammer, so it crushes staggered foes and its
+  full-charge leaping slam sends out a 56 px shockwave): two wide sweeps (3 × a light hit, the second all around),
+  the slam (6 ×), and a shoulder charge through foes. It opens with a 64 px ring, lasts 12 s (+1 s a kill, up to
+  +5 s), takes half the damage, and ends in an 80 px slam.
+- **Cinder Storm** puts the **cinder stave** in hand: fire bolts (1.5 × each, one every 10 ticks), a held cinder
+  ball that bursts 40 px around where it lands (6 ×), and a ring of fire out of a roll. Its fire needs no Embers.
+  It opens with a small ring, lasts 12 s (+1 s a kill, up to +5 s), takes 30% less damage, moves 10% faster, and
+  ends in a 72 px nova.
+- **The look in hand** borrows the weapon layers: the daggers tinted shade violet, the hammer in ochre stone, the
+  staff burning orange. The doc first described the Ashcaller's as "hands become the weapon"; a stave reads better
+  as a weapon on the character. Dedicated art can come later from the `tools/art` player generator.
 
 ## Decisions (2026-11-02)
 

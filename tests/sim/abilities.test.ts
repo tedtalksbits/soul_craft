@@ -225,7 +225,7 @@ describe('supers', () => {
     expect(abilities(sim).energy - before).toBeGreaterThan(passive * 21);
   });
 
-  it('Earthshatter halves the damage the player takes while it lasts', () => {
+  it('Earthshatter halves the damage the player takes while it lasts, and they stand firm', () => {
     const sim = unarmored(asClass('vanguard'));
     sim.state.cheats.god = false;
     abilities(sim).energy = 100;
@@ -234,6 +234,6 @@ describe('supers', () => {
     const pb = sim.ecs.need(sim.player, Body);
     applyDamage(sim, sim.player, { amount: 40, crit: false, fromX: pb.x + 1, fromY: pb.y, knockback: 0 });
     expect(sim.ecs.need(sim.player, Health).hp).toBe(100 - 20);
-    expect(sim.ecs.need(sim.player, Player).state).toBe('hurt');
+    expect(sim.ecs.need(sim.player, Player).state).not.toBe('hurt');
   });
 });

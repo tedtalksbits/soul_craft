@@ -511,9 +511,10 @@ export function fireShot(sim: Simulation, e: Entity, p: Player): void {
   const perfect = s.move === 'charged' && s.perfect === true && sig.type === 'pin';
   const numbers = moveNumbers(sim, move);
   let damage = numbers.damage * (perfect ? 1 + sig.bonus : 1);
-  // A staff's fireball spends an Ember; with none, it is only a spark. A full set bursts, with the perk.
-  let explode = 0;
-  if (sig.type === 'embers') {
+  // A staff's fireball spends an Ember; with none, it is only a spark. A full set bursts, with the perk. A super
+  // weapon's fire needs no Embers: it is the super.
+  let explode = move.shot.explode ?? 0;
+  if (sig.type === 'embers' && !superWeapon(sim)) {
     const embers = s.embers ?? 0;
     if (embers === 0) damage *= sig.spark;
     else {

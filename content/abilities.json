@@ -79,13 +79,22 @@
   },
   "earthshatter": {
     "name": "Earthshatter",
-    "description": "Split the ground in a wide ring, then stand fast: for a while you shrug off half of every blow.",
+    "description": "The ground gives you a stone maul. Wide sweeps, a leaping slam that cracks the earth, a shoulder charge through anything. It ends in one last slam.",
     "slot": "super",
     "cast": { "ticks": 30, "release": 16 },
     "pose": "cast_slam",
     "effects": [
-      { "type": "blast", "at": "self", "radius": 80, "damage": 90, "knockback": 6, "stagger": 120 },
-      { "type": "empower", "seconds": 10, "damage": 0, "defense": 0.5, "crit": 0, "staminaFree": false }
+      { "type": "blast", "at": "self", "radius": 64, "damage": 40, "knockback": 5, "stagger": 60 },
+      {
+        "type": "wield",
+        "weapon": "stone_maul",
+        "seconds": 12,
+        "resistance": 0.5,
+        "perKill": 1,
+        "maxBonus": 5,
+        "bossDamage": 0.6,
+        "end": { "blast": { "radius": 80, "damage": 60, "knockback": 6, "stagger": 90 } }
+      }
     ]
   },
   "bastion": {
@@ -497,29 +506,22 @@
   },
   "cinder_storm": {
     "name": "Cinder Storm",
-    "description": "Call a storm of falling embers down on the cursor. Nothing standing in it lasts long.",
+    "description": "Fire takes your hands and gives you a stave of it. Loose fire bolts, hold to hurl a cinder that bursts, and burn a ring around you out of a roll. It ends in a nova.",
     "slot": "super",
     "cast": { "ticks": 26, "release": 14 },
     "pose": "cast_raise",
     "effects": [
+      { "type": "blast", "at": "self", "radius": 48, "damage": 20, "knockback": 3, "stagger": 20 },
       {
-        "type": "blast",
-        "at": "aim",
-        "range": 110,
-        "radius": 64,
-        "damage": 30,
-        "knockback": 2,
-        "stagger": 30
-      },
-      {
-        "type": "zone",
-        "at": "aim",
-        "range": 110,
-        "radius": 64,
-        "delay": 0,
-        "duration": 360,
-        "interval": 20,
-        "damage": 14
+        "type": "wield",
+        "weapon": "cinder_stave",
+        "seconds": 12,
+        "resistance": 0.3,
+        "speed": 0.1,
+        "perKill": 1,
+        "maxBonus": 5,
+        "bossDamage": 0.6,
+        "end": { "blast": { "radius": 72, "damage": 48, "knockback": 4, "stagger": 40 } }
       }
     ]
   },
