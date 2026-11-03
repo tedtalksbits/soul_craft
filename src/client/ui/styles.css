@@ -540,6 +540,8 @@ kbd {
 .inventory .c-right {
   display: flex;
   flex-direction: column;
+  /* Slots keep their own size; stretched, a ring slot's frame and Power number spread across the column. */
+  align-items: flex-start;
   gap: 18px;
 }
 .inventory .c-weapon-row {
