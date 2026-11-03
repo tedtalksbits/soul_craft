@@ -1,21 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import {
-  Abilities,
-  Ai,
-  Body,
-  Bonfire,
-  Empowered,
-  Health,
-  Player,
-  Staggered,
-  Stamina,
-  Zone,
-} from '../../src/sim/components';
+import { Abilities, Ai, Body, Bonfire, Health, Player, Staggered, Zone } from '../../src/sim/components';
 import { TICK_RATE } from '../../src/sim/constants';
 import { inputFrame, type ActionName } from '../../src/sim/input';
 import { applyDamage } from '../../src/sim/modules/combat';
 import { restAt } from '../../src/sim/modules/interaction';
-import { playerStats } from '../../src/sim/modules/items';
 import { Simulation } from '../../src/sim/simulation';
 import { content, face, newSim, ofType, press, run, spawnNear, unarmored } from '../helpers';
 
@@ -235,23 +223,6 @@ describe('supers', () => {
     sim.ecs.add(hollow, Staggered, { ticks: 1e6 });
     press(sim, ['attack'], 20);
     expect(abilities(sim).energy - before).toBeGreaterThan(passive * 21);
-  });
-
-  it('Bladestorm makes swings free and harder for its duration, then ends', () => {
-    const sim = asClass('stalker');
-    abilities(sim).energy = 100;
-    const base = playerStats(sim, sim.player).damage;
-    const def = content.ability('bladestorm');
-    const used = cast(sim, 'super', def.cast.ticks);
-    expect(ofType(used, 'empowered')).toHaveLength(1);
-    expect(abilities(sim).energy).toBeLessThan(1);
-    expect(playerStats(sim, sim.player).damage).toBeCloseTo(base * 1.6);
-    const stamina = sim.ecs.need(sim.player, Stamina).value;
-    press(sim, ['attack'], 1);
-    expect(sim.ecs.need(sim.player, Stamina).value).toBeGreaterThanOrEqual(stamina);
-    const later = run(sim, 10 * TICK_RATE);
-    expect(ofType(later, 'empowerEnded')).toHaveLength(1);
-    expect(sim.ecs.has(sim.player, Empowered)).toBe(false);
   });
 
   it('Earthshatter halves the damage the player takes while it lasts', () => {

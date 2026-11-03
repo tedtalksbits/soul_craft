@@ -156,6 +156,34 @@ export class AbilityFx {
       case 'empowered':
         this.effects.shake = Math.min(8, this.effects.shake + 3);
         return;
+      case 'wielded': {
+        // A roaming super's weapon arrives: a heavy shake and a ring of the class color bursting off the player.
+        this.effects.shake = Math.min(10, this.effects.shake + 6);
+        const at = this.lastPlayer;
+        if (at) {
+          const color = abilityPalette(content, e.ability).light;
+          this.effects.burst(at.x, at.y, {
+            count: 40,
+            color,
+            speed: 2.4,
+            life: 36,
+            add: true,
+            z: 8,
+            vz: 0.6,
+          });
+        }
+        return;
+      }
+      case 'wieldEnded':
+        this.effects.burst(e.x, e.y, {
+          count: 24,
+          color: abilityPalette(content, e.ability).light,
+          speed: 1.4,
+          life: 30,
+          add: true,
+          z: 6,
+        });
+        return;
       // Shadow tricks: smoke when the player vanishes or a decoy fades, a flash on an ambush.
       case 'veiled':
       case 'decoyFaded': {

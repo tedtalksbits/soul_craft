@@ -500,8 +500,21 @@ export class App {
     if (this.slot && sim.tick - this.lastSaveTick >= AUTOSAVE_INTERVAL_TICKS) void this.save();
   }
 
+  /**
+   * A roaming super's arrival (docs/supers.md): the world stops for a beat, then runs slow for a moment before it
+   * catches up. Presentation only: the sim steps the same ticks, just later.
+   */
+  private superMoment(): void {
+    const normal = this.loop.timeScale;
+    this.loop.timeScale = 0;
+    window.setTimeout(() => (this.loop.timeScale = normal * 0.35), 130);
+    window.setTimeout(() => (this.loop.timeScale = normal), 430);
+  }
+
   private react(e: SimEvent): void {
     switch (e.type) {
+      case 'wielded':
+        return this.superMoment();
       case 'read':
         return this.ui.dialog(e.lines);
       case 'spoke':

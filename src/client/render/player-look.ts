@@ -7,6 +7,7 @@
 import type { ItemStack } from '../../sim/components';
 import { Equipment } from '../../sim/components';
 import { gearOf } from '../../sim/modules/gear';
+import { superWeapon } from '../../sim/modules/supers';
 import type { Simulation } from '../../sim/simulation';
 
 export interface Layer {
@@ -57,8 +58,12 @@ export function playerLook(sim: Simulation, showHelmet: boolean): PlayerLook {
     layers.push({ sheet: `player_${HELM[helm]}`, tint: 0xffffff });
     layers.push({ sheet: `player_${HELM[helm]}_trim`, tint: tierColor(sim, eq.helmet) });
   }
+  // A roaming super's weapon replaces the held one in hand (docs/supers.md).
+  const wielded = superWeapon(sim);
   const weapon = eq?.weapon ? sim.content.items[eq.weapon.item] : undefined;
-  if (weapon?.kind === 'weapon') layers.push({ sheet: `player_${weapon.weapon.type}`, tint: 0xffffff });
+  if (wielded)
+    layers.push({ sheet: wielded.look.sheet, tint: Number.parseInt(wielded.look.tint.slice(1), 16) });
+  else if (weapon?.kind === 'weapon') layers.push({ sheet: `player_${weapon.weapon.type}`, tint: 0xffffff });
   const shimmer = [eq?.ring0, eq?.ring1].some((r) => r?.gear?.tier === 'legendary');
   return { body: BODY[chest ?? 'cloth'], layers, shimmer };
 }

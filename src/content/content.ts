@@ -239,6 +239,10 @@ export function buildContent(files: ContentFiles): Content {
       problems.push('player.json: power.gap: rows must rise by gap');
   checkGear({ player, enemies, biomes, items, loot, abilities, classes }, problems);
   checkWeapons({ weapons, classes, loot }, problems);
+  for (const [id, def] of Object.entries(abilities))
+    for (const fx of def.effects)
+      if (fx.type === 'wield' && !(fx.weapon in weapons.supers))
+        problems.push(`abilities.json: ${id}: wields unknown super weapon "${fx.weapon}"`);
   checkClasses({ player, abilities, classes }, problems);
   checkModifiers({ enemies, abilities, classes, modifiers }, problems);
   checkRestoration({ items, prefabs, restoration }, problems);

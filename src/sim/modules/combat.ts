@@ -31,6 +31,7 @@ import { relicWanted } from './unlocks';
 import { playerStats } from './items';
 import { dropGear, dropSureGear } from './gear';
 import { foeDropPower, scaleDealt, scaleTaken } from './power';
+import { bossFactor, extendOnKill, wielding } from './supers';
 import { countKill } from './objectives';
 import { dropPickup } from './pickups';
 import { onHurt, onKill } from './modifiers';
@@ -169,7 +170,9 @@ function damageEnemy(sim: Simulation, e: Entity, health: Health, body: Body, hit
     return 'blocked';
   }
   // Every blow on a foe is the player's, so the weapon's Power against the foe's scales it.
-  const raw = scaleDealt(sim, hit.amount * (1 + ambush + bleedBonus(sim, e)), enemy.power);
+  // A roaming super's blows on a boss are cut (docs/supers.md), so it can't simply delete one.
+  const superCut = boss && wielding(sim) ? bossFactor(sim) : 1;
+  const raw = scaleDealt(sim, hit.amount * (1 + ambush + bleedBonus(sim, e)) * superCut, enemy.power);
   const amount = hit.amount > 0 ? Math.max(1, Math.round(raw)) : 0;
   if (ambush > 0) sim.events.emit({ type: 'ambushed', x: body.x, y: body.y, bonus: ambush });
 
@@ -279,6 +282,7 @@ export function killEnemy(sim: Simulation, e: Entity): void {
     dropSureGear(sim, def.sureGear.slot, def.sureGear.tier, power, body.x, body.y);
   }
   countKill(sim, enemy.archetype);
+  extendOnKill(sim);
   if (def.boss) {
     openChest(sim, e, enemy.archetype, !sim.state.bossesDefeated[enemy.archetype]);
     settleRefight(sim, enemy.archetype, heatOf(sim, e));

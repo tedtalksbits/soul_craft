@@ -11,7 +11,7 @@
  */
 import type { MoveDef, WeaponTypeDef, WeaponTypeId } from '../../content/schemas';
 import type { Box } from '../../core/math';
-import { DIR_VEC, normalize, overlaps } from '../../core/math';
+import { DIR_VEC, dirFromVec, normalize, overlaps } from '../../core/math';
 import type { Entity } from '../../core/ecs';
 import {
   Abilities,
@@ -51,9 +51,13 @@ import { gearEffects, gearTotals } from './gear';
 import { playerStats } from './items';
 import { onWeaponHit } from './perks';
 import { shotHits, spawnProjectile } from './projectiles';
+import { superWeapon, wielding } from './supers';
 
 /** The equipped weapon's type and its moves. Bare hands fight like a sword. */
 export function weaponType(sim: Simulation): { id: WeaponTypeId; def: WeaponTypeDef } {
+  // A roaming super's weapon replaces whatever is held, moves and rules alike.
+  const wielded = superWeapon(sim);
+  if (wielded) return { id: wielded.as, def: wielded };
   const stack = sim.ecs.get(sim.player, Equipment)?.weapon;
   const item = stack ? sim.content.items[stack.item] : undefined;
   const id = item?.kind === 'weapon' ? item.weapon.type : 'sword';
@@ -202,8 +206,38 @@ export function lungeBlocked(sim: Simulation, p: Player): boolean {
   return false;
 }
 
+/** How far off the aim (radians) a seeking move still snaps to a foe. */
+const SEEK_CONE = (35 * Math.PI) / 180;
+
+/**
+ * A seeking move (a super's blades) turns to the nearest foe within its `seek` distance and the cone around the aim,
+ * so a fast flurry lands without pixel-perfect aim; its lunge then carries the player in.
+ */
+export function seekTarget(sim: Simulation, p: Player): void {
+  const move = currentMove(sim);
+  if (move.seek <= 0) return;
+  const body = sim.ecs.need(sim.player, Body);
+  let best: { dx: number; dy: number; d: number } | null = null;
+  for (const [e, , tb] of sim.ecs.query(Enemy, Body)) {
+    if (sim.ecs.has(e, Dying)) continue;
+    const dx = tb.x - body.x;
+    const dy = tb.y - body.y;
+    const d = Math.hypot(dx, dy);
+    if (d === 0 || d > move.seek || (best && d >= best.d)) continue;
+    const off = Math.acos(Math.max(-1, Math.min(1, (dx * p.dirX + dy * p.dirY) / d)));
+    if (off <= SEEK_CONE) best = { dx, dy, d };
+  }
+  if (!best) return;
+  p.dirX = best.dx / best.d;
+  p.dirY = best.dy / best.d;
+  const facing = sim.ecs.get(sim.player, Facing);
+  if (facing) facing.dir = dirFromVec(p.dirX, p.dirY, facing.dir);
+}
+
 /** Whether blows taken now leave the player standing: hammer swings and full charges, until they land. */
 export function hyperArmored(sim: Simulation): boolean {
+  // A roaming super never flinches.
+  if (wielding(sim)) return true;
   const p = sim.ecs.need(sim.player, Player);
   if (p.state !== 'attack') return false;
   const move = currentMove(sim);

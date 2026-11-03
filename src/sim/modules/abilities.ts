@@ -25,6 +25,8 @@ import {
   Player,
   Projectile,
   Staggered,
+  Swing,
+  Wielding,
   Zone,
   type AbilityHit,
 } from '../components';
@@ -40,6 +42,7 @@ import { grantOvershield } from './overshield';
 import { onAbilityUsed, spendMark } from './weapons';
 import { shotHits, spawnProjectile } from './projectiles';
 import { clearStealth, loseTrack, spawnDecoy, veil } from './stealth';
+import { wieldEffect } from './supers';
 import { abilityPower } from './progression';
 import { slotUnlocked } from './unlocks';
 
@@ -236,6 +239,9 @@ function release(sim: Simulation, e: Entity, a: Abilities, slot: AbilitySlot, ab
         });
         sim.events.emit({ type: 'empowered', ability, seconds: fx.seconds });
         break;
+      case 'wield':
+        startWield(sim, e, ability, fx);
+        break;
     }
   }
   onCast(sim, slot);
@@ -395,6 +401,68 @@ function tickAbilities(sim: Simulation): void {
     ecs.remove(e, Empowered);
     sim.events.emit({ type: 'empowerEnded', ability: emp.ability });
   }
+  tickWield(sim);
+}
+
+// ------------------------------------------------------------------ roaming supers
+
+/** How long before a roaming super ends that it warns (the HUD flashes). */
+const WIELD_WARNING = 2 * TICK_RATE;
+
+/**
+ * A roaming super begins: the super weapon in hand (modules/supers.ts), and the resistance, speed and free stamina
+ * that come with it, carried by an empowerment that lasts as long.
+ */
+function startWield(
+  sim: Simulation,
+  e: Entity,
+  ability: string,
+  fx: Extract<AbilityEffect, { type: 'wield' }>,
+): void {
+  const ticks = Math.round(fx.seconds * TICK_RATE);
+  sim.ecs.add(e, Wielding, { ability, weapon: fx.weapon, ticks, bonus: 0 });
+  sim.ecs.add(e, Empowered, {
+    ability,
+    ticks,
+    damage: 0,
+    defense: fx.resistance,
+    crit: 0,
+    staminaFree: true,
+    speed: fx.speed,
+  });
+  // A fresh moveset: no half-finished chain carries over from the weapon put away.
+  const swing = sim.ecs.get(e, Swing);
+  if (swing) Object.assign(swing, { move: 'chain', step: 0, nextStep: 0, comboTicks: 0, charge: 0 });
+  sim.events.emit({ type: 'wielded', ability, weapon: fx.weapon, seconds: fx.seconds });
+}
+
+/** Counts a roaming super down; near the end it warns, and at the end its finale goes off. */
+function tickWield(sim: Simulation): void {
+  const e = sim.player;
+  const w = sim.ecs.get(e, Wielding);
+  if (!w) return;
+  w.ticks--;
+  if (w.ticks <= WIELD_WARNING && !w.warned) {
+    w.warned = true;
+    sim.events.emit({ type: 'wieldEnding', ability: w.ability });
+  }
+  if (w.ticks > 0) return;
+  const fx = wieldEffect(sim);
+  sim.ecs.remove(e, Wielding);
+  if (sim.ecs.get(e, Empowered)?.ability === w.ability) sim.ecs.remove(e, Empowered);
+  const body = sim.ecs.need(e, Body);
+  if (fx?.end.blast) {
+    const b = fx.end.blast;
+    detonate(sim, body.x, body.y, b.radius, {
+      ability: w.ability,
+      charges: false,
+      damage: b.damage,
+      knockback: b.knockback,
+      stagger: b.stagger,
+    });
+  }
+  if (fx?.end.vanish) veil(sim, fx.end.vanish.seconds, fx.end.vanish.bonus);
+  sim.events.emit({ type: 'wieldEnded', ability: w.ability, x: body.x, y: body.y });
 }
 
 /** Fuses burning down, ground that burns, heals or shields, and thrown knives finding their mark. */
@@ -491,6 +559,7 @@ export function refreshAbilities(sim: Simulation): void {
     a.casting = null;
   }
   ecs.remove(sim.player, Empowered);
+  ecs.remove(sim.player, Wielding);
   ecs.remove(sim.player, Overshield);
   clearStealth(sim);
   for (const [e] of ecs.query(Blast)) ecs.destroy(e);

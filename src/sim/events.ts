@@ -121,6 +121,10 @@ export type SimEvent =
   | { type: 'blast'; ability: string; x: number; y: number; radius: number }
   | { type: 'empowered'; ability: string; seconds: number }
   | { type: 'empowerEnded'; ability: string }
+  /** A roaming super began (the super weapon in hand), is about to end, or ended. */
+  | { type: 'wielded'; ability: string; weapon: string; seconds: number }
+  | { type: 'wieldEnding'; ability: string }
+  | { type: 'wieldEnded'; ability: string; x: number; y: number }
   /** The player's overshield grew to `hp`. */
   | { type: 'overshieldGained'; hp: number }
   /** A blow landed on the overshield: `absorbed` of it, leaving `hp` (0 = broken). */

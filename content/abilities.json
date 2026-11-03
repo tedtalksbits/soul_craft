@@ -296,12 +296,22 @@
   },
   "bladestorm": {
     "name": "Bladestorm",
-    "description": "Become the blade. Swings cost no stamina, strike harder and find gaps far more often.",
+    "description": "Twin blades of shade, whatever you hold. Every strike snaps to the nearest foe, and a held strike phases through a line. You end in a vanish.",
     "slot": "super",
     "cast": { "ticks": 18, "release": 8 },
     "pose": "cast_raise",
     "effects": [
-      { "type": "empower", "seconds": 10, "damage": 0.6, "defense": 0, "crit": 0.3, "staminaFree": true }
+      {
+        "type": "wield",
+        "weapon": "shade_blades",
+        "seconds": 10,
+        "resistance": 0.35,
+        "speed": 0.4,
+        "perKill": 1,
+        "maxBonus": 6,
+        "bossDamage": 0.6,
+        "end": { "vanish": { "seconds": 2, "bonus": 0.5 } }
+      }
     ]
   },
   "ghost_run": {

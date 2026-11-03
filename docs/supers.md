@@ -1,6 +1,6 @@
 # Supers: design proposal
 
-**Status: decided (2026-11-02), nothing built yet.** From the playtest: "Bladestorm is underwhelming, I don't feel
+**Status: decided (2026-11-02). The framework and Bladestorm are built (ADR 0013); Earthshatter and Cinder Storm are next.** From the playtest: "Bladestorm is underwhelming, I don't feel
 powerful, and it doesn't work with a bow. In Destiny the super has its own weapon for its duration. There are
 different kinds of supers (roaming, defensive, DPS): the fantasy is there, it lacks implementation."
 
@@ -73,6 +73,19 @@ Knife Fan and Meteor.
 Suggested order: the super weapon framework with Bladestorm first (it is the one the playtest called out, and it
 proves the framework with the bow case), then Earthshatter and Cinder Storm, then the burst and defensive
 variants.
+
+## Built so far (2026-11-02)
+
+- **The framework:** the `wield` effect, `weapons.json → supers`, the `seek` move option, damage resistance, no
+  flinching, extra time per kill, a boss damage share, no super energy during a super, and a finale. The HUD's super
+  slot drains while it lasts and blinks in the last 2 s; casting it stops the world for a beat, then runs slow for
+  0.3 s, with a shake, a burst in the class color and its own sound.
+- **Bladestorm** puts the **shade blades** in hand: three fast slashes (2 × a light hit each, the third a thrust)
+  that snap to a foe within 56 px and 35° of the aim, a held phase cut that lunges through a line (5 ×), and a blink
+  strike out of a roll. 10 s, +1 s a kill (up to +6 s), 35% less damage taken, 40% faster, free stamina, 0.6 of its
+  damage on bosses, and a 2 s vanish when it ends. It works the same with a bow in hand.
+- **The look in hand** is the twin daggers layer, tinted shade violet. Dedicated art can come later from the
+  `tools/art` player generator.
 
 ## Decisions (2026-11-02)
 

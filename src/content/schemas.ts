@@ -116,6 +116,28 @@ export const AbilityEffectSchema = z.discriminatedUnion('type', [
     /** Extra walking speed: 0.5 = half again as fast. */
     speed: nonneg.default(0),
   }),
+  /**
+   * A roaming super (docs/supers.md): for `seconds` the player fights with `weapon` (from `weapons.json → supers`)
+   * instead of what they hold, taking `resistance` less damage, never flinching, `speed` faster and free of
+   * stamina. Each kill adds `perKill` seconds, up to `maxBonus`. Its blows on a boss do `bossDamage` of their
+   * damage, and none of its hits charge super energy. When it ends: `end`, a final vanish and/or blast.
+   */
+  z.object({
+    type: z.literal('wield'),
+    weapon: z.string(),
+    seconds: pos,
+    resistance: fraction,
+    speed: nonneg.default(0),
+    perKill: nonneg.default(0),
+    maxBonus: nonneg.default(0),
+    bossDamage: fraction.default(1),
+    end: z
+      .object({
+        vanish: z.object({ seconds: pos, bonus: nonneg }).optional(),
+        blast: z.object({ radius: pos, damage: nonneg, knockback: nonneg, stagger: ticks }).optional(),
+      })
+      .default({}),
+  }),
 ]);
 export type AbilityEffect = z.infer<typeof AbilityEffectSchema>;
 
@@ -305,6 +327,11 @@ export const MoveSchema = z
     /** Lunges through foes instead of stopping short, untouchable until its last active tick. */
     through: z.boolean().default(false),
     /**
+     * Snaps toward the nearest foe within this many px (and within 35° of the aim) as it starts, so a fast
+     * flurry finds its targets: a super weapon's seeking blades.
+     */
+    seek: nonneg.default(0),
+    /**
      * Fires an arrow on its first active tick instead of swinging: flying `speed` px per tick for at most
      * `range` px. Reach and width don't apply.
      */
@@ -419,6 +446,22 @@ export const WeaponsSchema = z.object({
     bow: WeaponTypeDefSchema,
     staff: WeaponTypeDefSchema,
   }),
+  /**
+   * Super weapons (docs/supers.md): movesets a roaming super puts in the player's hands, whatever they hold. Each is
+   * a weapon type's moves and rules, plus its own `base` numbers (damage scales with ability power, not gear),
+   * the weapon type it counts as for weapon-type rules (`as`), and how it looks in hand (`look`: a weapon layer
+   * of the player sheet, tinted).
+   */
+  supers: z.record(
+    z.string(),
+    WeaponTypeDefSchema.and(
+      z.object({
+        base: z.object({ damage: pos, reach: pos, width: pos, knockback: nonneg }),
+        as: z.enum(['sword', 'spear', 'hammer', 'daggers', 'bow', 'staff']),
+        look: z.object({ sheet: z.string(), tint: color }),
+      }),
+    ),
+  ),
 });
 export type WeaponsDef = z.infer<typeof WeaponsSchema>;
 

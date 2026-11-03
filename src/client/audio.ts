@@ -376,6 +376,22 @@ export class Audio {
         );
       case 'empowerEnded':
         return this.arp([392, 330, 262], 80, 0.4, 0.04);
+      case 'wielded':
+        // A blade drawn: a bright rising sweep over a low swell.
+        this.burst(0.35, 2200, 0.3, 'bandpass', [600, 3200]);
+        return this.tone(
+          [
+            [98, 1],
+            [147, 0.8],
+          ],
+          1.4,
+          0.1,
+          'sawtooth',
+        );
+      case 'wieldEnding':
+        return this.tone([[880, 1]], 0.08, 0.05, 'square');
+      case 'wieldEnded':
+        return this.arp([392, 330, 262], 80, 0.4, 0.04);
       case 'abilityUnlocked':
         this.burst(0.5, 600, 0.3, 'lowpass');
         return this.arp([262, 330, 392, 523, 659], 90, 1.1, 0.06);

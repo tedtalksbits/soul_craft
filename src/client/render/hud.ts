@@ -6,6 +6,7 @@ import {
   Abilities,
   Buffs,
   Empowered,
+  Wielding,
   Equipment,
   Health,
   Inventory,
@@ -152,10 +153,18 @@ export class Hud {
       }
     });
     const emp = sim.ecs.get(sim.player, Empowered);
-    const seconds = sim.content.abilities[abilityIn(sim, 'super')]?.effects.find(
-      (fx) => fx.type === 'empower',
-    )?.seconds;
-    if (emp && seconds) {
+    const effects = sim.content.abilities[abilityIn(sim, 'super')]?.effects ?? [];
+    const w = sim.ecs.get(sim.player, Wielding);
+    const wield = effects.find((fx) => fx.type === 'wield');
+    const seconds = effects.find((fx) => fx.type === 'empower')?.seconds;
+    if (w && wield?.type === 'wield') {
+      // A roaming super's time left, kills' extra time included; it blinks once the end is near.
+      const total = (wield.seconds + w.bonus) * TICK_RATE;
+      const blink = w.warned === true && Math.floor(this.clockMs / 120) % 2 === 0;
+      over.rect(slotX(2), y - 4, Math.round(SLOT * Math.min(1, w.ticks / total)), 2).fill({
+        color: blink ? 0xffffff : pal.light,
+      });
+    } else if (emp && seconds) {
       over.rect(slotX(2), y - 4, Math.round(SLOT * (emp.ticks / (seconds * TICK_RATE))), 2).fill(pal.base);
     }
   }

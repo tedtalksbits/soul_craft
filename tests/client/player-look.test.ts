@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { playerLook } from '../../src/client/render/player-look';
 import type { TierId } from '../../src/content/schemas';
-import { Equipment, type ItemStack } from '../../src/sim/components';
+import { Equipment, Wielding, type ItemStack } from '../../src/sim/components';
 import { ROOT } from '../../scripts/lib/load-content';
 import { content, newSim } from '../helpers';
 
@@ -66,6 +66,29 @@ describe('playerLook', () => {
       for (const l of look.layers) sheets.add(l.sheet);
     }
     const missing = [...sheets].filter((s) => !existsSync(join(ROOT, 'assets', 'sprites', `${s}.json`)));
+    expect(missing).toEqual([]);
+  });
+});
+
+describe('a roaming super in hand', () => {
+  it('shows its weapon, tinted, in place of the held one, and every super weapon has its sheet', () => {
+    const sim = newSim();
+    Object.assign(sim.ecs.need(sim.player, Equipment), { weapon: worn('ashwood_bow', 'common') });
+    sim.ecs.add(sim.player, Wielding, {
+      ability: 'bladestorm',
+      weapon: 'shade_blades',
+      ticks: 600,
+      bonus: 0,
+    });
+    const blades = content.weapons.supers['shade_blades']!;
+    const weapon = playerLook(sim, true).layers.at(-1);
+    expect(weapon).toEqual({
+      sheet: blades.look.sheet,
+      tint: Number.parseInt(blades.look.tint.slice(1), 16),
+    });
+    const missing = Object.values(content.weapons.supers)
+      .map((s) => s.look.sheet)
+      .filter((s) => !existsSync(join(ROOT, 'assets', 'sprites', `${s}.json`)));
     expect(missing).toEqual([]);
   });
 });

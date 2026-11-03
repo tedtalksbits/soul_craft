@@ -108,7 +108,10 @@ multipliers for `damage`, `stamina`, `reach`, `width` and `knockback`, its timin
 swinging; a negative `lunge` steps back), and how it is drawn (`arc`,
 `pose`). A type can also set `drawDrain` (stamina a held charge burns per tick) and `chargePose`. `affinityBonus`,
 `minCharge` and `chargeMove` apply to every type. A perk with `weaponTypes` rolls only on
-weapons of those types.
+weapons of those types. A move's `seek` snaps it toward the nearest foe within that many px and 35° of the aim.
+`supers` holds the super weapons a `wield` effect puts in hand: a weapon type's moves and rules, plus `base`
+numbers (damage, reach, width, knockback; damage grows with ability power), the type it counts as (`as`) and its
+`look` (a player weapon layer and a tint).
 
 A boss's `boss` block can add `poise { max, stagger }` (weapon damage fills it while the shield is down, hammers
 three times faster; full, the boss staggers) and `warden { signature, alternate { item, slams } }`: its named
@@ -233,6 +236,10 @@ animation it plays, e.g. `cast_slam`; default `attack`), and `effects`, applied 
   attacking ends it too, and that first hit deals `bonus` more (1 = double) and gets past a raised shield.
 - `overshield`: `amount` extra health on the player at once, for `seconds`. Overshield soaks blows before
   health; a blow it soaks completely doesn't make the player flinch. Resting clears it.
+- `wield` (a roaming super, ADR 0013): for `seconds` the player fights with `weapon` from `weapons.json → supers`
+  instead of what they hold, with `resistance` less damage taken, no flinching, `speed` faster and free stamina.
+  Each kill adds `perKill` seconds, up to `maxBonus`; its blows on a boss do `bossDamage` of their damage; nothing
+  done during it charges super energy; and when it ends, `end` fires (`vanish` and/or a `blast`).
 - `volley`: `count` knives thrown at once, fanned across `spread` degrees around the cursor. Each flies
   `range` px at `speed` px per tick and hits the first enemy it meets for `damage` and `stagger`.
 - `dash`: carries the player `distance` px over `ticks`, optionally with i-frames, hitting what it passes

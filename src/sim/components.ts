@@ -128,6 +128,19 @@ export interface Empowered {
 }
 export const Empowered = defineComponent<Empowered>('empowered');
 
+/**
+ * A roaming super under way (modules/supers.ts): the player fights with super weapon `weapon` for `ticks` more,
+ * granted by `ability`; `bonus` is the seconds kills have added so far. `warned` once the end is near.
+ */
+export interface Wielding {
+  ability: string;
+  weapon: string;
+  ticks: number;
+  bonus: number;
+  warned?: true;
+}
+export const Wielding = defineComponent<Wielding>('wielding');
+
 /** An enemy knocked off balance: no moving, no attacking, no blocking until it recovers. */
 export interface Staggered {
   ticks: number;

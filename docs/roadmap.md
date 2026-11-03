@@ -285,7 +285,9 @@ proposal and its open questions are in [`docs/power-and-stash.md`](power-and-sta
 - **Infuse needs the same rarity,** and costs Echoes (a new material every dismantled piece gives, more for better
   tiers) plus 50 souls. **Hold F** over a piece in a flyout to dismantle it (1.5 s, the tile fills, letting go
   cancels); the held buttons take 1.5 s too.
-- **Proposed, not built:** supers with their own weapons and movesets ([`docs/supers.md`](supers.md)), and a UI
+- **Supers with their own weapons** ([`docs/supers.md`](supers.md), ADR 0013): the framework and Bladestorm's
+  shade blades are built; Earthshatter and Cinder Storm come next.
+- **Proposed, not built:** a UI
   redesign from a mood board of professional game UI. **To discuss:** gathering with the bow, and tools (axe,
   pickaxe, hoe) as their own mechanic.
 

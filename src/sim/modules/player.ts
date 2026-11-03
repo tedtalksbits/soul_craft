@@ -50,6 +50,7 @@ import {
   swingCost,
   throughGrace,
   swingOf,
+  seekTarget,
 } from './weapons';
 import { resetEnemies } from './streaming';
 import { strikeTiles } from './terrain';
@@ -269,6 +270,7 @@ function emitSwing(sim: Simulation, e: Entity, p: Player): void {
 function startAttack(sim: Simulation, e: Entity, p: Player, facing: Facing, stamina: Stamina): void {
   aimMove(sim, e, p, facing);
   chooseMove(sim);
+  seekTarget(sim, p);
   stamina.value -= swingCost(sim);
   stamina.delay = sim.content.player.staminaRegenDelay;
   p.struck = [];

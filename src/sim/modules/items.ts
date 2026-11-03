@@ -41,6 +41,7 @@ import {
   stashReachable,
   stashRoom,
 } from './storage';
+import { superWeapon } from './supers';
 import { gearOf, gearTotals, rollDrop, rollGear, weaponNumbers } from './gear';
 import { characterPower, gearPower, maxPower, playerPower } from './power';
 
@@ -218,7 +219,12 @@ export function computeStats(
   content: Content,
   eq: Equipment | undefined,
   attrs: Attributes | undefined,
-  temp: { buffs?: readonly Buff[]; emp?: Empowered | undefined } = {},
+  temp: {
+    buffs?: readonly Buff[];
+    emp?: Empowered | undefined;
+    /** A roaming super's weapon (modules/supers.ts): its base numbers replace the held weapon's. */
+    wield?: { damage: number; reach: number; width: number; knockback: number } | undefined;
+  } = {},
 ): PlayerStats {
   const def = content.player;
   const gear = gearTotals(content, eq);
@@ -230,14 +236,18 @@ export function computeStats(
   const per = def.leveling.perLevel;
   const gain = (gains: readonly [number, number, number], id: AttributeId) =>
     attributeGain(content, gains, attributes[id]);
-  const weapon = (eq?.weapon && weaponNumbers(content, eq.weapon)) ?? UNARMED;
+  const held = (eq?.weapon && weaponNumbers(content, eq.weapon)) ?? UNARMED;
+  const weapon = temp.wield ? { ...temp.wield, staminaCost: 0 } : held;
+  const abilityDamage = 1 + gear.abilityDamage + gain(per.attunement.abilityDamage, 'attunement');
   const taken =
     (1 - armorReduction(content, gear.armor)) * (1 - buffTotal(buffs, 'defense')) * (1 - (emp?.defense ?? 0));
   const buffHp = buffTotal(buffs, 'maxHp');
   return {
-    damage:
-      weapon.damage *
-      (1 + gear.damage + buffTotal(buffs, 'damage') + (emp?.damage ?? 0) + gain(per.might.damage, 'might')),
+    // A super weapon's blows grow with ability power (Attunement), not the weapon's own perks or Might.
+    damage: temp.wield
+      ? weapon.damage * abilityDamage
+      : weapon.damage *
+        (1 + gear.damage + buffTotal(buffs, 'damage') + (emp?.damage ?? 0) + gain(per.might.damage, 'might')),
     staminaCost: emp?.staminaFree ? 0 : weapon.staminaCost * Math.max(0, 1 - gear.attackStamina),
     reach: weapon.reach,
     width: weapon.width,
@@ -253,7 +263,7 @@ export function computeStats(
     moveSpeed: gear.moveSpeed,
     healing: 1 + gear.healing,
     souls: 1 + gear.souls,
-    abilityDamage: 1 + gear.abilityDamage + gain(per.attunement.abilityDamage, 'attunement'),
+    abilityDamage,
     energyRate: 1 + gain(per.attunement.energy, 'attunement') + gear.energyGain,
     rollIframes: gear.rollIframes,
     rollDistance: gear.rollDistance,
@@ -266,6 +276,7 @@ export function playerStats(sim: Simulation, e: Entity): PlayerStats {
   return computeStats(sim.content, sim.ecs.get(e, Equipment), sim.ecs.get(e, Attributes), {
     buffs: sim.ecs.get(e, Buffs)?.active ?? [],
     emp: sim.ecs.get(e, Empowered),
+    wield: e === sim.player ? superWeapon(sim)?.base : undefined,
   });
 }
 
